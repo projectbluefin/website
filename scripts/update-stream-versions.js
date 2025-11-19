@@ -23,7 +23,7 @@ const REPOS = {
 const BASE_OS_MAP = {
   lts: "CentOS Stream 10",
   gts: "Fedora 42",
-  stable: "Fedora 42"
+  stable: "Fedora 43"
 }
 
 /**
