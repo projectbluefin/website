@@ -8,7 +8,7 @@ const leftNavLinks = [
 // Right side navigation
 const rightNavLinks = [
   { name: 'Blog', href: 'https://docs.projectbluefin.io/blog' },
-  { name: 'Changelogs', href: 'https://docs.projectbluefin.io/changelogs' },
+  { name: 'Changelog', href: 'https://docs.projectbluefin.io/changelogs' },
   { name: 'Community', href: 'https://github.com/ublue-os/bluefin/discussions', external: true },
   { name: 'Feedback', href: 'https://feedback.projectbluefin.io/', external: true },
   { name: 'Store (US Only)', href: 'https://store.projectbluefin.io', external: true }
@@ -21,7 +21,7 @@ const rightNavLinks = [
       <div class="navbar__items">
         <a href="https://projectbluefin.io" class="navbar__brand">
           <div class="navbar__logo">
-            <img src="/img/logo.svg" alt="Bluefin" loading="lazy" />
+            <img src="/img/logo.svg" alt="Bluefin" loading="eager" />
           </div>
           <b class="navbar__title text--truncate">Bluefin</b>
         </a>
@@ -56,6 +56,7 @@ const rightNavLinks = [
 <style scoped lang="scss">
 // Docusaurus navbar styles - matching the docs site exactly
 .docusaurus-navbar {
+  // Infima CSS variables - matching Docusaurus defaults
   --ifm-navbar-background-color: #242526;
   --ifm-navbar-link-color: rgba(255, 255, 255, 0.9);
   --ifm-navbar-link-hover-color: #4a69bd;
@@ -63,15 +64,26 @@ const rightNavLinks = [
   --ifm-navbar-padding-horizontal: 1rem;
   --ifm-navbar-padding-vertical: calc((var(--ifm-navbar-height) - var(--ifm-navbar-item-height)) / 2);
   --ifm-navbar-item-height: 32px;
-  
+  --ifm-navbar-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+  --ifm-transition-fast: 200ms;
+  --ifm-transition-timing-default: cubic-bezier(0.4, 0, 0.2, 1);
+
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   height: var(--ifm-navbar-height);
   background-color: var(--ifm-navbar-background-color);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: var(--ifm-navbar-shadow);
   z-index: 1000;
+
+  // Use Docusaurus/Infima system font stack
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+
+  // Better text rendering
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .navbar__inner {
@@ -89,6 +101,7 @@ const rightNavLinks = [
   align-items: center;
   gap: 0;
   height: 100%;
+  flex-wrap: nowrap;
 }
 
 .navbar__brand {
@@ -98,9 +111,16 @@ const rightNavLinks = [
   text-decoration: none;
   margin-right: 1rem;
   height: var(--ifm-navbar-item-height);
-  
+  transition: opacity var(--ifm-transition-fast) var(--ifm-transition-timing-default);
+
   &:hover {
     opacity: 0.8;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ifm-navbar-link-hover-color);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 }
 
@@ -108,11 +128,12 @@ const rightNavLinks = [
   display: flex;
   align-items: center;
   height: 100%;
-  
+
   img {
     height: 2rem;
     width: auto;
     display: block;
+    max-width: none;
   }
 }
 
@@ -139,15 +160,21 @@ const rightNavLinks = [
   text-decoration: none;
   font-size: 1rem;
   font-weight: 400;
-  padding: calc(var(--ifm-navbar-padding-vertical) / 2) 0.75rem;
+  padding: 0 0.75rem;
   line-height: 1.5;
   display: flex;
   align-items: center;
-  height: var(--ifm-navbar-item-height);
-  transition: color 0.2s ease;
-  
+  height: 100%;
+  transition: color var(--ifm-transition-fast) var(--ifm-transition-timing-default);
+
   &:hover {
     color: var(--ifm-navbar-link-hover-color);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ifm-navbar-link-hover-color);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 }
 
@@ -156,17 +183,17 @@ const rightNavLinks = [
   justify-content: flex-end;
 }
 
-// Mobile responsive - matching Docusaurus breakpoints
+// Mobile responsive - matching Docusaurus breakpoints exactly
 @media (max-width: 996px) {
   .docusaurus-navbar {
     --ifm-navbar-padding-horizontal: 0.5rem;
   }
-  
+
   .navbar__link {
     font-size: 0.9rem;
-    padding: calc(var(--ifm-navbar-padding-vertical) / 2) 0.5rem;
+    padding: 0 0.5rem;
   }
-  
+
   .navbar__brand {
     margin-right: 0.5rem;
   }
@@ -178,11 +205,11 @@ const rightNavLinks = [
       display: none;
     }
   }
-  
+
   .navbar__brand {
     margin: 0 auto;
   }
-  
+
   .navbar__items--right {
     display: none;
   }
