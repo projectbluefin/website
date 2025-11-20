@@ -124,5 +124,9 @@
     "OurMission": "Unsere Mission",
     "TryOut": "Ausprobieren",
     "FAQ": "FAQ"
+  },
+  "Flock": {
+    "Title": "Unser Schwarm",
+    "Description": "Bluefin wird von einer engagierten Gruppe von Leuten gebaut. Dies sind die Mitwirkenden, die in den letzten 90 Tagen einen Commit gelandet haben. Danke, dass ihr das Projekt am Laufen haltet!"
   }
 }

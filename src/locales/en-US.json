@@ -119,5 +119,10 @@
     "OurMission": "Our Mission",
     "TryOut": "Try Out",
     "FAQ": "FAQ"
+  },
+  "Flock": {
+    "Title": "Our Flock",
+    "Description": "Bluefin is built by a dedicated group of people. These are the contributors who have landed a commit in the past 90 days. Thanks for keeping the project going!",
+    "AllTimeTitle": "And to our all-time contributors, thank you!"
   }
 }
