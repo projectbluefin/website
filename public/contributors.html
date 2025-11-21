@@ -1,233 +1,285 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <script src="https://cdn.jsdelivr.net/npm/@iframe-resizer/child@5.3.2" integrity="z4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP+DGNKHfuwvY7kxvUdBeoGlODJ6+SfaPg=="></script>
-    <style>
-      #contributor-container {
-        display: flex;
-        flex-flow: wrap;
-        justify-content: center;
+
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/@iframe-resizer/child@5.3.2"
+    integrity="z4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP+DGNKHfuwvY7kxvUdBeoGlODJ6+SfaPg=="></script>
+  <style>
+    .contributor-container {
+      display: flex;
+      flex-flow: wrap;
+      justify-content: center;
+    }
+
+    .github-profile-badge-wrapper {
+      text-decoration: none;
+      display: flex;
+      -webkit-tap-highlight-color: transparent;
+      padding-bottom: 5px;
+      padding-right: 5px;
+    }
+
+    .github-profile-badge-img-wrapper {
+      position: relative;
+      height: 50px;
+    }
+
+    .github-profile-badge-img {
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+    }
+
+    .github-profile-badge-name-wrapper {
+      box-sizing: content-box;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      background: #10151f;
+      white-space: nowrap;
+      align-self: stretch;
+      padding-left: 25px;
+      margin-left: -25px;
+      border-top-right-radius: 25px;
+      border-bottom-right-radius: 25px;
+      transition: all 0.5s ease;
+    }
+
+    .github-profile-badge-name {
+      font-size: 15px;
+      font-family: monospace;
+      color: white;
+      margin: 0;
+      padding: 0;
+      margin-left: 10px;
+      margin-right: 10px;
+    }
+
+    .github-profile-badge {
+      word-break: normal !important;
+      padding: 5px;
+      filter: drop-shadow(0px 0px 5px rgba(0, 0, 0, 0));
+      transition: transform .3s ease-in-out, filter .3s ease-in-out;
+    }
+
+    .github-profile-badge:hover {
+      transform: scale(1.2);
+      z-index: 1;
+      filter: drop-shadow(0px 0px 5px rgba(0, 0, 0, 0.2));
+    }
+
+    .github-profile-badge.always-expanded svg {
+      display: inline-block;
+      background: #f0f0f0;
+      border-radius: 50%;
+      fill: #958a31;
+      height: 30px;
+      width: 30px;
+      padding: 10px;
+    }
+
+    .github-profile-badge.stargazers svg {
+      fill: #b9a500;
+    }
+
+    .github-profile-badge.pulls svg {
+      fill: #4285f4;
+    }
+
+    @media only screen and (max-width: 600px) {
+      .github-profile-badge:not(.always-expanded) .github-profile-badge-name-wrapper {
+        display: none;
+        visibility: hidden;
       }
+    }
+  </style>
+</head>
 
-      .github-profile-badge-wrapper {
-          text-decoration: none;
-          display: flex;
-          -webkit-tap-highlight-color: transparent;
-          padding-bottom: 5px;
-          padding-right: 5px;
-      }
+<body>
+  <h3 style="text-align: center; font-family: sans-serif; color: #4a4a4a; margin-top: 20px;">Recent Contributors (Past 6
+    Months)</h3>
+  <div id="recent-container" class="contributor-container"></div>
 
-      .github-profile-badge-img-wrapper {
-          position: relative;
-          height: 50px;
-      }
+  <h3 style="text-align: center; font-family: sans-serif; color: #4a4a4a; margin-top: 40px;">All-Time Legends</h3>
+  <div id="alltime-container" class="contributor-container"></div>
+</body>
+<footer>
+  <script type="text/javascript">
+    const ignoredContributors = ['github-actions[bot]', 'dependabot[bot]', 'pull[bot]', 'renovate[bot]', 'blacksmith-sh[bot]', 'ubot-7274[bot]'];
 
-      .github-profile-badge-img {
-          border-radius: 50%;
-          width: 50px;
-          height: 50px;
-      }
+    /**
+     * Lightly modified from:
+     * https://github.com/Rapsssito/github-profile-badge
+     */
+    const BASE_SIZE = 50;
+    const LOGO_SIZE = 20;
+    const LOGO_OFFSET = 5;
 
-      .github-profile-badge-name-wrapper {
-          box-sizing: content-box;
-          display: flex;
-          align-items: center;
-          overflow: hidden;
-          background: #10151f;
-          white-space: nowrap;
-          align-self: stretch;
-          padding-left: 25px;
-          margin-left: -25px;
-          border-top-right-radius: 25px;
-          border-bottom-right-radius: 25px;
-          transition: all 0.5s ease;
-      }
+    function getWrapper(username) {
+      const wrapper = document.createElement('a');
+      wrapper.href = `https://github.com/${username}`;
+      wrapper.target = '_blank';
+      wrapper.className = 'github-profile-badge-wrapper';
+      return wrapper;
+    }
 
-      .github-profile-badge-name {
-          font-size: 15px;
-          font-family: monospace;
-          color: white;
-          margin: 0;
-          padding: 0;
-          margin-left: 10px;
-          margin-right: 10px;
-      }
+    function getProfile(username) {
+      const profileImg = document.createElement('img');
+      profileImg.src = `https://avatars.githubusercontent.com/${username}`;
+      profileImg.alt = `${username} GitHub Profile`;
+      profileImg.className = 'github-profile-badge-img';
+      return profileImg;
+    }
 
-      .github-profile-badge {
-        word-break: normal!important;
-        padding: 5px;
-        filter: drop-shadow(0px 0px 5px rgba(0,0,0,0));
-        transition: transform .3s ease-in-out, filter .3s ease-in-out;
-      }
+    function getImagesDiv(username) {
+      const parentDiv = document.createElement('div');
+      parentDiv.className = 'github-profile-badge-img-wrapper';
+      parentDiv.appendChild(getProfile(username));
+      return parentDiv;
+    }
 
-      .github-profile-badge:hover {
-        transform: scale(1.2);
-        z-index: 1;
-        filter: drop-shadow(0px 0px 5px rgba(0,0,0,0.2));
-      }
+    function getNameText(username) {
+      const nameText = document.createElement('p');
+      nameText.className = 'github-profile-badge-name';
+      nameText.innerText = username;
+      return nameText;
+    }
 
-      .github-profile-badge.always-expanded svg {
-        display: inline-block;
-        background: #f0f0f0;
-        border-radius: 50%;
-        fill: #958a31;
-        height: 30px;
-        width: 30px;
-        padding: 10px;
-      }
+    function fillWidget(widget) {
+      const username = widget.getAttribute('data-user');
+      const wrapper = getWrapper(username);
 
-      .github-profile-badge.stargazers svg {
-        fill: #b9a500;
-      }
+      wrapper.appendChild(getImagesDiv(username));
 
-      .github-profile-badge.pulls svg {
-        fill: #4285f4;
-      }
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'github-profile-badge-name-wrapper';
+      const nameText = getNameText(username);
+      nameDiv.appendChild(nameText);
+      wrapper.appendChild(nameDiv);
+      widget.appendChild(wrapper);
+    }
 
-      @media only screen and (max-width: 600px) {
-        .github-profile-badge:not(.always-expanded) .github-profile-badge-name-wrapper {
-          display: none;
-          visibility: hidden;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="contributor-container">
-    </div>
-  </body>
-  <footer>
-    <script type="text/javascript">
-      const ignoredContributors = ['github-actions[bot]', 'dependabot[bot]', 'pull[bot]', 'renovate[bot]', 'blacksmith-sh[bot]', 'ubot-7274[bot' ];
+    function createBadge(username) {
+      return `<div class="github-profile-badge" data-user="${username}"></div>`;
+    }
 
-      /**
-       * Lightly modified from:
-       * https://github.com/Rapsssito/github-profile-badge
-       */
-      const BASE_SIZE = 50;
-      const LOGO_SIZE = 20;
-      const LOGO_OFFSET = 5;
-
-      /**
-       * @param {string} username
-       */
-      function getWrapper(username) {
-          const wrapper = document.createElement('a');
-          wrapper.href = `https://github.com/${username}`;
-          wrapper.target = '_blank';
-          wrapper.className = 'github-profile-badge-wrapper';
-          return wrapper;
-      }
-
-      /**
-       * @param {string} username
-       */
-      function getProfile(username) {
-          const profileImg = document.createElement('img');
-          profileImg.src = `https://avatars.githubusercontent.com/${username}`;
-          profileImg.alt = `${username} GitHub Profile`;
-          profileImg.className = 'github-profile-badge-img';
-          return profileImg;
-      }
-
-      /**
-       * @param {string} username
-       */
-      function getImagesDiv(username) {
-          const parentDiv = document.createElement('div');
-          parentDiv.className = 'github-profile-badge-img-wrapper';
-          parentDiv.appendChild(getProfile(username));
-          return parentDiv;
-      }
-
-      /**
-       * @param {string} username
-       */
-      function getNameText(username) {
-          const nameText = document.createElement('p');
-          nameText.className = 'github-profile-badge-name';
-          nameText.innerText = username;
-          return nameText;
-      }
-
-      /**
-       * @param {HTMLElement} widget
-       */
-      function fillWidget(widget) {
-          const username = widget.getAttribute('data-user');
-          const wrapper = getWrapper(username);
-
-          wrapper.appendChild(getImagesDiv(username));
-
-          const nameDiv = document.createElement('div');
-          nameDiv.className = 'github-profile-badge-name-wrapper';
-          const nameText = getNameText(username);
-          nameDiv.appendChild(nameText);
-          wrapper.appendChild(nameDiv);
-          widget.appendChild(wrapper);
-      }
-
+    function fetchStats() {
       var xhr = new XMLHttpRequest();
-      xhr.open('GET', 'https://api.github.com/repos/ublue-os/bluefin/contributors', true);
+      xhr.open('GET', 'https://api.github.com/repos/ublue-os/bluefin/stats/contributors', true);
       xhr.responseType = 'json';
-      xhr.onload = function() {
+      xhr.onload = function () {
+        if (xhr.status === 202) {
+          // Stats are being computed, retry after a delay
+          console.log("Stats computing, retrying in 2 seconds...");
+          setTimeout(fetchStats, 2000);
+          return;
+        }
         if (xhr.status === 200) {
-          var data = xhr.response;
-          data.forEach(function(contributor) {
-            var contributorLogin = contributor['login']
-            if(!ignoredContributors.includes(contributorLogin)) {
-              document.getElementById('contributor-container').innerHTML += '<div class="github-profile-badge" data-user="' + contributorLogin + '"></div';
-            }
-          });
+          processData(xhr.response);
+        }
+      };
+      xhr.send();
+    }
 
-          const widgets = document.getElementsByClassName('github-profile-badge');
-          for (let i = 0; i < widgets.length; i++) {
-              fillWidget(widgets[i]);
-          }
+    function processData(data) {
+      if (!Array.isArray(data)) return;
 
-          var xhr2 = new XMLHttpRequest();
-          xhr2.open('GET', 'https://api.github.com/repos/ublue-os/bluefin', true);
-          xhr2.responseType = 'json';
-          xhr2.onload = function() {
-            if (xhr2.status === 200) {
-              var data = xhr2.response;
-              var stargazersCount = Intl.NumberFormat('en-US', {
+      // Calculate recent commits (last 26 weeks ~ 6 months)
+      const processed = data.map(item => {
+        const username = item.author.login;
+        const total = item.total;
+        // weeks is array of objects {w, a, d, c}
+        // Get last 26 weeks
+        const recentWeeks = item.weeks.slice(-26);
+        const recent = recentWeeks.reduce((acc, week) => acc + week.c, 0);
+        return { username, total, recent };
+      }).filter(item => !ignoredContributors.includes(item.username));
+
+      // Sort by total for All-Time list
+      // Let's take top 25 for All-Time
+      const allTimeSorted = [...processed].sort((a, b) => b.total - a.total);
+      const allTimeTop = allTimeSorted.slice(0, 25);
+      const allTimeUsernames = new Set(allTimeTop.map(u => u.username));
+
+      // Sort by recent for Prolific list
+      // Exclude those in All-Time
+      const recentSorted = [...processed]
+        .filter(u => !allTimeUsernames.has(u.username) && u.recent > 0)
+        .sort((a, b) => b.recent - a.recent);
+
+      // Let's take top 25 recent as well, or all of them? 
+      // User said "list of avatars be the most prolific", implying a list. 
+      // Let's cap it to keep it reasonable, e.g., 50, or just all with > 0 recent commits.
+      // Given the design, maybe top 40 is good.
+      const recentTop = recentSorted.slice(0, 40);
+
+      // Render All-Time
+      const allTimeContainer = document.getElementById('alltime-container');
+      allTimeTop.forEach(user => {
+        allTimeContainer.innerHTML += createBadge(user.username);
+      });
+
+      // Render Recent
+      const recentContainer = document.getElementById('recent-container');
+      recentTop.forEach(user => {
+        recentContainer.innerHTML += createBadge(user.username);
+      });
+
+      // Initialize widgets
+      const widgets = document.getElementsByClassName('github-profile-badge');
+      for (let i = 0; i < widgets.length; i++) {
+        fillWidget(widgets[i]);
+      }
+
+      // Add extra stats badges to All-Time container (Stargazers, Pulls)
+      addExtraBadges(allTimeContainer);
+    }
+
+    function addExtraBadges(container) {
+      var xhr2 = new XMLHttpRequest();
+      xhr2.open('GET', 'https://api.github.com/repos/ublue-os/bluefin', true);
+      xhr2.responseType = 'json';
+      xhr2.onload = function () {
+        if (xhr2.status === 200) {
+          var data = xhr2.response;
+          var stargazersCount = Intl.NumberFormat('en-US', {
+            notation: "compact",
+            maximumFractionDigits: 1
+          }).format(data['stargazers_count']);
+
+          container.innerHTML += '<div class="github-profile-badge always-expanded stargazers"><a href="https://github.com/ublue-os/bluefin/stargazers" target="_blank" class="github-profile-badge-wrapper"><div class="github-profile-badge-img-wrapper"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"/></svg></div><div class="github-profile-badge-name-wrapper"><p class="github-profile-badge-name">' + stargazersCount.toLowerCase() + ' Stargazers</p></div></a></div>';
+
+          var xhr3 = new XMLHttpRequest();
+          xhr3.open('GET', 'https://storage.googleapis.com/ghp-stats/ublue-os/data.json', true);
+          xhr3.responseType = 'json';
+          xhr3.onload = function () {
+            if (xhr3.status === 200) {
+              var totalPulls = 0;
+              var data = xhr3.response
+              var lastData = data[Object.keys(data)[Object.keys(data).length - 1]];
+
+              Object.keys(lastData).forEach(function (key) {
+                if (key.indexOf("bluefin") !== -1) {
+                  totalPulls += lastData[key];
+                }
+              });
+
+              var pullCount = Intl.NumberFormat('en-US', {
                 notation: "compact",
                 maximumFractionDigits: 1
-              }).format(data['stargazers_count']);
+              }).format(totalPulls);
 
-              document.getElementById('contributor-container').innerHTML += '<div class="github-profile-badge always-expanded stargazers"><a href="https://github.com/ublue-os/bluefin/stargazers" target="_blank" class="github-profile-badge-wrapper"><div class="github-profile-badge-img-wrapper"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"/></svg></div><div class="github-profile-badge-name-wrapper"><p class="github-profile-badge-name">' + stargazersCount.toLowerCase() + ' Stargazers</p></div></a></div>';
-
-              var xhr3 = new XMLHttpRequest();
-              xhr3.open('GET', 'https://storage.googleapis.com/ghp-stats/ublue-os/data.json', true);
-              xhr3.responseType = 'json';
-              xhr3.onload = function() {
-                if (xhr3.status === 200) {
-                  var totalPulls = 0;
-                  var data = xhr3.response
-                  var lastData = data[Object.keys(data)[Object.keys(data).length - 1]];
-
-                  Object.keys(lastData).forEach(function(key) {
-                    if (key.indexOf("bluefin") !== -1) {
-                      totalPulls += lastData[key];
-                    }
-                  });
-
-                  var pullCount = Intl.NumberFormat('en-US', {
-                    notation: "compact",
-                    maximumFractionDigits: 1
-                  }).format(totalPulls);
-
-                  document.getElementById('contributor-container').innerHTML += '<div class="github-profile-badge always-expanded pulls"><a href="https://github.com/orgs/ublue-os/packages?repo_name=bluefin" target="_blank" class="github-profile-badge-wrapper"><div class="github-profile-badge-img-wrapper"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M264.5 5.2c14.9-6.9 32.1-6.9 47 0l218.6 101c8.5 3.9 13.9 12.4 13.9 21.8s-5.4 17.9-13.9 21.8l-218.6 101c-14.9 6.9-32.1 6.9-47 0L45.9 149.8C37.4 145.8 32 137.3 32 128s5.4-17.9 13.9-21.8L264.5 5.2zM476.9 209.6l53.2 24.6c8.5 3.9 13.9 12.4 13.9 21.8s-5.4 17.9-13.9 21.8l-218.6 101c-14.9 6.9-32.1 6.9-47 0L45.9 277.8C37.4 273.8 32 265.3 32 256s5.4-17.9 13.9-21.8l53.2-24.6 152 70.2c23.4 10.8 50.4 10.8 73.8 0l152-70.2zm-152 198.2l152-70.2 53.2 24.6c8.5 3.9 13.9 12.4 13.9 21.8s-5.4 17.9-13.9 21.8l-218.6 101c-14.9 6.9-32.1 6.9-47 0L45.9 405.8C37.4 401.8 32 393.3 32 384s5.4-17.9 13.9-21.8l53.2-24.6 152 70.2c23.4 10.8 50.4 10.8 73.8 0z"/></svg></div><div class="github-profile-badge-name-wrapper"><p class="github-profile-badge-name">' + pullCount.toLowerCase() + ' Image Pulls</p></div></a></div>';
-                }
-              }
-              xhr3.send();
+              container.innerHTML += '<div class="github-profile-badge always-expanded pulls"><a href="https://github.com/orgs/ublue-os/packages?repo_name=bluefin" target="_blank" class="github-profile-badge-wrapper"><div class="github-profile-badge-img-wrapper"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M264.5 5.2c14.9-6.9 32.1-6.9 47 0l218.6 101c8.5 3.9 13.9 12.4 13.9 21.8s-5.4 17.9-13.9 21.8l-218.6 101c-14.9 6.9-32.1 6.9-47 0L45.9 149.8C37.4 145.8 32 137.3 32 128s5.4-17.9 13.9-21.8L264.5 5.2zM476.9 209.6l53.2 24.6c8.5 3.9 13.9 12.4 13.9 21.8s-5.4 17.9-13.9 21.8l-218.6 101c-14.9 6.9-32.1 6.9-47 0L45.9 277.8C37.4 273.8 32 265.3 32 256s5.4-17.9 13.9-21.8l53.2-24.6 152 70.2c23.4 10.8 50.4 10.8 73.8 0l152-70.2zm-152 198.2l152-70.2 53.2 24.6c8.5 3.9 13.9 12.4 13.9 21.8s-5.4 17.9-13.9 21.8l-218.6 101c-14.9 6.9-32.1 6.9-47 0L45.9 405.8C37.4 401.8 32 393.3 32 384s5.4-17.9 13.9-21.8l53.2-24.6 152 70.2c23.4 10.8 50.4 10.8 73.8 0z"/></svg></div><div class="github-profile-badge-name-wrapper"><p class="github-profile-badge-name">' + pullCount.toLowerCase() + ' Image Pulls</p></div></a></div>';
             }
           }
-          xhr2.send();
-        };
+          xhr3.send();
+        }
       }
-      xhr.send();
-    </script>
-  </footer>
+      xhr2.send();
+    }
+
+    fetchStats();
+  </script>
+</footer>
+
 </html>
