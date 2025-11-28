@@ -22,7 +22,7 @@ const { t } = useI18n<MessageSchema>({
           <p v-html="t('Bazaar.Description')"></p>
           <div class="bazaar-screenshot">
             <img 
-              src="/img/bazaar2.webp" 
+              src="/img/bazaar.png" 
               alt="Screenshot of Bluefin's Flatpak Store, Bazaar"
               loading="lazy"
             />
