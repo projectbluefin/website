@@ -52,7 +52,7 @@
   strong {
     @include fonts.font(400);
     display: block;
-    font-size: 1.2rem;
+    font-size: 2rem;
     text-transform: uppercase;
     color: var(--color-text-light);
   }

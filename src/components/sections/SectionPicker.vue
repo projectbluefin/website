@@ -11,6 +11,20 @@ const { t } = useI18n<MessageSchema>({
 </script>
 
 <style scoped>
+.picker-header {
+  max-width: 800px;
+  margin: 0 auto;
+
+  .picker-tag,
+  h2 {
+    text-align: left;
+  }
+
+  p {
+    text-align: center;
+  }
+}
+
 p :deep(a) {
   @include font(700);
   color: var(--color-blue-light);
@@ -24,7 +38,10 @@ p :deep(a) {
 <template>
   <section id="scene-picker" class="section-wrap">
     <div class="container">
-      <div>
+      <div class="picker-header">
+        <div class="picker-tag">
+          <strong>{{ t("TryBluefin.Tag") }}</strong>
+        </div>
         <h2>{{ t("TryBluefin.Title") }}</h2>
         <p v-html="marked.parse(t('TryBluefin.Description'))" />
       </div>
