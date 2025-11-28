@@ -146,7 +146,7 @@ const { t } = useI18n<MessageSchema>({
         align-items: center;
         gap: 8px;
         padding: 12px 24px;
-        background: var(--color-blue);
+        background: var(--color-blue-light);
         color: white;
         text-decoration: none;
         border-radius: 4px;
@@ -155,7 +155,7 @@ const { t } = useI18n<MessageSchema>({
         transition: background 0.3s ease;
 
         &:hover {
-          background: var(--color-blue-dark, #0056b3);
+          background: var(--color-blue);
         }
 
         .button-icon {
@@ -198,7 +198,7 @@ const { t } = useI18n<MessageSchema>({
         align-items: center;
         gap: 8px;
         padding: 12px 24px;
-        background: var(--color-blue);
+        background: var(--color-blue-light);
         color: white;
         text-decoration: none;
         border-radius: 4px;
@@ -207,7 +207,7 @@ const { t } = useI18n<MessageSchema>({
         transition: background 0.3s ease;
 
         &:hover {
-          background: var(--color-blue-dark, #0056b3);
+          background: var(--color-blue);
         }
 
         .button-icon {
