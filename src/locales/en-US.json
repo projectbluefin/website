@@ -20,7 +20,7 @@
     "Title": "Developers",
     "Text": "Bluefin comes with an optional \"developer mode\" that transforms your device into a powerful workstation. It features container-focused workflows to get you started depending on where you're coming from, or bring your own. There are [15.6 million cloud native developers](https://www.cncf.io/announcements/2025/11/11/cncf-and-slashdata-survey-finds-cloud-native-ecosystem-surges-to-15-6m-developers/) in the world, wield these [industry-leading tools](https://landscape.cncf.io/) with ease...",
     "BoxOne": "Visual Studio Code with devcontainers",
-    "BoxTwo": "Container focused terminal, work with your favorite Linux distributions directly with Podman",
+    "BoxTwo": "Work with your favorite Linux distributions with a container-focused terminal",
     "BoxThree": "Designed for cloud native development with the CNCF's best tools, including Kubernetes",
     "BoxFour": "Homebrew on-tap by default, same tools as your Mac",
     "BoxFive": "Podman Desktop for graphical container management",
