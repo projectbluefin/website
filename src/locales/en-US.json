@@ -108,7 +108,7 @@
       "Title": "Documentation",
       "Description": "Looking for support? View our documentation site for up-to-date guides on installation, general use, and troubleshooting.",
       "Button": "View Documentation",
-      "FAQButton": "View FAQ"
+      "DiscordButton": "Join our Discord"
     }
   },
   "Flock": {

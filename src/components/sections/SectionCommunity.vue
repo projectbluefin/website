@@ -30,11 +30,11 @@ const { t } = useI18n<MessageSchema>({
                 </span>
                 <span class="button-label">{{ t("Community.Documentation.Button") }}</span>
               </a>
-              <a class="community-button" href="https://community.projectbluefin.io" target="_blank">
+              <a class="community-button" href="https://discord.gg/WYCpGEM4sM" target="_blank">
                 <span class="button-icon">
-                  <i class="fas fa-list" aria-hidden="true"></i>
+                  <i class="fab fa-discord" aria-hidden="true"></i>
                 </span>
-                <span class="button-label">{{ t("Community.Documentation.FAQButton") }}</span>
+                <span class="button-label">{{ t("Community.Documentation.DiscordButton") }}</span>
               </a>
             </div>
           </div>
