@@ -11,6 +11,9 @@ const { t } = useI18n<MessageSchema>({
     <div class="container">
       <div class="community-content">
         <div class="community-header">
+          <div class="community-tag">
+            <strong>{{ t("Community.Tag") }}</strong>
+          </div>
           <h2>{{ t("Community.Title") }}</h2>
         </div>
 
@@ -92,7 +95,19 @@ const { t } = useI18n<MessageSchema>({
   }
 
   .community-header {
-    text-align: center;
+    text-align: left;
+    
+    .community-tag {
+      margin-bottom: 10px;
+
+      strong {
+        font-size: 1.2rem;
+        font-weight: 400;
+        text-transform: uppercase;
+        color: var(--color-text-light);
+        display: block;
+      }
+    }
     
     h2 {
       font-family: Inter;
@@ -100,7 +115,7 @@ const { t } = useI18n<MessageSchema>({
       font-size: 7rem;
       text-transform: uppercase;
       color: var(--color-text-light);
-      margin-bottom: 20px;
+      margin: 0 0 20px 0;
     }
   }
 

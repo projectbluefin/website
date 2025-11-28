@@ -103,7 +103,8 @@
     }
   },
   "Community": {
-    "Title": "Our Community",
+    "Tag": "Our",
+    "Title": "Community",
     "Documentation": {
       "Title": "Documentation",
       "Description": "Looking for support? View our documentation site for up-to-date guides on installation, general use, and troubleshooting.",
