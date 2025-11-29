@@ -1,9 +1,9 @@
 # GitHub Copilot Environment Configuration
 # This file configures the GitHub Copilot coding agent environment
 # to preinstall tools and dependencies for faster development workflows.
-# 
+#
 # This is the Bluefin website - a Vue 3 + TypeScript + Vite project
-# Primary tools: npm, Node.js 22, vue-tsc, vite, prettier
+# Primary tools: npm, Node.js 22, vue-tsc, vite, ESLint
 # Build process: npm install -> npm run build (vue-tsc + vite)
 
 # Preinstall project dependencies and development tools
@@ -12,25 +12,20 @@ install:
   # Includes: Vue 3, TypeScript, Vite, TailwindCSS, Vue i18n, and development tools
   # This step typically takes ~6 seconds and may show @types/marked deprecation warning (safe to ignore)
   - npm install
-  
-  # Preinstall prettier globally for code formatting
-  # Avoids the initial installation delay when running npx prettier commands
-  # Note: May show "quote-props" vs "quoteProps" warning (safe to ignore)
-  - npm install -g prettier@3.6.2
 
 # Environment variables for consistent behavior
 environment:
   # Use npm as the primary package manager (consistent with GitHub Actions deployment)
   NODE_PACKAGE_MANAGER: npm
-  
+
   # Set Node.js version to match deployment environment (from deploy.yml workflow)
   NODE_VERSION: "22"
-  
+
   # Optimize npm behavior for development environment
   NO_UPDATE_NOTIFIER: "true"
   CI: "true"
 
-# Additional setup commands to optimize the development environment  
+# Additional setup commands to optimize the development environment
 setup:
   # Verify the build process works correctly
   # This step typically takes ~3 seconds and may show Sass @import deprecation warning (safe to ignore)

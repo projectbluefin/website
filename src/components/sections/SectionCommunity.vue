@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { useI18n } from "vue-i18n"
-import type { MessageSchema } from "../../locales/schema"
+import type { MessageSchema } from '../../locales/schema'
+import { useI18n } from 'vue-i18n'
+
 const { t } = useI18n<MessageSchema>({
-  useScope: "global"
+  useScope: 'global'
 })
 </script>
 
@@ -29,19 +30,19 @@ const { t } = useI18n<MessageSchema>({
             <div class="card-buttons">
               <a class="community-button" href="https://docs.projectbluefin.io" target="_blank">
                 <span class="button-icon">
-                  <i class="fas fa-file" aria-hidden="true"></i>
+                  <i class="fas fa-file" aria-hidden="true" />
                 </span>
                 <span class="button-label">{{ t("Community.Documentation.Button") }}</span>
               </a>
               <a class="community-button" href="https://discord.gg/WYCpGEM4sM" target="_blank">
                 <span class="button-icon">
-                  <i class="fab fa-discord" aria-hidden="true"></i>
+                  <i class="fab fa-discord" aria-hidden="true" />
                 </span>
                 <span class="button-label">{{ t("Community.Documentation.DiscordButton") }}</span>
               </a>
               <a class="community-button" href="https://github.com/ublue-os/bluefin/discussions" target="_blank">
                 <span class="button-icon">
-                  <i class="fas fa-comments" aria-hidden="true"></i>
+                  <i class="fas fa-comments" aria-hidden="true" />
                 </span>
                 <span class="button-label">{{ t("Community.Documentation.DiscussionsButton") }}</span>
               </a>
@@ -56,13 +57,13 @@ const { t } = useI18n<MessageSchema>({
             <div class="card-buttons">
               <a class="community-button" href="https://github.com/ublue-os/bluefin" target="_blank">
                 <span class="button-icon">
-                  <i class="fab fa-github" aria-hidden="true"></i>
+                  <i class="fab fa-github" aria-hidden="true" />
                 </span>
                 <span class="button-label">{{ t("Community.Contribute.Button") }}</span>
               </a>
               <a class="community-button" href="https://docs.projectbluefin.io/donations" target="_blank">
                 <span class="button-icon">
-                  <i class="fas fa-heart" aria-hidden="true"></i>
+                  <i class="fas fa-heart" aria-hidden="true" />
                 </span>
                 <span class="button-label">{{ t("Community.Contribute.DonateButton") }}</span>
               </a>
@@ -70,7 +71,7 @@ const { t } = useI18n<MessageSchema>({
           </div>
           <div class="contrib-image">
             <a href="https://github.com/ublue-os/bluefin/pulse" target="_blank" title="View Bluefin's Pulse on GitHub">
-              <img src="https://repobeats.axiom.co/api/embed/40b85b252bf6ea25eb90539d1adcea013ccae69a.svg" alt="GitHub Repository Metrics" loading="lazy" />
+              <img src="https://repobeats.axiom.co/api/embed/40b85b252bf6ea25eb90539d1adcea013ccae69a.svg" alt="GitHub Repository Metrics" loading="lazy">
             </a>
           </div>
         </div>
@@ -82,7 +83,7 @@ const { t } = useI18n<MessageSchema>({
 <style scoped lang="scss">
 #community {
   background-color: var(--color-bg);
-  
+
   .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -96,7 +97,7 @@ const { t } = useI18n<MessageSchema>({
 
   .community-header {
     text-align: left;
-    
+
     .community-tag {
       margin-bottom: 10px;
 
@@ -108,7 +109,7 @@ const { t } = useI18n<MessageSchema>({
         display: block;
       }
     }
-    
+
     h2 {
       font-family: Inter;
       font-weight: 700;
@@ -264,7 +265,7 @@ const { t } = useI18n<MessageSchema>({
 
     .contribute-card {
       grid-template-columns: 1fr;
-      
+
       .contrib-text .card-buttons {
         justify-content: center;
       }

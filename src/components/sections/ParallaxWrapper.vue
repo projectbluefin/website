@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { refThrottled, useWindowScroll } from "@vueuse/core"
-import { computed, ref } from "vue"
-import { IS_TABLET } from "../../composables"
+import { refThrottled, useWindowScroll } from '@vueuse/core'
+import { computed, ref } from 'vue'
+import { IS_TABLET } from '../../composables'
 
 const { y: rawY } = useWindowScroll()
 const y = refThrottled(rawY, 10)
@@ -34,7 +34,7 @@ const showParallax = computed(() => {
         src="/mobile-parallax.webp"
         alt=""
         :style="{ transform: `translate3D(0,${y * -0.05}px,0)` }"
-      />
+      >
     </div>
     <template v-else>
       <div class="parallax-item">
@@ -43,7 +43,7 @@ const showParallax = computed(() => {
           fetchpriority="high"
           src="/evening/BlueFinSite_1_Sky-min.webp"
           alt=""
-        />
+        >
       </div>
 
       <div class="parallax-item">
@@ -52,7 +52,7 @@ const showParallax = computed(() => {
           fetchpriority="high"
           src="/evening/BlueFinSite_2_Clouds-min.webp"
           alt=""
-        />
+        >
       </div>
 
       <div
@@ -60,79 +60,79 @@ const showParallax = computed(() => {
         :style="{ transform: `translate3D(0,${y * 0.05}px,0)` }"
       >
         <!-- Evening -->
-        <img src="/evening/BlueFinSite_2_Sun-min.webp" alt="" />
+        <img src="/evening/BlueFinSite_2_Sun-min.webp" alt="">
       </div>
 
       <div class="parallax-item">
         <!-- Evening -->
-        <img src="/evening/BlueFinSite_3_Clouds-min.webp" alt="" />
+        <img src="/evening/BlueFinSite_3_Clouds-min.webp" alt="">
       </div>
 
       <div class="parallax-item">
         <!-- Evening -->
-        <img src="/evening/BlueFinSite_4_Mountains-min.webp" alt="" />
+        <img src="/evening/BlueFinSite_4_Mountains-min.webp" alt="">
       </div>
 
       <div class="parallax-item">
         <!-- Evening -->
-        <img src="/evening/BlueFinSite_5_FogA-min.webp" alt="" />
+        <img src="/evening/BlueFinSite_5_FogA-min.webp" alt="">
       </div>
       <div class="parallax-item">
         <!-- Evening -->
-        <img src="/evening/BlueFinSite_6_BackgroundA-min.webp" alt="" />
+        <img src="/evening/BlueFinSite_6_BackgroundA-min.webp" alt="">
       </div>
       <div class="parallax-item">
         <!-- Evening -->
-        <img src="/evening/BlueFinSite_7_FogB-min.webp" alt="" />
+        <img src="/evening/BlueFinSite_7_FogB-min.webp" alt="">
       </div>
       <div
         class="parallax-item"
         :style="{ transform: `translate3D(0,${y * -0.01}px,0)` }"
       >
         <!-- Evening -->
-        <img src="/evening/BlueFinSite_8_BackgroundB-min.webp" alt="" />
+        <img src="/evening/BlueFinSite_8_BackgroundB-min.webp" alt="">
       </div>
       <div
         class="parallax-item"
         :style="{ transform: `translate3D(0,${y * -0.03}px,0)` }"
       >
         <!-- Evening -->
-        <img src="/evening/BlueFinSite_9_MidGroundA-min.webp" alt="" />
+        <img src="/evening/BlueFinSite_9_MidGroundA-min.webp" alt="">
       </div>
       <div
         class="parallax-item"
         :style="{ transform: `translate3D(0,${y * -0.05}px,0)` }"
       >
         <!-- Evening -->
-        <img src="/evening/BlueFinSite_10_MidgroundB-min.webp" alt="" />
+        <img src="/evening/BlueFinSite_10_MidgroundB-min.webp" alt="">
       </div>
       <div
         class="parallax-item"
         :style="{ transform: `translate3D(0,${y * -0.07}px,0)` }"
       >
         <!-- Eveninght -->
-        <img src="/evening/BlueFinSite_11_MidGroundC-min.webp" alt="" />
+        <img src="/evening/BlueFinSite_11_MidGroundC-min.webp" alt="">
       </div>
       <div
         class="parallax-item"
         :style="{ transform: `translate3D(0,${y * -0.09}px,0)` }"
       >
         <!-- Evening -->
-        <img src="/evening/BlueFinSite_12_ForeGroundA-min.webp" alt="" />
+        <img src="/evening/BlueFinSite_12_ForeGroundA-min.webp" alt="">
       </div>
       <div
         class="parallax-item"
         :style="{ transform: `translate3D(0,${y * -0.11}px,0)` }"
       >
         <!-- Evening -->
-        <img src="/evening/BlueFinSite_13_ForegroundB-min.webp" alt="" />
+        <img src="/evening/BlueFinSite_13_ForegroundB-min.webp" alt="">
       </div>
       <div
         class="parallax-item"
         :style="{ transform: `translate3D(0,${y * -0.13}px,0)` }"
       >
         <!-- Evening -->
-        <img src="/evening/BlueFinSite_14_ForegroundC-min.webp" alt="" />
+        <img src="/evening/BlueFinSite_14_ForegroundC-min.webp" alt="">
       </div>
     </template>
   </div>

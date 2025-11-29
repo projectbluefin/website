@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import type { Component, WritableComputedRef } from "vue"
-import { inject, onMounted, ref, watch } from "vue"
+import type { Component, WritableComputedRef } from 'vue'
+import type { MessageSchema } from '../locales/schema'
 import {
   IconArrowUp,
   IconCodeBraces,
-  IconFaceManShimmer,
-  IconDownload
-} from "@iconify-prerendered/vue-mdi"
-import { useEventListener } from "@vueuse/core"
+  IconDownload,
+  IconFaceManShimmer
+} from '@iconify-prerendered/vue-mdi'
+import { useEventListener } from '@vueuse/core'
+
+import { inject, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 interface Link {
   name: string
@@ -17,34 +20,37 @@ interface Link {
 function scrollTo(id: string) {
   const el = document.querySelector(id)
 
-  el?.scrollIntoView({ behavior: "smooth" })
+  el?.scrollIntoView({ behavior: 'smooth' })
 }
 
 const links: Record<string, Link> = {
-  "#scene-users": { name: "Navbar.ForYou", icon: IconFaceManShimmer },
-  "#scene-developers": { name: "Navbar.ForDevs", icon: IconCodeBraces },
+  '#scene-users': { name: 'Navbar.ForYou', icon: IconFaceManShimmer },
+  '#scene-developers': { name: 'Navbar.ForDevs', icon: IconCodeBraces },
   // '#scene-gamers': { name: 'Gamers', icon: IconControllerClassic },
-  "#scene-mission": { name: "Navbar.OurMission" },
-  "#scene-picker": { name: "Navbar.TryOut", icon: IconDownload },
-  "#community": { name: "Navbar.Community" }
+  '#scene-mission': { name: 'Navbar.OurMission' },
+  '#scene-picker': { name: 'Navbar.TryOut', icon: IconDownload },
+  '#community': { name: 'Navbar.Community' }
 }
 
 const linksAmount = Object.keys(links).length
-const visibleSection = inject("visibleSection") as WritableComputedRef<string>
+const visibleSection = inject('visibleSection') as WritableComputedRef<string>
 const offset = ref<number>(0)
 
 onMounted(() => {
   watch(
     visibleSection,
     (section: string) => {
-      if (!section) return
+      if (!section) {
+        return
+      }
 
       const el = document.querySelector(`[data-section="${section}"]`)
 
-      if (el)
+      if (el) {
         offset.value = Array.from(el.parentElement?.childNodes ?? []).indexOf(
           el
         )
+      }
     },
     { immediate: true }
   )
@@ -53,26 +59,26 @@ onMounted(() => {
 //
 // Scroll up stuff
 const showButtonUp = ref(false)
-useEventListener(window, "scroll", () => {
+useEventListener(window, 'scroll', () => {
   if (
-    window.scrollY >=
-    document.documentElement.scrollHeight - window.innerHeight - 256
-  )
+    window.scrollY
+    >= document.documentElement.scrollHeight - window.innerHeight - 256
+  ) {
     showButtonUp.value = true
-  else if (showButtonUp.value) showButtonUp.value = false
+  }
+  else if (showButtonUp.value) {
+    showButtonUp.value = false
+  }
 })
 
 function scrollUp() {
   window.scrollTo({
     top: 0,
-    behavior: "smooth"
+    behavior: 'smooth'
   })
 }
-
-import { useI18n } from "vue-i18n"
-import type { MessageSchema } from "../locales/schema"
 const { t } = useI18n<MessageSchema>({
-  useScope: "global"
+  useScope: 'global'
 })
 </script>
 
@@ -81,7 +87,7 @@ const { t } = useI18n<MessageSchema>({
     <nav aria-label="Navigation">
       <ul
         :style="{
-          gridTemplateColumns: `repeat(${linksAmount},1fr)`
+          gridTemplateColumns: `repeat(${linksAmount},1fr)`,
         }"
       >
         <li v-for="(link, key) in links" :key="key" :data-section="key">
@@ -101,7 +107,7 @@ const { t } = useI18n<MessageSchema>({
           :style="{
             left: `${Math.max(0, (offset - 1) * 20)}%`,
             opacity: visibleSection === 'null' ? 0 : 1,
-            width: `${Math.round(100 / linksAmount)}%`
+            width: `${Math.round(100 / linksAmount)}%`,
           }"
         />
       </ul>

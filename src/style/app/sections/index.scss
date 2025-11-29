@@ -1,14 +1,14 @@
-@use "faq";
-@use "mission";
-@use "footer";
-@use "gamers";
-@use "devs";
-@use "users";
-@use "landing";
-@use "video";
-@use "news";
-@use "picker";
-@use "../../setup/mixins";
+@use 'faq';
+@use 'mission';
+@use 'footer';
+@use 'gamers';
+@use 'devs';
+@use 'users';
+@use 'landing';
+@use 'video';
+@use 'news';
+@use 'picker';
+@use '../../setup/mixins';
 
 .brand-grid {
   @include mixins.grid(0, 2);

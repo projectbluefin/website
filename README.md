@@ -28,6 +28,17 @@ Then, you can use `just` to run the common commands:
 -   `npm run dev`: Run the development server
 -   `npm run build`: Build for production
 -   `npm run preview`: Preview the production build locally
+-   `npm run lint`: Lint the project
+-   `npm run lint:fix`: Lint and fix all possible errors
+-   `npm run typecheck`: Typechecks the project with `vue-tsc`
+
+### Formatting
+
+The project utilizes the [@antfu/eslint-config](https://github.com/antfu/eslint-config) to standardize formatting. This means that we solely utilize ESLint to lint and format the project.
+
+Since the `@antfu/eslint-config` doesn't support formatting for CSS files, we have to utilize an external formatter (in this case prettier) under `eslint-plugin-format` to actually format the files.
+
+Please ensure that you format your code before submitting a PR!
 
 </details>
 

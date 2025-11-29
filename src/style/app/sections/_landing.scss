@@ -1,5 +1,5 @@
-@use "../../setup/fonts";
-@use "../../setup/mixins";
+@use '../../setup/fonts';
+@use '../../setup/mixins';
 
 #scene-landing {
   @include mixins.flex(0, flex-start, $d: column);
@@ -47,8 +47,7 @@
       }
 
       .text {
-        animation: content 0.75s normal 0s forwards
-          cubic-bezier(0.76, 0, 0.24, 1);
+        animation: content 0.75s normal 0s forwards cubic-bezier(0.76, 0, 0.24, 1);
       }
     }
 
@@ -134,7 +133,7 @@
         position: relative;
 
         &:before {
-          content: "”";
+          content: '”';
           width: 20px;
           height: 2px;
           position: absolute;

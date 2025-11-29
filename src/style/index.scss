@@ -1,7 +1,7 @@
-@use "sass:meta";
-@use "setup/fonts";
-@use "setup";
-@use "tailwindcss";
+@use 'sass:meta';
+@use 'setup/fonts';
+@use 'setup';
+@use 'tailwindcss';
 
 html {
   @include fonts.font(400);
@@ -17,6 +17,6 @@ html {
   }
 }
 
-@include meta.load-css("app/");
+@include meta.load-css('app/');
 
-@include meta.load-css("overrides/");
+@include meta.load-css('overrides/');

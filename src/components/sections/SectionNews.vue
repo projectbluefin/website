@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import type { MessageSchema } from "../../locales/schema"
-import { useI18n } from "vue-i18n"
-import RssFeed from "../RssFeed.vue"
+import type { MessageSchema } from '../../locales/schema'
+import { useI18n } from 'vue-i18n'
+import RssFeed from '../RssFeed.vue'
 
 const { t } = useI18n<MessageSchema>({
-  useScope: "global"
+  useScope: 'global'
 })
 </script>
 

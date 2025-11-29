@@ -1,4 +1,4 @@
-@use "../../setup/mixins";
+@use '../../setup/mixins';
 
 #scene-users {
   min-height: 90vh;
@@ -27,7 +27,7 @@
     }
 
     &:before {
-      content: "";
+      content: '';
       display: block;
       position: absolute;
       z-index: -1;

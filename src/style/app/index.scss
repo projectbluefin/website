@@ -1,14 +1,14 @@
 // Main app styles
-@use "layout";
-@use "scene";
-@use "navigation";
-@use "topnavbar";
-@use "animations";
-@use "loading";
-@use "sections";
-@use "parallax";
-@use "button";
-@use "../setup/fonts";
+@use 'layout';
+@use 'scene';
+@use 'navigation';
+@use 'topnavbar';
+@use 'animations';
+@use 'loading';
+@use 'sections';
+@use 'parallax';
+@use 'button';
+@use '../setup/fonts';
 
 h1 {
   @include fonts.font(700);

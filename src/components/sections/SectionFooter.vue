@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { marked } from "marked"
-import { LangPoweredBy, LangSocialLinks, LangAlumniCompanies, LangSponsors } from "../../content"
+import type { MessageSchema } from '../../locales/schema'
+import { marked } from 'marked'
 
-import type { MessageSchema } from "../../locales/schema"
-import { useI18n } from "vue-i18n"
+import { useI18n } from 'vue-i18n'
+import { LangAlumniCompanies, LangPoweredBy, LangSocialLinks, LangSponsors } from '../../content'
+
 const { t } = useI18n<MessageSchema>({
-  useScope: "global"
+  useScope: 'global'
 })
 </script>
 
@@ -18,17 +19,19 @@ const { t } = useI18n<MessageSchema>({
           {{ $t("Flock.Description") }}
         </p>
         <IframeResizer
-          license="GPLv3"
           id="contributor-container"
+          license="GPLv3"
           src="/contributors.html"
           loading="lazy"
           style="width: 100%; height: 200px"
-        ></IframeResizer>
+        />
       </div>
     </section>
     <section id="alumni" class="section-wrap">
       <div class="container" style="text-align: center;">
-        <h3 style="margin-bottom: 30px; font-size: 2rem; text-transform: none; font-weight: 600;">{{ $t("Flock.AlumniTitle") }}</h3>
+        <h3 style="margin-bottom: 30px; font-size: 2rem; text-transform: none; font-weight: 600;">
+          {{ $t("Flock.AlumniTitle") }}
+        </h3>
         <div class="logo-list alumni-logos">
           <template v-for="brand in LangAlumniCompanies" :key="brand.imageUrl">
             <a v-if="brand.projectUrl" :href="brand.projectUrl" target="_blank">
@@ -37,7 +40,7 @@ const { t } = useI18n<MessageSchema>({
                 :alt="brand.altText"
                 :title="brand.altText"
                 loading="lazy"
-              />
+              >
             </a>
             <img
               v-else
@@ -45,14 +48,16 @@ const { t } = useI18n<MessageSchema>({
               :alt="brand.altText"
               :title="brand.altText"
               loading="lazy"
-            />
+            >
           </template>
         </div>
       </div>
     </section>
     <section id="sponsors" class="section-wrap">
       <div class="container" style="text-align: center;">
-        <h3 style="margin-bottom: 30px; font-size: 2rem; text-transform: none; font-weight: 600;">{{ $t("Flock.SponsorsTitle") }}</h3>
+        <h3 style="margin-bottom: 30px; font-size: 2rem; text-transform: none; font-weight: 600;">
+          {{ $t("Flock.SponsorsTitle") }}
+        </h3>
         <div class="logo-list sponsor-logos">
           <template v-for="brand in LangSponsors" :key="brand.imageUrl">
             <a v-if="brand.projectUrl" :href="brand.projectUrl" target="_blank">
@@ -61,7 +66,7 @@ const { t } = useI18n<MessageSchema>({
                 :alt="brand.altText"
                 :title="brand.altText"
                 loading="lazy"
-              />
+              >
             </a>
             <img
               v-else
@@ -69,7 +74,7 @@ const { t } = useI18n<MessageSchema>({
               :alt="brand.altText"
               :title="brand.altText"
               loading="lazy"
-            />
+            >
           </template>
         </div>
       </div>
@@ -86,7 +91,7 @@ const { t } = useI18n<MessageSchema>({
                 :alt="brand.altText"
                 :title="brand.altText"
                 loading="lazy"
-              />
+              >
             </a>
 
             <!-- Does not have project url -->
@@ -96,7 +101,7 @@ const { t } = useI18n<MessageSchema>({
               :alt="brand.altText"
               :title="brand.altText"
               loading="lazy"
-            />
+            >
           </template>
         </div>
       </div>
@@ -113,7 +118,7 @@ const { t } = useI18n<MessageSchema>({
           </li>
         </ul>
 
-        <hr />
+        <hr>
 
         <p v-html="marked.parse(t('Footer.References'))" />
 

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { useI18n } from "vue-i18n"
-import type { MessageSchema } from "../../locales/schema"
+import type { MessageSchema } from '../../locales/schema'
+import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n<MessageSchema>({
-  useScope: "global"
+  useScope: 'global'
 })
 </script>
 
@@ -14,30 +14,32 @@ const { t } = useI18n<MessageSchema>({
         <div class="bazaar-tag">
           <strong>{{ t("Bazaar.Header.Tag") }}</strong>
         </div>
-        <h2 class="title-apps">{{ t("Bazaar.Header.Title") }}</h2>
+        <h2 class="title-apps">
+          {{ t("Bazaar.Header.Title") }}
+        </h2>
       </div>
 
       <div class="bazaar-main">
         <div class="bazaar-description">
-          <p v-html="t('Bazaar.Description')"></p>
+          <p v-html="t('Bazaar.Description')" />
           <div class="bazaar-screenshot">
-            <img 
-              src="/img/bazaar.png" 
+            <img
+              src="/img/bazaar.png"
               alt="Screenshot of Bluefin's Flatpak Store, Bazaar"
               loading="lazy"
-            />
-            <img 
-              src="/img/bazaar.svg" 
-              class="bazaar-icon" 
+            >
+            <img
+              src="/img/bazaar.svg"
+              class="bazaar-icon"
               alt="Bazaar's Icon"
               loading="lazy"
-            />
+            >
           </div>
         </div>
       </div>
 
       <div class="bazaar-additional">
-        <p v-html="t('Bazaar.Additional')"></p>
+        <p v-html="t('Bazaar.Additional')" />
       </div>
 
       <div class="bazaar-buttons">

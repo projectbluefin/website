@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import type { WritableComputedRef } from "vue"
-import { inject } from "vue"
-import { vElementVisibility } from "@vueuse/components"
+import type { WritableComputedRef } from 'vue'
+import { vElementVisibility } from '@vueuse/components'
+import { inject } from 'vue'
 
 const props = defineProps<{ name: string }>()
-const visibleSection = inject("visibleSection") as WritableComputedRef<string>
+const visibleSection = inject('visibleSection') as WritableComputedRef<string>
 
 function setVisibility(state: boolean) {
-  if (state) visibleSection.value = props.name
+  if (state) {
+    visibleSection.value = props.name
+  }
 }
 </script>
 
