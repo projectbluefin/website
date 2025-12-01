@@ -13,7 +13,7 @@ const props = defineProps<Props>()
 
 <template>
   <div class="arrow">
-    <img src="/icons/arrow.svg" alt=" " />
+    <img src="/icons/arrow.svg" alt=" ">
     <span>{{ props.text }}</span>
   </div>
 </template>

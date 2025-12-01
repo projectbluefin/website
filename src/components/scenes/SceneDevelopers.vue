@@ -1,40 +1,39 @@
 <script setup lang="ts">
-import { marked } from "marked"
-import { LangDevsAppendix, LangDevsTowerImageURL } from "../../content"
-import SceneContent from "../common/SceneContent.vue"
-import SceneVisibilityChecker from "../common/SceneVisibilityChecker.vue"
+import type { MessageSchema } from '../../locales/schema'
+import { marked } from 'marked'
+import { useI18n } from 'vue-i18n'
+import { LangDevsAppendix, LangDevsTowerImageURL } from '../../content'
 
-import { useI18n } from "vue-i18n"
-import type { MessageSchema } from "../../locales/schema"
+import SceneContent from '../common/SceneContent.vue'
+import SceneVisibilityChecker from '../common/SceneVisibilityChecker.vue'
+
 const { t } = useI18n<MessageSchema>({
-  useScope: "global"
+  useScope: 'global'
 })
 </script>
 
 <template>
   <section id="scene-developers" class="section-wrap">
     <div class="container">
-      <Transition name="fade">
-        <div>
-          <div class="img-wrap">
-            <img
-              class="container"
-              :src="LangDevsTowerImageURL"
-              :alt="t('ArtworkDescription')"
-            />
-          </div>
-          <div class="scene-arrow">
-            <img src="/icons/arrow.svg" alt="" />
-            <p v-html="marked.parse(t('Devs.TowerJoke'))" />
-          </div>
+      <div>
+        <div class="img-wrap">
+          <img
+            class="container"
+            :src="LangDevsTowerImageURL"
+            :alt="t('ArtworkDescription')"
+          >
         </div>
-      </Transition>
+        <div class="scene-arrow">
+          <img src="/icons/arrow.svg" alt="">
+          <p v-html="marked.parse(t('Devs.TowerJoke'))" />
+        </div>
+      </div>
 
       <div class="content">
         <SceneContent
-          :tag="'Devs.Tag'"
-          :title="'Devs.Title'"
-          :text="'Devs.Text'"
+          tag="Devs.Tag"
+          title="Devs.Title"
+          text="Devs.Text"
         >
           <div class="brand-grid">
             <div class="brand-item">
@@ -44,12 +43,12 @@ const { t } = useI18n<MessageSchema>({
                     src="/brands/vscode.svg"
                     alt="Visual Studio Code logo blur"
                     loading="lazy"
-                  />
+                  >
                   <img
                     src="/brands/vscode.svg"
                     alt="Visual Studio Code logo"
                     loading="lazy"
-                  />
+                  >
                 </div>
               </div>
               <p>{{ t("Devs.BoxOne") }}</p>
@@ -62,12 +61,12 @@ const { t } = useI18n<MessageSchema>({
                     src="/brands/kubernetes.svg"
                     alt="Kubernetes logo blur"
                     loading="lazy"
-                  />
+                  >
                   <img
                     src="/brands/kubernetes.svg"
                     alt="Kubernetes logo"
                     loading="lazy"
-                  />
+                  >
                 </div>
               </div>
               <p>{{ t("Devs.BoxThree") }}</p>
@@ -80,12 +79,12 @@ const { t } = useI18n<MessageSchema>({
                     src="/brands/homebrew.svg"
                     alt="Homebrew logo blur"
                     loading="lazy"
-                  />
+                  >
                   <img
                     src="/brands/homebrew.svg"
                     alt="Homebrew logo"
                     loading="lazy"
-                  />
+                  >
                 </div>
               </div>
               <p>{{ t("Devs.BoxFour") }}</p>
@@ -98,12 +97,12 @@ const { t } = useI18n<MessageSchema>({
                     src="/brands/podman-desktop.svg"
                     alt="Podman Desktop logo blur"
                     loading="lazy"
-                  />
+                  >
                   <img
                     src="/brands/podman-desktop.svg"
                     alt="Podman Desktop logo"
                     loading="lazy"
-                  />
+                  >
                 </div>
               </div>
               <p>{{ t("Devs.BoxFive") }}</p>
@@ -112,8 +111,8 @@ const { t } = useI18n<MessageSchema>({
             <div class="brand-item">
               <div>
                 <div class="icon-wrap">
-                  <img src="/brands/ptyxis.svg" alt="Ptyxis logo blur" />
-                  <img src="/brands/ptyxis.svg" alt="Ptyxis logo" />
+                  <img src="/brands/ptyxis.svg" alt="Ptyxis logo blur">
+                  <img src="/brands/ptyxis.svg" alt="Ptyxis logo">
                 </div>
               </div>
               <p>{{ t("Devs.BoxTwo") }}</p>
@@ -126,12 +125,12 @@ const { t } = useI18n<MessageSchema>({
                     src="/brands/jetbrains.png"
                     alt="JetBrains logo blur"
                     loading="lazy"
-                  />
+                  >
                   <img
                     src="/brands/jetbrains.png"
                     alt="JetBrains logo"
                     loading="lazy"
-                  />
+                  >
                 </div>
               </div>
               <p>{{ t("Devs.BoxSix") }}</p>

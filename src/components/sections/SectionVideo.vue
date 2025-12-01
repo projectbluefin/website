@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { marked } from "marked"
+import type { MessageSchema } from '../../locales/schema'
 
-import type { MessageSchema } from "../../locales/schema"
-import { useI18n } from "vue-i18n"
+import { marked } from 'marked'
+import { useI18n } from 'vue-i18n'
+
 const { t } = useI18n<MessageSchema>({
-  useScope: "global"
+  useScope: 'global'
 })
 </script>
 
@@ -20,8 +21,7 @@ const { t } = useI18n<MessageSchema>({
           frameborder="0"
           :title="t('Video.Title')"
           allowfullscreen
-        ></iframe
-        >,
+        />,
       </div>
     </div>
 

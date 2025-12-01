@@ -1,0 +1,29 @@
+name: Sync Bluefin Growth Chart # See: https://github.com/ublue-os/countme
+
+on:
+  schedule:
+    - cron: "0 8 * * *"  # Every day at 08:00 UTC
+  workflow_dispatch:
+
+jobs:
+  sync-bluefin-countme-chart:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository # Needed to find the src/assets/svg subdirectory
+        uses: actions/checkout@v4
+
+      - name: Download Bluefin Growth Chart # Downloads the current updated Bluefin chart (updates daily)
+        run: | # The `sed` command is used to change the color of the chart to dark (so we don't blind our users with a light chart)
+            curl https://raw.githubusercontent.com/ublue-os/countme/refs/heads/main/growth_bluefins.svg --output src/assets/svg/growth_bluefins.svg
+            sed -i 's/#ffffff/#0c1016/g; s/#cccccc/#272727/g; s/#616161/#bdbdbd/g; s/#77aadd/#4285f4/g; s/id="text_16">/id="text_16" style="fill: #bdbdbd">/' src/assets/svg/growth_bluefins.svg
+        working-directory: ${{ github.workspace }}
+
+      - name: Write SVG to Repository # Updates file if there's actually a difference from the old one
+        uses: test-room-7/action-update-file@v2
+        with:
+          commit-msg: "chore: update Bluefin growth chart"
+          file-path: src/assets/svg/growth_bluefins.svg
+          github-token: ${{ secrets.GITHUB_TOKEN }}

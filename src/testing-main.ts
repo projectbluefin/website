@@ -1,8 +1,8 @@
-import { createApp } from "vue"
-import TestingApp from "./TestingApp.vue"
-import "./style/index.scss"
-import { i18n } from "./locales/schema"
+import { createApp } from 'vue'
+import { i18n } from './locales/schema'
+import TestingApp from './TestingApp.vue'
+import './style/index.scss'
 
 const app = createApp(TestingApp)
 app.use(i18n)
-app.mount("#app")
+app.mount('#app')

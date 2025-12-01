@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
+import { onMounted, ref } from 'vue'
 
 /**
  * RSS/Atom Feed Parser Component
@@ -30,42 +30,44 @@ const posts = ref<BlogPost[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 
-const parseAtomFeed = (xmlText: string): BlogPost[] => {
+function parseAtomFeed(xmlText: string): BlogPost[] {
   const parser = new DOMParser()
-  const xmlDoc = parser.parseFromString(xmlText, "text/xml")
+  const xmlDoc = parser.parseFromString(xmlText, 'text/xml')
 
   // Check for parsing errors
-  const parserError = xmlDoc.querySelector("parsererror")
+  const parserError = xmlDoc.querySelector('parsererror')
   if (parserError) {
-    throw new Error("Failed to parse XML feed")
+    throw new Error('Failed to parse XML feed')
   }
 
-  const entries = xmlDoc.querySelectorAll("entry")
+  const entries = xmlDoc.querySelectorAll('entry')
   const parsedPosts: BlogPost[] = []
 
   entries.forEach((entry) => {
-    const title = entry.querySelector("title")?.textContent || "Untitled"
-    const link = entry.querySelector("link")?.getAttribute("href") || "#"
-    const summary =
-      entry.querySelector("summary")?.textContent ||
-      entry.querySelector("content")?.textContent ||
-      ""
-    const published =
-      entry.querySelector("published")?.textContent ||
-      entry.querySelector("updated")?.textContent ||
-      ""
+    const title = entry.querySelector('title')?.textContent || 'Untitled'
+    const link = entry.querySelector('link')?.getAttribute('href') || '#'
+    const summary
+      = entry.querySelector('summary')?.textContent
+        || entry.querySelector('content')?.textContent
+        || ''
+    const published
+      = entry.querySelector('published')?.textContent
+        || entry.querySelector('updated')?.textContent
+        || ''
 
     // Format the date
-    let formattedDate = ""
+    let formattedDate = ''
     if (published) {
       try {
         const date = new Date(published)
-        formattedDate = date.toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric"
+        formattedDate = date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
         })
-      } catch (e) {
+      }
+      catch (e) {
+        console.error(e)
         formattedDate = published
       }
     }
@@ -85,32 +87,32 @@ const parseAtomFeed = (xmlText: string): BlogPost[] => {
 // Mock data for testing when the real feed is not accessible
 const mockPosts: BlogPost[] = [
   {
-    title: "Introducing Project Bluefin",
-    link: "https://docs.projectbluefin.io/blog/introducing-project-bluefin",
+    title: 'Introducing Project Bluefin',
+    link: 'https://docs.projectbluefin.io/blog/introducing-project-bluefin',
     description:
-      "Welcome to Project Bluefin, the next generation Linux workstation designed for reliability, performance, and sustainability.",
-    pubDate: "2024-01-15T10:00:00Z",
-    formattedDate: "January 15, 2024"
+      'Welcome to Project Bluefin, the next generation Linux workstation designed for reliability, performance, and sustainability.',
+    pubDate: '2024-01-15T10:00:00Z',
+    formattedDate: 'January 15, 2024'
   },
   {
-    title: "Developer Mode: Cloud-Native Workflows",
-    link: "https://docs.projectbluefin.io/blog/developer-mode",
+    title: 'Developer Mode: Cloud-Native Workflows',
+    link: 'https://docs.projectbluefin.io/blog/developer-mode',
     description:
-      "Learn about Bluefin's developer mode and how it transforms your device into a powerful workstation with container-focused workflows.",
-    pubDate: "2024-01-20T14:30:00Z",
-    formattedDate: "January 20, 2024"
+      'Learn about Bluefin\'s developer mode and how it transforms your device into a powerful workstation with container-focused workflows.',
+    pubDate: '2024-01-20T14:30:00Z',
+    formattedDate: 'January 20, 2024'
   },
   {
-    title: "Understanding Image-Based Updates",
-    link: "https://docs.projectbluefin.io/blog/image-based-updates",
+    title: 'Understanding Image-Based Updates',
+    link: 'https://docs.projectbluefin.io/blog/image-based-updates',
     description:
-      "Discover how Bluefin's automatic image-based updates provide near-zero maintenance while ensuring system stability.",
-    pubDate: "2024-01-25T09:15:00Z",
-    formattedDate: "January 25, 2024"
+      'Discover how Bluefin\'s automatic image-based updates provide near-zero maintenance while ensuring system stability.',
+    pubDate: '2024-01-25T09:15:00Z',
+    formattedDate: 'January 25, 2024'
   }
 ]
 
-const fetchFeed = async () => {
+async function fetchFeed() {
   try {
     loading.value = true
     error.value = null
@@ -119,15 +121,15 @@ const fetchFeed = async () => {
     try {
       // Try direct fetch first
       let response = await fetch(props.feedUrl, {
-        mode: "cors",
+        mode: 'cors',
         headers: {
-          Accept: "application/atom+xml, application/xml, text/xml"
+          Accept: 'application/atom+xml, application/xml, text/xml'
         }
       })
 
       // If direct fetch fails due to CORS, try with a simple proxy
       if (!response.ok && response.status !== 200) {
-        console.warn("Direct fetch failed, trying with CORS proxy...")
+        console.warn('Direct fetch failed, trying with CORS proxy...')
         // Use a simple CORS proxy for production if direct access fails
         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(props.feedUrl)}`
         response = await fetch(proxyUrl)
@@ -139,7 +141,8 @@ const fetchFeed = async () => {
           posts.value = parsedPosts.slice(0, limit)
           return
         }
-      } else if (response.ok) {
+      }
+      else if (response.ok) {
         const xmlText = await response.text()
         const parsedPosts = parseAtomFeed(xmlText)
         const limit = props.perPage || parsedPosts.length
@@ -148,18 +151,21 @@ const fetchFeed = async () => {
       }
 
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-    } catch (fetchError) {
-      console.warn("Failed to fetch live feed, using fallback:", fetchError)
+    }
+    catch (fetchError) {
+      console.warn('Failed to fetch live feed, using fallback:', fetchError)
 
       // If the feed is not accessible (CORS, network issues, etc.), use mock data
       // This ensures the UI still works during development and provides a fallback
       const limit = props.perPage || mockPosts.length
       posts.value = mockPosts.slice(0, limit)
     }
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : "Failed to load feed"
-    console.error("RSS Feed Error:", err)
-  } finally {
+  }
+  catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to load feed'
+    console.error('RSS Feed Error:', err)
+  }
+  finally {
     loading.value = false
   }
 }

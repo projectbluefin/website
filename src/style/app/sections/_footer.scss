@@ -1,5 +1,5 @@
-@use "../../setup/fonts";
-@use "../../setup/mixins";
+@use '../../setup/fonts';
+@use '../../setup/mixins';
 
 footer {
   display: block;
@@ -48,7 +48,7 @@ footer {
       h3 {
         color: var(--color-text-light);
       }
-      
+
       & > div {
         border: none !important;
       }
@@ -70,7 +70,7 @@ footer {
       h3 {
         color: var(--color-text-light);
       }
-      
+
       & > div {
         border: none !important;
       }
@@ -99,7 +99,7 @@ footer {
       img {
         height: 34px;
       }
-      
+
       a {
         display: block;
         width: 100%;
@@ -111,19 +111,19 @@ footer {
       text-align: center;
       width: 100%;
       flex-direction: row !important;
-      
+
       img {
         height: 45px;
         width: auto;
         margin: 15px 30px 0 30px;
         display: inline-block;
       }
-      
+
       a {
         display: inline-block !important;
         width: auto !important;
         margin: 15px 30px 0 30px;
-        
+
         img {
           margin: 0;
           height: 45px;
@@ -136,19 +136,19 @@ footer {
       text-align: center;
       width: 100%;
       flex-direction: row !important;
-      
+
       img {
         height: 70px;
         width: auto;
         margin: 15px 30px 0 30px;
         display: inline-block;
       }
-      
+
       a {
         display: inline-block !important;
         width: auto !important;
         margin: 15px 30px 0 30px;
-        
+
         img {
           margin: 0;
           height: 70px;

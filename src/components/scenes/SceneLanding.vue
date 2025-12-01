@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue"
-import SceneVisibilityChecker from "../common/SceneVisibilityChecker.vue"
-import { LangLandingBluefinImageURLs } from "../../content"
-import { i18n } from "../../locales/schema"
-import { useI18n } from "vue-i18n"
-import type { MessageSchema } from "../../locales/schema"
+import type { MessageSchema } from '../../locales/schema'
+import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { LangLandingBluefinImageURLs } from '../../content'
+import { i18n } from '../../locales/schema'
+import SceneVisibilityChecker from '../common/SceneVisibilityChecker.vue'
 
 function scrollToUsers() {
-  document.querySelector("#scene-users")?.scrollIntoView({ behavior: "smooth" })
+  document.querySelector('#scene-users')?.scrollIntoView({ behavior: 'smooth' })
 }
 
 function scrollToPicker() {
   document
-    .querySelector("#scene-picker")
-    ?.scrollIntoView({ behavior: "smooth" })
+    .querySelector('#scene-picker')
+    ?.scrollIntoView({ behavior: 'smooth' })
 }
 
 function getRandomBluefinImage() {
@@ -32,17 +32,17 @@ onMounted(() => {
 })
 
 const lang = ref(i18n.global.locale)
-const redirectToLang = (lang: string) => {
-  // @ts-ignore
+function redirectToLang(lang: string) {
+  // We could utilize zod here to actually assess if the params exist (https://zod.dev/)
   const urlParams = new URLSearchParams(window.location.search)
 
-  urlParams.set("lang", lang)
+  urlParams.set('lang', lang)
 
-  // @ts-ignore
-  window.location.search = urlParams
+  // We should also utilize UFO here (https://github.com/unjs/ufo)
+  window.location.search = urlParams.toString()
 }
 const { t } = useI18n<MessageSchema>({
-  useScope: "global"
+  useScope: 'global'
 })
 </script>
 
@@ -58,7 +58,7 @@ const { t } = useI18n<MessageSchema>({
             src="/brands/bluefin.svg"
             fetchpriority="high"
             alt="Project Bluefin"
-          />
+          >
           <p>{{ t("Landing.Title") }}</p>
 
           <div class="btn-wrap">
@@ -71,12 +71,13 @@ const { t } = useI18n<MessageSchema>({
             </a>
 
             <select
+              v-model="lang"
               class="btn black filled text-nowrap"
               @change="redirectToLang(lang)"
-              v-model="lang"
             >
               <option
                 v-for="key in Object.keys(i18n.global.messages)"
+                :key="key"
                 :value="key"
               >
                 {{ key }}
@@ -88,7 +89,7 @@ const { t } = useI18n<MessageSchema>({
           class="sm:h-full sm:w-full object-contain my-3 w-1/2 h-1/2"
           :src="LangLandingBluefinImageURL"
           alt="Bluefin"
-        />
+        >
       </div>
     </div>
     <SceneVisibilityChecker name="null" />

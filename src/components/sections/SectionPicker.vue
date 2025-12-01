@@ -1,14 +1,37 @@
 <script setup lang="ts">
-import SceneVisibilityChecker from "../common/SceneVisibilityChecker.vue"
-import ImageChooser from "../ImageChooser.vue"
-import { marked } from "marked"
+import type { MessageSchema } from '../../locales/schema'
+import { marked } from 'marked'
+import { useI18n } from 'vue-i18n'
 
-import { useI18n } from "vue-i18n"
-import type { MessageSchema } from "../../locales/schema"
+import SceneVisibilityChecker from '../common/SceneVisibilityChecker.vue'
+import ImageChooser from '../ImageChooser.vue'
+
 const { t } = useI18n<MessageSchema>({
-  useScope: "global"
+  useScope: 'global'
 })
 </script>
+
+<template>
+  <section id="scene-picker" class="section-wrap">
+    <div class="container">
+      <div class="picker-header">
+        <div class="picker-tag">
+          <strong>{{ t("TryBluefin.Tag") }}</strong>
+        </div>
+        <h2>{{ t("TryBluefin.Title") }}</h2>
+      </div>
+
+      <div class="picker-card">
+        <div class="card-content">
+          <p v-html="marked.parse(t('TryBluefin.Description'))" />
+        </div>
+      </div>
+
+      <ImageChooser />
+    </div>
+    <SceneVisibilityChecker name="#scene-picker" />
+  </section>
+</template>
 
 <style scoped>
 .picker-card {
@@ -37,25 +60,3 @@ p :deep(a) {
   }
 }
 </style>
-
-<template>
-  <section id="scene-picker" class="section-wrap">
-    <div class="container">
-      <div class="picker-header">
-        <div class="picker-tag">
-          <strong>{{ t("TryBluefin.Tag") }}</strong>
-        </div>
-        <h2>{{ t("TryBluefin.Title") }}</h2>
-      </div>
-      
-      <div class="picker-card">
-        <div class="card-content">
-          <p v-html="marked.parse(t('TryBluefin.Description'))" />
-        </div>
-      </div>
-
-      <ImageChooser />
-    </div>
-    <SceneVisibilityChecker name="#scene-picker" />
-  </section>
-</template>

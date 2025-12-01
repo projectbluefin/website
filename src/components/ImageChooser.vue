@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { Ref, ref, computed, onMounted } from "vue"
-import { marked } from "marked"
+import type { Ref } from 'vue'
+import type { MessageSchema } from '../locales/schema'
 import {
   IconCheckCircle,
   IconDownload,
   IconGithubCircle
-} from "@iconify-prerendered/vue-mdi"
+} from '@iconify-prerendered/vue-mdi'
+import { marked } from 'marked'
 
-import { useI18n } from "vue-i18n"
-import type { MessageSchema } from "../locales/schema"
+import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+
 const { t } = useI18n<MessageSchema>({
-  useScope: "global"
+  useScope: 'global'
 })
 
 // Version information interface
@@ -40,7 +42,7 @@ const imageName: Ref<{
   imagesrc: string | undefined
 }> = ref({
   arch: undefined,
-  base: "bluefin",
+  base: 'bluefin',
   gpu: undefined,
   stream: undefined,
   kernel: undefined,
@@ -56,80 +58,81 @@ const showDownload = ref(false)
 // Release definitions with their characteristics
 const releases = [
   {
-    id: "lts",
-    title: "Bluefin LTS",
-    subtitle: "For professionals and AI/ML engineers",
+    id: 'lts',
+    title: 'Bluefin LTS',
+    subtitle: 'For professionals and AI/ML engineers',
     description:
-      "A long term support experience on an enterprise-grade foundation.",
-    image: "./characters/achillobator.webp",
-    supportedArch: ["x86", "arm"],
+      'A long term support experience on an enterprise-grade foundation.',
+    image: './characters/achillobator.webp',
+    supportedArch: ['x86', 'arm'],
     recommended: false
   },
   {
-    id: "stable",
-    title: "Bluefin",
-    subtitle: "For Everyone",
+    id: 'stable',
+    title: 'Bluefin',
+    subtitle: 'For Everyone',
     description:
-      "A modern desktop at the leading edge. Pick this if you're not sure.",
-    image: "./characters/leaping.webp",
-    supportedArch: ["x86"],
+      'A modern desktop at the leading edge. Pick this if you\'re not sure.',
+    image: './characters/leaping.webp',
+    supportedArch: ['x86'],
     recommended: true
   }
 ]
 
-const getFormattedImageName = () => {
+function getFormattedImageName() {
   let final_name = imageName.value.base
 
-  if (imageName.value.gpu == "nvidia") {
-    if (imageName.value.stream == "lts") {
-      final_name += "-gdx"
-    } else {
-      final_name += "-nvidia-open"
+  if (imageName.value.gpu === 'nvidia') {
+    if (imageName.value.stream === 'lts') {
+      final_name += '-gdx'
+    }
+    else {
+      final_name += '-nvidia-open'
     }
   }
 
-  final_name += "-" + imageName.value.stream
+  final_name += `-${imageName.value.stream}`
 
   // Add HWE suffix for LTS streams with hardware enablement
   // Skip HWE for GDX (LTS + Nvidia) as bluefin-gdx-lts-hwe-x86_64.iso does not exist
   if (
-    imageName.value.stream == "lts" &&
-    imageName.value.kernel == "hwe" &&
-    imageName.value.gpu != "nvidia"
+    imageName.value.stream === 'lts'
+    && imageName.value.kernel === 'hwe'
+    && imageName.value.gpu !== 'nvidia'
   ) {
-    final_name += "-hwe"
+    final_name += '-hwe'
   }
 
   switch (imageName.value.arch) {
-    case "x86":
-      final_name += "-x86_64"
+    case 'x86':
+      final_name += '-x86_64'
       break
-    case "arm":
-      final_name += "-aarch64"
+    case 'arm':
+      final_name += '-aarch64'
       break
   }
 
   return final_name
 }
 
-const selectRelease = (releaseId: string) => {
+function selectRelease(releaseId: string) {
   selectedRelease.value = releaseId
   imageName.value.stream = releaseId
-  imageName.value.imagesrc = releases.find((r) => r.id === releaseId)?.image
+  imageName.value.imagesrc = releases.find(r => r.id === releaseId)?.image
   showArchitectureStep.value = true
   showKernelStep.value = false
   showGpuStep.value = false
   showDownload.value = false
 }
 
-const selectArchitecture = (arch: string) => {
+function selectArchitecture(arch: string) {
   imageName.value.arch = arch
 
   // Apply ARM restrictions like in original component
-  if (arch == "arm" && imageName.value.stream != "lts") {
-    imageName.value.stream = "lts"
-    selectedRelease.value = "lts"
-    imageName.value.imagesrc = "./characters/achillobator.webp"
+  if (arch === 'arm' && imageName.value.stream !== 'lts') {
+    imageName.value.stream = 'lts'
+    selectedRelease.value = 'lts'
+    imageName.value.imagesrc = './characters/achillobator.webp'
   }
 
   // Always go to GPU step after architecture selection
@@ -138,57 +141,61 @@ const selectArchitecture = (arch: string) => {
   showDownload.value = false
 }
 
-const selectKernel = (kernel: string) => {
+function selectKernel(kernel: string) {
   imageName.value.kernel = kernel
   showGpuStep.value = false
   showDownload.value = true
 }
 
-const selectGpu = (gpu: string) => {
+function selectGpu(gpu: string) {
   imageName.value.gpu = gpu
 
   // For LTS stream: if Nvidia selected, skip kernel question and go to download
   // If non-Nvidia selected, show kernel question
-  if (imageName.value.stream === "lts") {
-    if (gpu === "nvidia") {
+  if (imageName.value.stream === 'lts') {
+    if (gpu === 'nvidia') {
       // Skip kernel question for Nvidia users - they get GDX which doesn't have HWE option
-      imageName.value.kernel = "regular" // Default for GDX
+      imageName.value.kernel = 'regular' // Default for GDX
       showKernelStep.value = false
       showDownload.value = true
-    } else {
+    }
+    else {
       // Show kernel question for non-Nvidia users
       showKernelStep.value = true
       showDownload.value = false
     }
-  } else {
+  }
+  else {
     // For non-LTS streams, go straight to download
-    imageName.value.kernel = "regular" // Default for non-LTS
+    imageName.value.kernel = 'regular' // Default for non-LTS
     showKernelStep.value = false
     showDownload.value = true
   }
 }
 
 const getSelectedRelease = computed(() => {
-  return releases.find((r) => r.id === selectedRelease.value)
+  return releases.find(r => r.id === selectedRelease.value)
 })
 
 const getSupportedArchitectures = computed(() => {
   const release = getSelectedRelease.value
-  if (!release) return []
+  if (!release) {
+    return []
+  }
 
-  return release.supportedArch.map((arch) => ({
+  return release.supportedArch.map(arch => ({
     id: arch,
     label:
-      arch === "x86"
-        ? t("TryBluefin.Architecture.x86")
-        : t("TryBluefin.Architecture.arm"),
+      arch === 'x86'
+        ? t('TryBluefin.Architecture.x86')
+        : t('TryBluefin.Architecture.arm'),
     available: true
   }))
 })
 
-const BLUEFIN_DOWNLOAD_URL = "https://download.projectbluefin.io/%TEMPLATE%"
+const BLUEFIN_DOWNLOAD_URL = 'https://download.projectbluefin.io/%TEMPLATE%'
 
-const reset = () => {
+function reset() {
   selectedRelease.value = undefined
   imageName.value.stream = undefined
   imageName.value.arch = undefined
@@ -202,26 +209,27 @@ const reset = () => {
 }
 
 // Load version information from YAML file
-const loadVersions = async () => {
+async function loadVersions() {
   try {
-    const response = await fetch("/stream-versions.yml")
+    const response = await fetch('/stream-versions.yml')
     const yamlText = await response.text()
 
     // Simple YAML parser for our specific format
     const parseYAML = (yaml: string): StreamVersions => {
       const lines = yaml
-        .split("\n")
-        .filter((line) => line.trim() && !line.trim().startsWith("#"))
+        .split('\n')
+        .filter(line => line.trim() && !line.trim().startsWith('#'))
       const result: any = {}
-      let currentStream = ""
+      let currentStream = ''
 
       for (const line of lines) {
-        if (!line.startsWith(" ") && line.includes(":")) {
-          currentStream = line.split(":")[0].trim()
+        if (!line.startsWith(' ') && line.includes(':')) {
+          currentStream = line.split(':')[0].trim()
           result[currentStream] = {}
-        } else if (line.startsWith("  ") && line.includes(":")) {
-          const [key, value] = line.trim().split(": ")
-          result[currentStream][key] = value.replace(/"/g, "")
+        }
+        else if (line.startsWith('  ') && line.includes(':')) {
+          const [key, value] = line.trim().split(': ')
+          result[currentStream][key] = value.replace(/"/g, '')
         }
       }
 
@@ -229,8 +237,9 @@ const loadVersions = async () => {
     }
 
     streamVersions.value = parseYAML(yamlText)
-  } catch (error) {
-    console.warn("Failed to load stream versions:", error)
+  }
+  catch (error) {
+    console.warn('Failed to load stream versions:', error)
   }
 }
 
@@ -257,60 +266,62 @@ onMounted(() => {
             :style="{ backgroundImage: `url(${release.image})` }"
           >
             <!-- Badges positioned in top right corner -->
-            <span v-if="release.recommended" class="recommended-badge"
-              >Recommended</span
-            >
+            <span v-if="release.recommended" class="recommended-badge">Recommended</span>
 
             <div class="release-overlay">
               <div class="release-content">
                 <div class="release-header">
-                  <h3 class="release-title">{{ release.title }}</h3>
+                  <h3 class="release-title">
+                    {{ release.title }}
+                  </h3>
                   <span class="release-subtitle">{{ release.subtitle }}</span>
                 </div>
-                <p class="release-description">{{ release.description }}</p>
+                <p class="release-description">
+                  {{ release.description }}
+                </p>
 
                 <!-- Version Information -->
                 <div
                   v-if="
-                    streamVersions &&
-                    streamVersions[release.id as keyof StreamVersions]
+                    streamVersions
+                      && streamVersions[release.id as keyof StreamVersions]
                   "
                   class="version-info"
                 >
                   <div class="version-item">
                     <span class="version-label">Base:</span>
-                    <span class="version-value">{{ 
+                    <span class="version-value">{{
                       streamVersions[release.id as keyof StreamVersions].base
                     }}</span>
                   </div>
                   <div class="version-item">
                     <span class="version-label">GNOME:</span>
-                    <span class="version-value">{{ 
+                    <span class="version-value">{{
                       streamVersions[release.id as keyof StreamVersions].gnome
                     }}</span>
                   </div>
                   <div class="version-item">
                     <span class="version-label">Kernel:</span>
-                    <span class="version-value">{{ 
+                    <span class="version-value">{{
                       streamVersions[release.id as keyof StreamVersions].kernel
                     }}</span>
                   </div>
                   <div v-if="release.id === 'lts'" class="version-item">
                     <span class="version-label">HWE Kernel:</span>
-                    <span class="version-value">{{ 
+                    <span class="version-value">{{
                       streamVersions[release.id as keyof StreamVersions].hwe
                     }}</span>
                   </div>
 
                   <div class="version-item">
                     <span class="version-label">MESA:</span>
-                    <span class="version-value">{{ 
+                    <span class="version-value">{{
                       streamVersions[release.id as keyof StreamVersions].mesa
                     }}</span>
                   </div>
                   <div class="version-item">
                     <span class="version-label">Nvidia:</span>
-                    <span class="version-value">{{ 
+                    <span class="version-value">{{
                       streamVersions[release.id as keyof StreamVersions].nvidia
                     }}</span>
                   </div>
@@ -328,7 +339,9 @@ onMounted(() => {
       class="step-selection"
     >
       <div class="step-header">
-        <button class="back-button" @click="reset">← Back to releases</button>
+        <button class="back-button" @click="reset">
+          ← Back to releases
+        </button>
         <h3>{{ t("TryBluefin.Architecture.Question") }}</h3>
       </div>
       <div class="options-grid">
@@ -411,7 +424,8 @@ onMounted(() => {
                 showKernelStep = true
                 imageName.kernel = undefined
                 showDownload = false
-              } else {
+              }
+              else {
                 showGpuStep = true
                 imageName.gpu = undefined
                 showDownload = false
@@ -477,21 +491,19 @@ onMounted(() => {
           </div>
           <div class="generated-filename">
             <span class="filename-label">Installation ISO:</span>
-            <span class="filename-value"
-              >{{ getFormattedImageName() }}.iso</span
-            >
+            <span class="filename-value">{{ getFormattedImageName() }}.iso</span>
           </div>
         </div>
-        <br />
-        <br />
-        <br />
+        <br>
+        <br>
+        <br>
         <div class="download-actions">
           <a
             class="download-button primary"
             :href="
               BLUEFIN_DOWNLOAD_URL.replace(
                 '%TEMPLATE%',
-                (getFormattedImageName() ?? '') + '.iso'
+                `${getFormattedImageName() ?? ''}.iso`,
               )
             "
           >
@@ -506,7 +518,7 @@ onMounted(() => {
               :href="
                 BLUEFIN_DOWNLOAD_URL.replace(
                   '%TEMPLATE%',
-                  (getFormattedImageName() ?? '') + '.iso-CHECKSUM'
+                  `${getFormattedImageName() ?? ''}.iso-CHECKSUM`,
                 )
               "
             >
@@ -600,6 +612,7 @@ onMounted(() => {
   inset: 0;
   background: linear-gradient(
     to bottom,
+    to bottom,
     rgba(0, 0, 0, 0.2) 0%,
     rgba(0, 0, 0, 0.5) 40%,
     rgba(0, 0, 0, 0.9) 100%
@@ -685,7 +698,7 @@ onMounted(() => {
 }
 
 .version-value {
-  font-family: "Courier New", monospace;
+  font-family: 'Courier New', 'Courier New';
   color: #93c5fd;
   font-weight: 500;
   background: rgba(0, 0, 0, 0.3);
@@ -846,7 +859,7 @@ onMounted(() => {
 
 .filename-value {
   display: block;
-  font-family: "Courier New", monospace;
+  font-family: 'Courier New', 'Courier New';
   font-size: 1.65rem;
   font-weight: 600;
   color: white;
@@ -901,8 +914,8 @@ onMounted(() => {
   border: 1px solid rgba(79, 156, 249, 0.2);
   border-radius: 8px;
   padding: 1.5rem;
-  /* Increased spacing below documentation note (contains "ventoy is unsupported" text) 
-     to provide better visual separation from the "Choose different release" button below.
+  /* Increased spacing below documentation note (contains "ventoy is unsupported" text)
+     to provie better visual separation from the "Choose different release" button below.
      Adjust this value to modify spacing between documentation and button. */
   margin-bottom: 3rem; /* Increased from 2rem to 3rem */
   color: white;

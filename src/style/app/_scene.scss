@@ -1,5 +1,5 @@
-@use "../setup/fonts";
-@use "../setup/mixins";
+@use '../setup/fonts';
+@use '../setup/mixins';
 
 .scene-components {
   // SECTION: debug
@@ -113,7 +113,7 @@
         position: relative;
 
         &:before {
-          content: "”";
+          content: '”';
           width: 20px;
           height: 2px;
           position: absolute;

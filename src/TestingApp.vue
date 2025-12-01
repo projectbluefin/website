@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import ImageChooser from "./components/ImageChooser.vue"
-import { marked } from "marked"
+import type { MessageSchema } from './locales/schema'
+import { marked } from 'marked'
 
-import { useI18n } from "vue-i18n"
-import type { MessageSchema } from "./locales/schema"
+import { useI18n } from 'vue-i18n'
+import ImageChooser from './components/ImageChooser.vue'
+
 const { t } = useI18n<MessageSchema>({
-  useScope: "global"
+  useScope: 'global'
 })
 </script>
 

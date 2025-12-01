@@ -28,7 +28,7 @@ npm run dev                       # ~190ms, serves on http://localhost:5173/
 npm run build                     # ~1.7s, outputs to ./dist/
 
 # 4. Format code before committing
-npx prettier --write src/         # ~3-5s
+npm run lint:fix
 ```
 
 **Verification:** After install, confirm `node_modules/@vitejs/plugin-vue` exists. After dev server starts, curl http://localhost:5173/ should return HTML with title "Bluefin | The Next Generation Linux Workstation".
@@ -100,20 +100,15 @@ npx prettier --write src/         # ~3-5s
 **Code formatting** (takes ~3-5 seconds):
 ```bash
 # Check formatting issues
-npx prettier --check src/ --config .prettierrc
+npm run lint
 
-# Fix formatting issues  
-npx prettier --write src/ --config .prettierrc
+# Fix formatting issues
+npm run lint:fix
+
 ```
-- Prettier configuration in `.prettierrc` includes: tabWidth: 2, singleQuote: false, semi: false, quote-props: "consistent"
-- Always run formatting before committing changes
-- First run may install prettier automatically
-
-**ESLint** - Configured but dependencies not installed:
-- .eslintrc extends @antfu but @antfu packages not in package.json
-- ESLint setup appears incomplete
-- Use Prettier for code formatting instead
-- DO NOT attempt to fix ESLint setup during normal development tasks
+**ESLint**
+- Configured with configuration at `eslint.config.js`
+- Extends @antfu/eslint-config
 
 ## Common Commands and Timing
 
@@ -122,7 +117,6 @@ npx prettier --write src/ --config .prettierrc
 - `npm run build`: ~1.7 seconds (outputs 8 assets + HTML files to ./dist/)
 - `npm run dev`: ~190ms to start (serves on http://localhost:5173/, use async mode)
 - `npm run preview`: Instant (serves ./dist/ on http://localhost:4173/)
-- `npx prettier --check src/`: ~3-5 seconds (may install prettier first run)
 
 **CRITICAL**: Always use `npm install --include=dev` to ensure @vitejs/plugin-vue and other dev dependencies are installed.
 
@@ -179,7 +173,7 @@ npx prettier --write src/ --config .prettierrc
 ├── vite.config.ts         # Vite configuration (multi-page: index.html + testing.html)
 ├── tailwind.config.js     # TailwindCSS configuration
 ├── tsconfig.json          # TypeScript configuration
-└── .prettierrc           # Code formatting rules
+└── eslint.config.js       # Code formatting rules
 ```
 
 **No test infrastructure exists** - validation is done manually through browser testing.
@@ -213,7 +207,7 @@ Large page sections that typically include:
 ```vue
 <script setup lang="ts">
 // Imports
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 // Props and emits (if needed)
@@ -232,7 +226,7 @@ const isVisible = ref(false)
   <!-- Template with semantic HTML -->
   <section class="component-name">
     <h2>{{ t('Section.Title') }}</h2>
-  </template>
+  </section>
 </template>
 ```
 
@@ -289,11 +283,11 @@ export const LangSectionTitle = 'Default English Text'
 Common mixins available for use:
 
 ```scss
-@include flex($gap, $justify, $align, $direction, $wrap)  // Flexbox layouts
-@include grid($gap, $columns)                             // Grid layouts
-@include t($time, $type)                                  // Transitions
-@include noselect()                                       // Disable text selection
-@include noscrollbar()                                    // Hide scrollbars
+@include flex($gap, $justify, $align, $direction, $wrap) // Flexbox layouts
+  @include grid($gap, $columns) // Grid layouts
+  @include t($time, $type) // Transitions
+  @include noselect() // Disable text selection
+  @include noscrollbar(); // Hide scrollbars
 ```
 
 ### TailwindCSS Integration
@@ -313,7 +307,7 @@ Common mixins available for use:
 1. **Start development server:** `npm run dev` (use async mode)
 2. **Make your changes** to Vue components, TypeScript, or SCSS files
 3. **Test functionality manually** in browser (http://localhost:5173/)
-4. **Format code:** `npx prettier --write src/`
+4. **Format code:** `npm run lint:fix`
 5. **Build to verify:** `npm run build`
 6. **Test production build:** `npm run preview`
 
@@ -376,7 +370,8 @@ npm install --include=dev  # Install all dependencies including dev (~6s)
 npm run dev               # Start dev server (~1s, use async mode)
 npm run build             # Build for production (~2s)
 npm run preview           # Preview production build
-npx prettier --write src/ # Format code (~3-5s)
+npm run lint               # Lints the project
+npm run lint:fix             # Lints and fixes issues in the project
 ```
 
 **CRITICAL REMINDERS:**

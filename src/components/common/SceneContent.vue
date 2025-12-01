@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { useElementVisibility, watchOnce } from "@vueuse/core"
-import { marked } from "marked"
-import { ref } from "vue"
+import type { MessageSchema } from '../../locales/schema'
+import { useElementVisibility, watchOnce } from '@vueuse/core'
+import { marked } from 'marked'
+
+import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   tag: string
@@ -19,20 +22,19 @@ const wrapper = ref<HTMLDivElement>()
 const isVisible = useElementVisibility(wrapper)
 const fired = ref(false)
 
-if (props.disableAnimation) fired.value = true
+if (props.disableAnimation) {
+  fired.value = true
+}
 
 watchOnce(isVisible, () => {
   fired.value = true
 
   setTimeout(() => {
-    emit("visible")
+    emit('visible')
   }, 50)
 })
-
-import { useI18n } from "vue-i18n"
-import type { MessageSchema } from "../../locales/schema"
 const { t } = useI18n<MessageSchema>({
-  useScope: "global"
+  useScope: 'global'
 })
 </script>
 

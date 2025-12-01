@@ -5,24 +5,24 @@
  * from ublue-os/bluefin and ublue-os/bluefin-lts releases
  */
 
-import fs from "fs"
-import path from "path"
-import { fileURLToPath } from "url"
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 // GitHub API configuration
-const GITHUB_API = "https://api.github.com"
+const GITHUB_API = 'https://api.github.com'
 const REPOS = {
-  lts: "ublue-os/bluefin-lts",
-  main: "ublue-os/bluefin"
+  lts: 'ublue-os/bluefin-lts',
+  main: 'ublue-os/bluefin'
 }
 
 // Base OS mapping for each stream
 const BASE_OS_MAP = {
-  lts: "CentOS Stream 10",
-  stable: "Fedora 43"
+  lts: 'CentOS Stream 10',
+  stable: 'Fedora 43'
 }
 
 /**
@@ -32,11 +32,11 @@ async function fetchLatestReleasesByStream(repo, stream) {
   const url = `${GITHUB_API}/repos/${repo}/releases`
   const response = await fetch(url, {
     headers: {
-      Authorization: process.env.GITHUB_TOKEN
+      'Authorization': process.env.GITHUB_TOKEN
         ? `token ${process.env.GITHUB_TOKEN}`
         : undefined,
-      "User-Agent": "bluefin-website-updater",
-      Accept: "application/vnd.github.v3+json"
+      'User-Agent': 'bluefin-website-updater',
+      'Accept': 'application/vnd.github.v3+json'
     }
   })
 
@@ -58,8 +58,8 @@ async function fetchLatestReleasesByStream(repo, stream) {
   // Find the latest release for the specified stream
   const streamRelease = releases.find((release) => {
     return (
-      release.tag_name.startsWith(`${stream}-`) ||
-      release.tag_name.startsWith(`${stream}.`)
+      release.tag_name.startsWith(`${stream}-`)
+      || release.tag_name.startsWith(`${stream}.`)
     )
   })
 
@@ -71,15 +71,15 @@ async function fetchLatestReleasesByStream(repo, stream) {
  */
 function parseChangelogVersions(body) {
   const versions = {
-    kernel: "",
-    gnome: "",
-    mesa: "",
-    nvidia: "",
-    hwe: ""
+    kernel: '',
+    gnome: '',
+    mesa: '',
+    nvidia: '',
+    hwe: ''
   }
 
   // Split by lines and find the Major packages and Major GDX packages sections
-  const lines = body.split("\n")
+  const lines = body.split('\n')
   let inMajorPackages = false
   let inMajorGdxPackages = false
 
@@ -87,14 +87,14 @@ function parseChangelogVersions(body) {
     const trimmed = line.trim()
 
     // Start of major packages section
-    if (trimmed === "### Major packages") {
+    if (trimmed === '### Major packages') {
       inMajorPackages = true
       inMajorGdxPackages = false
       continue
     }
 
     // Start of major GDX packages section (for LTS nvidia drivers)
-    if (trimmed === "### Major GDX packages") {
+    if (trimmed === '### Major GDX packages') {
       inMajorGdxPackages = true
       inMajorPackages = false
       continue
@@ -102,17 +102,17 @@ function parseChangelogVersions(body) {
 
     // End of current packages section
     if (
-      (inMajorPackages || inMajorGdxPackages) &&
-      trimmed.startsWith("###") &&
-      !trimmed.includes("Major packages") &&
-      !trimmed.includes("Major GDX packages")
+      (inMajorPackages || inMajorGdxPackages)
+      && trimmed.startsWith('###')
+      && !trimmed.includes('Major packages')
+      && !trimmed.includes('Major GDX packages')
     ) {
       inMajorPackages = false
       inMajorGdxPackages = false
       continue
     }
 
-    if ((inMajorPackages || inMajorGdxPackages) && trimmed.startsWith("| **")) {
+    if ((inMajorPackages || inMajorGdxPackages) && trimmed.startsWith('| **')) {
       // Parse package version lines like: | **Kernel** | 6.14.11-300 |
       // or with transitions like: | **Mesa** | 25.1.4-1 ➡️ 25.1.7-1 |
       const match = trimmed.match(/\| \*\*([^*]+)\*\* \| (.+) \|/)
@@ -121,20 +121,24 @@ function parseChangelogVersions(body) {
         let version = match[2].trim()
 
         // Handle version transitions (take the newer version after ➡️)
-        if (version.includes("➡️")) {
-          version = version.split("➡️")[1].trim()
+        if (version.includes('➡️')) {
+          version = version.split('➡️')[1].trim()
         }
 
         // Map package names to our keys
-        if (packageName === "kernel") {
+        if (packageName === 'kernel') {
           versions.kernel = version
-        } else if (packageName === "gnome") {
+        }
+        else if (packageName === 'gnome') {
           versions.gnome = version
-        } else if (packageName === "mesa") {
+        }
+        else if (packageName === 'mesa') {
           versions.mesa = version
-        } else if (packageName === "nvidia") {
+        }
+        else if (packageName === 'nvidia') {
           versions.nvidia = version
-        } else if (packageName === "hwe kernel") {
+        }
+        else if (packageName === 'hwe kernel') {
           versions.hwe = version
         }
       }
@@ -148,15 +152,15 @@ function parseChangelogVersions(body) {
  * Update the stream-versions.yml file
  */
 async function updateStreamVersions() {
-  console.log("Fetching latest releases...")
+  console.info('Fetching latest releases...')
 
   const updates = {}
 
   try {
     // Fetch LTS versions from bluefin-lts repo
-    const ltsRelease = await fetchLatestReleasesByStream(REPOS.lts, "lts")
+    const ltsRelease = await fetchLatestReleasesByStream(REPOS.lts, 'lts')
     if (ltsRelease) {
-      console.log(`Found LTS release: ${ltsRelease.tag_name}`)
+      console.info(`Found LTS release: ${ltsRelease.tag_name}`)
       const ltsVersions = parseChangelogVersions(ltsRelease.body)
       updates.lts = {
         base: BASE_OS_MAP.lts,
@@ -170,10 +174,10 @@ async function updateStreamVersions() {
 
     const stableRelease = await fetchLatestReleasesByStream(
       REPOS.main,
-      "stable"
+      'stable'
     )
     if (stableRelease) {
-      console.log(`Found Stable release: ${stableRelease.tag_name}`)
+      console.info(`Found Stable release: ${stableRelease.tag_name}`)
       const stableVersions = parseChangelogVersions(stableRelease.body)
       updates.stable = {
         base: BASE_OS_MAP.stable,
@@ -186,11 +190,11 @@ async function updateStreamVersions() {
 
     // Ensure we have at least some data
     if (Object.keys(updates).length === 0) {
-      throw new Error("No release data found for any stream")
+      throw new Error('No release data found for any stream')
     }
 
     // Generate the updated YAML content
-    const today = new Date().toISOString().split("T")[0]
+    const today = new Date().toISOString().split('T')[0]
     let yamlContent = `# Stream version information for Bluefin releases
 # This file contains the latest version information for each stream
 # Data is sourced from the most recent changelogs in ublue-os/bluefin and ublue-os/bluefin-lts repositories
@@ -200,7 +204,7 @@ async function updateStreamVersions() {
 
     // Add each stream's data
     for (const [streamName, data] of Object.entries(updates)) {
-      const hweField = streamName === "lts" ? `\n  hwe: "${data.hwe}"` : ""
+      const hweField = streamName === 'lts' ? `\n  hwe: "${data.hwe}"` : ''
 
       yamlContent += `${streamName}:
   base: "${data.base}"
@@ -213,19 +217,20 @@ async function updateStreamVersions() {
     }
 
     // Write the updated file
-    const yamlPath = path.join(__dirname, "..", "public", "stream-versions.yml")
-    fs.writeFileSync(yamlPath, yamlContent.trim() + "\n")
+    const yamlPath = path.join(__dirname, '..', 'public', 'stream-versions.yml')
+    fs.writeFileSync(yamlPath, `${yamlContent.trim()}\n`)
 
-    console.log("Stream versions updated successfully!")
-    console.log("Updated streams:", Object.keys(updates))
+    console.info('Stream versions updated successfully!')
+    console.info('Updated streams:', Object.keys(updates))
 
     // Log the parsed versions for verification
-    console.log("\nParsed versions:")
+    console.info('\nParsed versions:')
     for (const [stream, versions] of Object.entries(updates)) {
-      console.log(`${stream}:`, versions)
+      console.info(`${stream}:`, versions)
     }
-  } catch (error) {
-    console.error("Error updating stream versions:", error)
+  }
+  catch (error) {
+    console.error('Error updating stream versions:', error)
     process.exit(1)
   }
 }
