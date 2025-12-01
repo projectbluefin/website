@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue"
 import SceneVisibilityChecker from "../common/SceneVisibilityChecker.vue"
-import Holidaysaurus from '../../assets/svg/Holidaysaurus.svg'
+import Holidaysaurus from '../../assets/img/Holidaysaurus.webp'
 // Re-implement after December
 //import { LangLandingBluefinImageURLs } from "../../content"
 import { i18n } from "../../locales/schema"
