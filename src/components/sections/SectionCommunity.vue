@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { MessageSchema } from '../../locales/schema'
 import { useI18n } from 'vue-i18n'
+import BluefinGrowthChartSvg from '@/assets/svg/growth_bluefins.svg'
 
 import SceneVisibilityChecker from '../common/SceneVisibilityChecker.vue'
 
@@ -76,6 +77,10 @@ const { t } = useI18n<MessageSchema>({
               <img src="https://repobeats.axiom.co/api/embed/40b85b252bf6ea25eb90539d1adcea013ccae69a.svg" alt="GitHub Repository Metrics" loading="lazy">
             </a>
           </div>
+        </div>
+
+        <div class="community-card growth-chart-card">
+          <img class="growth-chart" :src="BluefinGrowthChartSvg">
         </div>
       </div>
     </div>
@@ -251,15 +256,17 @@ const { t } = useI18n<MessageSchema>({
     }
   }
 
+  .growth-chart {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
   @media (max-width: 768px) {
     .community-card {
       flex-direction: column;
       text-align: center;
       padding: 24px;
-
-      .card-icon {
-        max-width: 150px;
-      }
 
       .card-content .card-buttons {
         justify-content: center;
@@ -272,6 +279,18 @@ const { t } = useI18n<MessageSchema>({
       .contrib-text .card-buttons {
         justify-content: center;
       }
+
+      .contrib-image {
+        display: none;
+      }
+    }
+
+    .growth-chart {
+      display: none;
+    }
+
+    .growth-chart-card {
+      display: none;
     }
 
     .community-header h2 {
