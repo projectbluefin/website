@@ -68,8 +68,10 @@
   "Video": {
     "Url": "https://www.youtube.com/embed/Nz-yyDwTfRM&autoplay=1",
     "Title": "Bluefin Introduction",
-    "Passion": "Project Bluefin is not a finished product, she is an ongoing passion project maintained by [cloud-native enthusiasts](https://github.com/ublue-os/bluefin/graphs/contributors) who seek a more reliable and maintainable Linux desktop experience. Check out the [open issues](https://github.com/ublue-os/bluefin/issues).",
-    "StateOfTheArt": "She represents the state of the art : a beautiful and unique creature. A perfect predator for a world that will inevitably face challenges. We must adapt. We can do it **together**."
+    "Text": {
+      "Passion": "Project Bluefin is not a finished product, she is an ongoing passion project maintained by [cloud-native enthusiasts](https://github.com/ublue-os/bluefin/graphs/contributors) who seek a more reliable and maintainable Linux desktop experience. Check out the [open issues](https://github.com/ublue-os/bluefin/issues).",
+      "StateOfTheArt": "She represents the state of the art : a beautiful and unique creature. A perfect predator for a world that will inevitably face challenges. We must adapt. We can do it **together**."
+    }
   },
   "Bazaar": {
     "Tag": "Run your favorite",
@@ -187,11 +189,10 @@
     "SponsorsTitle": "Our sponsors"
   },
   "Footer": {
-    "Title": "Powered By",
-    "Copyright": "Copyright {date} © Project Bluefin and Universal Blue",
+    "PoweredBy": "Powered By",
     "Project": {
       "Title": "Project Bluefin is Built With",
-      "Ublue": "Universal Blue - A community toolkit designed to reboot the Linux desktop. Built for the love of the game. Welcome to indie Cloud Native."
+      "Ublue": "A community toolkit designed to reboot the Linux desktop. Built for the love of the game. Welcome to indie Cloud Native."
     },
     "Credits": {
       "Intro": "All artwork built by humans.",
@@ -201,7 +202,8 @@
       "Wallpapers": "Bluefin Illustrative Wallpaper - Andy Frazer, [DragonsofWales](https://www.etsy.com/fi-en/shop/DragonsofWales?ref=profile_header)",
       "Translations": "Translations - [Tulip Blossom](https://github.com/tulilirockz), [karhima](https://github.com/karhima), [Niklas](https://niklas.tech), [Crono](https://github.com/EPOCHvoyager), [Tsu-gu](https://github.com/Tsu-gu) & [Mimolet](https://github.com/theMimolet)",
       "Thanks": "Special Thanks - [Aaron Lake](https://www.linkedin.com/in/aaron-lake/), [Brian Ketelsen](https://brian.dev/), [Dustin Kirkland](https://www.kotterva.com/), [Wayne Witzel](https://github.com/wwitzel3), & [Marco Ceppi](https://github.com/marcoceppi)"
-    }
+    },
+    "Copyright": "Copyright {date} © Project Bluefin and Universal Blue"
   },
   "Navbar": {
     "ForYou": "For You",

@@ -81,7 +81,7 @@ const { t } = useI18n<MessageSchema>({
     </section>
     <div class="container">
       <div>
-        <strong class="footer-title">{{ $t("Footer.Title") }}</strong>
+        <strong class="footer-title">{{ $t("Footer.PoweredBy") }}</strong>
 
         <div class="logo-list">
           <template v-for="brand in LangPoweredBy" :key="brand.imageUrl">
@@ -105,13 +105,17 @@ const { t } = useI18n<MessageSchema>({
           </template>
         </div>
       </div>
-
       <div>
         <strong class="footer-title">{{ t("Footer.Project.Title") }}</strong>
-        <span style='display:inline-flex; align-items:center; gap:6px;'> <a class='ub-badge' href='https://universal-blue.org' target='_blank' rel='noopener noreferrer' style='display:inline-flex; align-items:center; text-decoration:none;'><img src='/brands/universal-blue.svg' alt='Universal Blue' style='height:2em;'/><span style='margin-left:4px;'>Universal Blue</span></a></span>
-        <br>
+        <p class="ublue">
+          <a href='https://universal-blue.org' target='_blank' rel='noopener noreferrer'>
+            <img src='/brands/universal-blue.svg' alt='Universal Blue Logo'/>
+            <span>
+              Universal Blue
+            </span>
+          </a>
+        </p>
         <div v-html="marked.parse(t('Footer.Project.Ublue'))" />
-        <br>
         <ul class="footer-links">
           <li v-for="item in LangSocialLinks" :key="item.text">
             <a :href="item.link">
@@ -139,3 +143,22 @@ const { t } = useI18n<MessageSchema>({
     </div>
   </footer>
 </template>
+<style scoped>
+  .ublue {
+    margin-bottom: 10px;
+  }
+
+  .ublue img {
+    height:2em;
+  }
+  .ublue a {
+    display:inline-flex; align-items:center;
+  }
+  .ublue span{
+    margin-left:4px;
+  }
+
+  .footer-links {
+    margin-top: 20px;
+  }
+</style>
