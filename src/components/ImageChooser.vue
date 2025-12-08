@@ -59,19 +59,18 @@ const showDownload = ref(false)
 const releases = [
   {
     id: 'lts',
-    title: 'Bluefin LTS',
-    subtitle: t('TryBluefin.LTS.Subtitle'),
-    description: t('TryBluefin.LTS.Description'),
+    title: t('TryBluefin.Lts.Title'),
+    subtitle: t('TryBluefin.Lts.Subtitle'),
+    description: t('TryBluefin.Lts.Description'),
     image: './characters/achillobator.webp',
     supportedArch: ['x86', 'arm'],
     recommended: false
   },
   {
     id: 'stable',
-    title: 'Bluefin',
-    subtitle: 'For Everyone',
-    description:
-      'A modern desktop at the leading edge. Pick this if you\'re not sure.',
+    title: t('TryBluefin.Stable.Title'),
+    subtitle: t('TryBluefin.Stable.Subtitle'),
+    description: t('TryBluefin.Stable.Description'),
     image: './characters/leaping.webp',
     supportedArch: ['x86'],
     recommended: true
@@ -265,7 +264,7 @@ onMounted(() => {
             :style="{ backgroundImage: `url(${release.image})` }"
           >
             <!-- Badges positioned in top right corner -->
-            <span v-if="release.recommended" class="recommended-badge">Recommended</span>
+            <span v-if="release.recommended" class="recommended-badge">{{ t('TryBluefin.Label.Recommended')}}</span>
 
             <div class="release-overlay">
               <div class="release-content">
@@ -288,38 +287,38 @@ onMounted(() => {
                   class="version-info"
                 >
                   <div class="version-item">
-                    <span class="version-label">Base:</span>
+                    <span class="version-label">{{ t('TryBluefin.Label.Base')}}:</span>
                     <span class="version-value">{{
                       streamVersions[release.id as keyof StreamVersions].base
                     }}</span>
                   </div>
                   <div class="version-item">
-                    <span class="version-label">GNOME:</span>
+                    <span class="version-label">{{ t('TryBluefin.Label.Gnome')}}:</span>
                     <span class="version-value">{{
                       streamVersions[release.id as keyof StreamVersions].gnome
                     }}</span>
                   </div>
                   <div class="version-item">
-                    <span class="version-label">Kernel:</span>
+                    <span class="version-label">{{ t('TryBluefin.Label.Kernel')}}:</span>
                     <span class="version-value">{{
                       streamVersions[release.id as keyof StreamVersions].kernel
                     }}</span>
                   </div>
                   <div v-if="release.id === 'lts'" class="version-item">
-                    <span class="version-label">HWE Kernel:</span>
+                    <span class="version-label">{{ t('TryBluefin.Label.HWEKernel')}}:</span>
                     <span class="version-value">{{
                       streamVersions[release.id as keyof StreamVersions].hwe
                     }}</span>
                   </div>
 
                   <div class="version-item">
-                    <span class="version-label">MESA:</span>
+                    <span class="version-label">{{ t('TryBluefin.Label.Mesa')}}:</span>
                     <span class="version-value">{{
                       streamVersions[release.id as keyof StreamVersions].mesa
                     }}</span>
                   </div>
                   <div class="version-item">
-                    <span class="version-label">Nvidia:</span>
+                    <span class="version-label">{{ t('TryBluefin.Label.Nvidia')}}:</span>
                     <span class="version-value">{{
                       streamVersions[release.id as keyof StreamVersions].nvidia
                     }}</span>
@@ -339,7 +338,7 @@ onMounted(() => {
     >
       <div class="step-header">
         <button class="back-button" @click="reset">
-          ← Back to releases
+          ← {{ t('TryBluefin.Label.BackToReleases')}}
         </button>
         <h3>{{ t("TryBluefin.Architecture.Question") }}</h3>
       </div>
@@ -369,7 +368,7 @@ onMounted(() => {
             }
           "
         >
-          ← Back
+          ← {{ t('TryBluefin.Label.Back')}}
         </button>
         <h3>{{ t("TryBluefin.Kernel.Question") }}</h3>
       </div>
@@ -396,16 +395,16 @@ onMounted(() => {
             }
           "
         >
-          ← Back
+          ← {{ t('TryBluefin.Label.Back')}}
         </button>
         <h3>{{ t("TryBluefin.Gpu.Question") }}</h3>
       </div>
       <div class="options-grid">
         <button class="option-button" @click="selectGpu('amd')">
-          AMD or Intel
+          {{ t("TryBluefin.Gpu.AMDIntel") }}
         </button>
         <button class="option-button" @click="selectGpu('nvidia')">
-          Nvidia RTX or GTX 16xx+ Series
+          {{ t("TryBluefin.Gpu.Nvidia") }} -
         </button>
       </div>
     </div>
@@ -432,17 +431,17 @@ onMounted(() => {
             }
           "
         >
-          ← Back
+          ← {{ t('TryBluefin.Label.Back')}}
         </button>
-        <h3>Ready to download!</h3>
+        <h3>{{ t('TryBluefin.Selection.Ready') }}</h3>
       </div>
 
       <div class="download-summary">
         <div class="decision-summary">
-          <h4>Your Selection ...</h4>
+          <h4>{{ t('TryBluefin.Selection.YourSelection') }}</h4>
           <div class="decision-items">
             <div class="decision-item">
-              <span class="decision-label">Release:</span>
+              <span class="decision-label">{{ t('TryBluefin.Selection.Release.Title') }}:</span>
               <span class="decision-value">{{
                 imageName.gpu === "nvidia" && imageName.stream === "lts"
                   ? "Bluefin GDX"
@@ -453,43 +452,43 @@ onMounted(() => {
               }}</span>
             </div>
             <div class="decision-item">
-              <span class="decision-label">Architecture:</span>
+              <span class="decision-label">{{ t('TryBluefin.Selection.Architecture.Title') }}:</span>
               <span class="decision-value">{{
                 imageName.arch === "x86" ? "x86_64" : "ARM64"
               }}</span>
               <span class="decision-subtitle">{{
                 imageName.arch === "x86"
-                  ? "Standard for most computers (AMD and Intel)"
-                  : "ARM-based systems"
+                  ? t('TryBluefin.Selection.Architecture.X86Desc')
+                  : t('TryBluefin.Selection.Architecture.ArmDesc')
               }}</span>
             </div>
             <div v-if="imageName.stream === 'lts'" class="decision-item">
-              <span class="decision-label">Kernel:</span>
+              <span class="decision-label">{{ t('TryBluefin.Selection.Kernel.Title') }}:</span>
               <span class="decision-value">{{
                 imageName.kernel === "hwe"
-                  ? "Hardware Enablement (HWE)"
-                  : "Regular LTS"
+                  ? t('TryBluefin.Selection.Kernel.HWE')
+                  : t('TryBluefin.Selection.Kernel.Regular')
               }}</span>
               <span class="decision-subtitle">{{
                 imageName.kernel === "hwe"
-                  ? "Regularly updated kernels for better hardware support"
-                  : "Stable kernel updates, locked to 6.12.0 with backports"
+                  ? t('TryBluefin.Selection.Kernel.HWEDesc')
+                  : t('TryBluefin.Selection.Kernel.RegularDesc')
               }}</span>
             </div>
             <div class="decision-item">
-              <span class="decision-label">GPU:</span>
+              <span class="decision-label">{{ t('TryBluefin.Selection.Gpu.Title') }}:</span>
               <span class="decision-value">{{
                 imageName.gpu === "amd" ? "AMD/Intel" : "Nvidia"
               }}</span>
               <span class="decision-subtitle">{{
                 imageName.gpu === "amd"
-                  ? "Integrated AMD or Intel graphics"
-                  : "Nvidia RTX/GTX 16xx+ series, GTX 10xx series and below unsupported"
+                  ? t('TryBluefin.Selection.Gpu.AMDIntelDesc')
+                  : t('TryBluefin.Selection.Gpu.NvidiaDesc')
               }}</span>
             </div>
           </div>
           <div class="generated-filename">
-            <span class="filename-label">Installation ISO:</span>
+            <span class="filename-label">{{ t('TryBluefin.Download.IsoDescription') }}:</span>
             <span class="filename-value">{{ getFormattedImageName() }}.iso</span>
           </div>
         </div>
@@ -506,7 +505,7 @@ onMounted(() => {
               )
             "
           >
-            {{ t("TryBluefin.Download.Iso") }}
+            {{ t("TryBluefin.Download.IsoDownload") }}
             <IconDownload class="download-icon" />
           </a>
 
@@ -522,7 +521,7 @@ onMounted(() => {
               "
             >
               <IconCheckCircle />
-              Verify (SHA256)
+              {{t('TryBluefin.Download.Checksum')}}
             </a>
             <a
               class="btn"
@@ -531,18 +530,18 @@ onMounted(() => {
               target="_blank"
             >
               <IconGithubCircle />
-              View Registry
+              {{t('TryBluefin.Download.Registry')}}
             </a>
           </div>
         </div>
       </div>
 
       <div class="documentation-note">
-        <p v-html="marked.parse(t('TryBluefin.Download.DocumentationURL'))" />
+        <p v-html="marked.parse(t('TryBluefin.Download.Documentation'))" />
       </div>
 
       <button class="start-over-button" @click="reset">
-        Choose a different release
+        {{t('TryBluefin.Download.ChooseRelease')}}
       </button>
     </div>
   </div>

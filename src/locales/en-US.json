@@ -63,8 +63,8 @@
   "Video": {
     "Url": "https://www.youtube.com/embed/Nz-yyDwTfRM&autoplay=1",
     "Title": "Bluefin Introduction",
-    "TextPassion": "Project Bluefin is not a finished product, she is an ongoing passion project maintained by [cloud-native enthusiasts](https://github.com/ublue-os/bluefin/graphs/contributors) who seek a more reliable and maintainable Linux desktop experience. Check out the [open issues](https://github.com/ublue-os/bluefin/issues).",
-    "TextStateOfTheArt": "She represents the state of the art … a beautiful and unique creature. A perfect predator for a world that will inevitably face challenges. We must adapt. We can do it **together**."
+    "Passion": "Project Bluefin is not a finished product, she is an ongoing passion project maintained by [cloud-native enthusiasts](https://github.com/ublue-os/bluefin/graphs/contributors) who seek a more reliable and maintainable Linux desktop experience. Check out the [open issues](https://github.com/ublue-os/bluefin/issues).",
+    "StateOfTheArt": "She represents the state of the art … a beautiful and unique creature. A perfect predator for a world that will inevitably face challenges. We must adapt. We can do it **together**."
   },
   "Bazaar": {
     "Tag": "Run your favorite",
@@ -76,22 +76,28 @@
   "TryBluefin": {
     "Tag": "Try",
     "Title": "Bluefin",
-    "TextChoice": "Choose your raptor for your hardware and use case. The team recommends [Fedora Media Writer](https://flathub.org/apps/org.fedoraproject.MediaWriter) to create installation media, Ventoy is unsupported. Check [the documentation](https://docs.projectbluefin.io) for more information.",
-    "TextUpdates": "Bluefin receives timely security updates and is available in two different streams that reflect how aggressively it receives feature updates:",
-    "Cards": {
-      "Base": "Base",
-      "GNOME": "GNOME",
-      "Kernel": "Kernel",
-      "HWE Kernel": "HWE Kernel",
-      "MESA": "MESA",
-      "Nvidia": "Nvidia",
-      "Recommended": "Recommended"
+    "Description": {
+      "Choice": "Choose your raptor for your hardware and use case. The team recommends [Fedora Media Writer](https://flathub.org/apps/org.fedoraproject.MediaWriter) to create installation media, Ventoy is unsupported. Check [the documentation](https://docs.projectbluefin.io) for more information.",
+      "Updates": "Bluefin receives timely security updates and is available in two different streams that reflect how aggressively it receives feature updates:"
     },
-    "LTS": {
+    "Label": {
+      "Base": "Base",
+      "Gnome": "GNOME",
+      "Kernel": "Kernel",
+      "HWEKernel": "HWE Kernel",
+      "Mesa": "MESA",
+      "Nvidia": "Nvidia",
+      "Recommended": "Recommended",
+      "Back": "Back",
+      "BackToReleases": "Back to releases"
+    },
+    "Lts": {
+      "Title": "Bluefin LTS",
       "Subtitle": "For professionals and AI/ML engineers",
       "Description": "A long term support experience on an enterprise-grade foundation."
     },
     "Stable": {
+      "Title": "Bluefin",
       "Subtitle": "For Everyone",
       "Description": "A modern desktop at the leading edge. Pick this if you're not sure."
     },
@@ -112,36 +118,36 @@
       "HWE": "Latest Linux kernel: Best for brand-new devices and getting the newest features."
     },
     "Selection": {
-      "Back": "Back",
       "Ready": "Ready to Download!",
       "YourSelection": "Your Selection ...",
       "Release": {
         "Title": "Release",
-        "Stable": "Bluefin",
-        "StableDesc": "For Everyone.",
-        "GDX": "Bluefin GDX",
-        "GDXDesc": "For Developers."
+        "StableDesc": "For Everyone",
+        "GDXDesc": "For Developers"
       },
       "Architecture": {
         "Title": "Architecture",
-        "x86": "x86_64",
-        "x86Desc": "Standard for most computers (AMD and Intel).",
-        "arm": "ARM64",
-        "armDesc": "For ARM-based devices (Apple Silicon, Raspberry Pi, etc)."
+        "X86Desc": "Standard for most computers (AMD and Intel)",
+        "ArmDesc": "For ARM-based systems (Apple Silicon, Raspberry Pi, etc)"
       },
-      "GPU": {
+      "Kernel": {
+        "Title": "Kernel",
+        "Regular": "Regular LTS",
+        "RegularDesc": "Stable kernel updates, locked to 6.12.0 with backports",
+        "HWE": "Hardware Enablement (HWE)",
+        "HWEDesc": "Regularly updated kernels for better hardware support"
+      },
+      "Gpu": {
         "Title": "Graphics Card (GPU)",
-        "AMDIntel": "AMD or Intel",
-        "AMDIntelDesc": "Most AMD and Intel integrated and dedicated graphics cards.",
-        "Nvidia": "Nvidia",
-        "NvidiaDesc": "Nvidia RTX/GTX 16xx+ Series, GTX 10xx Series and below are unsupported."
+        "AMDIntelDesc": "Integrated AMD or Intel graphics",
+        "NvidiaDesc": "Nvidia RTX/GTX 16xx+ Series, GTX 10xx Series and below are unsupported"
       }
     },
     "Download": {
-      "IsoDescription": "Installation ISO:",
+      "IsoDescription": "Installation ISO",
       "IsoDownload": "Download the ISO",
-      "Registry": "View Registry",
       "Checksum": "Verify (SHA256)",
+      "Registry": "View Registry",
       "Documentation": "Check out the [Bluefin Documentation](https://docs.projectbluefin.io/), it takes about 15 minutes and includes an installation runbook - set yourself up for success, you are headed into a new world.<br/><br/>Can't find what you're looking for? Check [the full list of downloads](https://docs.projectbluefin.io/downloads/).<br/><br/>If you choose secure boot during installation, the password is <code>universalblue</code>.",
       "ChooseRelease": "Choose a different release"
     }

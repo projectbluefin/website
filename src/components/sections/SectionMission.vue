@@ -24,6 +24,7 @@ const { t } = useI18n<MessageSchema>({
           tag="Mission.Tag"
           title="Mission.Title"
           text="Mission.MainText"
+          @visible="vis = true"
         >
         <SceneQuote
           quote="SpreadQuote.Quote"
