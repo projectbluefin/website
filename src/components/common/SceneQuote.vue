@@ -11,7 +11,7 @@
   }>()
 </script>
 <template>
-  <div class="scene-quote">
+  <div>
     <blockquote>
       <p>
         {{ t(props.quote) }}

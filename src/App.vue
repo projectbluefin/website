@@ -6,7 +6,6 @@ import TopNavbar from './components/TopNavbar.vue'
 import ParallaxWrapper from './components/sections/ParallaxWrapper.vue'
 import SceneLanding from './components/scenes/SceneLanding.vue'
 import SceneUsers from './components/scenes/SceneUsers.vue'
-import SceneQuote from './components/common/SceneQuote.vue'
 import SceneDevelopers from './components/scenes/SceneDevelopers.vue'
 import SectionMission from './components/sections/SectionMission.vue'
 import SectionVideo from './components/sections/SectionVideo.vue'
@@ -94,11 +93,6 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
       <ParallaxWrapper>
         <SceneLanding />
         <SceneUsers />
-        <SceneQuote
-          quote="EvolutionQuote.Quote"
-          author="EvolutionQuote.Author"
-          link="EvolutionQuote.WikiLink"
-        />
         <SceneDevelopers />
       </ParallaxWrapper>
       <SectionMission />

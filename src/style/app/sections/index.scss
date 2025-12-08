@@ -1,7 +1,5 @@
-@use 'faq';
 @use 'mission';
 @use 'footer';
-@use 'gamers';
 @use 'devs';
 @use 'users';
 @use 'landing';
@@ -27,7 +25,7 @@
       border-bottom: none;
     }
 
-    & > div {
+    &>div {
       @include mixins.flex(20px);
       margin-bottom: 20px;
     }

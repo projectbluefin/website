@@ -7,7 +7,7 @@
   position: relative;
   padding-bottom: 128px;
 
-  & > div {
+  &>div {
     display: block;
     height: 100vh;
     border-bottom: 1px solid var(--color-border);
@@ -15,10 +15,11 @@
 }
 
 .scene-content {
+
   // Initial state
   strong,
   h2,
-  & > div > div {
+  &>div>div {
     transform: translateY(150%);
   }
 
@@ -26,6 +27,7 @@
     from {
       transform: translateY(150%);
     }
+
     to {
       transform: translateY(0);
     }
@@ -40,12 +42,12 @@
       animation: slide 0.7s normal 0.1s forwards cubic-bezier(0.76, 0, 0.24, 1);
     }
 
-    & > div > div {
+    &>div>div {
       animation: slide 0.7s normal 0.2s forwards cubic-bezier(0.76, 0, 0.24, 1);
     }
   }
 
-  & > div {
+  &>div {
     overflow: hidden;
   }
 
@@ -109,6 +111,7 @@
       cite {
         display: block;
         padding-top: 15px;
+        margin-right: 10px;
         text-align: right;
         position: relative;
 

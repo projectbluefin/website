@@ -123,12 +123,12 @@
               <div>
                 <div class="icon-wrap">
                   <img
-                    src="/brands/jetbrains.png"
+                    src="/brands/jetbrains-icon.png"
                     alt="JetBrains logo blur"
                     loading="lazy"
                   >
                   <img
-                    src="/brands/jetbrains.png"
+                    src="/brands/jetbrains-icon.png"
                     alt="JetBrains logo"
                     loading="lazy"
                   >
