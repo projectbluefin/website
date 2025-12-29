@@ -1,128 +1,219 @@
 {
+  "TopBar": {
+    "Docs": "Dokumentation",
+    "AskBluefin": "Frag Bluefin",
+    "Blog": "Blog",
+    "Changelog": "Changelogs",
+    "Discussions": "Diskussionen",
+    "Feedback": "Feedback",
+    "Store": "Shop (nur USA)"
+  },
   "Landing": {
-    "Title": "Die neue Generation des Linux Desktops, konzipiert für Zuverlässigkeit, Leistungsfähigkeit und Nachhaltigkeit.",
+    "Title": "Die nächste Generation der Linux-Workstation, konzipiert für Zuverlässigkeit, Performance und Nachhaltigkeit.",
     "DiscoverButton": "Entdecken",
     "TryOutButton": "Ausprobieren"
   },
   "Users": {
-    "Text": "Bluefin ist ein Betriebssystem für Deinen Computer. Das Beste aus zwei Welten: die Zuverlässigkeit und Benutzerfreundlichkeit eines Chromebooks verbunden mit der Leistung des GNOME-Desktops.",
     "Tag": "Für",
     "Title": "Dich",
-    "Appendix": "Dank automatischer, image-basierter Updates und einer einfachen grafischen Applikationsverwaltung steht Bluefin Dir nicht im Weg. Lade herunter, was Du willst, ohne die Systemstabilität zu beeinträchtigen. Bluefin ist die Weiterentwicklung des Linux-Clients, ein frischer Start in die nächste Generation. Erfahre mehr im [Ankündigungspost](https://www.ypsidanger.com/announcing-project-bluefin/) und in der [einführenden Dokumentation](https://docs.projectbluefin.io). \n\nImages stehen für PC, Framework- und ASUS-Laptops, sowie für Microsoft-Surface-Geräte zur Verfügung.",
-    "ArtworkDescription": "Bluefin Charaktergrafik",
-    "Box1": "Programme von Flathub",
+    "Intro": "Bluefin ist ein Betriebssystem für Deinen Computer. Das Beste aus zwei Welten: die Zuverlässigkeit und Benutzerfreundlichkeit eines Chromebooks verbunden mit der Leistung des GNOME-Desktops.",
+    "Box1": "Apps von Flathub",
     "Box2": "Nahezu kein Wartungsaufwand",
-    "Box3": "GPU-Treiber standardmäßig enthalten"
+    "Box3": "GPU-Treiber standardmäßig enthalten",
+    "Features": "Dank automatischer, image-basierter Updates und eines einfachen grafischen App-Stores steht Dir Bluefin nicht im Weg. Lade herunter, was Du willst, ohne die Systemstabilität zu beeinträchtigen. Bluefin ist die Weiterentwicklung des Linux-Clients, ein frischer Start in die nächste Generation. Erfahre mehr im [Ankündigungspost](https://www.ypsidanger.com/announcing-project-bluefin/) und in der [einführenden Dokumentation](https://docs.projectbluefin.io).",
+    "BluefinArtworkAlt": "Bluefin blickt in die Zukunft von Linux"
   },
-  "ParallaxQuote": "Evolution is a process of constant branching and expansion.",
+  "EvolutionQuote": {
+    "Quote": "Evolution is a process of constant branching and expansion.",
+    "Author": "Stephen Jay Gould",
+    "WikiLink": "https://en.wikipedia.org/wiki/Stephen_Jay_Gould"
+  },
   "Devs": {
     "Tag": "Für",
     "Title": "Entwickler:innen",
-    "Text": "Bluefin verfügt über einen optionalen \"Developer Modus\" der Dein Gerät in eine mächtige Workstation verwandelt. Container-orientierte Workflows erleichtern Dir den Einstieg und passen sich ganz Deinen Bedürfnissen an, egal ob Du Neueinsteiger oder Veteran bist. Nutze [führende Tools der Branche](https://landscape.cncf.io/) direkt auf Deinem Gerät.",
-    "BoxOne": "Visual Studio Code mit devcontainers",
-    "BoxTwo": "Container-zentriertes Terminal",
-    "BoxThree": "DevPod für Entwicklungsumgebungen-as-Code",
-    "BoxFour": "Homebrew direkt vom Fass",
-    "Appendix": "Die Einbindung einer [Container-Runtime](https://podman.io) entfesselt das Potenzial Deines Teams. Nutze dieselben Tools, die die Grundlage der modernen Internet-Infrastruktur sind, auch auf Deinem Desktop. Bluefin weiß, wie Software ausgeliefert wird. \n\nWir richten uns an Linux-Anwender:innen, die Linux nicht als Desktop verwenden, weil sie enttäuscht wurden. Mit unserer Community erschaffen wir den Linux-Desktop in der Cloud-native-Ära neu. \n\n> Be the one who moves, not the one who is moved.\n> <cite>[Zavala][1]</cite>\n\n[1]: https://en.wikipedia.org/wiki/Lance_Reddick",
-    "ArtworkDescription": "Emporragende Charaktergrafik",
-    "TowerJoke": "<b>Beherrsche</b> Deinen Backlog!"
+    "Features": "Bluefin verfügt über einen optionalen „Developer Modus“ der Dein Gerät in eine mächtige Workstation verwandelt. Container-orientierte Workflows erleichtern Dir den Einstieg und passen sich ganz Deinen Bedürfnissen an, egal ob Du Neueinsteiger oder Veteran bist. Es gibt weltweit [15,6 Millionen Cloud-Native-Developer](https://www.cncf.io/announcements/2025/11/11/cncf-and-slashdata-survey-finds-cloud-native-ecosystem-surges-to-15-6m-developers/), nutz diese [branchenführenden Tools](https://landscape.cncf.io/) ganz easy...",
+    "BoxOne": "Visual Studio Code mit devcontainers.",
+    "BoxTwo": "Arbeite mit deinen Lieblings-Linux-Distributionen über ein container-zentriertes Terminal.",
+    "BoxThree": "Für Cloud-Native-Development gebaut mit den besten CNCF-Tools, inklusive Kubernetes.",
+    "BoxFour": "Homebrew standardmäßig am Start. Nutze die gleichen Tools wie auf deinem Mac.",
+    "BoxFive": "Podman Desktop für grafisches Container-Management.",
+    "BoxSix": "JetBrains IDEs mit nur einem Befehl installieren.",
+    "RuntimeContainers": "Die Einbindung einer [Container-Runtime](https://podman.io) entfesselt das Potenzial Deines Teams. Nutze dieselben Tools, die die Grundlage der modernen Internet-Infrastruktur sind, auch auf Deinem Desktop. Bluefin weiß, wie Software ausgeliefert wird.",
+    "CNJourney": "Wir richten uns an Linux-Anwender:innen, die Linux nicht als Desktop verwenden, weil sie enttäuscht wurden. Mit unserer Community erschaffen wir den Linux-Desktop in der Cloud-native-Ära neu.",
+    "KarlArtworkAlt": "Karl ragt über dem Backlog empor",
+    "TowerJoke": "<b>Überblicke</b> Deinen Backlog!"
+  },
+  "InitiativeQuote": {
+    "Quote": "Be the one who moves, not the one who is moved.",
+    "Author": "Commander Zavala (Destiny)",
+    "WikiLink": "https://en.wikipedia.org/wiki/Lance_Reddick"
   },
   "Mission": {
     "Tag": "Unsere",
     "Title": "Mission",
-    "Text": "Bluefin ist nicht nur eine Software, sie ist eine neue Tierart, angepasst, um die Härte eines von Riesen beherrschten Ökosystems zu überleben und gleichzeitig ihre Familie zu beschützen.\n\nWir glauben, dass sich das Desktop-Erlebnis ändern muss. Technologie beginnt bei Deinem lokalen Computer, dem Gerät, welches du täglich nutzt, und es sollte genauso wichtig sein, wie der Rest des Linux-Ökosystems.\n\nDurch die Verwendung von cloud-nativen Techniken auf dem Desktop hoffen wir das Interesse am Desktop-Computing zu wecken und gleichzeitig die nächste Generation von Open-Source-Mitwirkenden anzusprechen. Bluefin ist als das Tool konzipiert, auf das Du Dich verlassen kannst, während Du tust, was Du am besten kannst. Der aktuelle Linux-Desktop hat uns nicht hierher gebracht, aber wir glauben, dass gewisse Dinge rückgängig gemacht werden können. Machen wir es besser.\n\nBluefin dreht sich um Nachhaltigkeit, welche Software, Hardware und Menschen umfasst.\n\n> There are two ways of spreading light: to be the candle or the mirror that reflects it.\n> <cite>[Edith Wharton][1]</cite>\n\n[1]: https://en.wikipedia.org/wiki/Edith_Wharton\n\nOder sie schlitzt uns die Eingeweide auf. Cleveres Mädchen.",
+    "Text": {
+      "NewBreed": "Bluefin ist nicht nur eine Software, sie ist eine neue Tierart, angepasst, um die Härte eines von Riesen beherrschten Ökosystems zu überleben und gleichzeitig ihre Familie zu beschützen.",
+      "Change": "Wir glauben, dass sich das Desktop-Erlebnis ändern muss. Technologie beginnt bei Deinem lokalen Computer, dem Gerät, welches du täglich nutzt, und es sollte genauso wichtig sein, wie der Rest des Linux-Ökosystems.",
+      "CloudNative": "Durch die Verwendung von cloud-nativen Techniken auf dem Desktop hoffen wir das Interesse am Desktop-Computing zu wecken und gleichzeitig die nächste Generation von Open-Source-Mitwirkenden anzusprechen. Bluefin ist als das Tool konzipiert, auf das Du Dich verlassen kannst, während Du tust, was Du am besten kannst. Der aktuelle Linux-Desktop hat uns nicht hierher gebracht, aber wir glauben, dass gewisse Dinge rückgängig gemacht werden können. Machen wir es besser.",
+      "Sustainability": "Bluefin dreht sich um Nachhaltigkeit, welche Software, Hardware und Menschen umfasst."
+    },
+    "CleverGirl": "Oder sie schlitzt uns die Eingeweide auf. Cleveres Mädchen.",
     "BluefinChillAlt": "Bluefin liegt da und chillt"
+  },
+  "SpreadQuote": {
+    "Quote": "There are two ways of spreading light: to be the candle or the mirror that reflects it.",
+    "Author": "Edith Wharton",
+    "WikiLink": "https://en.wikipedia.org/wiki/Edith_Wharton"
   },
   "Video": {
     "Url": "https://www.youtube.com/embed/Nz-yyDwTfRM&autoplay=1",
-    "Title": "Bluefin Linux Einführung",
-    "AppendixText": "Project Bluefin ist kein fertiges Produkt, sondern ein fortlaufendes Leidenschaftsprojekt, das von [cloud-native Enthusiast:innen](https://github.com/ublue-os/bluefin/graphs/contributors) gepflegt wird, die eine zuverlässigere und wartbare Linux-Desktop-Erfahrung anstreben. Hilf mit und beseitige mit uns [offene Issues](https://github.com/ublue-os/bluefin/issues).\n\nSie repräsentiert den neuesten Stand der Technik … Ein zerbrechliches, schönes und einzigartiges Geschöpf. Ein perfektes Raubtier für eine Welt, die unweigerlich vor Herausforderungen stehen wird. Wir müssen uns anpassen. Wir können es schaffen, **gemeinsam**."
+    "Title": "Einführung in Bluefin ",
+    "Text": {
+      "Passion": "Project Bluefin ist kein fertiges Produkt, sondern ein fortlaufendes Leidenschaftsprojekt, das von [cloud-native Enthusiast:innen](https://github.com/ublue-os/bluefin/graphs/contributors) gepflegt wird, die eine zuverlässigere und wartbare Linux-Desktop-Erfahrung anstreben. Hilf mit und beseitige mit uns [offene Issues](https://github.com/ublue-os/bluefin/issues).",
+      "StateOfTheArt": "Sie repräsentiert den neuesten Stand der Technik … Ein schönes und einzigartiges Geschöpf. Ein perfektes Raubtier für eine Welt, die unweigerlich vor Herausforderungen stehen wird. Wir müssen uns anpassen. Wir können es schaffen, **gemeinsam**."
+    }
+  },
+  "Bazaar": {
+    "Tag": "Benutze deine lieblings",
+    "Title": "Programme",
+    "Description": "Bluefin nutzt <a href=\"https://github.com/kolunmi/bazaar\" target=\"_blank\">Bazaar</a> als App-Store, was dir einfaches Installieren und Verwalten von all deinen Lieblingsprogrammen von <a href=\"https://flathub.org\" target=\"_blank\">Flathub</a> erlaubt und einer kuratierten Liste von Apps, wo wir glauben das du sie lieben wirst.",
+    "Additional": "Zusätzlich bringt Bluefin <a href=\"https://docs.brew.sh/Homebrew-on-Linux\" target=\"_blank\">Homebrew</a> mit und durch Anwendungs-Container, läuft praktisch jede Software wie von selbst. <br><br><strong>Bluefin wird auf Bluefin entwickelt.</strong>",
+    "FlathubButton": "Apps auf Flathub anschauen"
   },
   "TryBluefin": {
-    "Title": "Bluefin ausprobieren",
-    "Description": "Verwende das untenstehende Formular um den richtigen ISO-Downloadlink für Deine Hardware und Deinen Verwendungszweck zu erhalten. Das Team empfiehlt den <a href='https://flathub.org/apps/org.fedoraproject.MediaWriter'>Fedora Media Writer</a>, um ein Installationsmedium zu erstellen:",
-    "Developer": {
-      "Question": "Bist Du ein:e Entwickler:in?",
-      "DefaultSelection": "Entwicklungswerkzeuge integrieren",
-      "Yes": "Ja",
-      "No": "Nein"
+    "Tag": "Bluefin",
+    "Title": "Ausprobieren",
+    "Description": {
+      "Choice": "Wähl deinen Raptor passend zur Hardware und Verwendungszweck. Das Team empfiehlt den [Fedora Media Writer](https://flathub.org/apps/org.fedoraproject.MediaWriter), um ein Installationsmedium zu erstellen. Ventoy wird nicht unterstützt. Mehr Infos findest du in [der Doku](https://docs.projectbluefin.io).",
+      "Updates": "Bluefin bekommt zeitnahe Security-Updates und ist in zwei Varianten verfügbar – je nachdem, wie aggressiv du Feature-Updates bekommen willst:"
     },
-    "Gpu": {
-      "Question": "Wer ist der Hersteller Deiner primären GPU?",
-      "DefaultSelection": "Primären GPU-Hersteller auswählen"
+    "Label": {
+      "Base": "Base",
+      "Gnome": "GNOME",
+      "Kernel": "Kernel",
+      "HWEKernel": "HWE-Kernel",
+      "Mesa": "MESA",
+      "Nvidia": "Nvidia",
+      "Recommended": "Empfohlen",
+      "Back": "Zurück",
+      "BackToReleases": "Zurück zu den Releases"
+    },
+    "Lts": {
+      "Title": "Bluefin LTS",
+      "Subtitle": "Für Profis und AI/ML-Ingenieur:in",
+      "Description": "Ein Long-Term-Support-Erlebnis auf einem Enterprise-Grade-Fundament."
+    },
+    "Stable": {
+      "Title": "Bluefin",
+      "Subtitle": "Für jeden",
+      "Description": "Ein moderner Desktop am Puls der Zeit. Nimm das hier, wenn du dir unsicher bist."
     },
     "Architecture": {
       "Question": "Auf welche Prozessorarchitektur wird Bluefin installiert? Ältere Systeme mit BIOS werden nicht unterstützt.",
       "x86": "x86_64 (Standard für die meisten Computer)",
       "arm": "ARM64"
     },
-    "Stream": {
-      "Question": "Wie häufig möchtest Du Updates? ",
-      "DefaultSelection": "Update Stream auswählen",
-      "Stable": "Bluefin (für Enthusiast:innen)",
-      "LTS": "Bluefin LTS"
+    "Gpu": {
+      "Question": "Wer ist der Hersteller deiner primären Grafikkarte (GPU)? Ältere Nvidia-Karten werden nicht unterstützt",
+      "DefaultSelection": "Wähle den Hersteller deiner primären GPU",
+      "AMDIntel": "AMD oder Intel",
+      "Nvidia": "Nvidia RTX oder GTX 16xx+ Serie"
+    },
+    "Kernel": {
+      "Question": "Was ist deine Priorität? Diese Auswahl balanciert Systemstabilität mit Support für die neueste Hardware. Du kannst das später ändern:",
+      "Regular": "LTS Linux-Kernel: Die zuverlässigste Option – perfekt für die meisten Rechner.",
+      "HWE": "Aktuellster Linux-Kernel: Am besten für brandneue Geräte und die neuesten Features."
+    },
+    "Selection": {
+      "Ready": "Bereit zum Download!",
+      "YourSelection": "Deine Auswahl ...",
+      "Release": {
+        "Title": "Release",
+        "StableDesc": "Für alle",
+        "GDXDesc": "Für Developer"
+      },
+      "Architecture": {
+        "Title": "Architektur",
+        "X86Desc": "Standard für die meisten Computer (AMD und Intel)",
+        "ArmDesc": "Für ARM-basierte Systeme (Apple Silicon, Raspberry Pi, usw.)"
+      },
+      "Kernel": {
+        "Title": "Kernel",
+        "Regular": "Normales LTS",
+        "RegularDesc": "Stabile Kernel-Updates, fixiert auf 6.12.0 mit Backports",
+        "HWE": "Hardware Enablement (HWE)",
+        "HWEDesc": "Regelmäßig aktualisierte Kernel für besseren Hardware-Support"
+      },
+      "Gpu": {
+        "Title": "Grafikkarte (GPU)",
+        "AMDIntelDesc": "Integrierte AMD- oder Intel-Grafik",
+        "NvidiaDesc": "Nvidia RTX/GTX 16xx+ Serie, GTX 10xx Serie und älter werden nicht unterstützt"
+      }
     },
     "Download": {
-      "Iso": "Herunterladen der ISO",
-      "Registry": "Schaue Dir die Details in der GitHub Container Registry an",
-      "Checksum": "Verifizieren (SHA256)",
-      "DocumentationURL": "Lies die [Bluefin Dokumentation (Englisch)](https://docs.projectbluefin.io/). Es dauert etwa 15 Minuten und beinhaltet ein Installations-Handbuch - bereite Dich vor, Du betrittst eine neue Welt.",
-      "DeveloperNote": "Lies die [Einführung zu Bluefin DX (Englisch)](https://docs.projectbluefin.io/bluefin-dx)",
-      "DollyChill": "Dolly chillt bei deinem ISO Link"
+      "IsoDescription": "Installations-ISO",
+      "IsoDownload": "ISO herunterladen",
+      "Checksum": "Prüfen (SHA256)",
+      "Registry": "Registry ansehen",
+      "Documentation": {
+        "Intro": "Schau dir die [Bluefin-Dokumentation](https://docs.projectbluefin.io/) an – dauert ungefähr 15 Minuten und enthält ein Installations-Runbook. Stell dich auf Erfolg ein: Du betrittst eine neue Welt.",
+        "Downloads": "Du findest nicht, was du suchst? Schau in die [vollständige Download-Liste](https://docs.projectbluefin.io/downloads/).",
+        "SecureBoot": "Wenn du bei der Installation Secure Boot auswählst, ist das Passwort „universalblue“."
+      },
+      "ChooseRelease": "Anderes Release auswählen"
     }
   },
-  "NewsTitle": "Neuigkeiten",
-  "Faq": {
-    "Tag": "Unsicher?",
-    "Title": "FAQ",
-    "Text": "Falls Fragen unbeantwortet geblieben sind, \nkannst Du uns [in unserem Discourse (Forum)](https://universal-blue.discourse.group/c/bluefin/6) finden oder einen Blick auf die Dokumentation unter [docs.projectbluefin.io (Englisch)](https://docs.projectbluefin.io) werfen.",
-    "QuestionsArray": {
-      "0": {
-        "question": "Was genau ist Bluefin? Warum habt ihr eine Linux Distribution erstellt?",
-        "answer": "Bluefin verwendet bootc's OCI-Container-Funktionalität, um ein Betriebssystem-Image zu definieren und bereitzustellen. Dieser Prozess wird von unserer gut strukturierten Community überwacht, die sich der Automatisierung und Nachhaltigkeit verschrieben hat. Das Endergebnis ist ein Betriebsystem, welches standardmäßig Best-Practices enthält, sodass Anwendende nicht von Neuem beginnen müssen. Wir verwenden den Begriff \"custom image\" um diesen Ansatz zu beschreiben. Es ist, als würde jemand ein ausgeklügeltes Setup für Dich installieren, konfigurieren und warten. \n\n Es ist wie, wenn Dein:e Geek-Freund:in Dir beim Einrichten des Computers hilft, nur dass wir es zusammen als Community tun, um uns gegenseitig zu unterstützen. \n\n[OSTree Native Containers](https://bootc-dev.github.io/bootc/)"
-      },
-      "1": {
-        "question": "Wie unterscheidet sich Bluefin von anderen Desktops?",
-        "answer": "Bluefin ist ein Desktop der nächsten Generation, der sich absichtlich wie ein Endgerät anstatt einer traditionellen Distribution verhält. Wir beseitigen die Qual der Wahl für Anwender:innen, indem wir den gut kuratierten Flathub-Store und Homebrew als primäre Quelle für Software nutzen und die Verwendung von System-Paketen auf ein Minimum beschränken. \n\n Für Entwickler:innen konzentrieren wir uns auf einen reinen cloud-native Developer-Workflow mittels Devcontainers. \n\n Du kannst aber auch jeden anderen OCI-Container als Deinen eigenen User-Space verwenden. \n\n [Distrobox](https://distrobox.privatedns.org/compatibility/#host-distros) \n [Flathub](https://flathub.org) \n [Devcontainers](https://containers.dev) \n [Ptyxis](https://flathub.org/apps/app.devsuite.Ptyxis)"
-      },
-      "2": {
-        "question": "Wo finde ich weitere Einzelheiten zu den Funktionen?",
-        "answer": "Du findest detaillierte Informationen in unserem GitHub Repository und in der Dokumentation. \n\n [GitHub](https://github.com/ublue-os/bluefin#readme) \n [Bluefin Dokumentation](https://docs.projectbluefin.io) [Entwicklerdokumentation](https://docs.projectbluefin.io/bluefin-dx)"
-      },
-      "3": {
-        "question": "Warum Dinosaurier?",
-        "answer": "Bluefin ist ein Deinonychus Antirrhopus, ein Theropode-Dinosaurier, dessen Name „schreckliche Klaue“ bedeutet. Sie wurde in den 1960er Jahren entdeckt und revolutionierte unser Verständnis von Dinosauriern. Vor dem Deinonychus wurden Dinosaurier oft als langsame, dümmliche Kreaturen angesehen. Sie räumte jedoch mit diesen Missverständnissen auf und bot Einblicke in die dynamische Welt heißblütiger, sich schnell entwickelnder Tiere, die ihr Reich beherrschten. Wir möchten, dass unser Desktop eine ähnliche Wendigkeit verkörpert. Kraft und Anpassungsfähigkeit. \n\n [Deinonychus](https://en.wikipedia.org/wiki/Deinonychus)"
-      },
-      "4": {
-        "question": "Wie steht es um die Zukunftsfähigkeit des Projekts?",
-        "answer": "Das Projekt ist absichtlich in Bash und Python geschrieben, um einen einfachen Einstieg für neue Mitwirkende zu ermöglichen. Wir kopieren nur Dateien hin und her, am Ende ist es immer noch Linux. Da dieses Modell skalierbar ist, glauben wir, dass Organisationen, die von diesem Projekt profitieren, einen Teil ihrer Zeit in die Wartung investieren würden. Der Funktionsumfang ist größtenteils vollständig und zieht automatisierungsorientierte Systemadministrator:innen an. Jede:r kann beitragen und einen Mehrwert erzielen, indem die Wartung des Betriebssystems über eine Community automatisiert wird. Oder spende einfach über GitHub Sponsors, um die Entwickler:innen und mehr paleoart zu sponsern. \n\n [GitHub Sponsors](https://github.com/sponsors/castrojo)"
-      },
-      "5": {
-        "question": "Was ist, wenn ich lieber KDE verwenden möchte?",
-        "answer": "Aurora ist praktisch das Gleiche wie Bluefin, nur dass es KDE verwendet. Wir hoffen, dass Bluefin und Aurora als Inspiration für andere dienen, um ihre eigenen Communitys und Benutzererlebnisse ins Leben zu rufen. Widme deine Aufmerksamkeit auch Bazzite, falls du ein Gaming-Erlebnis der Extraklasse wünschst, ähnlich dem von SteamOS. Gemeinsam sind wir stärker. \n\n [Aurora](https://getaurora.dev) \n [Bazzite](https://bazzite.gg)"
-      },
-      "6": {
-        "question": "Ich bin nicht an einem Desktop interessiert. Kann ich nur die Dinosaurier bekommen?",
-        "answer": "Bluefin wurde von Jacob Schnurr und Andy Frazer ins Leben gerufen. Die Kunst steht zur freien Verfügung. Sie stellt das empfindliche Gleichgewicht des Lebens dar und soll uns daran erinnern, dass Open Source ein Ökosystem ist, das erhalten werden muss. Die Software, die wir erstellen, hat Auswirkungen auf die Welt: Bluefin mag von Technologienerds zusammengestellt worden sein, aber es brauchte zwei Menschen, um uns die Bedeutung der Kreativität des menschlichen Geistes zu zeigen. \n\n [Hintergrundbilder und Dinosaurier](https://universal-blue.discourse.group/t/dinosaur-gallery/18/5) \n [Jacob Schnurr](https://www.etsy.com/shop/JSchnurrCommissions?listing_id=1425657775) \n [Andy Frazer](https://www.etsy.com/fi-en/shop/DragonsofWales?ref=profile_header)"
-      }
+  "Community": {
+    "Tag": "Unsere",
+    "Title": "Community",
+    "Documentation": {
+      "Title": "Dokumentation",
+      "Description": "Du suchst nach Support? Schau dir unsere Dokumentation mit aktuellen Leitfäden zur Installation, allgemeiner Nutzung und Fehlerbehebung an.",
+      "Button": "Dokumentation anschauen",
+      "DiscordButton": "Unserem Discord beitreten",
+      "DiscussionsButton": "Diskussionen"
+    },
+    "Contribute": {
+      "Title": "Mitwirken",
+      "Description": "Hilf bei Bluefins Entwicklung – mit Code, Bug-Reports oder Feature-Requests. Du kannst auch einzelne Mitwirkende sponsern, wenn du finanzielle Unterstützung geben willst.",
+      "Button": "Besuche uns auf GitHub",
+      "DonateButton": "Spenden"
     }
+  },
+  "News": {
+    "Title": "Neuigkeiten",
+    "Loading": "Blogposts werden geladen...",
+    "NoPosts": "Keine Blogposts gefunden.",
+    "ViewAll": "Alle Posts im offiziellen Blog ansehen"
   },
   "Flock": {
     "Title": "Unsere Mitwirkenden",
-    "Description": "Bluefin wird von einer engagierten Gruppe von Maintainern und Mitwirkenden entwickelt."
+    "Description": "Bluefin wird von einer engagierten Gruppe von Maintainern und Mitwirkenden entwickelt.",
+    "AlumniTitle": "Mit Alumni aus Firmen wie",
+    "SponsorsTitle": "Unsere Sponsoren"
   },
   "Footer": {
-    "Title": "Powered By",
-    "Copyright": "Copyright {date} © Project Bluefin and Universal Blue",
-    "Project": "Bluefin wird entwickelt von [Universal Blue](https://universal-blue.org), einem Community-Toolkit, welches dem Linux Desktop neues Leben einhauchen möchte. Aus der Liebe zum Spiel entwickelt. Willkommen bei Indie Cloud Native.",
-    "ProjectTitle": "Project Bluefin",
-    "References": "Alle Kunstwerke wurden von Menschen geschaffen.\n\n- Webseite - [Jan Dolanský](https://dolansky.dev/) & [Kyle Gospodnetich](https://kylegospodneti.ch/)\n- Logos und Hintergrundbilder - [Jacob Schnurr](https://www.etsy.com/shop/JSchnurrCommissions?listing_id=1425657775)\n- Andere Kunst und Illustrationen - [Chandeleer](https://ko-fi.com/chandeleer)\n-  Bluefin Illustrative Wallpaper - Andy Frazer\n, [DragonsofWales](https://www.etsy.com/fi-en/shop/DragonsofWales?ref=profile_header)\n- Übersetzungen (de-DE) - [karhima](https://github.com/karhima), [Niklas](https://niklas.tech) \n- Spezieller Dank geht an [Aaron Lake](https://www.linkedin.com/in/aaron-lake/), [Brian Ketelsen](https://brian.dev/), [Dustin Kirkland](https://www.kotterva.com/), und [Marco Ceppi](https://github.com/marcoceppi)"
+    "PoweredBy": "Powered By",
+    "Project": {
+      "Title": "Projekt Bluefin wird entwickelt mit",
+      "Ublue": "Einem Community-Toolkit, welches dem Linux Desktop neues Leben einhauchen möchte. Aus der Liebe zum Spiel entwickelt. Willkommen bei Indie Cloud Native."
+    },
+    "Credits": {
+      "Intro": "Alle Artworks wurden von Menschen geschaffen.",
+      "Website": "Webseite - [Jan Dolanský](https://dolansky.dev/) & [Kyle Gospodnetich](https://kylegospodneti.ch/)",
+      "Logos": "Logos und Hintergrundbilder - [Jacob Schnurr](https://www.etsy.com/shop/JSchnurrCommissions?listing_id=1425657775)",
+      "ImageEdit": "Bildbearbeitung - [Chandeleer](https://ko-fi.com/chandeleer) & [Delphic Melody](https://github.com/delphicmelody/)",
+      "Wallpapers": "Illustrative Bluefin Wallpaper - Andy Frazer, [DragonsofWales](https://www.etsy.com/fi-en/shop/DragonsofWales?ref=profile_header)",
+      "Translations": "Übersetzungen - [Tulip Blossom](https://github.com/tulilirockz), [karhima](https://github.com/karhima), [Niklas](https://niklas.tech), [Crono](https://github.com/EPOCHvoyager), [Tsu-gu](https://github.com/Tsu-gu) & [Mimolet](https://github.com/theMimolet)",
+      "Thanks": "Spezieller Dank an - [Aaron Lake](https://www.linkedin.com/in/aaron-lake/), [Brian Ketelsen](https://brian.dev/), [Dustin Kirkland](https://www.kotterva.com/), [Wayne Witzel](https://github.com/wwitzel3), & [Marco Ceppi](https://github.com/marcoceppi)"
+    },
+    "Copyright": "Copyright {date} © Project Bluefin and Universal Blue"
   },
   "Navbar": {
     "ForYou": "Für Dich",
     "ForDevs": "Für Entwickler",
     "OurMission": "Unsere Mission",
     "TryOut": "Ausprobieren",
-    "FAQ": "FAQ"
+    "Community": "Community"
   }
 }
