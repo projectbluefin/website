@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import { onBeforeMount, provide, ref } from 'vue'
 
+import Navigation from './components/Navigation.vue'
 import PageLoading from './components/PageLoading.vue'
-import TopNavbar from './components/TopNavbar.vue'
-import ParallaxWrapper from './components/sections/ParallaxWrapper.vue'
+import SceneDevelopers from './components/scenes/SceneDevelopers.vue'
 import SceneLanding from './components/scenes/SceneLanding.vue'
 import SceneUsers from './components/scenes/SceneUsers.vue'
-import SceneDevelopers from './components/scenes/SceneDevelopers.vue'
-import SectionMission from './components/sections/SectionMission.vue'
-import SectionVideo from './components/sections/SectionVideo.vue'
+import ParallaxWrapper from './components/sections/ParallaxWrapper.vue'
 import SectionBazaar from './components/sections/SectionBazaar.vue'
-import SectionPicker from './components/sections/SectionPicker.vue'
 import SectionCommunity from './components/sections/SectionCommunity.vue'
-import SectionNews from './components/sections/SectionNews.vue'
 import SectionFooter from './components/sections/SectionFooter.vue'
-import Navigation from './components/Navigation.vue'
+import SectionMission from './components/sections/SectionMission.vue'
+import SectionNews from './components/sections/SectionNews.vue'
+import SectionPicker from './components/sections/SectionPicker.vue'
+import SectionVideo from './components/sections/SectionVideo.vue'
+import TopNavbar from './components/TopNavbar.vue'
 
 import { IS_TABLET } from './composables'
 

@@ -3,8 +3,7 @@ import type { MessageSchema } from '../../locales/schema'
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Holidaysaurus from '../../assets/img/Holidaysaurus.webp'
-// Re-implement after December
-// import { LangLandingBluefinImageURLs } from "../../content"
+import { LangLandingBluefinImageURLs } from '../../content'
 import { i18n } from '../../locales/schema'
 import SceneVisibilityChecker from '../common/SceneVisibilityChecker.vue'
 
@@ -17,17 +16,19 @@ function scrollToPicker() {
     .querySelector('#scene-picker')
     ?.scrollIntoView({ behavior: 'smooth' })
 }
-/* Re-implement after December
+
 function getRandomBluefinImage() {
   return LangLandingBluefinImageURLs[
     Math.floor(Math.random() * LangLandingBluefinImageURLs.length)
   ]
 }
- */
 
 const isLoaded = ref(false)
-// Re-implement after December
-// const LangLandingBluefinImageURL = getRandomBluefinImage()
+
+const isHolidaySeason = new Date().getMonth() === 11
+const imageToDisplay = isHolidaySeason
+  ? Holidaysaurus
+  : getRandomBluefinImage()
 
 onMounted(() => {
   setTimeout(() => {
@@ -91,7 +92,7 @@ const { t } = useI18n<MessageSchema>({
         </div>
         <img
           class="sm:h-full sm:w-full object-contain my-3 w-1/2 h-1/2"
-          :src="Holidaysaurus"
+          :src="imageToDisplay"
           alt="Bluefin"
         >
       </div>

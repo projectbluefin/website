@@ -1,16 +1,16 @@
 <script setup lang="ts">
-  import type { MessageSchema } from '../../locales/schema'
-  import { marked } from 'marked'
-  import { useI18n } from 'vue-i18n'
-  import { LangDevsAppendix, LangDevsTowerImageURL } from '../../content'
+import type { MessageSchema } from '../../locales/schema'
+import { marked } from 'marked'
+import { useI18n } from 'vue-i18n'
+import { LangDevsAppendix, LangDevsTowerImageURL } from '../../content'
 
-  import SceneContent from '../common/SceneContent.vue'
-  import SceneVisibilityChecker from '../common/SceneVisibilityChecker.vue'
-  import SceneQuote from '../common/SceneQuote.vue'
+import SceneContent from '../common/SceneContent.vue'
+import SceneQuote from '../common/SceneQuote.vue'
+import SceneVisibilityChecker from '../common/SceneVisibilityChecker.vue'
 
-  const { t } = useI18n<MessageSchema>({
-    useScope: 'global'
-  })
+const { t } = useI18n<MessageSchema>({
+  useScope: 'global'
+})
 </script>
 
 <template>
