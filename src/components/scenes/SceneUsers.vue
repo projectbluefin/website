@@ -2,7 +2,6 @@
 import type { MessageSchema } from '../../locales/schema'
 import { marked } from 'marked'
 import { useI18n } from 'vue-i18n'
-import SceneQuote from '../common/SceneQuote.vue'
 import {
   LangUsersAppendix,
   LangUsersBluefinImageURL,
@@ -10,6 +9,8 @@ import {
 } from '../../content'
 
 import SceneContent from '../common/SceneContent.vue'
+import SceneQuote from '../common/SceneQuote.vue'
+
 import SceneVisibilityChecker from '../common/SceneVisibilityChecker.vue'
 
 const { t } = useI18n<MessageSchema>({
@@ -48,10 +49,10 @@ const { t } = useI18n<MessageSchema>({
             v-html="marked.parse(t('Users.Features'))"
           />
           <SceneQuote
-          quote="EvolutionQuote.Quote"
-          author="EvolutionQuote.Author"
-          link="EvolutionQuote.WikiLink"
-        />
+            quote="EvolutionQuote.Quote"
+            author="EvolutionQuote.Author"
+            link="EvolutionQuote.WikiLink"
+          />
         </SceneContent>
       </div>
     </div>
