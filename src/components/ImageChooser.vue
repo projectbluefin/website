@@ -426,6 +426,7 @@ onMounted(() => {
               else {
                 showGpuStep = true
                 imageName.gpu = undefined
+                imageName.kernel = undefined
                 showDownload = false
               }
             }
