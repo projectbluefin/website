@@ -1,7 +1,7 @@
 # Stream version information for Bluefin releases
 # This file contains the latest version information for each stream
 # Data is sourced from the most recent changelogs in ublue-os/bluefin and ublue-os/bluefin-lts repositories
-# Last updated: 2026-02-21
+# Last updated: 2026-03-01
 
 lts:
   base: "CentOS Stream 10"
