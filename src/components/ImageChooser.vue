@@ -218,7 +218,8 @@ function reset() {
   showKernelStep.value = false
   showGpuStep.value = false
   showDownload.value = false
-  // Do not reset detection — user opted in, keep result visible
+  // Do not reset detection result — user opted in, keep result for reference.
+  // Intercept visibility flags are cleared so the user can fall through to the manual wizard.
   detectionRecommended.value = false
   showMacIntercept.value = false
   showLegacyNvidiaIntercept.value = false
@@ -401,7 +402,7 @@ onMounted(() => {
             {{ t('TryBluefin.Detection.MacIntelButton') }}
           </a>
           <button class="back-button" @click="dismissMacIntercept">
-            {{ t('TryBluefin.Detection.MacContinue') }}
+            {{ t('TryBluefin.Detection.MacIntelContinue') }}
           </button>
         </div>
       </template>
@@ -940,13 +941,7 @@ onMounted(() => {
 .release-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    to bottom,
-    rgba(0, 0, 0, 0.2) 0%,
-    rgba(0, 0, 0, 0.5) 40%,
-    rgba(0, 0, 0, 0.9) 100%
-  );
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.5) 40%, rgba(0, 0, 0, 0.9) 100%);
   display: flex;
   align-items: flex-end;
   padding: 1.5rem;
@@ -1028,7 +1023,7 @@ onMounted(() => {
 }
 
 .version-value {
-  font-family: 'Courier New', 'Courier New';
+  font-family: 'Courier New', monospace;
   color: #93c5fd;
   font-weight: 500;
   background: rgba(0, 0, 0, 0.3);
@@ -1245,7 +1240,7 @@ onMounted(() => {
 
 .filename-value {
   display: block;
-  font-family: 'Courier New', 'Courier New';
+  font-family: 'Courier New', monospace;
   font-size: 1.65rem;
   font-weight: 600;
   color: white;

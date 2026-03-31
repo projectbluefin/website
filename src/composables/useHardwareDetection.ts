@@ -39,11 +39,17 @@ function detectGPU(): GPUResult {
   const ext = gl.getExtension('WEBGL_debug_renderer_info')
   // ext is null under Firefox privacy.resistFingerprinting — do not access its properties
   if (!ext) {
+    gl.getExtension('WEBGL_lose_context')?.loseContext()
     return { vendor: null, renderer: null, confidence: 'none', reason: 'no-debug-ext' }
   }
 
   const renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) as string
   const vendor = gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) as string
+
+  // Release the GPU context immediately after reading — we don't need it beyond this point.
+  // Browsers limit concurrent WebGL contexts (Chrome: 16, Safari: 8); explicit release avoids
+  // accumulation if detection is ever called more than once.
+  gl.getExtension('WEBGL_lose_context')?.loseContext()
 
   if (/llvmpipe|SwiftShader|softpipe/i.test(renderer)) {
     return { vendor: null, renderer, confidence: 'none', reason: 'software-renderer' }
@@ -88,11 +94,10 @@ async function detectArch(): Promise<Arch> {
       if (arch === 'arm' || arch === 'arm64' || arch === 'aarch64') {
         return 'arm64'
       }
-      if (arch === 'x86' || arch === 'x86_64' || arch === 'amd64') {
-        // On Windows ARM with an x86-emulated browser, Client Hints reports 'x86'
-        // because that is the browser's compiled target, not the hardware arch.
-        // Fall through to UA string check for any secondary ARM signals.
-      }
+      // On Windows ARM with an x86-emulated browser, Client Hints reports 'x86'
+      // because that is the browser's compiled target, not the hardware arch.
+      // No early return for x86 — always fall through to the UA string check below
+      // so a native ARM64 Chromium UA token ('ARM64') can still be detected.
     }
     catch {
       // fall through to UA string fallback
@@ -160,12 +165,11 @@ export function extractGPUName(renderer: string): string {
 }
 
 export async function runDetection(): Promise<DetectionResult> {
-  // All async work completes before state is returned (atomic update)
-  const [gpu, os, archRaw] = await Promise.all([
-    Promise.resolve(detectGPU()),
-    Promise.resolve(detectOS()),
-    detectArch(),
-  ])
+  // detectGPU and detectOS are synchronous; detectArch is async (Client Hints API).
+  // Run detectArch in parallel with the sync calls for clean sequencing.
+  const gpu = detectGPU()
+  const os = detectOS()
+  const archRaw = await detectArch()
 
   // Safari and Firefox on Apple Silicon report "Intel Mac OS X" in the UA and
   // have no Client Hints support, so detectArch() returns 'x86_64' even on M1/M2/M3.
@@ -173,7 +177,7 @@ export async function runDetection(): Promise<DetectionResult> {
   // fallback to correct the arch when the UA/Client Hints signal is wrong.
   let arch = archRaw
   if (os === 'mac' && arch === 'x86_64' && gpu.confidence === 'high' && gpu.renderer) {
-    if (/Apple\s+M\d/i.test(gpu.renderer) || /Apple GPU/i.test(gpu.renderer)) {
+    if (/Apple\s+M\d+/i.test(gpu.renderer) || /Apple GPU/i.test(gpu.renderer)) {
       arch = 'arm64'
     }
   }
