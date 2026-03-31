@@ -1,15 +1,22 @@
 <script setup lang="ts">
+// Privacy: all processing is client-side, no data transmitted
 import type { Ref } from 'vue'
+import type { DetectionResult, GPUClass } from '../composables/useHardwareDetection'
 import type { MessageSchema } from '../locales/schema'
 import {
   IconCheckCircle,
   IconDownload,
   IconGithubCircle
 } from '@iconify-prerendered/vue-mdi'
-import { marked } from 'marked'
 
+import { marked } from 'marked'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import {
+  classifyGPU,
+  extractGPUName,
+  runDetection,
+} from '../composables/useHardwareDetection'
 
 const { t } = useI18n<MessageSchema>({
   useScope: 'global'
@@ -54,6 +61,13 @@ const showArchitectureStep = ref(false)
 const showKernelStep = ref(false)
 const showGpuStep = ref(false)
 const showDownload = ref(false)
+
+// Hardware detection state (atomic — all set together after async completes)
+const detection = ref<DetectionResult | null>(null)
+const detectionRunning = ref(false)
+const showMacIntercept = ref(false)
+const showLegacyNvidiaIntercept = ref(false)
+const detectionRecommended = ref(false)
 
 // Release definitions with their characteristics
 const releases = [
@@ -204,6 +218,118 @@ function reset() {
   showKernelStep.value = false
   showGpuStep.value = false
   showDownload.value = false
+  // Do not reset detection — user opted in, keep result visible
+  detectionRecommended.value = false
+  showMacIntercept.value = false
+  showLegacyNvidiaIntercept.value = false
+}
+
+// --- Hardware Detection ---
+
+const detectedGPUClass = computed<GPUClass | null>(() => {
+  if (!detection.value || detection.value.gpu.confidence !== 'high') {
+    return null
+  }
+  return classifyGPU(detection.value.gpu.renderer!)
+})
+
+const detectedGPUName = computed<string | null>(() => {
+  if (!detection.value || detection.value.gpu.confidence !== 'high') {
+    return null
+  }
+  return extractGPUName(detection.value.gpu.renderer!)
+})
+
+// Map detected GPU class to the wizard GPU value
+const suggestedGpu = computed<'nvidia' | 'amd' | null>(() => {
+  if (!detectedGPUClass.value) {
+    return null
+  }
+  if (detectedGPUClass.value === 'nvidia') {
+    return 'nvidia'
+  }
+  if (detectedGPUClass.value === 'nvidia-nouveau') {
+    return null // ambiguous
+  }
+  if (detectedGPUClass.value === 'nvidia-legacy') {
+    return 'amd' // pre-Turing: nvidia-open not supported, route to AMD/Intel ISO
+  }
+  return 'amd'
+})
+
+// Apply detection result: set all wizard choices and jump straight to download
+function applyDetectionRecommendation(result: DetectionResult) {
+  if (result.os === 'mac') {
+    showMacIntercept.value = true
+    return
+  }
+
+  if (result.arch !== 'arm64' && detectedGPUClass.value === 'nvidia-legacy') {
+    showLegacyNvidiaIntercept.value = true
+    return
+  }
+
+  const gpu = result.arch === 'arm64'
+    ? 'amd' // ARM: no NVIDIA ISOs; use amd/intel image
+    : (suggestedGpu.value === 'nvidia' ? 'nvidia' : 'amd')
+
+  const stream = result.arch === 'arm64' ? 'lts' : 'stable'
+  const arch = result.arch === 'arm64' ? 'arm' : 'x86'
+
+  imageName.value.stream = stream
+  imageName.value.arch = arch
+  imageName.value.gpu = gpu
+  imageName.value.kernel = 'regular'
+  imageName.value.imagesrc = stream === 'lts'
+    ? './characters/achillobator.webp'
+    : './characters/leaping.webp'
+
+  selectedRelease.value = stream
+  detectionRecommended.value = true
+  showArchitectureStep.value = false
+  showKernelStep.value = false
+  showGpuStep.value = false
+  showDownload.value = true
+}
+
+async function detectHardware() {
+  if (detectionRunning.value) {
+    return
+  }
+  detectionRunning.value = true
+  try {
+    const result = await runDetection()
+    // Atomic update — all state set at once
+    detection.value = result
+    applyDetectionRecommendation(result)
+  }
+  finally {
+    detectionRunning.value = false
+  }
+}
+
+function dismissMacIntercept() {
+  showMacIntercept.value = false
+}
+
+function dismissLegacyNvidiaIntercept() {
+  showLegacyNvidiaIntercept.value = false
+  // Still apply the recommendation — route to AMD/Intel ISO
+  if (detection.value) {
+    const gpu = 'amd'
+    const stream = 'stable'
+    imageName.value.stream = stream
+    imageName.value.arch = 'x86'
+    imageName.value.gpu = gpu
+    imageName.value.kernel = 'regular'
+    imageName.value.imagesrc = './characters/leaping.webp'
+    selectedRelease.value = stream
+    detectionRecommended.value = true
+    showArchitectureStep.value = false
+    showKernelStep.value = false
+    showGpuStep.value = false
+    showDownload.value = true
+  }
 }
 
 // Load version information from YAML file
@@ -249,79 +375,148 @@ onMounted(() => {
 
 <template>
   <div class="image-chooser">
-    <!-- Release Selection -->
-    <div v-if="!selectedRelease" class="release-selection">
-      <div class="release-grid">
-        <div
-          v-for="release in releases"
-          :key="release.id"
-          class="release-box"
-          :class="{ recommended: release.recommended }"
-          @click="selectRelease(release.id)"
-        >
-          <div
-            class="release-image"
-            :style="{ backgroundImage: `url(${release.image})` }"
+    <!-- Mac Intercept (shown after detection when OS=mac) -->
+    <div v-if="showMacIntercept && detection" class="mac-intercept-card">
+      <!-- ARM Mac: hard dead-end, no recommendation, no continue -->
+      <template v-if="detection.arch === 'arm64'">
+        <p class="mac-intercept-message">
+          {{ t('TryBluefin.Detection.MacArmMessage') }}
+        </p>
+      </template>
+      <!-- Intel Mac: Ubuntu redirect + "Continue anyway" -->
+      <template v-else>
+        <p class="mac-intercept-message">
+          {{ t('TryBluefin.Detection.MacIntelMessage') }}
+        </p>
+        <p class="mac-intercept-recommendation">
+          {{ t('TryBluefin.Detection.MacIntelRecommendation') }}
+        </p>
+        <div class="mac-intercept-actions">
+          <a
+            class="download-button primary"
+            href="https://ubuntu.com/download/desktop"
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            <!-- Badges positioned in top right corner -->
-            <span v-if="release.recommended" class="recommended-badge">{{ t('TryBluefin.Label.Recommended')}}</span>
+            {{ t('TryBluefin.Detection.MacIntelButton') }}
+          </a>
+          <button class="back-button" @click="dismissMacIntercept">
+            {{ t('TryBluefin.Detection.MacContinue') }}
+          </button>
+        </div>
+      </template>
+    </div>
 
-            <div class="release-overlay">
-              <div class="release-content">
-                <div class="release-header">
-                  <h3 class="release-title">
-                    {{ release.title }}
-                  </h3>
-                  <span class="release-subtitle">{{ release.subtitle }}</span>
-                </div>
-                <p class="release-description">
-                  {{ release.description }}
-                </p>
+    <!-- Legacy NVIDIA Intercept (shown after detection when GPU is pre-Turing) -->
+    <div v-if="showLegacyNvidiaIntercept && detection" class="mac-intercept-card">
+      <p class="mac-intercept-message">
+        {{ t('TryBluefin.Detection.LegacyNvidiaMessage') }}
+      </p>
+      <p class="mac-intercept-recommendation">
+        {{ t('TryBluefin.Detection.LegacyNvidiaRecommendation') }}
+      </p>
+      <div class="mac-intercept-actions">
+        <a
+          class="download-button primary"
+          href="https://bazzite.gg"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {{ t('TryBluefin.Detection.LegacyNvidiaButton') }}
+        </a>
+        <button class="back-button" @click="dismissLegacyNvidiaIntercept">
+          {{ t('TryBluefin.Detection.LegacyNvidiaContinue') }}
+        </button>
+      </div>
+    </div>
 
-                <!-- Version Information -->
-                <div
-                  v-if="
-                    streamVersions
-                      && streamVersions[release.id as keyof StreamVersions]
-                  "
-                  class="version-info"
-                >
-                  <div class="version-item">
-                    <span class="version-label">{{ t('TryBluefin.Label.Base')}}:</span>
-                    <span class="version-value">{{
-                      streamVersions[release.id as keyof StreamVersions].base
-                    }}</span>
-                  </div>
-                  <div class="version-item">
-                    <span class="version-label">{{ t('TryBluefin.Label.Gnome')}}:</span>
-                    <span class="version-value">{{
-                      streamVersions[release.id as keyof StreamVersions].gnome
-                    }}</span>
-                  </div>
-                  <div class="version-item">
-                    <span class="version-label">{{ t('TryBluefin.Label.Kernel')}}:</span>
-                    <span class="version-value">{{
-                      streamVersions[release.id as keyof StreamVersions].kernel
-                    }}</span>
-                  </div>
-                  <div v-if="release.id === 'lts'" class="version-item">
-                    <span class="version-label">{{ t('TryBluefin.Label.HWEKernel')}}:</span>
-                    <span class="version-value">{{
-                      streamVersions[release.id as keyof StreamVersions].hwe
-                    }}</span>
-                  </div>
+    <!-- Detection Button + Release Selection (hidden during intercepts and after release chosen) -->
+    <template v-if="!selectedRelease && !showMacIntercept && !showLegacyNvidiaIntercept">
+      <!-- Detection Button -->
+      <div class="detection-row">
+        <button
+          class="detect-button"
+          :disabled="detectionRunning"
+          @click="detectHardware"
+        >
+          {{ detectionRunning ? t('TryBluefin.Detection.Detecting') : t('TryBluefin.Detection.Button') }}
+        </button>
+      </div>
 
-                  <div class="version-item">
-                    <span class="version-label">{{ t('TryBluefin.Label.Mesa')}}:</span>
-                    <span class="version-value">{{
-                      streamVersions[release.id as keyof StreamVersions].mesa
-                    }}</span>
+      <!-- Release Selection -->
+      <div class="release-selection">
+        <div class="release-grid">
+          <div
+            v-for="release in releases"
+            :key="release.id"
+            class="release-box"
+            :class="{ recommended: release.recommended }"
+            @click="selectRelease(release.id)"
+          >
+            <div
+              class="release-image"
+              :style="{ backgroundImage: `url(${release.image})` }"
+            >
+              <!-- Badges positioned in top right corner -->
+              <span v-if="release.recommended" class="recommended-badge">{{ t('TryBluefin.Label.Recommended') }}</span>
+
+              <div class="release-overlay">
+                <div class="release-content">
+                  <div class="release-header">
+                    <h3 class="release-title">
+                      {{ release.title }}
+                    </h3>
+                    <span class="release-subtitle">{{ release.subtitle }}</span>
                   </div>
-                  <div class="version-item">
-                    <span class="version-label">{{ t('TryBluefin.Label.Nvidia')}}:</span>
-                    <span class="version-value">{{
-                      streamVersions[release.id as keyof StreamVersions].nvidia
-                    }}</span>
+                  <p class="release-description">
+                    {{ release.description }}
+                  </p>
+
+                  <!-- Version Information -->
+                  <div
+                    v-if="
+                      streamVersions
+                        && streamVersions[release.id as keyof StreamVersions]
+                    "
+                    class="version-info"
+                  >
+                    <div class="version-item">
+                      <span class="version-label">{{ t('TryBluefin.Label.Base') }}:</span>
+                      <span class="version-value">{{
+                        streamVersions[release.id as keyof StreamVersions].base
+                      }}</span>
+                    </div>
+                    <div class="version-item">
+                      <span class="version-label">{{ t('TryBluefin.Label.Gnome') }}:</span>
+                      <span class="version-value">{{
+                        streamVersions[release.id as keyof StreamVersions].gnome
+                      }}</span>
+                    </div>
+                    <div class="version-item">
+                      <span class="version-label">{{ t('TryBluefin.Label.Kernel') }}:</span>
+                      <span class="version-value">{{
+                        streamVersions[release.id as keyof StreamVersions].kernel
+                      }}</span>
+                    </div>
+                    <div v-if="release.id === 'lts'" class="version-item">
+                      <span class="version-label">{{ t('TryBluefin.Label.HWEKernel') }}:</span>
+                      <span class="version-value">{{
+                        streamVersions[release.id as keyof StreamVersions].hwe
+                      }}</span>
+                    </div>
+
+                    <div class="version-item">
+                      <span class="version-label">{{ t('TryBluefin.Label.Mesa') }}:</span>
+                      <span class="version-value">{{
+                        streamVersions[release.id as keyof StreamVersions].mesa
+                      }}</span>
+                    </div>
+                    <div class="version-item">
+                      <span class="version-label">{{ t('TryBluefin.Label.Nvidia') }}:</span>
+                      <span class="version-value">{{
+                        streamVersions[release.id as keyof StreamVersions].nvidia
+                      }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -329,7 +524,7 @@ onMounted(() => {
           </div>
         </div>
       </div>
-    </div>
+    </template>
 
     <!-- Architecture Selection -->
     <div
@@ -338,7 +533,7 @@ onMounted(() => {
     >
       <div class="step-header">
         <button class="back-button" @click="reset">
-          {{ t('TryBluefin.Label.BackToReleases')}}
+          {{ t('TryBluefin.Label.BackToReleases') }}
         </button>
         <h3>{{ t("TryBluefin.Architecture.Question") }}</h3>
       </div>
@@ -368,7 +563,7 @@ onMounted(() => {
             }
           "
         >
-          {{ t('TryBluefin.Label.Back')}}
+          {{ t('TryBluefin.Label.Back') }}
         </button>
         <h3>{{ t("TryBluefin.Kernel.Question") }}</h3>
       </div>
@@ -395,18 +590,50 @@ onMounted(() => {
             }
           "
         >
-          {{ t('TryBluefin.Label.Back')}}
+          {{ t('TryBluefin.Label.Back') }}
         </button>
         <h3>{{ t("TryBluefin.Gpu.Question") }}</h3>
       </div>
+
+      <!-- Privacy/VM detection notices -->
+      <div
+        v-if="detection && detection.gpu.reason === 'no-debug-ext'"
+        class="detection-notice"
+      >
+        {{ t('TryBluefin.Detection.PrivacyBlocked') }}
+      </div>
+      <div
+        v-else-if="detection && detection.gpu.reason === 'software-renderer'"
+        class="detection-notice detection-notice--warning"
+      >
+        {{ t('TryBluefin.Detection.VmWarning') }}
+      </div>
+
       <div class="options-grid">
-        <button class="option-button" @click="selectGpu('amd')">
+        <!-- AMD/Intel option — detected badge if suggestedGpu === 'amd' -->
+        <button
+          class="option-button"
+          :class="{ 'option-button--detected': suggestedGpu === 'amd' }"
+          @click="selectGpu('amd')"
+        >
+          <span v-if="suggestedGpu === 'amd'" class="detected-badge">{{ t('TryBluefin.Detection.Detected') }}</span>
           {{ t("TryBluefin.Gpu.AMDIntel") }}
         </button>
-        <button class="option-button" @click="selectGpu('nvidia')">
-          {{ t("TryBluefin.Gpu.Nvidia") }} -
+        <!-- NVIDIA option — detected badge if suggestedGpu === 'nvidia' -->
+        <button
+          class="option-button"
+          :class="{ 'option-button--detected': suggestedGpu === 'nvidia' }"
+          @click="selectGpu('nvidia')"
+        >
+          <span v-if="suggestedGpu === 'nvidia'" class="detected-badge">{{ t('TryBluefin.Detection.Detected') }}</span>
+          {{ t("TryBluefin.Gpu.Nvidia") }}
         </button>
       </div>
+
+      <!-- Hybrid graphics note -->
+      <p class="hybrid-note">
+        {{ t('TryBluefin.Detection.HybridNote') }}
+      </p>
     </div>
 
     <!-- Download Section -->
@@ -432,7 +659,7 @@ onMounted(() => {
             }
           "
         >
-          {{ t('TryBluefin.Label.Back')}}
+          {{ t('TryBluefin.Label.Back') }}
         </button>
         <h3>{{ t('TryBluefin.Selection.Ready') }}</h3>
       </div>
@@ -496,6 +723,11 @@ onMounted(() => {
         <br>
         <br>
         <br>
+        <!-- Recommendation banner shown when detection drove this selection -->
+        <div v-if="detectionRecommended" class="detection-recommendation-banner">
+          {{ t('TryBluefin.Detection.RecommendedForYourHardware') }}
+          <span v-if="detectedGPUName"> — {{ detectedGPUName }}</span>
+        </div>
         <div class="download-actions">
           <a
             class="download-button primary"
@@ -522,7 +754,7 @@ onMounted(() => {
               "
             >
               <IconCheckCircle />
-              {{t('TryBluefin.Download.Checksum')}}
+              {{ t('TryBluefin.Download.Checksum') }}
             </a>
             <a
               class="btn"
@@ -531,10 +763,35 @@ onMounted(() => {
               target="_blank"
             >
               <IconGithubCircle />
-              {{t('TryBluefin.Download.Registry')}}
+              {{ t('TryBluefin.Download.Registry') }}
             </a>
           </div>
         </div>
+      </div>
+
+      <!-- Pre-flight notes -->
+      <div class="preflight-notes">
+        <h4 class="preflight-title">
+          {{ t('TryBluefin.Preflight.Title') }}
+        </h4>
+        <ul class="preflight-list">
+          <!-- Windows-only notes -->
+          <template v-if="detection?.os === 'windows'">
+            <li class="preflight-item preflight-item--windows">
+              {{ t('TryBluefin.Preflight.Bitlocker') }}
+            </li>
+            <li class="preflight-item preflight-item--windows">
+              {{ t('TryBluefin.Preflight.FastStartup') }}
+            </li>
+          </template>
+          <!-- Always shown -->
+          <li class="preflight-item">
+            {{ t('TryBluefin.Preflight.SecureBoot') }}
+          </li>
+          <li class="preflight-item">
+            {{ t('TryBluefin.Preflight.MediaWriter') }}
+          </li>
+        </ul>
       </div>
 
       <div class="documentation-note">
@@ -544,7 +801,7 @@ onMounted(() => {
       </div>
 
       <button class="start-over-button" @click="reset">
-        {{t('TryBluefin.Download.ChooseRelease')}}
+        {{ t('TryBluefin.Download.ChooseRelease') }}
       </button>
     </div>
   </div>
@@ -557,6 +814,75 @@ onMounted(() => {
   margin: 0 auto;
   /* Ensure consistent height across all steps to prevent FAQ section from jumping */
   min-height: 500px;
+}
+
+/* Detection row (above release grid) */
+.detection-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.detect-button {
+  font-weight: 700;
+  height: 36px;
+  line-height: 36px;
+  border: 2px solid var(--color-blue);
+  background-color: var(--color-blue);
+  color: var(--color-text-light);
+  border-radius: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 20px;
+  font-size: 1.7rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.detect-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.detect-button:hover:not(:disabled) {
+  background-color: var(--color-blue);
+  color: var(--color-text-light);
+}
+
+/* Mac intercept card */
+.mac-intercept-card {
+  max-width: 600px;
+  margin: 2rem auto;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  padding: 40px;
+  text-align: center;
+}
+
+.mac-intercept-message {
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 1rem 0;
+}
+
+.mac-intercept-recommendation {
+  font-size: 1.6rem;
+  color: var(--color-text);
+  margin: 0 0 2rem 0;
+}
+
+.mac-intercept-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
 }
 
 /* Release Selection */
@@ -759,6 +1085,7 @@ onMounted(() => {
 }
 
 .option-button {
+  position: relative;
   padding: 1.5rem;
   border: 2px solid #374151;
   border-radius: 8px;
@@ -778,6 +1105,61 @@ onMounted(() => {
 .option-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.option-button--detected {
+  border-color: #4f9cf9;
+  background: rgba(79, 156, 249, 0.08);
+}
+
+.detected-badge {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(var(--color-blue-rgb), 0.9);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+/* Detection notice (privacy blocked / VM) */
+.detection-notice {
+  background: rgba(79, 156, 249, 0.1);
+  border: 1px solid rgba(79, 156, 249, 0.2);
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  color: white;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.detection-notice--warning {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+}
+
+/* Hybrid note (below GPU options) */
+.hybrid-note {
+  margin-top: 1rem;
+  font-size: 1.4rem;
+  color: var(--color-text);
+  text-align: center;
+}
+
+/* Detection recommendation banner (shown above download when detection drove selection) */
+.detection-recommendation-banner {
+  background: rgba(79, 156, 249, 0.12);
+  border: 1px solid rgba(79, 156, 249, 0.35);
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  color: #93c5fd;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 1.5rem;
 }
 
 /* Download Section */
@@ -910,6 +1292,55 @@ onMounted(() => {
   flex-wrap: wrap;
 }
 
+/* Pre-flight notes */
+.preflight-notes {
+  background: rgba(79, 156, 249, 0.1);
+  border: 1px solid rgba(79, 156, 249, 0.2);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  color: white;
+  text-align: left;
+}
+
+.preflight-title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 1rem 0;
+}
+
+.preflight-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.preflight-item {
+  font-size: 1.5rem;
+  color: var(--color-text);
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.preflight-item::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--color-blue);
+}
+
+.preflight-item--windows {
+  color: #fbbf24;
+}
+
+.preflight-item--windows::before {
+  color: #fbbf24;
+}
+
 .documentation-note {
   background: rgba(79, 156, 249, 0.1);
   border: 1px solid rgba(79, 156, 249, 0.2);
@@ -955,6 +1386,10 @@ onMounted(() => {
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
+  .detection-row {
+    display: none;
+  }
+
   .release-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
@@ -992,6 +1427,10 @@ onMounted(() => {
   .secondary-actions {
     flex-direction: column;
     gap: 0.75rem;
+  }
+
+  .mac-intercept-actions {
+    flex-direction: column;
   }
 }
 </style>

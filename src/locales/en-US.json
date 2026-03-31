@@ -150,6 +150,34 @@
         "NvidiaDesc": "Nvidia RTX/GTX 16xx+ Series, GTX 10xx Series and below are unsupported"
       }
     },
+    "Detection": {
+      "Button": "Detect my hardware",
+      "Detecting": "Detecting...",
+      "NvidiaDetected": "NVIDIA GPU detected",
+      "AmdIntelDetected": "AMD / Intel GPU detected",
+      "Detected": "Detected",
+      "PrivacyBlocked": "GPU detection is unavailable or blocked. Select your GPU manually below.",
+      "VmWarning": "Software rendering was detected instead of a physical GPU. This can happen in virtual machines, remote sessions, or when GPU acceleration is disabled — results may not reflect your actual hardware.",
+      "HybridNote": "On laptops with dual graphics (NVIDIA Optimus), we may detect the integrated GPU. If you know you have NVIDIA, select it manually.",
+      "MacIntelMessage": "Bluefin does not support macOS on Intel Macs.",
+      "MacIntelRecommendation": "We recommend Ubuntu for Intel Mac users.",
+      "MacIntelButton": "Download Ubuntu",
+      "MacArmMessage": "Bluefin does not support Apple Silicon (ARM) Macs.",
+      "MacContinue": "Continue anyway",
+      "ArmWarning": "Apple Silicon Macs are not supported. ARM64 on Linux (Raspberry Pi, etc.) is supported via the LTS image.",
+      "RecommendedForYourHardware": "Recommended for your hardware",
+      "LegacyNvidiaMessage": "Your NVIDIA GPU is not supported by the open-source nvidia-open driver that Bluefin uses.",
+      "LegacyNvidiaRecommendation": "We recommend Bazzite, which includes full support for older NVIDIA cards.",
+      "LegacyNvidiaButton": "Check out Bazzite",
+      "LegacyNvidiaContinue": "Continue with Bluefin anyway"
+    },
+    "Preflight": {
+      "Title": "Before you install",
+      "Bitlocker": "Find your BitLocker recovery key before repartitioning (Windows 11+)",
+      "FastStartup": "Disable Fast Startup in Windows Power Settings before dual-booting",
+      "SecureBoot": "Bluefin supports Secure Boot — no BIOS change needed for most hardware",
+      "MediaWriter": "Use Fedora Media Writer to create your install USB — Ventoy is unsupported"
+    },
     "Download": {
       "IsoDescription": "Installation ISO",
       "IsoDownload": "Download the ISO",
