@@ -165,7 +165,11 @@
       "MacArmMessage": "Bluefin does not support Apple Silicon (ARM) Macs.",
       "MacContinue": "Continue anyway",
       "ArmWarning": "Bluefin targets x86_64. ARM support is not available.",
-      "RecommendedForYourHardware": "Recommended for your hardware"
+      "RecommendedForYourHardware": "Recommended for your hardware",
+      "LegacyNvidiaMessage": "Your NVIDIA GPU is not supported by the open-source nvidia-open driver that Bluefin uses.",
+      "LegacyNvidiaRecommendation": "We recommend Bazzite, which includes full support for older NVIDIA cards.",
+      "LegacyNvidiaButton": "Check out Bazzite",
+      "LegacyNvidiaContinue": "Continue with Bluefin anyway"
     },
     "Preflight": {
       "Title": "Before you install",

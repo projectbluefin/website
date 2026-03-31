@@ -66,6 +66,7 @@ const showDownload = ref(false)
 const detection = ref<DetectionResult | null>(null)
 const detectionRunning = ref(false)
 const showMacIntercept = ref(false)
+const showLegacyNvidiaIntercept = ref(false)
 const detectionRecommended = ref(false)
 
 // Release definitions with their characteristics
@@ -220,6 +221,7 @@ function reset() {
   // Do not reset detection — user opted in, keep result visible
   detectionRecommended.value = false
   showMacIntercept.value = false
+  showLegacyNvidiaIntercept.value = false
 }
 
 // --- Hardware Detection ---
@@ -259,6 +261,11 @@ const suggestedGpu = computed<'nvidia' | 'amd' | null>(() => {
 function applyDetectionRecommendation(result: DetectionResult) {
   if (result.os === 'mac') {
     showMacIntercept.value = true
+    return
+  }
+
+  if (result.arch !== 'arm64' && detectedGPUClass.value === 'nvidia-legacy') {
+    showLegacyNvidiaIntercept.value = true
     return
   }
 
@@ -303,6 +310,26 @@ async function detectHardware() {
 
 function dismissMacIntercept() {
   showMacIntercept.value = false
+}
+
+function dismissLegacyNvidiaIntercept() {
+  showLegacyNvidiaIntercept.value = false
+  // Still apply the recommendation — route to AMD/Intel ISO
+  if (detection.value) {
+    const gpu = 'amd'
+    const stream = 'stable'
+    imageName.value.stream = stream
+    imageName.value.arch = 'x86'
+    imageName.value.gpu = gpu
+    imageName.value.kernel = 'regular'
+    imageName.value.imagesrc = './characters/leaping.webp'
+    selectedRelease.value = stream
+    detectionRecommended.value = true
+    showArchitectureStep.value = false
+    showKernelStep.value = false
+    showGpuStep.value = false
+    showDownload.value = true
+  }
 }
 
 // Load version information from YAML file
@@ -380,8 +407,31 @@ onMounted(() => {
       </template>
     </div>
 
+    <!-- Legacy NVIDIA Intercept (shown after detection when GPU is pre-Turing) -->
+    <div v-if="showLegacyNvidiaIntercept && detection" class="mac-intercept-card">
+      <p class="mac-intercept-message">
+        {{ t('TryBluefin.Detection.LegacyNvidiaMessage') }}
+      </p>
+      <p class="mac-intercept-recommendation">
+        {{ t('TryBluefin.Detection.LegacyNvidiaRecommendation') }}
+      </p>
+      <div class="mac-intercept-actions">
+        <a
+          class="download-button primary"
+          href="https://bazzite.gg"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {{ t('TryBluefin.Detection.LegacyNvidiaButton') }}
+        </a>
+        <button class="back-button" @click="dismissLegacyNvidiaIntercept">
+          {{ t('TryBluefin.Detection.LegacyNvidiaContinue') }}
+        </button>
+      </div>
+    </div>
+
     <!-- Detection Button (shown when no release selected and not in mac intercept) -->
-    <div v-if="!selectedRelease && !showMacIntercept" class="detection-row">
+    <div v-if="!selectedRelease && !showMacIntercept && !showLegacyNvidiaIntercept" class="detection-row">
       <button
         class="detect-button"
         :disabled="detectionRunning"
@@ -392,7 +442,7 @@ onMounted(() => {
     </div>
 
     <!-- Release Selection -->
-    <div v-if="!selectedRelease && !showMacIntercept" class="release-selection">
+    <div v-if="!selectedRelease && !showMacIntercept && !showLegacyNvidiaIntercept" class="release-selection">
       <div class="release-grid">
         <div
           v-for="release in releases"
