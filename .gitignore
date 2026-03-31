@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Generated build artifacts
+public/iframe-resizer-child.js
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

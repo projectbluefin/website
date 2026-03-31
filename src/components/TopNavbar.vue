@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type { MessageSchema } from '../locales/schema'
+import { onClickOutside } from '@vueuse/core'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n<MessageSchema>({
@@ -35,10 +37,23 @@ const rightNavLinks = [
     external: true
   }
 ]
+
+const allNavLinks = [...leftNavLinks, ...rightNavLinks]
+
+const menuOpen = ref(false)
+const navRef = ref<HTMLElement | null>(null)
+
+onClickOutside(navRef, () => {
+  menuOpen.value = false
+})
+
+function closeMenu() {
+  menuOpen.value = false
+}
 </script>
 
 <template>
-  <nav class="docusaurus-navbar navbar navbar--fixed-top">
+  <nav ref="navRef" class="docusaurus-navbar navbar navbar--fixed-top">
     <div class="navbar__inner">
       <div class="navbar__items">
         <a href="https://projectbluefin.io" class="navbar__brand">
@@ -51,7 +66,7 @@ const rightNavLinks = [
           v-for="link in leftNavLinks"
           :key="link.name"
           :href="link.href"
-          class="navbar__item navbar__link"
+          class="navbar__item navbar__link navbar__link--desktop"
           :target="link.external ? '_blank' : undefined"
           :rel="link.external ? 'noopener noreferrer' : undefined"
         >
@@ -64,13 +79,40 @@ const rightNavLinks = [
           v-for="link in rightNavLinks"
           :key="link.name"
           :href="link.href"
-          class="navbar__item navbar__link"
+          class="navbar__item navbar__link navbar__link--desktop"
           :target="link.external ? '_blank' : undefined"
           :rel="link.external ? 'noopener noreferrer' : undefined"
         >
           {{ link.name }}
         </a>
       </div>
+
+      <!-- Hamburger button — mobile only -->
+      <button
+        class="navbar__toggle"
+        :aria-expanded="menuOpen"
+        aria-label="Toggle navigation menu"
+        @click="menuOpen = !menuOpen"
+      >
+        <span class="navbar__toggle-bar" />
+        <span class="navbar__toggle-bar" />
+        <span class="navbar__toggle-bar" />
+      </button>
+    </div>
+
+    <!-- Mobile dropdown menu -->
+    <div v-if="menuOpen" class="navbar__mobile-menu">
+      <a
+        v-for="link in allNavLinks"
+        :key="link.name"
+        :href="link.href"
+        class="navbar__mobile-link"
+        :target="link.external ? '_blank' : undefined"
+        :rel="link.external ? 'noopener noreferrer' : undefined"
+        @click="closeMenu"
+      >
+        {{ link.name }}
+      </a>
     </div>
   </nav>
 </template>
@@ -127,7 +169,7 @@ const rightNavLinks = [
   max-width: 1440px;
   margin: 0 auto;
   padding: var(--ifm-navbar-padding-vertical) var(--ifm-navbar-padding-horizontal);
-  height: 100%;
+  height: var(--ifm-navbar-height);
 }
 
 .navbar__items {
@@ -217,6 +259,62 @@ const rightNavLinks = [
   justify-content: flex-end;
 }
 
+// Hamburger button — hidden on desktop
+.navbar__toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.navbar__toggle-bar {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background-color: var(--ifm-navbar-link-color);
+  border-radius: 2px;
+  transition: background-color var(--ifm-transition-fast) var(--ifm-transition-timing-default);
+}
+
+.navbar__toggle:hover .navbar__toggle-bar {
+  background-color: var(--ifm-navbar-link-hover-color);
+}
+
+// Mobile dropdown
+.navbar__mobile-menu {
+  display: none;
+  flex-direction: column;
+  background-color: var(--ifm-navbar-background-color);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 1rem 1rem;
+}
+
+.navbar__mobile-link {
+  color: var(--ifm-navbar-link-color);
+  text-decoration: none;
+  font-size: 14pt;
+  font-weight: 400;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  transition: color var(--ifm-transition-fast) var(--ifm-transition-timing-default);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    color: var(--ifm-navbar-link-hover-color);
+  }
+}
+
 // Mobile responsive - matching Docusaurus breakpoints exactly
 @media (max-width: 996px) {
   .docusaurus-navbar {
@@ -234,18 +332,33 @@ const rightNavLinks = [
 }
 
 @media (max-width: 768px) {
-  .navbar__items {
-    a:not(.navbar__brand) {
-      display: none;
-    }
+  .docusaurus-navbar {
+    height: auto;
+    min-height: var(--ifm-navbar-height);
   }
 
-  .navbar__brand {
-    margin: 0 auto;
+  .navbar__inner {
+    height: var(--ifm-navbar-height);
+  }
+
+  .navbar__link--desktop {
+    display: none;
   }
 
   .navbar__items--right {
     display: none;
+  }
+
+  .navbar__brand {
+    margin: 0;
+  }
+
+  .navbar__toggle {
+    display: flex;
+  }
+
+  .navbar__mobile-menu {
+    display: flex;
   }
 }
 </style>
