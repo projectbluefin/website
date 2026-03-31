@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc && vite build",
+    "dev": "cp node_modules/@iframe-resizer/child/index.umd.js public/iframe-resizer-child.js && vite",
+    "build": "cp node_modules/@iframe-resizer/child/index.umd.js public/iframe-resizer-child.js && vue-tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
