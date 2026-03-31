@@ -164,7 +164,8 @@
       "MacIntelButton": "Download Ubuntu",
       "MacArmMessage": "Bluefin does not support Apple Silicon (ARM) Macs.",
       "MacContinue": "Continue anyway",
-      "ArmWarning": "Bluefin targets x86_64. ARM support is not available."
+      "ArmWarning": "Bluefin targets x86_64. ARM support is not available.",
+      "RecommendedForYourHardware": "Recommended for your hardware"
     },
     "Preflight": {
       "Title": "Before you install",

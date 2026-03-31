@@ -66,6 +66,7 @@ const showDownload = ref(false)
 const detection = ref<DetectionResult | null>(null)
 const detectionRunning = ref(false)
 const showMacIntercept = ref(false)
+const detectionRecommended = ref(false)
 
 // Release definitions with their characteristics
 const releases = [
@@ -217,6 +218,7 @@ function reset() {
   showGpuStep.value = false
   showDownload.value = false
   // Do not reset detection — user opted in, keep result visible
+  detectionRecommended.value = false
   showMacIntercept.value = false
 }
 
@@ -250,6 +252,36 @@ const suggestedGpu = computed<'nvidia' | 'amd' | null>(() => {
   return 'amd'
 })
 
+// Apply detection result: set all wizard choices and jump straight to download
+function applyDetectionRecommendation(result: DetectionResult) {
+  if (result.os === 'mac') {
+    showMacIntercept.value = true
+    return
+  }
+
+  const gpu = result.arch === 'arm64'
+    ? 'amd' // ARM: no NVIDIA ISOs; use amd/intel image
+    : (suggestedGpu.value === 'nvidia' ? 'nvidia' : 'amd')
+
+  const stream = result.arch === 'arm64' ? 'lts' : 'stable'
+  const arch = result.arch === 'arm64' ? 'arm' : 'x86'
+
+  imageName.value.stream = stream
+  imageName.value.arch = arch
+  imageName.value.gpu = gpu
+  imageName.value.kernel = 'regular'
+  imageName.value.imagesrc = stream === 'lts'
+    ? './characters/achillobator.webp'
+    : './characters/leaping.webp'
+
+  selectedRelease.value = stream
+  detectionRecommended.value = true
+  showArchitectureStep.value = false
+  showKernelStep.value = false
+  showGpuStep.value = false
+  showDownload.value = true
+}
+
 async function detectHardware() {
   if (detectionRunning.value) {
     return
@@ -259,9 +291,7 @@ async function detectHardware() {
     const result = await runDetection()
     // Atomic update — all state set at once
     detection.value = result
-    if (result.os === 'mac') {
-      showMacIntercept.value = true
-    }
+    applyDetectionRecommendation(result)
   }
   finally {
     detectionRunning.value = false
@@ -356,16 +386,6 @@ onMounted(() => {
       >
         {{ detectionRunning ? t('TryBluefin.Detection.Detecting') : t('TryBluefin.Detection.Button') }}
       </button>
-
-      <!-- Detection result summary (shown after successful detection, no mac intercept) -->
-      <div v-if="detection && detection.state === 'done' && detection.os !== 'mac'" class="detection-result-banner">
-        <span v-if="detection.gpu.confidence === 'high' && detectedGPUName">
-          {{ detectedGPUName }}
-        </span>
-        <span v-if="detection.arch === 'arm64'" class="arm-warning">
-          {{ t('TryBluefin.Detection.ArmWarning') }}
-        </span>
-      </div>
     </div>
 
     <!-- Release Selection -->
@@ -647,6 +667,11 @@ onMounted(() => {
         <br>
         <br>
         <br>
+        <!-- Recommendation banner shown when detection drove this selection -->
+        <div v-if="detectionRecommended" class="detection-recommendation-banner">
+          {{ t('TryBluefin.Detection.RecommendedForYourHardware') }}
+          <span v-if="detectedGPUName"> — {{ detectedGPUName }}</span>
+        </div>
         <div class="download-actions">
           <a
             class="download-button primary"
@@ -769,24 +794,6 @@ onMounted(() => {
 .detect-button:hover:not(:disabled) {
   background-color: var(--color-blue);
   color: var(--color-text-light);
-}
-
-.detection-result-banner {
-  background: rgba(79, 156, 249, 0.1);
-  border: 1px solid rgba(79, 156, 249, 0.2);
-  border-radius: 8px;
-  padding: 0.75rem 1.5rem;
-  color: white;
-  font-size: 1.5rem;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.arm-warning {
-  color: #fbbf24;
-  font-size: 1.4rem;
 }
 
 /* Mac intercept card */
@@ -1082,6 +1089,19 @@ onMounted(() => {
   font-size: 1.4rem;
   color: var(--color-text);
   text-align: center;
+}
+
+/* Detection recommendation banner (shown above download when detection drove selection) */
+.detection-recommendation-banner {
+  background: rgba(79, 156, 249, 0.12);
+  border: 1px solid rgba(79, 156, 249, 0.35);
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  color: #93c5fd;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 1.5rem;
 }
 
 /* Download Section */
