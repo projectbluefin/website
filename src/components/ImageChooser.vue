@@ -1328,6 +1328,10 @@ onMounted(() => {
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
+  .detection-row {
+    display: none;
+  }
+
   .release-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
