@@ -106,11 +106,11 @@ export function classifyGPU(renderer: string): GPUClass {
   if (/^NV[0-9A-F]{2,3}$/i.test(renderer.trim())) {
     return 'nvidia-nouveau'
   }
-  if (/NVIDIA/i.test(renderer) && /RTX/i.test(renderer)) {
-    return 'nvidia' // Turing+ (RTX): supported by nvidia-open kernel module
+  if (/NVIDIA/i.test(renderer) && (/RTX/i.test(renderer) || /GTX 16\d{2}/i.test(renderer))) {
+    return 'nvidia' // Turing+ (RTX series + GTX 1650/1660): supported by nvidia-open
   }
   if (/NVIDIA/i.test(renderer)) {
-    return 'nvidia-legacy' // Pre-Turing (GTX and older): not supported by nvidia-open
+    return 'nvidia-legacy' // Pre-Turing (GTX 10xx and older): not supported by nvidia-open
   }
   if (/AMD|Radeon/i.test(renderer)) {
     return 'amd'
