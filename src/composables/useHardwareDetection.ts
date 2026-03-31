@@ -2,7 +2,7 @@
 
 export type OS = 'windows' | 'linux' | 'mac' | 'unknown'
 export type Arch = 'x86_64' | 'arm64'
-export type GPUClass = 'nvidia' | 'nvidia-nouveau' | 'amd' | 'intel' | 'other'
+export type GPUClass = 'nvidia' | 'nvidia-legacy' | 'nvidia-nouveau' | 'amd' | 'intel' | 'other'
 export type DetectionState = 'idle' | 'detecting' | 'done'
 
 export interface GPUResult {
@@ -106,8 +106,11 @@ export function classifyGPU(renderer: string): GPUClass {
   if (/^NV[0-9A-F]{2,3}$/i.test(renderer.trim())) {
     return 'nvidia-nouveau'
   }
+  if (/NVIDIA/i.test(renderer) && /RTX/i.test(renderer)) {
+    return 'nvidia' // Turing+ (RTX): supported by nvidia-open kernel module
+  }
   if (/NVIDIA/i.test(renderer)) {
-    return 'nvidia'
+    return 'nvidia-legacy' // Pre-Turing (GTX and older): not supported by nvidia-open
   }
   if (/AMD|Radeon/i.test(renderer)) {
     return 'amd'

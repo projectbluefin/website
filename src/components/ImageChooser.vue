@@ -249,6 +249,9 @@ const suggestedGpu = computed<'nvidia' | 'amd' | null>(() => {
   if (detectedGPUClass.value === 'nvidia-nouveau') {
     return null // ambiguous
   }
+  if (detectedGPUClass.value === 'nvidia-legacy') {
+    return 'amd' // pre-Turing: nvidia-open not supported, route to AMD/Intel ISO
+  }
   return 'amd'
 })
 
