@@ -186,7 +186,7 @@
       "Documentation": {
         "Intro": "Check out the [Bluefin Documentation](https://docs.projectbluefin.io/), it takes about 15 minutes and includes an installation runbook - set yourself up for success, you are headed into a new world.",
         "Downloads": "Can't find what you're looking for? Check [the full list of downloads](https://docs.projectbluefin.io/downloads/).",
-        "SecureBoot": "If you choose secure boot during installation, the password is \"universalblue\"."
+        "SecureBoot": "If you choose [secure boot](https://docs.projectbluefin.io/installation#secure-boot) during installation, the password is \"universalblue\"."
       },
       "ChooseRelease": "Choose a different release"
     }
