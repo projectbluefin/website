@@ -111,17 +111,11 @@ export function classifyGPU(renderer: string): GPUClass {
   if (/^NV[0-9A-F]{2,3}$/i.test(renderer.trim())) {
     return 'nvidia-nouveau'
   }
-  if (/NVIDIA/i.test(renderer) && (
-    /RTX/i.test(renderer)
-    || /GTX 16\d{2}/i.test(renderer)
-    || /\bT\d{3,4}\b/.test(renderer) // T400, T600, T1000, T1200 (Turing workstation)
-    || /GeForce MX[4-9]\d{2}/.test(renderer) // MX450, MX550, MX570 (Turing/Ampere laptop)
-    || /GeForce MX3[5-9]\d/.test(renderer) // MX350 (Turing laptop)
-  )) {
-    return 'nvidia' // Turing+ (RTX, GTX 16xx, T-series, MX350+): supported by nvidia-open
-  }
   if (/NVIDIA/i.test(renderer)) {
-    return 'nvidia-legacy' // Pre-Turing (GTX 10xx and older): not supported by nvidia-open
+    if (/RTX/i.test(renderer) || /GTX 16\d{2}/i.test(renderer)) {
+      return 'nvidia' // Turing+ (RTX, GTX 16xx): supported by nvidia-open
+    }
+    return 'nvidia-legacy' // Pre-Turing: not supported by nvidia-open
   }
   if (/AMD|Radeon/i.test(renderer)) {
     return 'amd'
