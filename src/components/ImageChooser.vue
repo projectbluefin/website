@@ -68,6 +68,7 @@ const detection = ref<DetectionResult | null>(null)
 const detectionRunning = ref(false)
 const showMacIntercept = ref(false)
 const showLegacyNvidiaIntercept = ref(false)
+const showNouveauWarning = ref(false)
 const detectionRecommended = ref(false)
 
 // Release definitions with their characteristics
@@ -266,6 +267,11 @@ function applyDetectionRecommendation(result: DetectionResult) {
     return
   }
 
+  if (result.arch !== 'arm64' && detectedGPUClass.value === 'nvidia-nouveau') {
+    showNouveauWarning.value = true
+    return
+  }
+
   if (result.arch !== 'arm64' && detectedGPUClass.value === 'nvidia-legacy') {
     showLegacyNvidiaIntercept.value = true
     return
@@ -312,6 +318,24 @@ async function detectHardware() {
 
 function dismissMacIntercept() {
   showMacIntercept.value = false
+}
+
+function dismissNouveauWarning() {
+  showNouveauWarning.value = false
+  if (detection.value) {
+    const stream = detection.value.arch === 'arm64' ? 'lts' : 'stable'
+    const arch = detection.value.arch === 'arm64' ? 'arm' : 'x86'
+    imageName.value.stream = stream
+    imageName.value.arch = arch
+    selectedRelease.value = stream
+    imageName.value.imagesrc = stream === 'lts'
+      ? './characters/achillobator.webp'
+      : './characters/leaping.webp'
+    detectionRecommended.value = true
+    showArchitectureStep.value = false
+    showKernelStep.value = false
+    showGpuStep.value = false
+  }
 }
 
 function dismissLegacyNvidiaIntercept() {
@@ -409,8 +433,26 @@ onMounted(() => {
       </div>
     </div>
 
+    <!-- Nouveau Driver Intercept (shown after detection when Nouveau open-source driver is active) -->
+    <div v-if="showNouveauWarning && detection" class="mac-intercept-card">
+      <p class="mac-intercept-message">
+        {{ t('TryBluefin.Detection.NouveauWarning') }}
+      </p>
+      <p class="mac-intercept-recommendation">
+        {{ t('TryBluefin.Detection.NouveauRecommendation') }}
+      </p>
+      <div class="mac-intercept-actions">
+        <button class="back-button" @click="dismissNouveauWarning(); selectGpu('nvidia')">
+          {{ t('TryBluefin.Detection.NouveauSelectNvidia') }}
+        </button>
+        <button class="back-button" @click="dismissNouveauWarning(); selectGpu('amd')">
+          {{ t('TryBluefin.Detection.NouveauSelectAmd') }}
+        </button>
+      </div>
+    </div>
+
     <!-- Detection Button + Release Selection (hidden during intercepts and after release chosen) -->
-    <template v-if="!selectedRelease && !showMacIntercept && !showLegacyNvidiaIntercept">
+    <template v-if="!selectedRelease && !showMacIntercept && !showLegacyNvidiaIntercept && !showNouveauWarning">
       <!-- Detection Button -->
       <div class="detection-row">
         <button
