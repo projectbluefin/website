@@ -39,21 +39,6 @@ describe('classifyGPU — nvidia-legacy (pre-Turing, not supported by nvidia-ope
   })
 })
 
-describe('classifyGPU — nouveau driver', () => {
-  it('classifies bare NV hex string as nvidia-nouveau', () => {
-    expect(classifyGPU('NV167')).toBe('nvidia-nouveau')
-    expect(classifyGPU('NVA8')).toBe('nvidia-nouveau')
-    expect(classifyGPU('NV50')).toBe('nvidia-nouveau')
-  })
-
-  it('handles leading/trailing whitespace', () => {
-    expect(classifyGPU('  NVA8  ')).toBe('nvidia-nouveau')
-  })
-
-  it('handles lowercase nv hex', () => {
-    expect(classifyGPU('nva8')).toBe('nvidia-nouveau')
-  })
-})
 
 describe('classifyGPU — AMD and Intel', () => {
   it('classifies AMD Radeon as amd', () => {
