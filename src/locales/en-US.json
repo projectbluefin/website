@@ -168,7 +168,11 @@
       "LegacyNvidiaMessage": "Your NVIDIA GPU is not supported by the open-source nvidia-open driver that Bluefin uses.",
       "LegacyNvidiaRecommendation": "We recommend Bazzite, which includes full support for older NVIDIA cards.",
       "LegacyNvidiaButton": "Check out Bazzite",
-      "LegacyNvidiaContinue": "Continue with Bluefin anyway"
+      "LegacyNvidiaContinue": "Continue with Bluefin anyway",
+      "NouveauWarning": "Your NVIDIA GPU was detected via the open-source Nouveau driver.",
+      "NouveauRecommendation": "For the best experience with Bluefin, install the NVIDIA proprietary driver. Choose your setup below.",
+      "NouveauSelectNvidia": "I'll use the NVIDIA proprietary driver",
+      "NouveauSelectAmd": "I have an AMD or Intel GPU"
     },
     "Preflight": {
       "Title": "Before you install",
