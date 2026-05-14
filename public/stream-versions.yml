@@ -1,18 +1,18 @@
 # Stream version information for Bluefin releases
 # This file contains the latest version information for each stream
 # Data is sourced from the most recent changelogs in ublue-os/bluefin and ublue-os/bluefin-lts repositories
-# Last updated: 2026-03-31
+# Last updated: 2026-05-14
 
 lts:
   base: "CentOS Stream 10"
-  gnome: "48.4-1"
-  kernel: "6.12.0-172"
-  mesa: "25.2.5-3"
-  nvidia: "590.44.01-1"
-  hwe: "6.17.8-200.fc42"
+  gnome: "unknown"
+  kernel: "unknown"
+  mesa: "unknown"
+  nvidia: "unknown"
+  hwe: "unknown"
 stable:
   base: "Fedora 43"
-  gnome: "49.5-1"
-  kernel: "6.18.13-200"
-  mesa: "25.3.6-6"
-  nvidia: "595.58.03-1"
+  gnome: "50.1-2"
+  kernel: "6.19.14-101"
+  mesa: "26.0.6-4"
+  nvidia: "595.71.05-1"

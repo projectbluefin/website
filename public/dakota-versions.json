@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-05-11T05:04:41.312Z",
+  "generatedAt": "2026-05-14T08:54:15.304Z",
   "packages": {
-    "kernel": "6.19.11",
-    "gnome": "50.0",
-    "freedesktop-sdk": "25.08.10",
+    "kernel": "6.19.14",
+    "gnome": "50.1",
+    "freedesktop-sdk": "25.08.11",
     "mesa": "26.0.5",
     "bootc": "1.15.2",
     "nvidia": "595.71.05",
