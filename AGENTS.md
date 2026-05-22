@@ -433,6 +433,27 @@ npm run lint:fix             # Lints and fixes issues in the project
 - 🔒 **Bluespeed page is `noindex` / unlisted** — same pattern as Dakota; `src/KnuckleApp.vue`, `bluespeed/index.html`, components at `src/components/knuckle/`
 - ✅ **Run `node tests/navbar-visual.mjs`** to validate navbar rendering against docs.projectbluefin.io (38 Playwright assertions)
 
+## Ecosystem Integration Strategy (decided 2026-05-21)
+
+**Overall approach: Option D — shared design tokens.** Do not merge codebases. Keep projectbluefin.io (Vue 3) and docs.projectbluefin.io (Docusaurus) as separate apps.
+
+**Why the sites cannot be naively fused:**
+- Completely different CSS systems: main site uses Tailwind 4 + SCSS + `--color-*` vars; docs uses Infima + `--ifm-*` vars + CSS Cascade Layers (`useCssCascadeLayers: true`)
+- Font mismatch: main site self-hosts Inter via `@font-face`; docs uses Infima/system fonts
+- Docusaurus CSS bleeds body/heading/link resets globally — would destroy main site if shared
+
+**Planned phases (not yet implemented — assigned to another contributor):**
+1. **Phase 1:** Add Vue Router to main SPA. `/bluespeed` and `/dakota` become proper route components with shared navbar. Add `SectionEcosystem` (cards section after `SectionBazaar`) + `Projects ▾` nav dropdown.
+2. **Phase 2:** Add Inter font + shared nav component to docs site. Fixes biggest visual seam (~1 day).
+3. **Phase 3:** Reverse proxy (Cloudflare/nginx) so `projectbluefin.io/docs/*` routes to Docusaurus. Unified domain.
+
+**Prototype built 2026-05-21, reverted — do not re-implement without reading this section:**
+- `SectionEcosystem.vue` — two-card grid (Bluespeed + Dakota) with Beta/Alpha badges
+- Nav dropdown: added `Projects ▾` to `TopNavbar.vue` with `ref(dropdownOpen)`
+- Hero CTA: `⚡ Explore the Ecosystem` button with `.ecosystem-cta` SCSS class
+- Footer links: `⚡ Bluespeed` + `🦕 Dakota` in the Project column
+- All four options were visually verified; A1 (nav) + A2 (ecosystem section) is the recommended combination
+
 ## Git / Fork Workflow
 
 **Fork setup:**
