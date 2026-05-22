@@ -66,7 +66,7 @@ const clients: ClientCard[] = [
     href: 'https://github.com/aaif-goose/goose',
     icon: IconCodeBraces,
     desc: 'Open Source AI agent, your "terminal" to your local AI network.',
-    org: 'aaf',
+    org: 'aaif',
     orgLabel: 'Agentic AI Foundation',
   },
   {
@@ -304,8 +304,8 @@ const clients: ClientCard[] = [
       color: #8899bb;
       background: rgba(136, 153, 187, 0.15);
     }
-    // AAF badge
-    &.org-aaf {
+    // AAIF badge
+    &.org-aaif {
       color: #c084fc;
       background: rgba(192, 132, 252, 0.15);
     }
@@ -316,8 +316,8 @@ const clients: ClientCard[] = [
     }
   }
 
-  // org-aaf card
-  .app-card.org-aaf {
+  // org-aaif card
+  .app-card.org-aaif {
     border-color: rgba(192, 132, 252, 0.35);
     background: rgba(192, 132, 252, 0.05);
     &:hover {
