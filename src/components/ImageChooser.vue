@@ -135,10 +135,17 @@ function selectArchitecture(arch: string) {
     imageName.value.imagesrc = './characters/achillobator.webp'
   }
 
-  // Always go to GPU step after architecture selection
   showKernelStep.value = false
-  showGpuStep.value = true
   showDownload.value = false
+
+  // ARM64 has no GPU variants — skip GPU step and proceed directly to download
+  if (arch === 'arm') {
+    imageName.value.gpu = undefined
+    showGpuStep.value = false
+    showDownload.value = true
+  } else {
+    showGpuStep.value = true
+  }
 }
 
 function selectKernel(kernel: string) {
@@ -406,14 +413,16 @@ onMounted(() => {
           class="back-button"
           @click="
             () => {
-              // If we came from kernel step (LTS + non-Nvidia), go back to kernel step
-              // Otherwise go back to GPU step
-              if (imageName.stream === 'lts' && imageName.gpu === 'amd') {
+              if (imageName.arch === 'arm') {
+                showArchitectureStep = true
+                imageName.arch = undefined
+                imageName.gpu = undefined
+                showDownload = false
+              } else if (imageName.stream === 'lts' && imageName.gpu === 'amd') {
                 showKernelStep = true
                 imageName.kernel = undefined
                 showDownload = false
-              }
-              else {
+              } else {
                 showGpuStep = true
                 imageName.gpu = undefined
                 imageName.kernel = undefined
