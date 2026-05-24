@@ -160,7 +160,7 @@ const entries: DownloadEntry[] = [
   }
 }
 
-@media (max-width: 500px) {
+@media (max-width: 700px) {
   .entry {
     flex-direction: column;
     align-items: flex-start;
@@ -172,6 +172,7 @@ const entries: DownloadEntry[] = [
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+    width: 100%;
   }
 
   .btn {

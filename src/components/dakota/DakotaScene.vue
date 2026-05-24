@@ -153,19 +153,6 @@ onMounted(() => {
   }
 }
 
-.back-link {
-  display: inline-block;
-  color: var(--color-text-light);
-  text-decoration: none;
-  font-size: 1.3rem;
-  opacity: 0.6;
-  margin-bottom: 12px;
-  transition: opacity 0.2s;
-
-  &:hover {
-    opacity: 1;
-  }
-}
 
 @media (max-width: 500px) {
   .alpha-badge {

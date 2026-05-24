@@ -62,28 +62,24 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
 <style scoped lang="scss">
 .dakota-page {
   min-height: 100vh;
+  overflow-y: auto;
   background-image: url('/evening/night-sky.webp');
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
-
-  // Lock to one screen only on true landscape 16:9
-  @media (min-aspect-ratio: 16/10) and (min-width: 1024px) {
-    height: 100vh;
-    overflow: hidden;
-  }
 }
 
 .dakota-layout {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
+  box-sizing: border-box;
   padding: 48px 60px 40px;
   gap: 40px;
 
-  // Lock height only on wide landscape
+  // Keep the fullscreen feel on wide landscape without clipping tall content
   @media (min-aspect-ratio: 16/10) and (min-width: 1024px) {
-    height: calc(100vh - 60px);
+    min-height: calc(100vh - 60px);
   }
 
   // Tablet portrait / narrow desktop: stack columns
@@ -144,7 +140,8 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
   justify-content: flex-start;
   flex: 1;
   min-width: 0;
-  overflow: hidden;
+  min-height: 0;
+  overflow: visible;
   background: rgba(var(--color-bg-rgb), 0.55);
   backdrop-filter: blur(8px);
   border-radius: 12px;

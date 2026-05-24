@@ -1,13 +1,22 @@
 <script setup lang="ts">
 import type { MessageSchema } from '../locales/schema'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+interface NavLink {
+  name: string
+  href: string
+  external?: boolean
+}
 
 const { t } = useI18n<MessageSchema>({
   useScope: 'global'
 })
 
+const menuOpen = ref(false)
+
 // Left side navigation
-const leftNavLinks = [
+const leftNavLinks: NavLink[] = [
   {
     name: t('TopBar.Docs'),
     href: 'https://docs.projectbluefin.io/introduction'
@@ -16,7 +25,7 @@ const leftNavLinks = [
 ]
 
 // Right side navigation
-const rightNavLinks = [
+const rightNavLinks: NavLink[] = [
   { name: t('TopBar.Blog'), href: 'https://docs.projectbluefin.io/blog' },
   { name: t('TopBar.Changelog'), href: 'https://docs.projectbluefin.io/changelogs' },
   { name: t('TopBar.Reports'), href: 'https://docs.projectbluefin.io/reports' },
@@ -36,6 +45,12 @@ const rightNavLinks = [
     external: true
   }
 ]
+
+const mobileNavLinks = [...leftNavLinks, ...rightNavLinks]
+
+const closeMenu = () => {
+  menuOpen.value = false
+}
 </script>
 
 <template>
@@ -73,6 +88,36 @@ const rightNavLinks = [
           {{ link.name }}
         </a>
       </div>
+
+      <button
+        type="button"
+        class="navbar__menu-toggle"
+        :aria-expanded="menuOpen"
+        aria-controls="navbar-mobile-menu"
+        :aria-label="menuOpen ? 'Close navigation menu' : 'Open navigation menu'"
+        @click="menuOpen = !menuOpen"
+      >
+        {{ menuOpen ? '✕' : '☰' }}
+      </button>
+    </div>
+
+    <div
+      v-if="menuOpen"
+      id="navbar-mobile-menu"
+      class="navbar__mobile-menu"
+    >
+      <a
+        v-for="link in mobileNavLinks"
+        :key="link.name"
+        :href="link.href"
+        class="navbar__mobile-link"
+        :class="{ 'navbar__link--active': link.name === t('TopBar.Docs') }"
+        :target="link.external ? '_blank' : undefined"
+        :rel="link.external ? 'noopener noreferrer' : undefined"
+        @click="closeMenu"
+      >
+        {{ link.name }}
+      </a>
     </div>
   </nav>
 </template>
@@ -224,6 +269,71 @@ const rightNavLinks = [
   justify-content: flex-end;
 }
 
+.navbar__menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ifm-navbar-link-color);
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color var(--ifm-transition-fast) var(--ifm-transition-timing-default),
+    border-color var(--ifm-transition-fast) var(--ifm-transition-timing-default),
+    background-color var(--ifm-transition-fast) var(--ifm-transition-timing-default);
+
+  &:hover {
+    color: var(--ifm-navbar-link-hover-color);
+    border-color: rgba(138, 151, 247, 0.5);
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ifm-navbar-link-hover-color);
+    outline-offset: 2px;
+  }
+}
+
+.navbar__mobile-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  flex-direction: column;
+  padding: 8px 16px 16px;
+  background-color: var(--ifm-navbar-background-color);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+  max-height: calc(100vh - var(--ifm-navbar-height));
+  overflow-y: auto;
+}
+
+.navbar__mobile-link {
+  color: var(--ifm-navbar-link-color);
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  transition: color var(--ifm-transition-fast) var(--ifm-transition-timing-default);
+
+  &:hover {
+    color: var(--ifm-navbar-link-hover-color);
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
 // Mobile responsive - matching Docusaurus breakpoints exactly
 @media (max-width: 996px) {
   .docusaurus-navbar {
@@ -241,18 +351,34 @@ const rightNavLinks = [
 }
 
 @media (max-width: 768px) {
+  .navbar__inner {
+    gap: 12px;
+  }
+
   .navbar__items {
+    flex: 1;
+    min-width: 0;
+
     a:not(.navbar__brand) {
       display: none;
     }
   }
 
   .navbar__brand {
-    margin: 0 auto;
+    margin-right: 0;
   }
 
   .navbar__items--right {
     display: none;
+  }
+
+  .navbar__menu-toggle {
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+
+  .navbar__mobile-menu {
+    display: flex;
   }
 }
 </style>

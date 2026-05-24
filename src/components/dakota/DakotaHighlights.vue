@@ -120,8 +120,12 @@ import {
       width: 36px;
     }
 
+    .brand-title,
     p {
-      font-size: 1.8rem !important;
+      font-size: 1.6rem !important;
+    }
+
+    p {
       font-weight: 400;
     }
   }
