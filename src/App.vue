@@ -9,6 +9,8 @@ import SceneUsers from './components/scenes/SceneUsers.vue'
 import ParallaxWrapper from './components/sections/ParallaxWrapper.vue'
 import SectionBazaar from './components/sections/SectionBazaar.vue'
 import SectionCommunity from './components/sections/SectionCommunity.vue'
+import SectionContributors from './components/sections/SectionContributors.vue'
+import SectionFlock from './components/sections/SectionFlock.vue'
 import SectionFooter from './components/sections/SectionFooter.vue'
 import SectionMission from './components/sections/SectionMission.vue'
 import SectionNews from './components/sections/SectionNews.vue'
@@ -72,6 +74,8 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
       <SectionBazaar />
       <SectionPicker />
       <SectionCommunity />
+      <SectionContributors />
+      <SectionFlock />
       <SectionNews />
       <SectionFooter />
       <Navigation />

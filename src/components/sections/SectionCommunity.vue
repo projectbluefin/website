@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import type { MessageSchema } from '../../locales/schema'
-import { IconFileOutline, IconForumOutline, IconGithub, IconHeartCircle, IconMessage } from '@iconify-prerendered/vue-mdi'
+import { IconFileOutline, IconForumOutline, IconMessage } from '@iconify-prerendered/vue-mdi'
 import { useI18n } from 'vue-i18n'
-import BluefinGrowthChartSvg from '@/assets/svg/growth_bluefins.svg'
 
 import SceneVisibilityChecker from '../common/SceneVisibilityChecker.vue'
 
@@ -54,35 +53,6 @@ const { t } = useI18n<MessageSchema>({
           </div>
         </div>
 
-        <div class="community-card contribute-card">
-          <div class="contrib-text">
-            <h3>{{ t("Community.Contribute.Title") }}</h3>
-            <p>{{ t("Community.Contribute.Description") }}</p>
-            <div class="card-buttons">
-              <a class="community-button" href="https://github.com/ublue-os/bluefin" target="_blank">
-                <span class="button-icon">
-                  <IconGithub class="size-6" />
-                </span>
-                <span class="button-label">{{ t("Community.Contribute.Button") }}</span>
-              </a>
-              <a class="community-button" href="https://docs.projectbluefin.io/donations" target="_blank">
-                <span class="button-icon">
-                  <IconHeartCircle class="size-6" />
-                </span>
-                <span class="button-label">{{ t("Community.Contribute.DonateButton") }}</span>
-              </a>
-            </div>
-          </div>
-          <div class="contrib-image">
-            <a href="https://github.com/ublue-os/bluefin/pulse" target="_blank" title="View Bluefin's Pulse on GitHub">
-              <img src="https://repobeats.axiom.co/api/embed/40b85b252bf6ea25eb90539d1adcea013ccae69a.svg" alt="GitHub Repository Metrics" loading="lazy">
-            </a>
-          </div>
-        </div>
-
-        <div class="community-card growth-chart-card">
-          <img class="growth-chart" :src="BluefinGrowthChartSvg">
-        </div>
       </div>
     </div>
     <SceneVisibilityChecker name="#scene-community" />
@@ -197,72 +167,6 @@ const { t } = useI18n<MessageSchema>({
     }
   }
 
-  .contribute-card {
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: 40px;
-    align-items: start;
-
-    .contrib-text {
-      h3 {
-        font-size: 2.4rem;
-        font-weight: 600;
-        color: var(--color-text);
-        margin-bottom: 16px;
-      }
-
-      p {
-        font-size: 1.6rem;
-        line-height: 1.6;
-        color: var(--color-text-light);
-        margin-bottom: 24px;
-      }
-
-      .card-buttons {
-        display: flex;
-        gap: 16px;
-        flex-wrap: wrap;
-      }
-
-      .community-button {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 12px 24px;
-        background: var(--color-blue);
-        color: white;
-        text-decoration: none;
-        border-radius: 4px;
-        font-size: 1.4rem;
-        font-weight: 600;
-        transition: background 0.3s ease;
-
-        &:hover {
-          background: var(--color-blue-dark, #0056b3);
-        }
-
-        .button-icon {
-          display: flex;
-          align-items: center;
-        }
-      }
-    }
-
-    .contrib-image {
-      img {
-        width: 100%;
-        height: auto;
-        display: block;
-      }
-    }
-  }
-
-  .growth-chart {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-
   @media (max-width: 768px) {
     .community-card {
       flex-direction: column;
@@ -272,26 +176,6 @@ const { t } = useI18n<MessageSchema>({
       .card-content .card-buttons {
         justify-content: center;
       }
-    }
-
-    .contribute-card {
-      grid-template-columns: 1fr;
-
-      .contrib-text .card-buttons {
-        justify-content: center;
-      }
-
-      .contrib-image {
-        display: none;
-      }
-    }
-
-    .growth-chart {
-      display: none;
-    }
-
-    .growth-chart-card {
-      display: none;
     }
 
     .community-header h2 {

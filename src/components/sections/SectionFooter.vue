@@ -12,21 +12,6 @@ const { t } = useI18n<MessageSchema>({
 
 <template>
   <footer>
-    <section id="contributors" class="section-wrap">
-      <div class="container">
-        <h2>{{ $t("Flock.Title") }}</h2>
-        <p style="font-size: 18px">
-          {{ $t("Flock.Description") }}
-        </p>
-        <IframeResizer
-          id="contributor-container"
-          license="GPLv3"
-          src="/contributors.html"
-          loading="lazy"
-          style="width: 100%; height: 200px"
-        />
-      </div>
-    </section>
     <section id="alumni" class="section-wrap">
       <div class="container" style="text-align: center;">
         <h3 style="margin-bottom: 30px; font-size: 2rem; text-transform: none; font-weight: 600;">
