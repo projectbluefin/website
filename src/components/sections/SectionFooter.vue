@@ -101,6 +101,20 @@ const { t } = useI18n<MessageSchema>({
           </a>
         </p>
         <div v-html="marked.parse(t('Footer.Project.Ublue'))" />
+        <a
+          class="lfx-badge-link"
+          href="https://insights.linuxfoundation.org/project/ublue-os-bluefin/contributors"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="View Project Bluefin contributor insights on Linux Foundation Insights"
+        >
+          <img
+            class="lfx-badge"
+            src="/lfx-badge.png"
+            alt="Linux Foundation Insights contributor badge"
+            loading="lazy"
+          >
+        </a>
         <ul class="footer-links">
           <li v-for="item in LangSocialLinks" :key="item.text">
             <a :href="item.link">
@@ -143,6 +157,24 @@ const { t } = useI18n<MessageSchema>({
 }
 .ublue span {
   margin-left: 4px;
+}
+
+.lfx-badge-link {
+  display: inline-flex;
+  margin-top: 1.6rem;
+}
+
+.lfx-badge {
+  width: min(100%, 282px);
+  height: auto;
+  border-radius: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lfx-badge-link:hover .lfx-badge,
+.lfx-badge-link:focus-visible .lfx-badge {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
 }
 
 .footer-links {
