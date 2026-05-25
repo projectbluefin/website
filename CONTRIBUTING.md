@@ -1,7 +1,75 @@
-# CONTRIBUTING
+# Contributing to projectbluefin/website
 
-Thanks for helping out!
+Thanks for helping out! This guide covers everything you need to contribute to the Bluefin marketing website.
 
-Check the [Contributing Guide](https://docs.projectbluefin.io/contributing) for contribution information.
+> For broader project contribution (image builds, architecture, community), see the [full Contributing Guide](https://docs.projectbluefin.io/contributing).
 
-This repository is for building the images, you are probably looking for [@projectbluefin/common](https://github.com/projectbluefin/common) to change something in Bluefin. Make sure you check [the architecture diagram](https://docs.projectbluefin.io/contributing#understanding-bluefins-architecture).
+## Repository overview
+
+This is the **projectbluefin.io** marketing website — a multi-SPA project built with [Vite](https://vitejs.dev/) and [Vue 3](https://vuejs.org/). It contains three sub-apps:
+
+| Directory | Purpose |
+|-----------|---------|
+| `bluespeed/` | Main Bluefin landing page |
+| `dakota/` | Dakota variant landing page |
+| `knuckle/` | Knuckle bare-metal installer page |
+| `public/` | Static assets served as-is |
+
+## Local development
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) v18 or higher
+- [npm](https://www.npmjs.com/)
+- Optional: [just](https://github.com/casey/just) for simplified commands
+
+### Setup
+
+```bash
+git clone https://github.com/projectbluefin/website
+cd website
+npm install
+```
+
+### Dev server
+
+```bash
+npm run dev        # Start development server (hot reload)
+npm run build      # Build for production
+npm run preview    # Preview the production build locally
+```
+
+With `just`:
+```bash
+just build         # Build for production
+just serve         # Preview the production build locally
+```
+
+### Linting and formatting
+
+The project uses [`@antfu/eslint-config`](https://github.com/antfu/eslint-config) for linting and formatting. Run before submitting a PR:
+
+```bash
+npm run lint        # Lint
+npm run lint:fix    # Lint and auto-fix
+npm run typecheck   # Type-check with vue-tsc
+```
+
+## Adding a new language (i18n)
+
+1. Copy an existing locale file from `src/locales/` (e.g., `enUS.json`)
+2. Name your file following [Navigator.language](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/language) (e.g., `ptBR.json`)
+3. Translate all values — keep all keys identical to `enUS.json`
+4. Open a PR; CI will validate the JSON schema
+
+## PR workflow
+
+1. Fork the repo and create a branch: `git checkout -b feat/my-change`
+2. Make your changes — **do not run build/test locally**, CI handles validation
+3. Commit with a [Conventional Commits](https://www.conventionalcommits.org/) message: `feat(section): add X`
+4. Push and open a PR against `main`
+5. All PRs require at least 1 approving review from a maintainer before merging
+
+## Security issues
+
+Please **do not** file public issues for security vulnerabilities. See `SECURITY.md` or email the maintainers directly.
