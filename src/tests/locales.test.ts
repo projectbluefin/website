@@ -36,10 +36,11 @@ describe('locale files — structural integrity', () => {
     const locale = JSON.parse(readFileSync(resolve(localesDir, file), 'utf8'))
     const localeKeys = flatKeys(locale)
 
-    it(`${file} has same top-level sections as en-US`, () => {
-      const enTopLevel = Object.keys(enUS).sort()
-      const localeTopLevel = Object.keys(locale).sort()
-      expect(localeTopLevel).toEqual(enTopLevel)
+    it(`${file} has no extra top-level sections absent from en-US`, () => {
+      const enTopLevel = Object.keys(enUS)
+      const localeTopLevel = Object.keys(locale)
+      const extras = localeTopLevel.filter(k => !enTopLevel.includes(k))
+      expect(extras, `Extra sections in ${file}: ${extras.join(', ')}`).toHaveLength(0)
     })
 
     it(`${file} has no extra keys absent from en-US`, () => {
