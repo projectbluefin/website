@@ -8,26 +8,19 @@
     "TryOutButton": "試してみる"
   },
   "Users": {
-    "Text": "Bluefin はあなたのコンピュータのためのオペレーティングシステムです。Chromebook の信頼性と使いやすさに、GNOME デスクトップのパワーを兼ね備えた、両方の良いところを持ち合わせています。",
     "Tag": "向け",
     "Title": "ユーザー",
-    "Appendix": "自動イメージベースの更新とシンプルなグラフィカルアプリケーションストアを特徴とし、Bluefin はあなたの邪魔をしないように設計されています。システムの安定性を犠牲にすることなく、あなたが望むものを手に入れられます。Linux クライアントは進化し、次世代のためのクリーンスタートを切りました。詳細については、 [発表ブログ記事](https://www.ypsidanger.com/announcing-project-bluefin/) と [入門ドキュメント] (https://docs.projectbluefin.io) をご覧ください。",
-    "ArtworkDescription": "キャラクター Bluefin のアートワーク",
     "Box1": "Flathub によるアプリケーション",
     "Box2": "ほぼメンテナンス不要",
     "Box3": "GPU ドライバー同梱"
   },
-  "ParallaxQuote": "進化は絶え間ない分岐と拡大のプロセスです。",
   "Devs": {
     "Tag": "向け",
     "Title": "開発者",
-    "Text": "Bluefin には、あなたのデバイスを強力なワークステーションに変えるオプションの  \"開発者モード\" が付属しています。あなたがどこから来たかに応じて、コンテナ中心のワークフローでスタートできるほか、独自のワークフローも持ち込めます。[業界をリードするツール](https://landscape.cncf.io/) を指先で操ることができます。",
     "BoxOne": "devcontainers を活用した Visual Studio Code",
     "BoxTwo": "コンテナ中心のターミナル",
     "BoxThree": "コードとしての開発環境を実現する Devpod",
     "BoxFour": "Homebrew をすぐに利用可能",
-    "Appendix": "[コンテナランタイム](https://podman.io) の組み込みにより、チームの可能性が広がります。現代のインターネットインフラを支えるのと同じツールをデスクトップ上で使用できます。Bluefin は本番環境への展開方法を知っています。\n\n私たちは、デスクトップで Linux を使用していない Linux 運用者をターゲットにしていますが、それは彼らにとって Linux デスクトップが期待に応えられなかったためです。そこで、私たちは Linux デスクトップをクラウドネイティブの旅に連れ出し、コミュニティとして構築しています。\n\n> 動かされる者ではなく、動かす者になれ。\n> <cite>[Zavala][1]</cite>\n\n[1]: https://en.wikipedia.org/wiki/Lance_Reddick",
-    "ArtworkDescription": "キャラクタータワーのアートワーク",
     "TowerJoke": "あなたのバックログを<b>Tower</b>（見下ろし）しましょう！"
   },
   "Mission": {
@@ -38,69 +31,18 @@
   },
   "Video": {
     "Url": "https://www.youtube.com/embed/Nz-yyDwTfRM&autoplay=1",
-    "Title": "Bluefin Linux 紹介",
-    "AppendixText": "Project Bluefin は完成した製品ではなく、より信頼性が高く保守可能な Linux デスクトップ体験を求める [クラウドネイティブ愛好家](https://github.com/ublue-os/bluefin/graphs/contributors) によって維持されている継続的な情熱プロジェクトです。[未解決の課題](https://github.com/ublue-os/bluefin/issues) をご覧ください。\n\n彼女は最先端を代表しています…美しくユニークな生き物です。必然的に課題に直面する世界のための完璧な捕食者。私たちは適応しなければなりません。**一緒に**それができるのです。"
+    "Title": "Bluefin Linux 紹介"
   },
   "TryBluefin": {
     "Title": "Bluefin を試す",
     "Description": "以下のフォームを使用して、お使いのハードウェアとユースケースに適した ISO ダウンロードリンクを取得してください。チームは、インストールメディアを作成するために<a href='https://flathub.org/apps/org.fedoraproject.MediaWriter'>Fedora Media Writer</a> を推奨しています：",
-    "Developer": {
-      "Question": "開発者ですか？",
-      "DefaultSelection": "開発者ツールを含める",
-      "Yes": "はい",
-      "No": "いいえ"
-    },
     "Gpu": {
       "Question": "主要 GPU のベンダーは誰ですか？",
       "DefaultSelection": "主要 GPU ベンダーを選択"
     },
-    "Stream": {
-      "Question": "更新の積極性はどの程度がいいですか？",
-      "DefaultSelection": "更新ストリームを選択",
-      "Stable": "Bluefin（愛好家向け、Fedora {version} ベース）"
-    },
     "Download": {
-      "Iso": "ISO をダウンロード",
       "Registry": "GitHub Container Registry で詳細を表示",
-      "Checksum": "検証 (SHA256)",
-      "DeveloperNote": "[Bluefin DX の紹介](https://docs.projectbluefin.io/bluefin-dx) をご覧ください。",
-      "DollyChill": "ISO リンクの近くでくつろぐ Dolly"
-    }
-  },
-  "NewsTitle": "ニュース",
-  "Faq": {
-    "Tag": "不明点は？",
-    "Title": "よくある質問",
-    "Text": "質問が解決しない場合は、\n[Discourse フォーラム](https://universal-blue.discourse.group/c/bluefin/6) で私たちを見つけたり、[docs.projectbluefin.io](https://docs.projectbluefin.io) をチェックしたりできます",
-    "QuestionsArray": {
-      "0": {
-        "question": "これは正確には何ですか？なぜ Linux ディストリビューションを作ったのですか？",
-        "answer": "Bluefin は bootc の OCI コンテナ機能を活用して OS イメージを構成・構築します。このプロセスは、自動化と持続可能性に取り組む整然としたコミュニティによって監督されています。最終的な結果は、Ansible や Salt のような構成管理ツールに似ていますが、カスタムディストリビューションの維持に通常伴う典型的な課題がありません。私たちはこのアプローチを説明するために「カスタムイメージ」という用語を使用しています。誰かがあなたのために洗練されたセットアップをインストール、構成、維持するようなものです。\n\nそれはあなたのオタク友達があなたのコンピュータのセットアップを手伝うようなものですが、私たちはコミュニティとして互いを助け合うために一緒にそれを行います。\n\n[OSTree ネイティブコンテナ](https://bootc-dev.github.io/bootc/)"
-      },
-      "1": {
-        "question": "他のデスクトップとどう違いますか？",
-        "answer": "Bluefin は、従来のディストリビューションではなく、意図的に消費者向けデバイスのように振る舞う次世代デスクトップです。厳選された Flathub ストア、Homebrew を提供し、システムパッケージの使用を最小限に抑えることで、ユーザーの選択麻痺を解消します。\n\n開発者には、devcontainers を通じた純粋なクラウドネイティブな開発ワークフローに集中しています。\n\nあるいは、任意の OCI コンテナをユーザースペースとして使用できます。\n\n [Distrobox](https://distrobox.privatedns.org/compatibility/#host-distros) \n [Flathub](https://flathub.org) \n [Devcontainers](https://containers.dev) \n [Ptyxis](https://flathub.org/apps/app.devsuite.Ptyxis)"
-      },
-      "2": {
-        "question": "機能の詳細はどこで見つけられますか？",
-        "answer": "詳細情報は私たちの GitHub リポジトリで見つけることができます。\n\n [GitHub](https://github.com/ublue-os/bluefin#readme) \n [Bluefin ドキュメント](https://docs.projectbluefin.io) [開発者ドキュメント](https://docs.projectbluefin.io/bluefin-dx)"
-      },
-      "3": {
-        "question": "なぜ恐竜なのですか？",
-        "answer": "Bluefin は、名前が「恐ろしい爪」を意味する獣脚類恐竜、デイノニクス・アンティロプスです。1960 年代に発見され、彼女は恐竜に対する私たちの理解を革命的に変えました。デイノニクス以前、恐竜はしばしば鈍重で頭の悪い生き物と見なされていました。しかし、彼女はこれらの誤解を打ち砕き、温血で急速に進化し、その領域の主であった動物たちのダイナミックな世界への洞察を提供しました。私たちは、私たちのデスクトップが同様の俊敏性を体現することを目指しています。パワーと適応性。\n\n [Deinonychus](https://en.wikipedia.org/wiki/Deinonychus)"
-      },
-      "4": {
-        "question": "プロジェクトをどのように持続可能にする計画ですか？",
-        "answer": "このプロジェクトは、簡単に参加できるように bash と Python で意図的に書かれています。私たちはただファイルをコピーしているだけです、それは Linux です。このモデルは拡張性があるため、このプロジェクトから価値を得る組織が、それを維持するために時間を割くことに貢献すると考えています。ほとんど機能は完成しており、自動化志向のシステム管理者を引き付けます。誰でもコミュニティを通じてオペレーティングシステムのメンテナンスを自動化することで貢献し、価値を得ることができます。あるいは、ビルダーの費用を賄うためや、より多くの古生物学的アートをスポンサーするために、単に GitHub Sponsors に寄付することもできます。\n\n [GitHub Sponsors](https://github.com/sponsors/castrojo)"
-      },
-      "5": {
-        "question": "KDE を使用したい場合はどうすればいいですか？",
-        "answer": "Aurora は Bluefin に似ていますが、代わりに KDE を使用しています。Bluefin と Aurora が、他の人々が独自のユーザー体験を中心としたコミュニティを構築するインスピレーションになることを願っています。また、SteamOS に似た愛好家グレードのゲーム体験が欲しい場合は、Bazzite をチェックしてください。類は友を呼び、共に強くなります。\n\n [Aurora](https://getaurora.dev) \n [Bazzite](https://bazzite.gg)"
-      },
-      "6": {
-        "question": "デスクトップには興味がありませんが、恐竜だけを入手できますか？",
-        "answer": "Bluefin は Jacob Schnurr と Andy Frazer によって命を吹き込まれました。アートワークは自由に使用できます。それは生命の繊細なバランスを表しており、オープンソースが持続される必要のあるエコシステムであることを思い出させるためのものです。私たちが作るソフトウェアは世界に影響を与えます：Bluefin はテクノロジーオタクによって組み立てられるかもしれませんが、人間の心の創造性の重要性を示すために二人の人間が必要でした。\n\n [壁紙と恐竜](https://universal-blue.discourse.group/t/dinosaur-gallery/18/5) \n [Jacob Schnurr](https://www.etsy.com/shop/JSchnurrCommissions?listing_id=1425657775) \n [Andy Frazer](https://www.etsy.com/fi-en/shop/DragonsofWales?ref=profile_header)"
-      }
+      "Checksum": "検証 (SHA256)"
     }
   },
   "Flock": {
@@ -108,17 +50,13 @@
     "Description": "Bluefin は、献身的なメンテナーと貢献者のグループによって構築されています。"
   },
   "Footer": {
-    "Title": "提供",
     "Copyright": "Copyright {date} © Project Bluefin and Universal Blue",
-    "Project": "Bluefin は、Linux デスクトップを再起動するために設計されたコミュニティツールキットである [Universal Blue](https://universal-blue.org) で構築されています。ゲームへの愛のために作られました。インディークラウドネイティブへようこそ。",
-    "ProjectTitle": "Project Bluefin",
-    "References": "すべてのアートワークは人間によって作られています。\n\n- ウェブサイト - [Jan Dolanský](https://dolansky.dev/) & [Kyle Gospodnetich](https://kylegospodneti.ch/)\n- ロゴと壁紙 - [Jacob Schnurr](https://www.etsy.com/shop/JSchnurrCommissions?listing_id=1425657775)\n- Bluefin 説明用壁紙 - Andy Frazer, [DragonsofWales](https://www.etsy.com/fi-en/shop/DragonsofWales?ref=profile_header)\n- 翻訳 - [Tulip Blossom](https://github.com/tulilirockz), [karhima](https://github.com/karhima), [Niklas](https://niklas.tech), [Crono](https://github.com/EPOCHvoyager) and [Tsu-gu](https://github.com/Tsu-gu) \n- 特別な感謝 - [Aaron Lake](https://www.linkedin.com/in/aaron-lake/), [Brian Ketelsen](https://brian.dev/), [Dustin Kirkland](https://www.kotterva.com/), and [Marco Ceppi](https://github.com/marcoceppi)"
+    "Project": "Bluefin は、Linux デスクトップを再起動するために設計されたコミュニティツールキットである [Universal Blue](https://universal-blue.org) で構築されています。ゲームへの愛のために作られました。インディークラウドネイティブへようこそ。"
   },
   "Navbar": {
     "ForYou": "あなたのために",
     "ForDevs": "開発者向け",
     "OurMission": "私たちのミッション",
-    "TryOut": "試してみる",
-    "FAQ": "よくある質問"
+    "TryOut": "試してみる"
   }
 }

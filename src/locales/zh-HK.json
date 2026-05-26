@@ -8,26 +8,19 @@
     "TryOutButton": "立即試用"
   },
   "Users": {
-    "Text": "Bluefin 是為您電腦而設的作業系統，有如 Chromebook 可靠、方便，同時擁有 GNOME 桌面強大的力量。",
     "Tag": "為",
     "Title": "您",
-    "Appendix": "具備自動映像更新及簡潔軟件中心介面，避免阻撓日常使用，保持系統穩定，令您隨心所欲。Linux 於不同裝置的持續進化下脫胎換骨，為次代打開新章。參閱[公佈](https://www.ypsidanger.com/announcing-project-bluefin/)及[文檔簡介](https://docs.projectbluefin.io)瞭解更多。",
-    "ArtworkDescription": "Character bluefin artwork",
     "Box1": "Flathub 軟件",
     "Box2": "「近乎零」維護",
     "Box3": "包括 GPU 驅動程序"
   },
-  "ParallaxQuote": "進化，就是持續的出枝及擴展。",
   "Devs": {
     "Tag": "為",
     "Title": "開發者",
-    "Text": "「開發者模式」可令您的裝置改頭換面，重生為強大的工作站。不論何方而來，以容器為中心的工作流程都會令您更易開始，而您亦可選擇沿用自己的流程。[行業尖端工具](https://landscape.cncf.io/)觸手可及。",
     "BoxOne": "Visual Studio Code 與 devcontainers",
     "BoxTwo": "以容器為中心的終端",
     "BoxThree": "適用於開發者環境的 Devpod",
     "BoxFour": "Homebrew",
-    "Appendix": "以[容器](https://podman.io)解鎖您團隊的潛能。利用支撐現代網絡的工具同樣優化您的桌面體驗。Bluefin 理解生產過程。\n\n我們以曾嘗試而不愛 Linux 桌面的 Linux 開發者為對象。我們帶 Linux 走趟雲端原生的旅程，加上社區的合作令她得以捲土重來。\n\n> Be the one who moves, not the one who is moved.\n> <cite>[蘭斯·列迪克][1]</cite>\n\n[1]: https://zh.wikipedia.org/wiki/兰斯·雷迪克",
-    "ArtworkDescription": "Character tower artwork",
     "TowerJoke": "<b>Tower</b> over your Backlog!"
   },
   "Mission": {
@@ -38,18 +31,11 @@
   },
   "Video": {
     "Url": "https://www.youtube.com/embed/Nz-yyDwTfRM&autoplay=1",
-    "Title": "Bluefin 簡介",
-    "AppendixText": "Project Bluefin 並非完成品，而是[各位雲端原生發燒友](https://github.com/ublue-os/bluefin/graphs/contributors)密密維護的激情項目，以求取更可靠、更易維護的 Linux 桌面體驗。參見[各項未解決問題](https://github.com/ublue-os/bluefin/issues)。\n\n她代表了最先進的技術……一個美麗而獨特的生物。一個完美的掠食者，在這個難免面對挑戰的世界裡。我們必須適應。我們可以**一起**面對挑戰。"
+    "Title": "Bluefin 簡介"
   },
   "TryBluefin": {
     "Title": "試用 Bluefin",
     "Description": "以下方表格取得為您硬件及用例而設的正確 ISO 下載連結。\n\n注意：這些 ISO 僅作試驗用，請[提出任何問題](https://github.com/ublue-os/titanoboa/issues)，多謝！\n\n建議以[Fedora Media Writer](https://flathub.org/apps/org.fedoraproject.MediaWriter)製作安裝媒體，不支援 Ventoy：\n",
-    "Developer": {
-      "Question": "您是否開發者？",
-      "DefaultSelection": "加入開發者工具",
-      "Yes": "是",
-      "No": "否"
-    },
     "Architecture": {
       "Question": "請選擇系統架構（不支援舊 BIOS）",
       "x86": "x86_64（大多數標準）",
@@ -59,55 +45,9 @@
       "Question": "請選擇顯卡（GPU）廠商（不支援舊 Nvidia 卡）",
       "DefaultSelection": "選擇主要 GPU 廠商"
     },
-    "Stream": {
-      "Question": "請選擇更新頻率",
-      "DefaultSelection": "更新頻率",
-      "Stable": "Bluefin（推薦給發燒友）",
-      "LTS": "Bluefin LTS"
-    },
     "Download": {
-      "Iso": "下載 ISO",
       "Registry": "於 GitHub Container Registry 查看細節",
-      "Checksum": "核對（SHA256）",
-      "DocumentationURL": "參閱 [Bluefin 文檔](https://docs.projectbluefin.io/)，包含安裝運行簿，15分鐘內為自己成功做好準備，踏進新世界。<br/><br/>",
-      "DeveloperNote": "參閱[Bluefin DX 簡介](https://docs.projectbluefin.io/bluefin-dx)。",
-      "DollyChill": "Dolly chilling near your ISO link"
-    }
-  },
-  "NewsTitle": "最新消息",
-  "Faq": {
-    "Tag": "有疑問？",
-    "Title": "常見問題",
-    "Text": "若有未解答疑問，可到 [Discourse 論壇](https://universal-blue.discourse.group/c/bluefin/6)及 [docs.projectbluefin.io](https://docs.projectbluefin.io)",
-    "QuestionsArray": {
-      "0": {
-        "question": "這是甚麼？為何又弄一個新 Linux 發行版？",
-        "answer": "Bluefin 利用 bootc 的 OCI 容器功能組成、建立作業系統映像。此過程由致力於自動化及永續性的社羣所監督。最終的結果是眾包的最佳實作，因此使用者不必從頭開始。我們以「客製化映像（custom image）」形容此方式。這就像有人為您安裝、配置及維護一個完美的設置。\n\n 這有如您的極客朋友幫您設置電腦一樣，只不過現在是我們作為一個社羣一起做的，互相幫助。\n\n[OSTree Native Containers](https://bootc-dev.github.io/bootc/)"
-      },
-      "1": {
-        "question": "這跟其他桌面有何不同？",
-        "answer": "Bluefin 是次世代桌面，專門模仿消費設備，而並非傳統的發行版，通過展示精心策劃的 Flathub 商店、Homebrew，並減少系統包裝的使用，以簡化使用者選擇。\n\n對於開發人員，我們利用 devcontainers 集中研發雲端原生開發工作流程。\n\n或者使用任何 OCI 容器作為您的用戶空間。\n\n [Distrobox](https://distrobox.privatedns.org/compatibility/#host-distros) \n [Flathub](https://flathub.org) \n [Devcontainers](https://containers.dev) \n [Ptyxis](https://flathub.org/apps/app.devsuite.Ptyxis)"
-      },
-      "2": {
-        "question": "我在哪裡可以找到功能的詳細資訊？",
-        "answer": "您可到 GitHub 中找到詳情。\n\n [GitHub](https://github.com/ublue-os/bluefin#readme) \n [Bluefin 文檔](https://docs.projectbluefin.io) [開發文檔](https://docs.projectbluefin.io/bluefin-dx)"
-      },
-      "3": {
-        "question": "為什麼是恐龍？",
-        "answer": "Bluefin是平衡恐爪龍，是一種獸腳類恐龍，名字的意思是 「可怕的爪子」。它在1960年代被發現，徹底改變了我們對恐龍的認識。在恐爪龍屬之前，恐龍通常被視為緩慢、愚蠢的生物。然而，恐爪龍屬打破了這些錯誤的觀念，讓我們了解到熱血、快速進化的動物的動態世界，這些動物都是其領域的主宰。我們的目標是讓我們的桌面體現出類似的敏捷、力量和適應性。\n\n [恐爪龍屬](https://zh.wikipedia.org/wiki/恐爪龍屬)"
-      },
-      "4": {
-        "question": "您打算如何讓這個方案持續下去？",
-        "answer": "本方案特意以 bash 和 Python 寫成，使其初學者友好。我們只是在複製檔案，這就是 Linux。由於這個模式可以擴充規模，我們認為從這個方案中獲得價值的組織可以貢獻一些時間來協助維護。它的大部分功能都很完整，並且吸引了很多有自動化意識的系統管理員。任何人都可以透過社群貢獻獲得自動化作業系統維護的價值回報。或者直接捐獻給 GitHub 贊助者，以幫助支付建置者的費用，並贊助更多的古美術。\n\n [GitHub Sponsors](https://github.com/sponsors/castrojo)"
-      },
-      "5": {
-        "question": "如果我想用 KDE 呢？",
-        "answer": "Aurora 與 Bluefin 相似，但使用的是 KDE。我們希望 Bluefin 和 Aurora 能啟發其他人圍繞使用者體驗建立自己的社羣。如果您想要類似 SteamOS 的發燒級遊戲體驗，也可以參考 Bazzite。物以類聚，人以群分。\n\n [Aurora](https://getaurora.dev) \n [Bazzite](https://bazzite.gg)"
-      },
-      "6": {
-        "question": "我對桌面不感興趣，我能只要恐龍嗎？",
-        "answer": "Bluefin 由 Jacob Schnurr 和 Andy Frazer 繪製。您可以免費使用這幅作品。它代表了生命的微妙平衡，提醒我們開放原始碼是一個需要維持的生態系統。我們製作的軟體會對世界產生影響：Bluefin 可能是由技術呆子拼湊而成，但卻是由兩個人類向我們展示了人類思想創造力的重要性。\n\n [壁紙及恐龍](https://universal-blue.discourse.group/t/dinosaur-gallery/18/5) \n [Jacob Schnurr](https://www.etsy.com/shop/JSchnurrCommissions?listing_id=1425657775) \n [Andy Frazer](https://www.etsy.com/fi-en/shop/DragonsofWales?ref=profile_header)"
-      }
+      "Checksum": "核對（SHA256）"
     }
   },
   "Flock": {
@@ -115,17 +55,13 @@
     "Description": "Bluefin 是由一群熱心的維護者和貢獻者所建立的。"
   },
   "Footer": {
-    "Title": "提供者",
     "Copyright": "版權所有 {date} © Project Bluefin 及 Universal Blue",
-    "Project": "Bluefin 以 [Universal Blue](https://universal-blue.org) 建設，它是一個社羣工具包，旨在重啟 Linux 桌面。為愛好者而建。歡迎來到獨立雲端原生。",
-    "ProjectTitle": "Project Bluefin",
-    "References": "所有藝術作品均由人類創作。\n\n- 網站 - [Jan Dolanský](https://dolansky.dev/)、[Kyle Gospodnetich](https://kylegospodneti.ch/)\n- 標誌及背景 - [Jacob Schnurr](https://www.etsy.com/shop/JSchnurrCommissions?listing_id=1425657775)\n- 相片編輯 - [Chandeleer](https://ko-fi.com/chandeleer)\n- Bluefin 插圖壁紙 - Andy Frazer、[DragonsofWales](https://www.etsy.com/fi-en/shop/DragonsofWales?ref=profile_header)\n- 翻譯 - [Tulip Blossom](https://github.com/tulilirockz)、[karhima](https://github.com/karhima)、[Niklas](https://niklas.tech)、[Crono](https://github.com/EPOCHvoyager)、[Tsu-gu](https://github.com/Tsu-gu)、[Madomado](https://github.com/madonuko)\n- 特別感謝 - [Aaron Lake](https://www.linkedin.com/in/aaron-lake/)、[Brian Ketelsen](https://brian.dev/)、[Dustin Kirkland](https://www.kotterva.com/)、[Marco Ceppi](https://github.com/marcoceppi)"
+    "Project": "Bluefin 以 [Universal Blue](https://universal-blue.org) 建設，它是一個社羣工具包，旨在重啟 Linux 桌面。為愛好者而建。歡迎來到獨立雲端原生。"
   },
   "Navbar": {
     "ForYou": "為您",
     "ForDevs": "為開發者",
     "OurMission": "我們的任務",
-    "TryOut": "試用",
-    "FAQ": "常見問題"
+    "TryOut": "試用"
   }
 }

@@ -8,26 +8,19 @@
     "TryOutButton": "Dùng thử"
   },
   "Users": {
-    "Text": "Bluefin là một hệ điều hành dành riêng cho máy tính của bạn. Tận hưởng sự kết hợp hòan hảo đến từ cả hai thế giới: sự ổn định và dễ sử dụng như một Chromebook, với sức mạnh đến từ giao diện người dùng GNOME.",
     "Tag": "Chỉ dành cho",
     "Title": "Bạn",
-    "Appendix": "Với khả năng cập nhật tự động dựa trên bản sao đám mây được gửi thẳng đến tay bạn và kho ứng dụng mang giao diện dễ sử dụng, Bluefin được thiết kế để không làm phiền đến bạn. Lấy tất cả những gì bạn muốn mà không cần phải lo lắng đến sự ổn định của hệ thống. Linux cho người dùng cá nhân đã bước sang trang mới, một sự khởi đầu hoàn toàn mới cho thế hệ tiếp theo. Xem thêm tại [bài đăng thông báo](https://www.ypsidanger.com/announcing-project-bluefin/) và [tài liệu giới thiệu](https://docs.projectbluefin.io) để biết thêm chi tiết.",
-    "ArtworkDescription": "Character bluefin artwork",
     "Box1": "Các ứng dụng từ Flathub",
     "Box2": "Bảo trì gần như không cần thiết",
     "Box3": "Tích hợp trình điều khiển dành cho GPU"
   },
-  "ParallaxQuote": "Tiến hóa là quá trình không ngừng phân nhánh và mở rộng.",
   "Devs": {
     "Tag": "Dành cho",
     "Title": "Các Lập trình viên",
-    "Text": "Bluefin mang đến tùy chọn \"developer mode\" biến máy tính cá nhân của bạn thành một trạm làm việc mạnh mẽ. Tuỳ chọn này mở ra cánh cửa sáng tạo với môi trường container linh hoạt, sẵn sàng đón nhận bạn từ bất kỳ nền tảng nào, hoặc cho phép bạn tự do phát huy phong cách riêng. Làm chủ [các công cụ hàng đầu trong ngành](https://landscape.cncf.io/) ngay trong tầm tay bạn.",
     "BoxOne": "Visual Studio Code với môi trường devcontainers.",
     "BoxTwo": "Giao diện dòng lệnh tích hợp trong container",
     "BoxThree": "Devpod cho môi trường phát triển dưới dạng mã nguồn",
     "BoxFour": "Homebrew sẵn sàng sử dụng",
-    "Appendix": "Việc tích hợp [container runtime](https://podman.io) giúp khai phóng tiềm năng của đội bạn. Trải nghiệm sức mạnh của những công cụ đang vận hành internet hiện đại - giờ đây ngay trên chiếc máy tính cá nhân của bạn. Bluefin đồng hành cùng bạn từ phát triển đến triển khai. \n\nChúng tôi hướng đến những người làm việc trên Linux không sử dụng Linux trên máy tính cá nhân vì những trải nghiệm không như mong đợi trước đây. Chính vì vậy, chúng tôi đang biến đổi thế giới máy tính Linux, đưa nó vào kỷ nguyên công nghệ đám mây và cùng nhau kiến tạo nó như một cộng đồng thống nhất. \n\n> Hãy là người tiên phong, chứ không phải là người dõi theo.\n> <cite>[Zavala][1]</cite>\n\n[1]: https://en.wikipedia.org/wiki/Lance_Reddick",
-    "ArtworkDescription": "Character tower artwork",
     "TowerJoke": "<b>Vươn cao</b> vượt qua mọi Thách thức!"
   },
   "Mission": {
@@ -38,69 +31,18 @@
   },
   "Video": {
     "Url": "https://www.youtube.com/embed/Nz-yyDwTfRM&autoplay=1",
-    "Title": "Giới thiệu về Bluefin Linux",
-    "AppendixText": "Dự án Bluefin không phải là một sản phẩm hoàn thiện, cô ấy là dự án tâm huyết đang được phát triển bởi [những người yêu thích công nghệ đám mây](https://github.com/ublue-os/bluefin/graphs/contributors) những người mong muốn tạo ra trải nghiệm Linux desktop đáng tin cậy và dễ bảo trì hơn. Hãy ghé thăm trang [open issues](https://github.com/ublue-os/bluefin/issues).\n\nCô ấy là biểu tượng của sự hoàn mỹ … một sinh vật tuyệt mỹ và độc nhất. Một kẻ săn mồi hoàn hảo cho một thế giới chắc chắn sẽ phải đối mặt với những thách thức. Chúng ta phải thích nghi. Chúng ta có thể làm được điều đó **cùng với nhau**."
+    "Title": "Giới thiệu về Bluefin Linux"
   },
   "TryBluefin": {
     "Title": "Dùng thử Bluefin",
     "Description": "Dùng biểu mẫu bên dưới để tải chính xác file ISO phù hợp với phần cứng và nhu cầu của bạn. Chúng tôi khuyên dùng <a href='https://flathub.org/apps/org.fedoraproject.MediaWriter'>Fedora Media Writer</a> để tạo bản cài đặt:",
-    "Developer": {
-      "Question": "Bạn có phải là lập trình viên không?",
-      "DefaultSelection": "Bao gồm các công cụ lập trình",
-      "Yes": "Có",
-      "No": "Không"
-    },
     "Gpu": {
       "Question": "GPU chính của bạn là hãng nào? ",
       "DefaultSelection": "Hãy chọn hãng GPU chính của bạn"
     },
-    "Stream": {
-      "Question": "Bạn muốn được cập nhật thường xuyên như thế nào? ",
-      "DefaultSelection": "Hãy chọn tần suất cập nhật của bạn",
-      "Stable": "Bluefin (dành cho người đam mê, dựa trên Fedora {version})"
-    },
     "Download": {
-      "Iso": "Tải xuống bản ISO",
       "Registry": "Xem chi tiết bản cài đặt trên GitHub Container Registry",
-      "Checksum": "Kiểm tra (SHA256)",
-      "DeveloperNote": "Xem ngay [Giới thiệu về Bluefin DX](https://docs.projectbluefin.io/bluefin-dx).",
-      "DollyChill": "Dolly chilling near your ISO link"
-    }
-  },
-  "NewsTitle": "Tin tức",
-  "Faq": {
-    "Tag": "Bạn còn thắc mắc?",
-    "Title": "FAQ",
-    "Text": "Nếu câu hỏi của bạn vẫn chưa được trả lời, \nbạn có thể tìm chúng tôi [trên diễn đàn Discourse của chúng tôi](https://universal-blue.discourse.group/c/bluefin/6) và xem thêm tại [docs.projectbluefin.io](https://docs.projectbluefin.io)",
-    "QuestionsArray": {
-      "0": {
-        "question": "Đây chính xác là gì? Tại sao chúng tôi tạo ra một bản phân phối Linux mới?",
-        "answer": "Bluefin sử dụng các tính năng container OCI của bootc để tổng hợp và xây dựng bản sao hệ điều hành (OS image). Quá trình này được điều phối bởi một cộng đồng có tổ chức chặt chẽ, với cam kết mạnh mẽ về tự động hóa và phát triển bền vững. Đây là kết quả của sản phẩm tương tự như một công cụ quản lý hệ thống tùy chỉnh như Ansible hoặc Salt, nhưng loại bỏ được những trở ngại quen thuộc thường gặp trong việc duy trì một bản phân phối được tùy chỉnh riêng. Chúng tôi gọi đây là \"bản sao tùy chỉnh\" để mô tả cách tiếp cận này. Nó giống như việc ai đó đang cài đặt, tùy chỉnh, và bảo trì một hệ thống hoàn chỉnh dành cho bạn. \n\n Điều này tương tự như bạn có một người bạn am hiểu công nghệ hỗ trợ bạn thiết lập máy tình của mình, nhưng ở đây chúng tôi làm điều đó cùng nhau như một cộng đồng để hỗ trợ lẫn nhau. \n\n[OSTree Native Containers](https://containers.github.io/bootc/)"
-      },
-      "1": {
-        "question": "Bluefin khác gì so với các hệ điều hành desktop khác?",
-        "answer": "Bluefin là một desktop thế hệ mới hoạt động như một sản phẩm tiêu dùng thông thường thay vì một bản phân phối truyền thống. Chúng tôi giúp người dùng tránh bối rối khi lựa chọn bằng cách cung cấp một kho ứng dụng Flathub được chọn lọc kỹ càng, kèm theo Homebrew, và giảm thiểu việc sử dụng các gói hệ thống phức tạp. \n\n Đối với lập trình viên, chúng tôi tập trung vào quy trình làm việc dựa trên công nghệ đám mây hiện đại thông qua devcontainers.  \n\nHoặc bạn có thể sử dụng bất kỳ container OCI nào làm không gian làm việc của mình. \n\n [Distrobox](https://distrobox.privatedns.org/compatibility/#host-distros) \n [Flathub](https://flathub.org) \n [Devcontainers](https://containers.dev) \n [Ptyxis](https://flathub.org/apps/app.devsuite.Ptyxis)"
-      },
-      "2": {
-        "question": "Tôi có thể tìm thêm chi tiết về các tính năng ở đâu?",
-        "answer": "Bạn có thể tìm thấy thông tin chi tiết trong GitHub repository của chúng tôi. \n\n [GitHub](https://github.com/ublue-os/bluefin#readme) \n [Tài liệu về Bluefin](https://docs.projectbluefin.io) [Tài liệu dành cho Lập trình viên](https://docs.projectbluefin.io/bluefin-dx)"
-      },
-      "3": {
-        "question": "Tại sao lại chọn Khủng long làm biểu tượng?",
-        "answer": "Bluefin là một loài Deinonychus antirrhopus, là một chi khủng long theropoda sở hữu với cái tên \"móng vuốt đáng sợ\". Được phát hiện vào những năm 1960, cô khủng long này đã thay đổi hoàn toàn hiểu biết của chúng ta về khủng long. Trước Deinonychus, khủng long thường được xem là những sinh vật chậm chạp, kém thông minh. Tuy nhiên, cô khủng long này đã phá vỡ những quan niệm sai lầm đó, mang đến cái nhìn mới về một thế giới năng động của những loài động vật máu nóng, tiến hóa nhanh chóng và thống trị môi trường sống của chúng. Chúng tôi hướng đến hệ điều hành của mình thể hiện được sự nhanh nhẹn. Sức mạnh và khả năng thích ứng tương tự. \n\n [Deinonychus](https://en.wikipedia.org/wiki/Deinonychus)"
-      },
-      "4": {
-        "question": "Bạn làm như thế nào để làm dự án này phát triển một cách bền vững?",
-        "answer": "Dự án được viết bằng bash và Python để mọi người dễ dàng tham gia đóng góp. Chúng tôi chỉ đang sắp xếp các tệp tin một cách hợp lý, vì đó là Linux. Từ khi mô hình này được nhân rộng, chúng tôi tin rằng các tổ chức hưởng lợi từ dự án sẽ mong muốn dành thời gian của họ trong việc giúp đỡ bảo trì dự án. Dự án hầu như đã có đầy đủ tính năng và đặc biệt hấp dẫn với các quản trị viên hệ thống ưa chuộng sự tự động hóa. Tham gia cộng đồng, bạn không chỉ đóng góp mà còn được hưởng lợi từ việc tự động hóa bảo trì hệ điều hành. Bạn cũng có thể đơn giản là ủng hộ qua GitHub Sponsors để hỗ trợ các nhà phát triển và những tác phẩm nghệ thuật khủng long tuyệt vời. \n\n [GitHub Sponsors](https://github.com/sponsors/castrojo)"
-      },
-      "5": {
-        "question": "Nếu tôi muốn sử dụng giao diện KDE thì sao?",
-        "answer": "Aurora tương tự như Bluefin nhưng sử dụng sử dụng giao diện KDE. Chúng tôi hy vọng rằng Bluefin và Aurora sẽ truyền cảm hứng cho người khác xây dựng cộng đồng riêng xoay quanh trải nghiệm người dùng ưa thích. Hãy khám phá Bazzite nếu bạn muốn một trải nghiệm gaming đỉnh cao, tương tự như SteamOS. Đoàn kết tạo nên sức mạnh khi cùng chung đam mê. \n\n [Aurora](https://getaurora.dev) \n [Bazzite](https://bazzite.gg)"
-      },
-      "6": {
-        "question": "Tôi không quan tâm đến hệ điều hành, tôi chỉ muốn có hình khủng long thôi được không?",
-        "answer": "Bluefin được khắc họa sống động bởi Jacob Schnurr và Andy Frazer. Những tác phẩm nghệ thuật này hoàn toàn miễn phí để bạn sử dụng. Các tác phẩm này đại diện cho sự cân bằng tinh tế của cuộc sống và nhắc nhở chúng ta rằng mã nguồn mở là một hệ sinh thái cần được duy trì bền vững. Phần mềm chúng tôi tạo ra có sức ảnh hưởng đến thế giới: Bluefin được tạo ra bởi những người đam mê kỹ thuật, nhưng chính hai con người này đã nhấn mạnh cho chúng ta thấy rằng tầm quan trọng trong khả năng sáng tạo của con người. \n\n [Hình nền và Khủng long](https://universal-blue.discourse.group/t/dinosaur-gallery/18/5) \n [Jacob Schnurr](https://www.etsy.com/shop/JSchnurrCommissions?listing_id=1425657775) \n [Andy Frazer](https://www.etsy.com/fi-en/shop/DragonsofWales?ref=profile_header)"
-      }
+      "Checksum": "Kiểm tra (SHA256)"
     }
   },
   "Flock": {
@@ -108,17 +50,13 @@
     "Description": "Bluefin được xây dựng bởi một nhóm các bảo trì và cộng tác viên đầy nhiệt huyết."
   },
   "Footer": {
-    "Title": "Được Hỗ Trợ Bởi",
     "Copyright": "Bản quyền {date} © Project Bluefin và Universal Blue",
-    "Project": "Bluefin được xây dựng cùng với [Universal Blue](https://universal-blue.org), bộ công cụ cộng đồng được thiết kế để đổi mới Linux desktop. Được tạo ra từ niềm đam mê. Chào mừng đến với indie Cloud Native.",
-    "ProjectTitle": "Project Bluefin",
-    "References": "Tất cả tác phẩm nghệ thuật được tạo ra bởi con người.\n\n- Website - [Jan Dolanský](https://dolansky.dev/) & [Kyle Gospodnetich](https://kylegospodneti.ch/)\n- Logo và Hình nền - [Jacob Schnurr](https://www.etsy.com/shop/JSchnurrCommissions?listing_id=1425657775)\n- Hình nền minh họa Bluefin - Andy Frazer, [DragonsofWales](https://www.etsy.com/fi-en/shop/DragonsofWales?ref=profile_header)\n- Dịch thuật - [Tulip Blossom](https://github.com/tulilirockz), [karhima](https://github.com/karhima), [Niklas](https://niklas.tech), [Crono](https://github.com/EPOCHvoyager) và [Tsu-gu](https://github.com/Tsu-gu) \n- Lời cảm ơn đặc biệt gửi đến - [Aaron Lake](https://www.linkedin.com/in/aaron-lake/), [Brian Ketelsen](https://brian.dev/), [Dustin Kirkland](https://www.kotterva.com/), và [Marco Ceppi](https://github.com/marcoceppi)"
+    "Project": "Bluefin được xây dựng cùng với [Universal Blue](https://universal-blue.org), bộ công cụ cộng đồng được thiết kế để đổi mới Linux desktop. Được tạo ra từ niềm đam mê. Chào mừng đến với indie Cloud Native."
   },
   "Navbar": {
     "ForYou": "Dành cho Bạn",
     "ForDevs": "Lập trình viên",
     "OurMission": "Sứ mệnh",
-    "TryOut": "Dùng thử",
-    "FAQ": "FAQ"
+    "TryOut": "Dùng thử"
   }
 }

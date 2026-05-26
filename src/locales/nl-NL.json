@@ -8,26 +8,19 @@
     "TryOutButton": "Probeer"
   },
   "Users": {
-    "Text": "Bluefin is een besturingssysteem voor je computer. Het beste van twee werelden: de betrouwbaarheid en het gebruiksgemak van een Chromebook, met de kracht van een GNOME-desktop.",
     "Tag": "Voor",
     "Title": "Jou",
-    "Appendix": "Met automatische, op image gebaseerde updates en een eenvoudige grafische applicatiewinkel is Bluefin ontworpen om je niet in de weg te staan. Krijg wat je wilt zonder de systeemstabiliteit op te offeren. De Linux-client is geëvolueerd, een frisse start voor de volgende generatie. Bekijk de [aankondigingsblogpost](https://www.ypsidanger.com/announcing-project-bluefin/) en de [inleidende documentatie](https://docs.projectbluefin.io) voor meer informatie.",
-    "ArtworkDescription": "Bluefin karakter illustratie",
     "Box1": "Applicaties door Flathub",
     "Box2": "Bijna geen onderhoud",
     "Box3": "Inclusief GPU-stuurprogramma's"
   },
-  "ParallaxQuote": "Evolutie is een proces van constante vertakking en uitbreiding.",
   "Devs": {
     "Tag": "Voor",
     "Title": "Ontwikkelaars",
-    "Text": "Bluefin wordt geleverd met een optionele \"ontwikkelaarsmodus\" die je apparaat transformeert in een krachtige werkstation. Het bevat containergerichte workflows om je op weg te helpen, afhankelijk van waar je vandaan komt, of breng je eigen mee. Gebruik de [toonaangevende tools van de industrie](https://landscape.cncf.io/) binnen handbereik.",
     "BoxOne": "Visual Studio Code met devcontainers.",
     "BoxTwo": "Containergericht terminal",
     "BoxThree": "Devpod voor ontwikkelomgevingen als code",
     "BoxFour": "Homebrew direct beschikbaar",
-    "Appendix": "De opname van een [container-runtime](https://podman.io) ontsluit het potentieel van je team. Gebruik dezelfde tools die moderne internetinfrastructuur aandrijven op je desktop. Bluefin weet hoe je naar productie kunt verzenden. \n\nWe richten ons op Linux-operators die Linux niet op de desktop gebruiken omdat het hen heeft gefaald. Dus we nemen de Linux-desktop mee op zijn cloud-native reis en bouwen het als een gemeenschap. \n\n> Wees degene die beweegt, niet degene die wordt bewogen.\n> <cite>[Zavala][1]</cite>\n\n[1]: https://en.wikipedia.org/wiki/Lance_Reddick",
-    "ArtworkDescription": "Karakter toren illustratie",
     "TowerJoke": "<b>Toren</b> over je Backlog!"
   },
   "Mission": {
@@ -38,69 +31,18 @@
   },
   "Video": {
     "Url": "https://www.youtube.com/embed/Nz-yyDwTfRM&autoplay=1",
-    "Title": "Bluefin Linux introductie",
-    "AppendixText": "Project Bluefin is geen afgewerkt product, het is een doorlopend passieproject onderhouden door [cloud-native enthousiastelingen](https://github.com/ublue-os/bluefin/graphs/contributors) die op zoek zijn naar een betrouwbaardere en beter onderhoudbare Linux-desktopervaring. Bekijk de [openstaande issues](https://github.com/ublue-os/bluefin/issues).\n\nZe vertegenwoordigt de state-of-the-art ... een mooi en uniek wezen. Een perfecte roofdier voor een wereld die onvermijdelijk uitdagingen zal tegenkomen. We moeten ons aanpassen. We kunnen het **samen** doen."
+    "Title": "Bluefin Linux introductie"
   },
   "TryBluefin": {
     "Title": "Probeer Bluefin",
     "Description": "Gebruik het onderstaande formulier om de juiste ISO-downloadlink voor je hardware en gebruikssituatie te krijgen. Het team raadt aan om <a href='https://flathub.org/apps/org.fedoraproject.MediaWriter'>Fedora Media Writer</a> te gebruiken om installatiemedia te maken:",
-    "Developer": {
-      "Question": "Ben je een ontwikkelaar?",
-      "DefaultSelection": "Ontwikkelaarstools opnemen",
-      "Yes": "Ja",
-      "No": "Nee"
-    },
     "Gpu": {
       "Question": "Wie is de leverancier van je primaire GPU? ",
       "DefaultSelection": "Selecteer je primaire GPU-leverancier"
     },
-    "Stream": {
-      "Question": "Hoe agressief wil je je updates? ",
-      "DefaultSelection": "Selecteer je updatekanaal",
-      "Stable": "Bluefin (voor enthousiastelingen, gebaseerd op Fedora {version})"
-    },
     "Download": {
-      "Iso": "Download de ISO",
       "Registry": "Bekijk details op de GitHub Container Registry",
-      "Checksum": "Verifieer (SHA256)",
-      "DeveloperNote": "Bekijk [Introductie tot Bluefin DX](https://docs.projectbluefin.io/bluefin-dx).",
-      "DollyChill": "Dolly chillt bij je ISO-link"
-    }
-  },
-  "NewsTitle": "Nieuws",
-  "Faq": {
-    "Tag": "Twijfel je?",
-    "Title": "FAQ",
-    "Text": "Als je vragen onbeantwoord blijven, \nkun je ons vinden [op ons Discourse-forum](https://universal-blue.discourse.group/c/bluefin/6) en bekijk [docs.projectbluefin.io](https://docs.projectbluefin.io)",
-    "QuestionsArray": {
-      "0": {
-        "question": "Wat is dit precies? Waarom hebben jullie een Linux-distributie gemaakt?",
-        "answer": "Bluefin maakt gebruik van de OCI-containerfuncties van bootc om een OS-afbeelding samen te stellen en te bouwen. Dit proces wordt overzien door een goed gestructureerde gemeenschap die zich inzet voor automatisering en duurzaamheid. Het eindresultaat is vergelijkbaar met een configuratiebeheertool zoals Ansible of Salt, maar zonder de typische uitdagingen die gepaard gaan met het onderhouden van een aangepaste distributie. We gebruiken de term \"aangepaste afbeelding\" om deze aanpak te beschrijven. Het is alsof iemand een gepolijste setup voor je installeert, configureert en onderhoudt. \n\n Het is alsof je nerdy vriend je helpt je computer in te stellen, behalve dat we het samen doen als een gemeenschap om elkaar te helpen. \n\n[OSTree Native Containers](https://bootc-dev.github.io/bootc/)"
-      },
-      "1": {
-        "question": "Hoe verschilt dit van andere desktops?",
-        "answer": "Bluefin is een desktop van de volgende generatie die zich opzettelijk gedraagt als een consumentapparaat in plaats van een traditionele distributie. We verwijderen keuzestress voor gebruikers door één goed samengestelde Flathub-winkel, Homebrew, te presenteren en het gebruik van systeemverpakkingen te minimaliseren. \n\n Voor ontwikkelaars concentreren we ons op een pure cloud-native ontwikkelaarsworkflow via devcontainers.  \n\nOf gebruik elke OCI-container als je gebruikersruimte. \n\n [Distrobox](https://distrobox.privatedns.org/compatibility/#host-distros) \n [Flathub](https://flathub.org) \n [Devcontainers](https://containers.dev) \n [Ptyxis](https://flathub.org/apps/app.devsuite.Ptyxis)"
-      },
-      "2": {
-        "question": "Waar kan ik meer details vinden over de functies?",
-        "answer": "Je kunt gedetailleerde informatie vinden in onze GitHub-repository. \n\n [GitHub](https://github.com/ublue-os/bluefin#readme) \n [Bluefin Documentatie](https://docs.projectbluefin.io) [Ontwikkelaarsdocumentatie](https://docs.projectbluefin.io/bluefin-dx)"
-      },
-      "3": {
-        "question": "Waarom dinosaurussen?",
-        "answer": "Bluefin is een Deinonychus antirrhopus, een theropode dinosaurus wiens naam \"verschrikkelijke klauw\" betekent. Ontdekt in de jaren 1960, revolutioneerde ze ons begrip van dinosaurussen. Voor Deinonychus werden dinosaurussen vaak gezien als langzame, domme wezens. Ze vernietigde echter deze misvattingen en bood inzicht in de dynamische wereld van warmbloedige, snel evoluerende dieren die meesters waren in hun domein. We willen dat onze desktop een vergelijkbare behendigheid belichaamt. Kracht en aanpassingsvermogen. \n\n [Deinonychus](https://en.wikipedia.org/wiki/Deinonychus)"
-      },
-      "4": {
-        "question": "Hoe plan je het project duurzaam te maken?",
-        "answer": "Het project is opzettelijk geschreven in bash en Python om gemakkelijke toegang te bieden. We kopiëren alleen bestanden, het is Linux. Omdat dit model schaalbaar is, denken we dat organisaties die waarde halen uit dit project een deel van hun tijd zouden bijdragen om het te helpen onderhouden. Het is grotendeels functioneel compleet en trekt systeembeheerders aan die gericht zijn op automatisering. Iedereen kan bijdragen en waarde terugkrijgen door het onderhoud van het besturingssysteem te automatiseren via een gemeenschap. Of doneer gewoon aan GitHub Sponsors om de bouwers te helpen betalen en meer paleoart te sponsoren. \n\n [GitHub Sponsors](https://github.com/sponsors/castrojo)"
-      },
-      "5": {
-        "question": "Wat als ik KDE wil gebruiken?",
-        "answer": "Aurora is vergelijkbaar met Bluefin maar gebruikt KDE in plaats daarvan. We hopen dat Bluefin en Aurora als inspiratie dienen voor anderen om hun eigen gemeenschappen rond gebruikerservaringen op te bouwen. Bekijk ook Bazzite als je een gaming-ervaring van enthousiast niveau wilt, vergelijkbaar met SteamOS. Vogels van dezelfde veren zijn samen sterker. \n\n [Aurora](https://getaurora.dev) \n [Bazzite](https://bazzite.gg)"
-      },
-      "6": {
-        "question": "Ik ben niet geïnteresseerd in een desktop, kan ik gewoon de dinosaurussen krijgen?",
-        "answer": "Bluefin werd tot leven gebracht door Jacob Schnurr en Andy Frazer. De kunstwerken zijn vrij te gebruiken. Ze vertegenwoordigen het delicate evenwicht van het leven en zijn er om ons eraan te herinneren dat open source een ecosysteem is dat moet worden onderhouden. De software die we maken heeft een effect op de wereld: Bluefin is misschien samengesteld door technologienerds, maar het kostte twee mensen om ons het belang van de creativiteit van de menselijke geest te laten zien. \n\n [Achtergronden en Dinosaurussen](https://universal-blue.discourse.group/t/dinosaur-gallery/18/5) \n [Jacob Schnurr](https://www.etsy.com/shop/JSchnurrCommissions?listing_id=1425657775) \n [Andy Frazer](https://www.etsy.com/fi-en/shop/DragonsofWales?ref=profile_header)"
-      }
+      "Checksum": "Verifieer (SHA256)"
     }
   },
   "Flock": {
@@ -108,17 +50,13 @@
     "Description": "Bluefin is gebouwd door een toegewijde groep maintainers en bijdragers."
   },
   "Footer": {
-    "Title": "Aangedreven door",
     "Copyright": "Copyright {date} © Project Bluefin en Universal Blue",
-    "Project": "Bluefin is gebouwd met [Universal Blue](https://universal-blue.org), een community toolkit ontworpen om de Linux-desktop opnieuw op te starten. Gebouwd voor de liefde van het spel. Welkom bij indie Cloud Native.",
-    "ProjectTitle": "Project Bluefin",
-    "References": "Alle kunstwerken zijn gemaakt door mensen.\n\n- Website - [Jan Dolanský](https://dolansky.dev/) & [Kyle Gospodnetich](https://kylegospodneti.ch/)\n- Logo's en Achtergronden - [Jacob Schnurr](https://www.etsy.com/shop/JSchnurrCommissions?listing_id=1425657775)\n- Bluefin Illustratieve Achtergrond - Andy Frazer, [DragonsofWales](https://www.etsy.com/fi-en/shop/DragonsofWales?ref=profile_header)\n- Vertalingen - [Tulip Blossom](https://github.com/tulilirockz), [karhima](https://github.com/karhima), [Niklas](https://niklas.tech), [Crono](https://github.com/EPOCHvoyager) en [Tsu-gu](https://github.com/Tsu-gu) \n- Speciale Dank - [Aaron Lake](https://www.linkedin.com/in/aaron-lake/), [Brian Ketelsen](https://brian.dev/), [Dustin Kirkland](https://www.kotterva.com/), en [Marco Ceppi](https://github.com/marcoceppi)"
+    "Project": "Bluefin is gebouwd met [Universal Blue](https://universal-blue.org), een community toolkit ontworpen om de Linux-desktop opnieuw op te starten. Gebouwd voor de liefde van het spel. Welkom bij indie Cloud Native."
   },
   "Navbar": {
     "ForYou": "Voor Jou",
     "ForDevs": "Voor Ontwikkelaars",
     "OurMission": "Onze Missie",
-    "TryOut": "Probeer",
-    "FAQ": "FAQ"
+    "TryOut": "Probeer"
   }
 }
