@@ -62,13 +62,34 @@ npm run typecheck   # Type-check with vue-tsc
 3. Translate all values — keep all keys identical to `enUS.json`
 4. Open a PR; CI will validate the JSON schema
 
+## Testing
+
+Run tests locally before opening a PR.
+
+**Unit tests** (Vitest — fast, no browser needed):
+
+```bash
+npm run test:run    # run once and exit
+npm test            # run in watch mode
+```
+
+**Navbar visual tests** (Playwright — requires a running dev server):
+
+```bash
+npm run dev &                   # start dev server (or in a separate terminal)
+node tests/navbar-visual.mjs    # 38 assertions against navbar rendering
+```
+
+The Playwright tests check that the navigation bar renders correctly at various viewport widths. Run them after any change to `TopNavbar.vue` or layout-affecting CSS.
+
 ## PR workflow
 
 1. Fork the repo and create a branch: `git checkout -b feat/my-change`
-2. Make your changes — **do not run build/test locally**, CI handles validation
-3. Commit with a [Conventional Commits](https://www.conventionalcommits.org/) message: `feat(section): add X`
-4. Push and open a PR against `main`
-5. All PRs require at least 1 approving review from a maintainer before merging
+2. Make your changes
+3. Run linting, unit tests, and the navbar visual tests (see **Testing** above)
+4. Commit with a [Conventional Commits](https://www.conventionalcommits.org/) message: `feat(section): add X`
+5. Push and open a PR against `main`
+6. All PRs require at least 1 approving review from a maintainer before merging
 
 ## Security issues
 
