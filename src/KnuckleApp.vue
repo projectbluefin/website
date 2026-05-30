@@ -41,16 +41,16 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
     <PageLoading v-if="isLoading" />
     <TopNavbar v-show="!isLoading" />
 
-    <div v-show="!isLoading" class="knuckle-layout">
-      <!-- Karl on the right, head above the right column -->
-      <img
-        class="karl"
-        :src="`${baseUrl}characters/karl.webp`"
-        alt=""
-        fetchpriority="high"
-        aria-hidden="true"
-      >
+    <img
+      v-show="!isLoading"
+      class="karl"
+      :src="`${baseUrl}characters/karl.webp`"
+      alt=""
+      fetchpriority="high"
+      aria-hidden="true"
+    >
 
+    <div v-show="!isLoading" class="knuckle-layout">
       <!-- Single column: glass boxes stacked vertically -->
       <div class="col-left-stack">
         <div class="col-left">
@@ -174,15 +174,15 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
 .karl {
   position: fixed;
   bottom: -10px;
-  right: 0px;
-  height: 60vh;
+  right: 0;
+  height: 50vh;
   width: auto;
   z-index: 3;
   pointer-events: none;
   user-select: none;
   filter: drop-shadow(0 0 40px rgba(var(--color-blue-rgb), 0.3));
-  object-fit: cover;
-  object-position: bottom center;
+  object-fit: contain;
+  object-position: bottom right;
 
   @media (max-width: 1023px) {
     display: none;
