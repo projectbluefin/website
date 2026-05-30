@@ -173,14 +173,16 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
 // Karl: right side, original orientation (faces left, towards content)
 .karl {
   position: fixed;
-  top: 64px;
-  right: 0;
-  height: 95vh;
+  bottom: -10px;
+  right: 0px;
+  height: 60vh;
   width: auto;
-  z-index: 0;
+  z-index: 3;
   pointer-events: none;
   user-select: none;
   filter: drop-shadow(0 0 40px rgba(var(--color-blue-rgb), 0.3));
+  object-fit: cover;
+  object-position: bottom center;
 
   @media (max-width: 1023px) {
     display: none;
