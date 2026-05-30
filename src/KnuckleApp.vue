@@ -69,13 +69,13 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
           <h2 class="why-title" @click="whyBox1Open = !whyBox1Open">
             Why Bluefin Server?
           </h2>
-          <ul v-if="whyBox1Open" class="why-list">
-            <li><strong>Sustainability</strong> — Use all of your machines as one cluster, take advantage of everything you own.</li>
-            <li><strong>Community Driven</strong> — CNCF Projects have a proven track record of community interaction and commercial vendors</li>
-            <li><strong>Built by Experts for themselves</strong> — This is how we would design our ultimate homelab ourselves, your favorite dinosaur people</li>
-            <li><strong>Common</strong> — everything you learn here is a real world skill. One that is in high demand!</li>
-            <li><strong>Foundational</strong> — Keep it simple or build an automation setup totally run by your own self host models. Sky's the limit.</li>
-            <li><strong>On Brand</strong> — Working hard to give you Star Trek, it's about useful bling here, we're trying to show off to our friends.</li>
+          <ul v-if="whyBox1Open" class="why-list why-list-grid">
+            <li><strong>Sustainability.</strong> Use all of your machines as one cluster, take advantage of everything you own.</li>
+            <li><strong>Community Driven.</strong> CNCF Projects have a proven track record of community interaction and commercial vendors.</li>
+            <li><strong>Built by Experts for themselves.</strong> This is how we would design our ultimate homelab ourselves, your favorite dinosaur people.</li>
+            <li><strong>Common.</strong> Everything you learn here is a real world skill. One that is in high demand.</li>
+            <li><strong>Foundational.</strong> Keep it simple or build an automation setup totally run by your own self host models. Sky is the limit.</li>
+            <li><strong>On Brand.</strong> Working hard to give you Star Trek, it's about useful bling here, we're trying to show off to our friends.</li>
           </ul>
         </div>
 
@@ -293,12 +293,12 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
       font-size: 1.6rem;
       line-height: 1.7;
       color: var(--color-text-light);
-      padding: 8px 0 8px 16px;
-      border-left: 2px solid rgba(var(--color-blue-rgb), 0.3);
-      margin-bottom: 6px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      transition: background 0.2s;
 
       &:hover {
-        border-left-color: rgba(var(--color-blue-rgb), 0.7);
+        background: rgba(var(--color-blue-rgb), 0.2);
       }
 
       strong {
@@ -306,6 +306,24 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
         font-weight: 600;
         letter-spacing: 0.01em;
       }
+    }
+  }
+
+  .why-list-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+
+    @media (max-width: 1023px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 639px) {
+      grid-template-columns: 1fr;
+    }
+
+    li {
+      margin-bottom: 0;
     }
   }
 }
