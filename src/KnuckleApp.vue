@@ -245,7 +245,6 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
 .why-box {
   @extend %col-glass;
   gap: 12px;
-  border-left: 3px solid rgba(var(--color-blue-rgb), 0.5);
 
   .why-title {
     cursor: pointer;
@@ -291,7 +290,6 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
 .quote-box {
   @extend %col-glass;
   margin: 0;
-  border-left: 3px solid rgba(var(--color-blue-rgb), 0.5);
   gap: 10px;
 
   .quote-label {
