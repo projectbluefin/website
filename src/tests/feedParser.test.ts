@@ -1,5 +1,6 @@
 import { DOMParser } from '@xmldom/xmldom'
 import { describe, expect, it } from 'vitest'
+import type { XmlParser } from '../utils/feedParser'
 import { formatFeedDate, parseAtomFeed } from '../utils/feedParser'
 
 describe('feedParser', () => {
@@ -19,7 +20,7 @@ describe('feedParser', () => {
           <updated>2024-02-01T08:30:00Z</updated>
         </entry>
       </feed>
-    `, new DOMParser())
+    `, new DOMParser() as unknown as XmlParser)
 
     expect(posts).toEqual([
       {
@@ -46,7 +47,7 @@ describe('feedParser', () => {
           <link />
         </entry>
       </feed>
-    `, new DOMParser())
+    `, new DOMParser() as unknown as XmlParser)
 
     expect(posts).toEqual([
       {
@@ -60,13 +61,13 @@ describe('feedParser', () => {
   })
 
   it('returns an empty list when the feed has no entries', () => {
-    expect(parseAtomFeed('<feed></feed>', new DOMParser())).toEqual([])
+    expect(parseAtomFeed('<feed></feed>', new DOMParser() as unknown as XmlParser)).toEqual([])
   })
 
   it('throws when the parser reports malformed XML', () => {
-    const parserWithError = {
+    const parserWithError: XmlParser = {
       parseFromString(_xml: string, _mimeType: string) {
-        return new DOMParser().parseFromString('<parsererror />', 'text/xml')
+        return new DOMParser().parseFromString('<parsererror />', 'text/xml') as unknown as ReturnType<XmlParser['parseFromString']>
       },
     }
 

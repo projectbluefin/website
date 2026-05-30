@@ -12,7 +12,7 @@ interface XmlNodeLike {
   getElementsByTagName(tagName: string): ArrayLike<XmlNodeLike>
 }
 
-interface XmlParser {
+export interface XmlParser {
   parseFromString(xml: string, mimeType: string): {
     documentElement?: { nodeName?: string }
     getElementsByTagName(tagName: string): ArrayLike<XmlNodeLike>
