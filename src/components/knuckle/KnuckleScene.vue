@@ -38,19 +38,6 @@ onMounted(() => {
     <div class="alpha-badge">
       ⚠️ Beta — take appropriate precautions
     </div>
-
-    <div class="release-links">
-      <a
-        href="https://github.com/projectbluefin/knuckle/releases"
-        target="_blank"
-        rel="noopener noreferrer"
-      >Download →</a>
-      <a
-        href="https://github.com/projectbluefin/knuckle"
-        target="_blank"
-        rel="noopener noreferrer"
-      >GitHub →</a>
-    </div>
   </div>
 </template>
 
@@ -88,7 +75,7 @@ onMounted(() => {
   font-weight: 700;
   font-size: 4.2rem;
   text-transform: uppercase;
-  color: var(--color-text-light);
+  color: var(--color-blue-light);
   margin: 0 0 6px 0;
   line-height: 1;
   padding-top: 0;
