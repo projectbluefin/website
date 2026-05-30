@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { onBeforeMount, provide, ref } from 'vue'
 import KnuckleDemos from './components/knuckle/KnuckleDemos.vue'
-import KnuckleScene from './components/knuckle/KnuckleScene.vue'
+import KnuckleTitle from './components/knuckle/KnuckleTitle.vue'
+import KnuckleDesc from './components/knuckle/KnuckleDesc.vue'
 import KnuckleVersionChips from './components/knuckle/KnuckleVersionChips.vue'
 import PageLoading from './components/PageLoading.vue'
 import TopNavbar from './components/TopNavbar.vue'
@@ -52,7 +53,11 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
       <!-- Single column: glass boxes stacked vertically -->
       <div class="col-left-stack">
         <div class="col-left">
-          <KnuckleScene />
+          <KnuckleTitle />
+          <KnuckleDesc />
+          <div class="alpha-badge-row">
+            <div class="alpha-badge"><strong>⚠️ Beta.</strong> Take appropriate precautions.</div>
+          </div>
         </div>
         <div class="col-demos">
           <KnuckleDemos />
@@ -62,7 +67,7 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
         </div>
         <div class="why-box">
           <h2 class="why-title" @click="whyBox1Open = !whyBox1Open">
-            Why Bluespeed?
+            Why Bluefin Server?
           </h2>
           <ul v-if="whyBox1Open" class="why-list">
             <li><strong>Sustainability</strong> — Use all of your machines as one cluster, take advantage of everything you own.</li>
@@ -76,7 +81,7 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
 
         <div class="why-box">
           <h2 class="why-title" @click="whyBox2Open = !whyBox2Open">
-            One node to start. Scale effortlessly.
+            One node to start, then scale effortlessly
           </h2>
           <ul v-if="whyBox2Open" class="why-list">
             <li><strong>One config, infinite nodes</strong> — Seamlessly just add nodes, it's all just Kubernetes</li>
@@ -90,10 +95,10 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
 
         <blockquote class="quote-box">
           <p class="quote-label">
-            Mission:
+            Mission
           </p>
-          <p>We're sysadmins, we work really hard to be lazy. So we took all of our work skills and tools and put together a little toolkit for you. The way we would do it.</p>
-          <p><a href="https://landscape.cncf.io" target="_blank" rel="noopener noreferrer">CNCF tech stack</a> for the home. Fully automated, the foundation for the best setup because it's designed to build around what you're into. Also, there is a 3-ton <em>Amargasaurus</em> chasing us.<br><br>This is our contribution to training the next generation. Thanks for joining us!</p>
+          <p>We're sysadmins, we work really hard to be lazy. So we took all of our work skills and tools and put together a little toolkit for you. The way we would do it: <a href="https://landscape.cncf.io" target="_blank" rel="noopener noreferrer">CNCF tech stack</a> for the home. Fully automated, the foundation for the best setup because it's designed to build around what you're into. Also, there is a 3-ton <em>Amargasaurus</em> chasing us.</p>
+          <p>This is our contribution to training the next generation. Thanks for joining us!</p>
           <div class="quote-signatories">
             <a class="signatory" href="https://github.com/clubanderson" target="_blank" rel="noopener noreferrer">
               <img src="https://github.com/clubanderson.png" alt="Andy Anderson" loading="lazy">
@@ -106,13 +111,8 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
           </div>
         </blockquote>
 
-        <blockquote class="quote-box">
-          <p>"Little Bluefin has brought many of you to the world of cloud native. Now meet the real giant. Infrastructure. How would cloud native people run their own homelabs? As customizable as you want where it matters, and a fully automated, well tuned machine. Bluefin's natural companion. The building block to your perfect computing setup, all controlled by you. Help us build it!"</p>
-          <div class="quote-signatories">
-            <a class="signatory" href="https://github.com/castrojo" target="_blank" rel="noopener noreferrer">
-              <img src="https://github.com/castrojo.png" alt="Jorge Castro" loading="lazy">
-            </a>
-          </div>
+        <blockquote class="little-bluefin">
+          <p>Little Bluefin has brought many of you to the world of cloud native. Now meet the real giant. <strong>Infrastructure</strong>. How would cloud native people run their own homelabs? As customizable as you want where it matters, and a fully automated, well tuned machine. Bluefin's natural companion. The building block to your perfect computing setup, all controlled by you. Help us build it!</p>
         </blockquote>
       </div>
     </div>
@@ -213,6 +213,35 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
   box-sizing: border-box;
 }
 
+.alpha-badge-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.alpha-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.2rem;
+  color: var(--color-text-light);
+  background: rgba(var(--color-bg-rgb), 0.5);
+  border: 1px solid var(--color-border-light);
+  border-radius: 6px;
+  padding: 7px 10px;
+
+  strong {
+  	font-weight: 600;
+  }
+}
+
+@media (max-width: 640px) {
+  .alpha-badge {
+    font-size: 1.1rem;
+    padding: 6px 12px;
+  }
+}
+
 .col-left {
   @extend %col-glass;
   justify-content: flex-start;
@@ -274,6 +303,23 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
         letter-spacing: 0.01em;
       }
     }
+  }
+}
+
+.little-bluefin {
+  margin: 15px 30px 30px;
+  gap: 10px;
+  p {
+    margin: 0;
+    font-size: 1.8rem;
+    line-height: 1.6;
+    color: var(--color-text-light);
+    opacity: 0.85;
+    font-style: italic;
+    text-align: center;
+  }
+  strong {
+    font-weight: 600;
   }
 }
 

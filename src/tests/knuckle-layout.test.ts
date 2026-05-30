@@ -25,11 +25,12 @@ describe('knuckleApp layout — right column must stay bottom-aligned so the din
     expect(rightBlock).toContain('KnuckleVersionChips')
   })
 
-  it('col-left contains KnuckleScene and KnuckleHighlights', () => {
+  it('col-left contains KnuckleTitle, KnuckleDesc, and KnuckleHighlights', () => {
     const leftStart = template.indexOf('"col-left"')
     const featuresStart = template.indexOf('col-features')
     const left = template.slice(leftStart, featuresStart)
-    expect(left).toContain('KnuckleScene')
+    expect(left).toContain('KnuckleTitle')
+    expect(left).toContain('KnuckleDesc')
     expect(left).toContain('KnuckleHighlights')
   })
 
