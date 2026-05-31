@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { MessageSchema } from './../locales/schema'
 import type { BlogPost } from '../utils/feedParser'
-import { parseAtomFeed } from '../utils/feedParser'
+import type { MessageSchema } from './../locales/schema'
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { parseAtomFeed } from '../utils/feedParser'
 
 const props = defineProps<{
   feedUrl: string

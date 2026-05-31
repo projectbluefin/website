@@ -1,6 +1,6 @@
+import type { XmlParser } from '../utils/feedParser'
 import { DOMParser } from '@xmldom/xmldom'
 import { describe, expect, it } from 'vitest'
-import type { XmlParser } from '../utils/feedParser'
 import { formatFeedDate, parseAtomFeed } from '../utils/feedParser'
 
 describe('feedParser', () => {
