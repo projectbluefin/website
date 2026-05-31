@@ -52,7 +52,6 @@ const { t } = useI18n<MessageSchema>({
             </div>
           </div>
         </div>
-
       </div>
     </div>
     <SceneVisibilityChecker name="#scene-community" />

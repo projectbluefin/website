@@ -153,7 +153,6 @@ onMounted(() => {
   }
 }
 
-
 @media (max-width: 500px) {
   .alpha-badge {
     font-size: 1.1rem;
