@@ -18,7 +18,7 @@ Thanks for helping out! This repository contains the source for
 
 | Tool | Version | Purpose |
 |------|---------|---------|
-| [Node.js](https://nodejs.org/) | 18 or higher | Runtime + build toolchain |
+| [Node.js](https://nodejs.org/) | 24+ (current LTS) | Runtime + build toolchain |
 | [npm](https://www.npmjs.com/) | bundled with Node.js | Package manager |
 | [just](https://github.com/casey/just) | any | Optional — wraps common npm commands |
 
@@ -61,7 +61,7 @@ locale JSON are reflected instantly without a full page reload.
 
 ## Repository Structure
 
-```
+```plaintext
 website/
 ├── index.html            # Main Bluefin site entry point
 ├── dakota/index.html     # Dakota app entry point
@@ -166,7 +166,7 @@ Use conventional commits: `<type>(<scope>): <short description>`
 Common types: `feat`, `fix`, `docs`, `chore`, `i18n`, `style`, `refactor`
 
 Examples:
-```
+```plaintext
 feat(knuckle): add download counter to hero section
 fix(locales): correct typo in fr-FR Mission.Text.Change
 i18n: add Polish (pl-PL) locale
