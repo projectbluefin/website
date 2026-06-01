@@ -341,7 +341,7 @@ function backToCard() {
 /* ── Download View ── */
 
 .download-view {
-  height: 400px;
+  min-height: 400px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -349,7 +349,7 @@ function backToCard() {
   backdrop-filter: blur(8px);
   border: 2px solid rgba(79, 156, 249, 0.25);
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: 1.25rem;
   transition:
     transform 0.3s ease,
     box-shadow 0.3s ease;
@@ -375,7 +375,7 @@ function backToCard() {
   flex-direction: column;
   gap: 0;
   width: 100%;
-  padding: 0 16px;
+  padding: 0 8px;
 }
 
 .download-entry {
@@ -422,7 +422,8 @@ function backToCard() {
   justify-content: center;
   gap: 6px;
   font-size: 1.3rem;
-  flex: 1;
+  flex: 1 1 0%;
+  white-space: nowrap;
 
   &:hover {
     text-decoration: underline;
@@ -435,6 +436,8 @@ function backToCard() {
   justify-content: center;
   gap: 6px;
   font-size: 1.3rem;
+  flex: 0 1 auto;
+  max-width: 160px;
 }
 
 .back-button {
@@ -459,19 +462,7 @@ function backToCard() {
 
 /* ── Responsive ── */
 
-@media (max-width: 700px) {
-  .card-box,
-  .download-view {
-    height: 350px;
-  }
-}
-
 @media (max-width: 500px) {
-  .card-box,
-  .download-view {
-    height: 300px;
-  }
-
   .card-title {
     font-size: 1.7rem;
   }
