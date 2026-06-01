@@ -1,15 +1,11 @@
 <script setup lang="ts">
+import type { DakotaVersions } from '../../composables'
 import { computed, onMounted, ref } from 'vue'
 import { getDakotaVersions } from '../../composables'
 
 const props = defineProps<{
   keys?: string[]
 }>()
-
-interface DakotaVersions {
-  generatedAt: string
-  packages: Record<string, string>
-}
 
 const LABELS: Record<string, string> = {
   'kernel': 'Kernel',

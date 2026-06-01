@@ -10,7 +10,7 @@ export const IS_TABLET = computed(() => {
   return width.value <= 956
 })
 
-interface DakotaVersions {
+export interface DakotaVersions {
   generatedAt: string
   packages: Record<string, string>
 }
