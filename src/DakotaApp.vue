@@ -50,16 +50,18 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
         </div>
         <div class="release-links">
           <span>Read the announcements:</span>
-          <a
-            href="https://docs.projectbluefin.io/blog/making-our-own-fate/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >Alpha 2 Release →</a>
-          <a
-            href="https://docs.projectbluefin.io/blog/dakota-alpha-1/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >Alpha 1 Release →</a>
+          <div class="release-link-item">
+	        <a
+	          href="https://docs.projectbluefin.io/blog/making-our-own-fate/"
+	          target="_blank"
+	          rel="noopener noreferrer"
+	        >Alpha 2 Release →</a>
+	        <a
+	          href="https://docs.projectbluefin.io/blog/dakota-alpha-1/"
+	          target="_blank"
+	          rel="noopener noreferrer"
+	        >Alpha 1 Release →</a>
+	      </div>
         </div>
         <DakotaHighlights />
       </div>
@@ -145,21 +147,22 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
     color: var(--color-text-light);
   }
 
+.release-link-item {
   a {
     font-weight: 600;
     text-decoration: none;
-    background: var(--color-blue-light);
+    background: rgb(var(--color-bg-rgb), 0.5);
     color: var(--color-text-light);
     height: 36px;
     line-height: 36px;
-    padding: 0 20px 0 20px;
+    padding: 8px 18px;
     border-radius: 18px;
-    transition: opacity 0.2s;
+    margin: 0 4px 0 4px;
+    transition: background 0.2s;
 
-    &:hover {
-      opacity: 1;
-      text-decoration: underline;
-    }
+	&:hover {
+	  background: var(--color-blue);
+	}
   }
 }
 
