@@ -200,10 +200,4 @@ import {
     }
   }
 }
-
-@media only screen and (max-width: 956px) {
-  .brand-grid {
-     margin-top: 0px;
-  }
-}
 </style>

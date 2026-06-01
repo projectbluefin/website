@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onBeforeMount, provide, ref } from 'vue'
 import { IconGithubCircle } from '@iconify-prerendered/vue-mdi'
+import { onBeforeMount, provide, ref } from 'vue'
 import DakotaHighlights from './components/dakota/DakotaHighlights.vue'
 import DakotaScene from './components/dakota/DakotaScene.vue'
 import DakotaVersionCard from './components/dakota/DakotaVersionCard.vue'
@@ -52,17 +52,17 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
         <div class="release-links">
           <span>Read the announcements:</span>
           <div class="release-link-item">
-	        <a
-	          href="https://docs.projectbluefin.io/blog/making-our-own-fate/"
-	          target="_blank"
-	          rel="noopener noreferrer"
-	        >Alpha 2 Release →</a>
-	        <a
-	          href="https://docs.projectbluefin.io/blog/dakota-alpha-1/"
-	          target="_blank"
-	          rel="noopener noreferrer"
-	        >Alpha 1 Release →</a>
-	      </div>
+            <a
+              href="https://docs.projectbluefin.io/blog/making-our-own-fate/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Alpha 2 Release →</a>
+            <a
+              href="https://docs.projectbluefin.io/blog/dakota-alpha-1/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Alpha 1 Release →</a>
+          </div>
         </div>
         <DakotaHighlights />
       </div>
@@ -141,7 +141,7 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
 .col-right-sticky {
   @media (min-width: 840px) {
     position: sticky;
-    top: calc(22vh);
+    top: 22vh;
   }
 }
 
@@ -173,9 +173,9 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
     margin: 0 4px 0 4px;
     transition: background 0.2s;
 
-	&:hover {
-	  background: var(--color-blue);
-	}
+    &:hover {
+      background: var(--color-blue);
+    }
   }
 }
 

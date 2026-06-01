@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
 import {
   IconCheckCircleOutline,
   IconDownload,
 } from '@iconify-prerendered/vue-mdi'
+import { computed, onMounted, ref } from 'vue'
 import { getDakotaVersions } from '../../composables'
 import DakotaVersionChips from './DakotaVersionChips.vue'
 
@@ -102,7 +102,9 @@ function backToCard() {
       >
         <div class="card-overlay">
           <div class="card-header">
-            <h3 class="card-title">Dakota</h3>
+            <h3 class="card-title">
+              Dakota
+            </h3>
             <span class="card-subtitle">For the brave soul</span>
           </div>
 
@@ -150,7 +152,6 @@ function backToCard() {
               <a
                 class="btn filled entry-dl"
                 :href="entry.isoUrl"
-                :download="entry.isoFilename"
               >
                 <IconDownload />
                 Download ISO
@@ -214,12 +215,7 @@ function backToCard() {
 .card-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.15) 0%,
-    rgba(0, 0, 0, 0.4) 30%,
-    rgba(0, 0, 0, 0.92) 100%
-  );
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.4) 30%, rgba(0, 0, 0, 0.92) 100%);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -334,8 +330,13 @@ function backToCard() {
 }
 
 @keyframes pulse-hint {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 /* ── Download View ── */
