@@ -90,7 +90,11 @@ function backToCard() {
     <div
       v-if="!showDownloads"
       class="card-box"
-      @click="openDownloads"
+      role="button"
+      tabindex="0"
+      `@click`="openDownloads"
+      `@keydown.enter.prevent`="openDownloads"
+      `@keydown.space.prevent`="openDownloads"
     >
       <div class="alpha-badge">
         <span class="alpha-badge-title">⚠️ Alpha.</span>
