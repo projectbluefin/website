@@ -92,13 +92,28 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
 
 <style scoped lang="scss">
 .dakota-page {
+  position: relative;
   background-image: url('/evening/night-sky.webp');
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 600px;
+    background: linear-gradient(to bottom, rgba(var(--color-bg-rgb), 0.7), transparent);
+    z-index: 0;
+    pointer-events: none;
+  }
 }
 
 .dakota-layout {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -143,9 +158,9 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
   gap: 12px;
   font-size: 1.4rem;
   font-weight: 600;
-
   span {
     color: var(--color-text-light);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   }
 }
 
