@@ -3,7 +3,6 @@ import { computed, onMounted, ref } from 'vue'
 import {
   IconCheckCircleOutline,
   IconDownload,
-  IconGithubCircle,
 } from '@iconify-prerendered/vue-mdi'
 import { getDakotaVersions } from '../../composables'
 import DakotaVersionChips from './DakotaVersionChips.vue'
@@ -93,6 +92,10 @@ function backToCard() {
       class="card-box"
       @click="openDownloads"
     >
+      <div class="alpha-badge">
+        <span class="alpha-badge-title">⚠️ Alpha.</span>
+        <span class="alpha-badge-sub">Take appropriate precautions.</span>
+      </div>
       <div
         class="card-image"
         :style="cardImageStyle"
@@ -263,7 +266,7 @@ function backToCard() {
 .version-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   margin-bottom: 0.4rem;
   font-size: 1.55rem;
 
@@ -286,6 +289,39 @@ function backToCard() {
   padding: 0.1rem 0.4rem;
   border-radius: 4px;
   font-size: 1.55rem;
+}
+
+.alpha-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  width: max-content;
+  max-width: calc(100% - 24px);
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: baseline;
+  column-gap: 0.3em;
+  white-space: normal;
+  font-size: 1.2rem;
+  line-height: 1.3;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 5px 10px;
+  pointer-events: none;
+  text-align: right;
+
+  .alpha-badge-title {
+    font-weight: 600;
+  }
+
+  .alpha-badge-sub {
+    opacity: 0.9;
+  }
 }
 
 .click-hint {
