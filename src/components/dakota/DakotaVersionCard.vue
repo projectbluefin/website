@@ -191,14 +191,14 @@ function backToCard() {
   transition:
     transform 0.3s ease,
     box-shadow 0.3s ease;
-  border: 2px solid rgba(79, 156, 249, 0.25);
+  border: 2px solid rgba(var(--color-blue-rgb), 0.25);
   background: #1f2937;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-    border-color: rgba(79, 156, 249, 0.5);
+    border-color: rgba(var(--color-blue-rgb), 0.5);
   }
 }
 
@@ -224,7 +224,7 @@ function backToCard() {
   flex-direction: column;
   justify-content: flex-end;
   padding: 1.5rem;
-  color: white;
+  color: var(--color-text-light);
   border-radius: 12px;
 }
 
@@ -307,7 +307,7 @@ function backToCard() {
   white-space: normal;
   font-size: 1.2rem;
   line-height: 1.3;
-  color: #fff;
+  color: var(--color-text-light);
   background: rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
@@ -347,7 +347,7 @@ function backToCard() {
   flex-direction: column;
   background: rgba(31, 41, 55, 0.6);
   backdrop-filter: blur(8px);
-  border: 2px solid rgba(79, 156, 249, 0.25);
+  border: 2px solid rgba(var(--color-blue-rgb), 0.25);
   border-radius: 12px;
   padding: 1.25rem;
   transition:
