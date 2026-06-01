@@ -1,5 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { getDakotaVersions } from '../../composables'
+
+const props = defineProps<{
+  keys?: string[]
+}>()
 
 interface DakotaVersions {
   generatedAt: string
@@ -26,11 +31,7 @@ const versions = ref<DakotaVersions | null>(null)
 
 onMounted(async () => {
   try {
-    const res = await fetch('/dakota-versions.json')
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`)
-    }
-    versions.value = await res.json()
+    versions.value = await getDakotaVersions()
   }
   catch (e) {
     if (import.meta.env.DEV) {
@@ -44,6 +45,7 @@ const chips = computed(() => {
     return []
   }
   return Object.entries(versions.value.packages)
+    .filter(([key]) => !props.keys || props.keys.includes(key))
     .filter(([, v]) => v)
     .map(([key, value]) => ({ label: LABELS[key] ?? key, value, isFeature: FEATURE_KEYS.has(key) }))
 })

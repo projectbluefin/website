@@ -10,6 +10,33 @@ export const IS_TABLET = computed(() => {
   return width.value <= 956
 })
 
+interface DakotaVersions {
+  generatedAt: string
+  packages: Record<string, string>
+}
+
+let versionsPromise: Promise<DakotaVersions> | null = null
+
+function fetchVersionsOnce(): Promise<DakotaVersions> {
+  if (!versionsPromise) {
+    versionsPromise = (async () => {
+      const res = await fetch(`${import.meta.env.BASE_URL}dakota-versions.json`)
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`)
+      }
+      return res.json()
+    })()
+  }
+  return versionsPromise
+}
+
+/**
+ * Fetches dakota-versions.json once and caches the result.
+ */
+export async function getDakotaVersions(): Promise<DakotaVersions> {
+  return fetchVersionsOnce()
+}
+
 /**
  * Fades in + slides up 150ms after mount. Used by KnuckleTitle and KnuckleDesc.
  */
