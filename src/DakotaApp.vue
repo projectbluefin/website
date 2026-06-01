@@ -140,12 +140,14 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
   justify-content: center;
   width: 100%;
   flex-wrap: wrap;
-  gap: 12px 20px;
-  font-size: 1.3rem;
+  gap: 12px;
+  font-size: 1.4rem;
+  font-weight: 600;
 
   span {
     color: var(--color-text-light);
   }
+}
 
 .release-link-item {
   a {
