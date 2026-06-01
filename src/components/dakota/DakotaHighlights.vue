@@ -170,11 +170,17 @@ import {
   }
 }
 
-@media (max-width: 500px) {
+@media (max-width: 840px) {
   .dakota-highlights {
     :deep(.brand-grid) {
       grid-template-columns: 1fr !important;
     }
+  }
+}
+
+@media only screen and (max-width: 956px) {
+  .brand-grid {
+     margin-top: 0px;
   }
 }
 </style>
