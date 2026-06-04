@@ -1,66 +1,158 @@
-# Contributing to projectbluefin/website
+# Contributing to the Project Bluefin Website
 
-Thanks for helping out! This guide covers everything you need to contribute to the Bluefin marketing website.
+Thanks for helping out! This repository contains the source for
+[projectbluefin.io](https://projectbluefin.io) — a multi-page
+[Vite](https://vitejs.dev/) + [Vue 3](https://vuejs.org/) application.
 
-> For broader project contribution (image builds, architecture, community), see the [full Contributing Guide](https://docs.projectbluefin.io/contributing).
+> **Looking to change Bluefin itself?**
+> This repo is for the website only. Head to
+> [@ublue-os/bluefin](https://github.com/ublue-os/bluefin) or
+> [@projectbluefin/common](https://github.com/projectbluefin/common) for the OS
+> images. See the
+> [full Contributing Guide](https://docs.projectbluefin.io/contributing) and
+> [architecture diagram](https://docs.projectbluefin.io/contributing#understanding-bluefins-architecture)
+> for the full picture.
 
-## Repository overview
+---
 
-This is the **projectbluefin.io** marketing website — a multi-SPA project built with [Vite](https://vitejs.dev/) and [Vue 3](https://vuejs.org/). It contains three sub-apps:
+## Prerequisites
 
-| Directory | Purpose |
-|-----------|---------|
-| `bluespeed/` | Main Bluefin landing page |
-| `dakota/` | Dakota variant landing page |
-| `knuckle/` | Knuckle bare-metal installer page |
-| `public/` | Static assets served as-is |
+| Tool | Version | Purpose |
+|------|---------|---------|
+| [Node.js](https://nodejs.org/) | 18 or higher | Runtime + build toolchain |
+| [npm](https://www.npmjs.com/) | bundled with Node.js | Package manager |
+| [just](https://github.com/casey/just) | any | Optional — wraps common npm commands |
 
-## Local development
+Install Node.js via your system package manager, [nvm](https://github.com/nvm-sh/nvm),
+or the [official installer](https://nodejs.org/en/download/).
 
-### Prerequisites
+---
 
-- [Node.js](https://nodejs.org/) v18 or higher
-- [npm](https://www.npmjs.com/)
-- Optional: [just](https://github.com/casey/just) for simplified commands
-
-### Setup
+## Local Development
 
 ```bash
-git clone https://github.com/projectbluefin/website
+# 1. Clone the repo
+git clone https://github.com/projectbluefin/website.git
 cd website
+
+# 2. Install dependencies
 npm install
+
+# 3. Start the dev server (http://localhost:5173)
+npm run dev
+# or, if you have just installed:
+just serve
 ```
 
-### Dev server
+The dev server supports hot module replacement — changes to `.vue` files and
+locale JSON are reflected instantly without a full page reload.
 
-```bash
-npm run dev        # Start development server (hot reload)
-npm run build      # Build for production
-npm run preview    # Preview the production build locally
+### Other useful commands
+
+| Command | What it does |
+|---------|-------------|
+| `npm run dev` | Start the local dev server |
+| `npm run preview` | Preview a production build locally |
+| `npm run lint` | Check for linting / formatting issues |
+| `npm run lint:fix` | Auto-fix linting and formatting issues |
+| `npm run typecheck` | TypeScript type check (via `vue-tsc`) |
+| `just build` / `npm run build` | Build for production (not needed for PRs) |
+
+---
+
+## Repository Structure
+
+```
+website/
+ index.html            # Main Bluefin site entry point
+ dakota/index.html     # Dakota app entry point
+ knuckle/index.html    # Knuckle product page entry point
+ bluespeed/index.html  # Bluespeed sub-app entry point (noindex)
+ src/
+   ├── App.vue           # Main site root component
+   ├── DakotaApp.vue     # Dakota root component
+   ├── KnuckleApp.vue    # Knuckle root component
+   ├── main.ts           # Main site bootstrap
+   ├── dakota-main.ts    # Dakota bootstrap
+   ├── knuckle-main.ts   # Knuckle bootstrap
+   ├── components/       # Shared Vue components
+   │   ├── common/       # Site-wide UI primitives
+   │   ├── sections/     # Main-site content sections
+   │   ├── scenes/       # Scene / hero sections
+   │   ├── dakota/       # Dakota-specific components
+   │   └── knuckle/      # Knuckle-specific components
+   ├── composables/      # Reusable Vue composables
+   ├── locales/          # i18n translation files (JSON)
+   ├── assets/           # Static images, fonts, etc.
+   └── style/            # Global CSS
+ public/               # Files copied verbatim to build output
+ scripts/              # Build helper scripts
+ tests/                # Playwright end-to-end tests
+ vite.config.ts        # Vite config — defines multi-page inputs
+ eslint.config.js      # ESLint config (@antfu/eslint-config)
+ tailwind.config.js    # Tailwind CSS config
 ```
 
-With `just`:
+The site uses Vite's
+[multi-page app](https://vitejs.dev/guide/build.html#multi-page-app) mode.
+Each subdirectory (`dakota/`, `knuckle/`, `bluespeed/`) is a separate HTML
+entry point that mounts its own Vue app root. They share the same `src/`
+source tree and all locale data.
+
+See [TRANSLATION-GUIDE.md](TRANSLATION-GUIDE.md) for the full i18n workflow.
+
+---
+
+## Making Changes
+
+### Main website content
+
+Text strings that appear on the main site live in `src/locales/en-US.json`.
+Visual layout and logic live in the Vue components under `src/components/sections/`
+and `src/components/scenes/`.
+
+### Adding or editing a component
+
+Components follow the
+[Vue 3 `<script setup>` / Composition API](https://vuejs.org/api/sfc-script-setup.html)
+style. Keep new components in the most specific subdirectory (`common/`,
+`sections/`, `dakota/`, `knuckle/`, etc.).
+
+### Adding a new language (i18n)
+
+1. Copy an existing locale file from `src/locales/` (e.g., `en-US.json`)
+2. Name your file following [Navigator.language](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/language) (e.g., `pt-BR.json`)
+3. Translate all values — keep all keys identical to `en-US.json`
+4. Open a PR; CI will validate the JSON schema
+
+See [TRANSLATION-GUIDE.md](TRANSLATION-GUIDE.md) for a full walkthrough,
+including which fields support Markdown or HTML.
+
+---
+
+## Code Style and Formatting
+
+This project uses [ESLint](https://eslint.org/) via
+[@antfu/eslint-config](https://github.com/antfu/eslint-config) for both
+**linting and formatting** — there is no separate Prettier config. Key rules:
+
+- **Indent:** 2 spaces
+- **Quotes:** single quotes
+- **CSS / `<style>` blocks:** formatted via Prettier (via `eslint-plugin-format`)
+- **`console.log` is banned** — use `console.info`, `console.warn`, or
+  `console.error` instead
+
+Before opening a PR, run the auto-fixer:
+
 ```bash
-just build         # Build for production
-just serve         # Preview the production build locally
-```
-
-### Linting and formatting
-
-The project uses [`@antfu/eslint-config`](https://github.com/antfu/eslint-config) for linting and formatting. Run before submitting a PR:
-
-```bash
-npm run lint        # Lint
-npm run lint:fix    # Lint and auto-fix
+npm run lint:fix
 npm run typecheck   # Type-check with vue-tsc
 ```
 
-## Adding a new language (i18n)
+If `npm run lint` reports errors that `--fix` cannot auto-correct, address them
+manually before submitting.
 
-1. Copy an existing locale file from `src/locales/` (e.g., `enUS.json`)
-2. Name your file following [Navigator.language](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/language) (e.g., `ptBR.json`)
-3. Translate all values — keep all keys identical to `enUS.json`
-4. Open a PR; CI will validate the JSON schema
+---
 
 ## Testing
 
@@ -82,15 +174,61 @@ node tests/navbar-visual.mjs    # 38 assertions against navbar rendering
 
 The Playwright tests check that the navigation bar renders correctly at various viewport widths. Run them after any change to `TopNavbar.vue` or layout-affecting CSS.
 
-## PR workflow
+---
 
-1. Fork the repo and create a branch: `git checkout -b feat/my-change`
-2. Make your changes
-3. Run linting, unit tests, and the navbar visual tests (see **Testing** above)
-4. Commit with a [Conventional Commits](https://www.conventionalcommits.org/) message: `feat(section): add X`
-5. Push and open a PR against `main`
-6. All PRs require at least 1 approving review from a maintainer before merging
+## Submitting a Pull Request
 
-## Security issues
+1. **Fork** the repository and create a branch from `main`.
+2. **Make your change** — keep the scope focused.
+3. **Run the linter and tests** — `npm run lint:fix` then `npm run lint` must be
+   clean; unit tests and navbar visual tests must pass.
+4. **Sign your commits** (DCO required):
+   ```bash
+   git commit -s -m "fix(locales): correct German translation for Landing.Title"
+   ```
+5. **Open a PR** against `main` and fill out the description.
+6. All PRs require at least 1 approving review from a maintainer before merging.
 
-Please **do not** file public issues for security vulnerabilities. See `SECURITY.md` or email the maintainers directly.
+### Commit message convention
+
+Use conventional commits: `<type>(<scope>): <short description>`
+
+Common types: `feat`, `fix`, `docs`, `chore`, `i18n`, `style`, `refactor`
+
+Examples:
+```
+feat(knuckle): add download counter to hero section
+fix(locales): correct typo in fr-FR Mission.Text.Change
+i18n: add Polish (pl-PL) locale
+docs: expand CONTRIBUTING guide
+```
+
+### DCO — Developer Certificate of Origin
+
+All commits must be signed with `-s` (`--signoff`). This adds a
+`Signed-off-by:` trailer certifying you have the right to submit the
+contribution under the project's license.
+
+```bash
+# Sign a new commit
+git commit -s -m "your message"
+
+# Add sign-off to the most recent commit
+git commit --amend -s --no-edit
+```
+
+---
+
+## Security Issues
+
+Please **do not** file public issues for security vulnerabilities. See
+`SECURITY.md` or email the maintainers directly.
+
+---
+
+## Questions?
+
+- [Discord](https://discord.gg/projectbluefin) — quickest way to get help
+- [GitHub Discussions](https://github.com/projectbluefin/website/discussions)
+- [Open an issue](https://github.com/projectbluefin/website/issues) for bugs
+  or feature requests
