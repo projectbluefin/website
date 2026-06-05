@@ -62,6 +62,48 @@ npm run typecheck   # Type-check with vue-tsc
 3. Translate all values — keep all keys identical to `enUS.json`
 4. Open a PR; CI will validate the JSON schema
 
+### Locale field rendering
+
+Not all locale fields are rendered the same way. Using the wrong markup in a field produces broken output.
+
+**Markdown fields** — support `**bold**`, `[links](url)`, `_italic_`, etc. (rendered via `marked.parse()`):
+
+| Key | Component |
+|-----|-----------|
+| `Users.Features` | SceneUsers.vue |
+| `Devs.TowerJoke` | SceneDevelopers.vue |
+| `Devs.RuntimeContainers` | SceneDevelopers.vue |
+| `Devs.CNJourney` | SceneDevelopers.vue |
+| `Mission.Text.Change` | SectionMission.vue |
+| `Mission.Text.CloudNative` | SectionMission.vue |
+| `Mission.Text.Sustainability` | SectionMission.vue |
+| `Mission.CleverGirl` | SectionMission.vue |
+| `TryBluefin.Description` | ImageChooser.vue |
+| `TryBluefin.Description.Choice` | ImageChooser.vue |
+| `TryBluefin.Description.Updates` | ImageChooser.vue |
+| `TryBluefin.Download.Documentation.Intro` | ImageChooser.vue |
+| `TryBluefin.Download.Documentation.Downloads` | ImageChooser.vue |
+| `TryBluefin.Download.Documentation.SecureBoot` | ImageChooser.vue |
+| `Video.Text.Passion` | SceneContent.vue |
+| `Video.Text.StateOfTheArt` | SceneContent.vue |
+| `Footer.Credits.Intro` | SectionFooter.vue |
+| `Footer.Credits.Wallpapers` | SectionFooter.vue |
+| `Footer.Credits.Website` | SectionFooter.vue |
+| `Footer.Credits.Logos` | SectionFooter.vue |
+| `Footer.Credits.Thanks` | SectionFooter.vue |
+| `Footer.Credits.Translations` | SectionFooter.vue |
+| `Footer.Credits.ImageEdit` | SectionFooter.vue |
+| `Footer.Project.Ublue` | SectionFooter.vue |
+
+**Raw HTML fields** — use `<a href="...">link</a>` directly; Markdown syntax will appear literally (rendered via `v-html`):
+
+| Key | Component |
+|-----|-----------|
+| `Bazaar.Description` | SectionBazaar.vue |
+| `Bazaar.Additional` | SectionBazaar.vue |
+
+**Plain text fields** — all other keys. Markdown and HTML tags will appear as literal characters. Do not use markup.
+
 ## Testing
 
 Run tests locally before opening a PR.
