@@ -19,7 +19,7 @@ const { isLoaded } = useFadeInUp()
 
       <div class="title-col-right">
         <p class="title-subtitle">
-          Seamless homelab with CNCF tech stack
+          Digital sovereignty is not just for nations
         </p>
       </div>
     </div>

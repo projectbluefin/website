@@ -61,7 +61,15 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
         </div>
         <div class="alpha-badge-row">
           <div class="alpha-badge">
-            <strong>⚠️ Beta.</strong> Take appropriate precautions.
+            <strong>⚠️ Coming Soon.</strong> Take appropriate precautions.
+          </div>
+        </div>
+
+        <div class="coming-soon-widget">
+          <span class="coming-soon-icon">🚧</span>
+          <div class="coming-soon-text">
+            <strong>Coming Soon!</strong>
+            <span>We're working hard to bring you the full Bluefin Server experience. Stay tuned!</span>
           </div>
         </div>
         <div>
@@ -77,7 +85,7 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
             <li><strong>Built by Experts for themselves.</strong> This is how we would design our ultimate homelab ourselves, your favorite dinosaur people.</li>
             <li><strong>Common.</strong> Everything you learn here is a real world skill. One that is in high demand.</li>
             <li><strong>Foundational.</strong> Keep it simple or build an automation setup totally run by your own self host models. Sky is the limit.</li>
-            <li><strong>On Brand.</strong> Working hard to give you Star Trek, it's about useful bling here, we're trying to show off to our friends.</li>
+            <li><strong>On Brand.</strong> Working hard to give you Star Trek, it's about useful bling.</li>
           </ul>
         </div>
 
@@ -217,6 +225,40 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
   border-radius: 12px;
   padding: 12px 16px;
   box-sizing: border-box;
+}
+
+.coming-soon-widget {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(var(--color-blue-rgb), 0.15);
+  border: 1px solid rgba(var(--color-blue-rgb), 0.4);
+  border-radius: 10px;
+  padding: 14px 20px;
+  backdrop-filter: blur(8px);
+
+  .coming-soon-icon {
+    font-size: 2.4rem;
+    flex-shrink: 0;
+  }
+
+  .coming-soon-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    strong {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--color-blue-light);
+    }
+
+    span {
+      font-size: 1.4rem;
+      color: var(--color-text-light);
+      opacity: 0.85;
+    }
+  }
 }
 
 .alpha-badge-row {
