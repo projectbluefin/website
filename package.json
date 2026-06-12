@@ -18,7 +18,7 @@
     "@iframe-resizer/child": "5.5.7",
     "@iframe-resizer/parent": "5.5.7",
     "@iframe-resizer/vue": "5.5.7",
-    "@tailwindcss/vite": "^4.0.0",
+    "@tailwindcss/vite": "^4.3.1",
     "@types/js-yaml": "^4.0.9",
     "@types/marked": "^6.0.0",
     "@vueuse/components": "^14.0.0",
@@ -32,14 +32,14 @@
   "devDependencies": {
     "@antfu/eslint-config": "^6.2.0",
     "@types/node": "^24.10.1",
-    "@vitejs/plugin-vue": "6.0.1",
+    "@vitejs/plugin-vue": "6.0.7",
     "@vitest/coverage-v8": "^4.1.7",
     "@xmldom/xmldom": "^0.9.10",
     "eslint": "^9.38.0",
     "eslint-plugin-format": "^1.0.2",
     "tailwindcss": "4.1.16",
     "typescript": "5.9.3",
-    "vite": "7.3.3",
+    "vite": "8.0.16",
     "vitest": "^4.1.4",
     "vue-tsc": "3.1.3"
   }
