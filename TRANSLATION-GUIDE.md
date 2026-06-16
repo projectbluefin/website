@@ -240,6 +240,7 @@ which formatting rules apply.
 | `Description` | Plain | |
 | `AlumniTitle` | Plain | |
 | `SponsorsTitle` | Plain | |
+| `Attribution` | Plain | |
 
 ### `Footer`
 
