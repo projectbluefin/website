@@ -175,6 +175,7 @@
       "DiscussionsButton": "Discussions"
     },
     "Contribute": {
+      "Tag": "Our Contributors",
       "Title": "Contribute",
       "Description": "Assist in Bluefin's development by contributing code, reporting bugs, or making feature requests. You can also sponsor individual contributors if you'd like to contribute monetarily.",
       "Button": "Visit our GitHub",
@@ -191,7 +192,8 @@
     "Title": "Our Flock",
     "Description": "Bluefin is built by a dedicated group of maintainers and contributors.",
     "AlumniTitle": "Featuring alumni from companies like",
-    "SponsorsTitle": "Our sponsors"
+    "SponsorsTitle": "Our sponsors",
+    "Attribution": "Statistics provided by"
   },
   "Footer": {
     "PoweredBy": "Powered By",
