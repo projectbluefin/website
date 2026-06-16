@@ -16,7 +16,7 @@ const repoBeatsEmbedUrl = 'https://repobeats.axiom.co/api/embed/40b85b252bf6ea25
   <section id="contributors" class="section-wrap">
     <div class="container">
       <div class="contributors-header">
-        <h2>Our Contributors</h2>
+        <h2>{{ t("Community.Contribute.Tag") }}</h2>
       </div>
 
       <div class="contributors-card">
