@@ -23,7 +23,7 @@ const countMeUrl = 'https://github.com/ublue-os/countme'
       </div>
 
       <p class="flock-attribution">
-        Statistics provided by
+        {{ t("Flock.Attribution")  }}
         <a :href="countMeUrl" target="_blank" rel="noopener noreferrer">DNF Count Me</a>
       </p>
     </div>
