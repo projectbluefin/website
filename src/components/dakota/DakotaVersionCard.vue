@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import type { DakotaVersions } from '../../composables'
 import {
   IconCheckCircleOutline,
   IconDownload,
 } from '@iconify-prerendered/vue-mdi'
 import { computed, onMounted, ref } from 'vue'
-import type { DakotaVersions } from '../../composables'
 import { getDakotaVersions } from '../../composables'
 import DakotaVersionChips from './DakotaVersionChips.vue'
 

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-14T12:57:10.591Z",
+  "generatedAt": "2026-06-20T18:22:41.238Z",
   "isos": [
     {
       "label": "Download ISO",
@@ -9,7 +9,7 @@
   "packages": {
     "kernel": "6.19.14",
     "gnome": "50.1",
-    "freedesktop-sdk": "25.08.11",
+    "freedesktop-sdk": "25.08.13",
     "mesa": "26.0.5",
     "bootc": "1.15.2",
     "nvidia": "595.71.05",
