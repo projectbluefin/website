@@ -1,7 +1,7 @@
 # Bluefin Website — Agent Instructions
 
-**Deployed at:** https://projectbluefin.io/  
-**Framework:** Vue 3 + Vite + TailwindCSS 4 + TypeScript  
+**Deployed at:** https://projectbluefin.io/
+**Framework:** Vue 3 + Vite + TailwindCSS 4 + TypeScript
 **Fork-aware:** all public asset fetches MUST use `import.meta.env.BASE_URL`, not absolute `/` paths.
 
 ## Quick Start

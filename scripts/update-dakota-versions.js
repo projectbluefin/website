@@ -25,6 +25,48 @@ const OUT = path.join(__dirname, '../public/dakota-versions.json')
 const FDSDK_BST_URL = 'https://api.github.com/repos/projectbluefin/dakota/contents/elements/freedesktop-sdk.bst'
 
 // ---------------------------------------------------------------------------
+// Exported helpers
+// ---------------------------------------------------------------------------
+
+export function decodeGitHubContent(content, encoding) {
+  return encoding === 'base64' ? Buffer.from(content, 'base64').toString() : content
+}
+
+export function extractFreedesktopSdkVersion(text) {
+  return text.match(/ref:\s*freedesktop-sdk-([\d.]+)/)?.[1] ?? null
+}
+
+/**
+ * Merge package versions from BST streams data into the current dakota-versions object.
+ * @param {object} current  - existing dakota-versions.json contents
+ * @param {object} streamsData - { streams: { 'dakota-latest': { releases: { latest: { packageVersions } } } } }
+ * @param {string} date     - ISO date string to stamp generatedAt
+ */
+export function applySbomVersions(current, streamsData, date) {
+  const streams = streamsData.streams || {}
+  const dakotaLatest = streams['dakota-latest']?.releases?.latest?.packageVersions
+  if (!dakotaLatest) {
+    return current
+  }
+  const packages = { ...current.packages }
+  for (const field of ['kernel', 'gnome', 'mesa', 'systemd', 'podman', 'pipewire', 'flatpak']) {
+    if (dakotaLatest[field]) {
+      packages[field] = dakotaLatest[field]
+    }
+  }
+  if (dakotaLatest.allPackages) {
+    for (const [k, v] of Object.entries(dakotaLatest.allPackages)) {
+      packages[k] = v
+    }
+  }
+  const nvidiaVersions = streams['dakota-nvidia-latest']?.releases?.latest?.packageVersions
+  if (nvidiaVersions?.nvidia) {
+    packages.nvidia = nvidiaVersions.nvidia
+  }
+  return { ...current, packages, generatedAt: date }
+}
+
+// ---------------------------------------------------------------------------
 // BST SPDX extractor
 // ---------------------------------------------------------------------------
 
@@ -154,8 +196,8 @@ async function main() {
     const res = await fetch(FDSDK_BST_URL, { headers })
     if (res.ok) {
       const { content, encoding } = await res.json()
-      const raw = encoding === 'base64' ? Buffer.from(content, 'base64').toString() : content
-      const ver = raw.match(/ref:\s*freedesktop-sdk-([\d.]+)/)?.[1]
+      const raw = decodeGitHubContent(content, encoding)
+      const ver = extractFreedesktopSdkVersion(raw)
       if (ver) {
         current.packages['freedesktop-sdk'] = ver
         console.info(`[dakota-versions] freedesktop-sdk → ${ver}`)
