@@ -5,7 +5,8 @@
  *
  * Sources of truth (in priority order):
  * 1. docs.projectbluefin.io/data/sbom-attestations.json  — kernel, gnome, mesa,
- *    bootc, systemd, podman, pipewire, flatpak from the live SBOM pipeline
+ *    bootc, systemd, podman, pipewire, flatpak from the live SBOM pipeline.
+ *    Uses dakota-stable stream.
  * 2. projectbluefin/dakota raw freedesktop-sdk.bst       — freedesktop-sdk version
  *    (parsed from the `ref:` tag; not in SBOM because it's a build junction)
  * 3. Existing values in dakota-versions.json             — fallback / manual fields
@@ -29,7 +30,7 @@ const FDSDK_BST_URL
 
 export function applySbomVersions(current, sbom, generatedAt = new Date().toISOString()) {
   const next = structuredClone(current)
-  const stream = sbom?.streams?.['dakota-latest']
+  const stream = sbom?.streams?.['dakota-stable']
   const releases = stream?.releases ?? {}
   const latest = Object.values(releases)[0]
 
@@ -54,7 +55,7 @@ export function applySbomVersions(current, sbom, generatedAt = new Date().toISOS
   assign('flatpak', pv.flatpak)
   assign('bootc', all.bootc)
 
-  const nvStream = sbom?.streams?.['dakota-nvidia-latest']
+  const nvStream = sbom?.streams?.['dakota-nvidia-stable']
   const nvReleases = nvStream?.releases ?? {}
   const nvLatest = Object.values(nvReleases)[0]
   assign('nvidia', nvLatest?.packageVersions?.nvidia)
