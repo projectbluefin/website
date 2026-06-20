@@ -1,5 +1,15 @@
 {
   "generatedAt": "2026-05-14T12:57:10.591Z",
+  "isos": [
+    {
+      "label": "AMD / Intel",
+      "filename": "dakota-live-alpha2.iso"
+    },
+    {
+      "label": "NVIDIA",
+      "filename": "dakota-nvidia-live-alpha2.iso"
+    }
+  ],
   "packages": {
     "kernel": "6.19.14",
     "gnome": "50.1",

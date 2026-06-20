@@ -160,7 +160,7 @@ npm run lint:fix
 │   ├── evening/             # Background images
 │   │   └── night-sky.webp   # Dakota background
 │   ├── favicons/            # Site icons
-│   ├── dakota-versions.json  # Version chip data (seeded; CI update TODO)
+│   ├── dakota-versions.json  # Version chip data (auto-updated daily by update-content.yml)
 │   └── testing.html         # Testing page (also built to dist/public/)
 ├── src/
 │   ├── components/          # Vue components
@@ -170,7 +170,6 @@ npm run lint:fix
 │   │   └── dakota/         # Dakota-specific components
 │   │       ├── DakotaScene.vue
 │   │       ├── DakotaHighlights.vue
-│   │       ├── DakotaDownloadCard.vue
 │   │       └── DakotaVersionChips.vue
 │   ├── locales/            # i18n translation files (13 JSON files)
 │   ├── style/              # SCSS styling
@@ -253,7 +252,7 @@ const isVisible = ref(false)
 **Sections (8):** `SectionBazaar.vue`, `SectionCommunity.vue`, `SectionFooter.vue`, `SectionMission.vue`, `SectionNews.vue`, `SectionPicker.vue`, `SectionVideo.vue`, `ParallaxWrapper.vue`
 **Common (4):** `SceneContent.vue`, `SceneQuote.vue`, `SceneVisibilityChecker.vue`, `TextArrow.vue`
 **Root Components (5):** `Navigation.vue`, `TopNavbar.vue`, `PageLoading.vue`, `ImageChooser.vue`, `RssFeed.vue`
-**Dakota (4):** `DakotaScene.vue`, `DakotaHighlights.vue`, `DakotaDownloadCard.vue`, `DakotaVersionChips.vue`
+**Dakota (3):** `DakotaScene.vue`, `DakotaHighlights.vue`, `DakotaVersionChips.vue`
 
 ## Content Management
 
@@ -293,7 +292,7 @@ export const LangSectionTitle = 'Default English Text'
 ## Data Pipeline
 
 ### Dakota Versions (`public/dakota-versions.json`)
-Fetched client-side by `DakotaVersionChips.vue`. Contains kernel/gnome/freedesktop-sdk/mesa/bootc/nvidia/systemd/podman/pipewire/flatpak/baseline versions. Currently seeded with SBOM data. TODO: wire into CI auto-update via `update-content.yml`.
+Fetched client-side by `DakotaVersionChips.vue`. Contains kernel/gnome/freedesktop-sdk/mesa/bootc/nvidia/systemd/podman/pipewire/flatpak/baseline versions. Auto-updated daily by `update-content.yml` (`scripts/update-dakota-versions.js`). The `isos` field holds current download filenames.
 
 ### Stream Versions (`public/stream-versions.yml`)
 Fetched **client-side at runtime** by `ImageChooser.vue` via `fetch('/stream-versions.yml')`. Contains kernel/gnome/mesa/nvidia/hwe versions for each stream. Updated daily at 08:00 UTC by `update-content.yml` which parses GitHub Release markdown tables from `ublue-os/bluefin` and `ublue-os/bluefin-lts`. Parsing is fragile (format-dependent) — see TODO comment in `scripts/update-stream-versions.js` for the proper SBOM-based fix.

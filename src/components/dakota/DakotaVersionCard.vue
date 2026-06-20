@@ -4,13 +4,9 @@ import {
   IconDownload,
 } from '@iconify-prerendered/vue-mdi'
 import { computed, onMounted, ref } from 'vue'
+import type { DakotaVersions } from '../../composables'
 import { getDakotaVersions } from '../../composables'
 import DakotaVersionChips from './DakotaVersionChips.vue'
-
-interface DakotaVersions {
-  generatedAt: string
-  packages: Record<string, string>
-}
 
 interface DownloadEntry {
   label: string
@@ -28,20 +24,21 @@ const cardImageStyle = computed(() => ({
   backgroundImage: `url(${import.meta.env.BASE_URL}characters/dakota.webp)`,
 }))
 
-const entries: DownloadEntry[] = [
-  {
-    label: 'AMD / Intel',
-    isoUrl: `${BASE}/dakota-live-alpha2.iso`,
-    isoFilename: 'dakota-live-alpha2.iso',
-    checksumUrl: `${BASE}/dakota-live-alpha2.iso-CHECKSUM`,
-  },
-  {
-    label: 'NVIDIA',
-    isoUrl: `${BASE}/dakota-nvidia-live-alpha2.iso`,
-    isoFilename: 'dakota-nvidia-live-alpha2.iso',
-    checksumUrl: `${BASE}/dakota-nvidia-live-alpha2.iso-CHECKSUM`,
-  },
+// ponytail: static fallback keeps downloads working if JSON fetch fails
+const FALLBACK_ISOS = [
+  { label: 'AMD / Intel', filename: 'dakota-live-alpha2.iso' },
+  { label: 'NVIDIA', filename: 'dakota-nvidia-live-alpha2.iso' },
 ]
+
+const entries = computed<DownloadEntry[]>(() => {
+  const isos = versions.value?.isos ?? FALLBACK_ISOS
+  return isos.map(iso => ({
+    label: iso.label,
+    isoUrl: `${BASE}/${iso.filename}`,
+    isoFilename: iso.filename,
+    checksumUrl: `${BASE}/${iso.filename}-CHECKSUM`,
+  }))
+})
 
 const VERSION_LABELS: Record<string, string> = {
   'kernel': 'Kernel',
