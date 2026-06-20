@@ -13,6 +13,7 @@
  * 3. Existing dakota-versions.json — fallback for fields not in SBOM
  */
 
+import { Buffer } from 'node:buffer'
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -21,8 +22,7 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const OUT = path.join(__dirname, '../public/dakota-versions.json')
-const GITHUB_API = 'https://api.github.com'
-const FDSDK_BST_URL = `${GITHUB_API}/repos/projectbluefin/dakota/contents/elements/freedesktop-sdk.bst`
+const FDSDK_BST_URL = 'https://api.github.com/repos/projectbluefin/dakota/contents/elements/freedesktop-sdk.bst'
 
 // ---------------------------------------------------------------------------
 // BST SPDX extractor
@@ -48,12 +48,20 @@ function extractBstVersions(sbom) {
   const result = {}
   for (const pkg of (sbom.packages || [])) {
     const { name, versionInfo: ver } = pkg
-    if (!name || !isSemverLike(ver)) { continue }
+    if (!name || !isSemverLike(ver)) {
+      continue
+    }
     const bstRefs = (pkg.externalRefs || []).filter(r => r.referenceType === 'bst-element')
-    if (!bstRefs.length) { continue }
+    if (!bstRefs.length) {
+      continue
+    }
     for (const { name: n, bstSuffix, field } of BST_PACKAGE_MAP) {
-      if (name !== n || result[field]) { continue }
-      if (bstRefs.some(r => r.referenceLocator?.endsWith(bstSuffix))) { result[field] = ver }
+      if (name !== n || result[field]) {
+        continue
+      }
+      if (bstRefs.some(r => r.referenceLocator?.endsWith(bstSuffix))) {
+        result[field] = ver
+      }
     }
   }
   return result
@@ -69,7 +77,6 @@ function orasLogin() {
 }
 
 function pullSbom(imageRef, outDir) {
-  // Discover SPDX referrer digest
   const raw = execFileSync('oras', [
     'discover',
     '--artifact-type',
@@ -79,16 +86,19 @@ function pullSbom(imageRef, outDir) {
     imageRef,
   ], { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] })
 
-  const referrers = JSON.parse(raw).referrers || []
-  const spdx = referrers.find(r => r.artifactType === 'application/vnd.spdx+json')
-  if (!spdx) { return null }
+  const spdx = (JSON.parse(raw).referrers || [])
+    .find(r => r.artifactType === 'application/vnd.spdx+json')
+  if (!spdx) {
+    return null
+  }
 
-  // Pull the SBOM blob
   execFileSync('oras', ['pull', `ghcr.io/projectbluefin/dakota@${spdx.digest}`, '--output', outDir], { stdio: 'pipe' })
 
-  const files = fs.readdirSync(outDir).filter(f => f.endsWith('.json'))
-  if (!files.length) { return null }
-  return JSON.parse(fs.readFileSync(path.join(outDir, files[0]), 'utf8'))
+  const file = fs.readdirSync(outDir).find(f => f.endsWith('.json'))
+  if (!file) {
+    return null
+  }
+  return JSON.parse(fs.readFileSync(path.join(outDir, file), 'utf8'))
 }
 
 // ---------------------------------------------------------------------------
@@ -106,7 +116,10 @@ async function main() {
       const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'dakota-sbom-'))
       try {
         sbom = pullSbom(`ghcr.io/projectbluefin/dakota:${tag}`, tmp)
-        if (sbom) { console.info(`[dakota-versions] SBOM from :${tag}`); break }
+        if (sbom) {
+          console.info(`[dakota-versions] SBOM from :${tag}`)
+          break
+        }
         console.warn(`[dakota-versions] no SPDX referrer on :${tag}`)
       }
       finally {
@@ -117,7 +130,9 @@ async function main() {
     if (sbom) {
       const versions = extractBstVersions(sbom)
       for (const [k, v] of Object.entries(versions)) {
-        if (v) { current.packages[k] = v }
+        if (v) {
+          current.packages[k] = v
+        }
       }
       current.generatedAt = new Date().toISOString()
       console.info('[dakota-versions] versions:', JSON.stringify(versions))
@@ -139,9 +154,7 @@ async function main() {
     const res = await fetch(FDSDK_BST_URL, { headers })
     if (res.ok) {
       const { content, encoding } = await res.json()
-      const raw = encoding === 'base64'
-        ? Buffer.from(content, 'base64').toString()
-        : content
+      const raw = encoding === 'base64' ? Buffer.from(content, 'base64').toString() : content
       const ver = raw.match(/ref:\s*freedesktop-sdk-([\d.]+)/)?.[1]
       if (ver) {
         current.packages['freedesktop-sdk'] = ver
