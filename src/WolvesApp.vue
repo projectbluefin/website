@@ -24,13 +24,14 @@ import bazziteQuotes from './data/bazzite-quotes.json'
 // to `window.pdfjsLib`. It ships no first-party types, so we treat it as `any`.
 const PDF_URL = 'https://download.projectbluefin.io/color-with-bluefin.pdf'
 const PDFJS_SCRIPT_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
+const PDFJS_SCRIPT_INTEGRITY = 'sha512-q+4liFwdPC/bNdhUpZx6aXDx/h77yEQtn4I1slHydcbZK34nLaR3cAeYSJshoxIOq3mjEf7xJE8YWIUHMn+oCQ=='
 const PDFJS_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
 
 let pdfjsLib: any = null
 let pdfDocument: any = null
-// Tracks in-flight render tasks per page number so a resize/page-flip can cancel
+// Tracks in-flight render tasks per canvas element so a resize/page-flip can cancel
 // a stale render before starting a new one on the same canvas.
-const renderTasks = new Map<number, any>()
+const renderTasks = new Map<HTMLCanvasElement, any>()
 
 // Soundtrack Widget state
 const playlistId = 'PLA78oiE-RGAE'
@@ -82,7 +83,9 @@ function setScrollCanvasRef(el: Element | null, index: number) {
 }
 
 // Dynamically injects a <script> tag once and resolves when it has loaded.
-function loadScript(src: string): Promise<void> {
+// When `integrity` is supplied, the script is fetched with subresource integrity
+// verification and CORS mode enabled so the browser can check the hash.
+function loadScript(src: string, integrity?: string): Promise<void> {
   return new Promise((resolve, reject) => {
     if (document.querySelector(`script[src="${src}"]`)) {
       resolve()
@@ -91,6 +94,10 @@ function loadScript(src: string): Promise<void> {
     const script = document.createElement('script')
     script.src = src
     script.async = true
+    if (integrity) {
+      script.integrity = integrity
+      script.crossOrigin = 'anonymous'
+    }
     script.onload = () => resolve()
     script.onerror = () => reject(new Error(`Failed to load script: ${src}`))
     document.head.appendChild(script)
@@ -102,7 +109,7 @@ async function loadPdfJs(): Promise<any> {
   if (pdfjsLib) {
     return pdfjsLib
   }
-  await loadScript(PDFJS_SCRIPT_URL)
+  await loadScript(PDFJS_SCRIPT_URL, PDFJS_SCRIPT_INTEGRITY)
   const lib = (window as any).pdfjsLib
   if (!lib) {
     throw new Error('PDF.js failed to initialize')
@@ -118,11 +125,10 @@ async function renderPageOnCanvas(pageNumber: number, canvas: HTMLCanvasElement,
     return
   }
 
-  // Cancel a stale in-flight render for this page before starting a new one.
-  const pending = renderTasks.get(pageNumber)
-  if (pending) {
-    pending.cancel()
-    renderTasks.delete(pageNumber)
+  // Cancel a stale in-flight render targeting this canvas before starting a new one.
+  const existingTask = renderTasks.get(canvas)
+  if (existingTask) {
+    existingTask.cancel()
   }
 
   const page = await pdfDocument.getPage(pageNumber)
@@ -144,7 +150,12 @@ async function renderPageOnCanvas(pageNumber: number, canvas: HTMLCanvasElement,
   const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined
 
   const renderTask = page.render({ canvasContext: context, viewport, transform })
-  renderTasks.set(pageNumber, renderTask)
+  renderTasks.set(canvas, renderTask)
+  renderTask.promise.then(() => {
+    if (renderTasks.get(canvas) === renderTask) {
+      renderTasks.delete(canvas)
+    }
+  }).catch(() => {})
   try {
     await renderTask.promise
   }
@@ -152,9 +163,6 @@ async function renderPageOnCanvas(pageNumber: number, canvas: HTMLCanvasElement,
     if (err?.name !== 'RenderingCancelledException') {
       console.error('[wolves] Failed to render PDF page', pageNumber, err)
     }
-  }
-  finally {
-    renderTasks.delete(pageNumber)
   }
 }
 
@@ -229,6 +237,10 @@ function handleScroll() {
 
 // Keyboard navigation helper
 function handleKeyDown(event: KeyboardEvent) {
+  const target = event.target as HTMLElement
+  if (target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) {
+    return
+  }
   if (readingMode.value !== 'flip') {
     return
   }
