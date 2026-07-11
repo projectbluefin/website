@@ -165,60 +165,50 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="wolves-teaser-page bg-[#0c1016] text-[#ffffff] min-h-screen font-sans antialiased selection:bg-[#ef4444] selection:text-white">
+  <div class="wolves-teaser-page">
     <!-- Top Global Navigation Bar -->
     <TopNavbar />
 
     <!-- Sticky Soundtrack Widget (floats right below top navbar which is 60px height) -->
     <div
       v-if="!isDismissed && isSticky"
-      class="fixed left-0 right-0 z-50 transition-all duration-300 transform translate-y-0"
+      class="sticky-soundtrack-bar"
       :style="{ top: '60px' }"
     >
-      <div class="bg-[#10151f]/95 backdrop-blur border-b border-[#ef4444]/30 px-4 py-3 shadow-lg flex items-center justify-between max-w-7xl mx-auto md:rounded-b-xl md:border-x">
-        <div class="flex items-center gap-3 min-w-0 flex-1">
+      <div class="bar-content">
+        <div class="bar-info">
           <!-- Album Thumbnail -->
-          <div class="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-black border border-[#ef4444]/40">
-            <img :src="coverArtUrl" :alt="playlistTitle" class="w-full h-full object-cover">
+          <div class="bar-thumbnail">
+            <img :src="coverArtUrl" :alt="playlistTitle">
           </div>
-          <div class="min-w-0 flex-1">
-            <span class="block text-[10px] font-bold tracking-widest text-[#ef4444] uppercase leading-none">Soundtrack Playing</span>
-            <span class="block text-sm font-semibold truncate text-[#ffffff] mt-0.5">{{ playlistTitle }}</span>
+          <div class="bar-meta">
+            <span class="bar-label">Soundtrack Playing</span>
+            <span class="bar-title">{{ playlistTitle }}</span>
           </div>
         </div>
 
-        <div class="flex items-center gap-4">
+        <div class="bar-controls">
           <!-- Media Player -->
-          <div class="w-[120px] h-[30px] rounded overflow-hidden bg-black flex-shrink-0 relative hidden md:block">
+          <div class="mini-player">
             <iframe
               v-if="isPlaying"
               :src="embedUrl"
               title="YouTube playlist player"
-              class="w-full h-full border-none"
               allow="autoplay; encrypted-media"
             />
-            <div v-else class="w-full h-full flex items-center justify-center bg-zinc-900">
+            <div v-else class="play-overlay">
               <button
-                class="text-xs font-bold text-[#ffffff] hover:text-[#ef4444] flex items-center gap-1.5 transition-colors"
+                class="mini-play-btn"
                 @click="isPlaying = true"
               >
-                <span>▶ Play Audio</span>
+                ▶ Play Audio
               </button>
             </div>
           </div>
 
-          <!-- Small controls for mobile/tablet when already playing -->
-          <button
-            v-if="!isPlaying"
-            class="md:hidden text-xs bg-[#ef4444] hover:bg-red-600 text-white font-bold px-3 py-1.5 rounded-full transition-colors flex items-center gap-1"
-            @click="isPlaying = true"
-          >
-            <span>▶ Play</span>
-          </button>
-
           <!-- Dismiss button -->
           <button
-            class="text-[#bdbdbd] hover:text-white transition-colors text-xl font-bold leading-none p-1"
+            class="close-btn"
             aria-label="Dismiss Player"
             @click="isDismissed = true"
           >
@@ -229,53 +219,52 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Main Outer Container -->
-    <div class="pt-[80px] px-4 md:px-8 max-w-5xl mx-auto flex flex-col gap-16 pb-24">
+    <div class="wolves-layout">
       <!-- SECTION 1: HERO SECTION -->
-      <header class="relative flex flex-col md:flex-row items-center gap-8 py-8 md:py-12 border-b border-[#ef4444]/20">
-        <div class="flex-1 text-center md:text-left">
-          <div class="inline-block border border-[#ef4444] text-[#ef4444] text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-4">
+      <header class="wolves-hero">
+        <div class="hero-text">
+          <div class="hero-tag">
             Upcoming Release Teaser
           </div>
           <!-- Aggressive display typography with heavy scale -->
-          <h1 class="text-4xl md:text-6xl font-extrabold tracking-tighter text-white uppercase leading-none mb-4">
-            Seven Days to the <span class="text-[#ef4444]">Wolves</span>
+          <h1 class="hero-title">
+            Seven Days to the <span class="accent">Wolves</span>
           </h1>
-          <p class="text-lg md:text-xl text-[#bdbdbd] font-medium max-w-2xl leading-relaxed mb-6">
+          <p class="hero-description">
             An original Project Bluefin graphic novel. Follow the journey of an architect battling systemic infrastructure collapse, navigating the shadows of the old web, and fighting to deploy ultimate digital sovereignty.
           </p>
-          <div class="text-[13px] text-[#bdbdbd]/60 italic">
+          <div class="hero-footnote">
             Comic book release slated for late 2026. Review placeholder governance comic below.
           </div>
         </div>
 
         <!-- Hero Soundtrack Widget Box -->
-        <div v-if="!isSticky || isDismissed" class="w-full md:w-[350px] flex-shrink-0 bg-[#10151f] border border-[#ef4444]/40 rounded-2xl overflow-hidden shadow-2xl p-5 flex flex-col gap-4">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded bg-black flex-shrink-0 overflow-hidden border border-[#ef4444]/30">
-              <img :src="coverArtUrl" :alt="playlistTitle" class="w-full h-full object-cover">
+        <div v-if="!isSticky || isDismissed" class="hero-soundtrack-card">
+          <div class="soundtrack-header">
+            <div class="soundtrack-thumbnail">
+              <img :src="coverArtUrl" :alt="playlistTitle">
             </div>
-            <div>
-              <span class="text-[9px] font-extrabold tracking-widest text-[#ef4444] uppercase block leading-none">Soundtrack Invite</span>
-              <span class="text-sm font-bold text-white block mt-0.5 leading-tight truncate max-w-[200px]">{{ playlistTitle }}</span>
+            <div class="soundtrack-meta">
+              <span class="soundtrack-tag">Soundtrack Invite</span>
+              <span class="soundtrack-title">{{ playlistTitle }}</span>
             </div>
           </div>
-          <p class="text-xs text-[#bdbdbd] leading-relaxed">
+          <p class="soundtrack-desc">
             {{ playlistDescription }}. Activate playback to lock in the metal atmosphere while scrolling the story panels.
           </p>
-          <div class="w-full aspect-video bg-black rounded-lg overflow-hidden border border-zinc-800 relative">
+          <div class="soundtrack-player-wrapper">
             <iframe
               v-if="isPlaying"
               :src="embedUrl"
               title="YouTube playlist player"
-              class="w-full h-full border-none"
               allow="autoplay; encrypted-media"
             />
-            <div v-else class="absolute inset-0 flex flex-col items-center justify-center p-4 bg-gradient-to-t from-black/80 to-black/30">
+            <div v-else class="play-overlay">
               <button
-                class="bg-[#ef4444] hover:bg-red-600 text-white font-bold px-5 py-2.5 rounded-full text-xs uppercase tracking-widest transition-all shadow-lg flex items-center gap-2 transform hover:scale-105"
+                class="play-btn"
                 @click="isPlaying = true"
               >
-                <span>▶ Start Soundtrack</span>
+                ▶ Start Soundtrack
               </button>
             </div>
           </div>
@@ -283,29 +272,27 @@ onBeforeUnmount(() => {
       </header>
 
       <!-- SECTION 2: COMIC READER -->
-      <section id="comic-reader" class="flex flex-col gap-6">
-        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <section id="comic-reader" class="comic-reader-section">
+        <div class="section-title-wrap">
           <div>
-            <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight uppercase">
+            <h2 class="title-h2">
               Comic Reader
             </h2>
-            <p class="text-sm text-[#bdbdbd]">
+            <p class="title-p">
               Review the technical placeholder comic book below. Ingesting Stacklet original artwork.
             </p>
           </div>
 
           <!-- Mode Selector Toggles -->
-          <div class="flex items-center gap-2 self-start md:self-auto bg-[#10151f] p-1 rounded-lg border border-zinc-800 text-xs">
+          <div class="mode-selectors">
             <button
-              class="px-3 py-1.5 rounded font-bold transition-all"
-              :class="readingMode === 'flip' ? 'bg-[#ef4444] text-white' : 'text-[#bdbdbd] hover:text-white'"
+              :class="{ active: readingMode === 'flip' }"
               @click="readingMode = 'flip'"
             >
               Page By Page
             </button>
             <button
-              class="px-3 py-1.5 rounded font-bold transition-all"
-              :class="readingMode === 'scroll' ? 'bg-[#ef4444] text-white' : 'text-[#bdbdbd] hover:text-white'"
+              :class="{ active: readingMode === 'scroll' }"
               @click="readingMode = 'scroll'"
             >
               Continuous Scroll
@@ -314,44 +301,41 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Comic Reader Layout: Page by Page (Slideshow) -->
-        <div v-if="readingMode === 'flip'" class="flex flex-col gap-4">
-          <div class="relative w-full aspect-[4/5] max-w-2xl mx-auto bg-[#10151f] border border-[#ef4444]/30 rounded-2xl overflow-hidden shadow-2xl flex items-center justify-center group">
+        <div v-if="readingMode === 'flip'" class="page-flip-comic-layout">
+          <div class="comic-viewport">
             <!-- Page Contents -->
-            <div class="absolute inset-0 flex flex-col">
+            <div class="comic-content-area">
               <!-- If page has actual image, render it, else render beautiful custom comic panel placeholder -->
-              <div v-if="comicPages[currentPageIndex].imageUrl" class="flex-1 w-full h-full relative">
+              <div v-if="comicPages[currentPageIndex].imageUrl" class="comic-image-wrap">
                 <img
                   :src="comicPages[currentPageIndex].imageUrl"
                   :alt="comicPages[currentPageIndex].caption"
-                  class="w-full h-full object-contain"
                   loading="eager"
                 >
               </div>
-              <div v-else class="flex-1 p-8 flex flex-col items-center justify-center text-center relative bg-gradient-to-br from-[#10151f] to-zinc-950">
-                <!-- Retro-styled Comic Dots background & styling -->
-                <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#ef4444_1px,transparent_1px)] [background-size:16px_16px]" />
-
-                <div class="relative z-10 max-w-md flex flex-col items-center gap-4">
-                  <div class="w-16 h-16 rounded-lg border border-[#ef4444]/60 bg-black/40 flex items-center justify-center text-[#ef4444]">
+              <div v-else class="comic-placeholder-wrap">
+                <div class="dots-overlay" />
+                <div class="placeholder-content">
+                  <div class="placeholder-icon">
                     <svg viewBox="0 0 24 24" fill="currentColor" width="36" height="36">
                       <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4 6h-4v2h4v2h-4v2h4v2H9V7h6v2z" />
                     </svg>
                   </div>
-                  <div class="text-[#ef4444] text-xs font-bold uppercase tracking-widest leading-none">
-                    PANEL {{ comicPages[currentPageIndex].pageNumber }} OF 12
+                  <div class="placeholder-tag">
+                    PANEL {{ comicPages[currentPageIndex].pageNumber }} OF {{ comicPages.length }}
                   </div>
-                  <h3 class="text-xl md:text-2xl font-black tracking-tight text-white uppercase mt-1">
+                  <h3 class="placeholder-title">
                     {{ comicPages[currentPageIndex].title }}
                   </h3>
-                  <div class="h-px w-24 bg-gradient-to-r from-transparent via-[#ef4444] to-transparent my-1" />
-                  <p class="text-sm md:text-base text-[#bdbdbd] leading-relaxed italic">
+                  <div class="placeholder-divider" />
+                  <p class="placeholder-desc">
                     "{{ comicPages[currentPageIndex].caption }}"
                   </p>
                 </div>
               </div>
 
               <!-- Page Caption Banner at Bottom -->
-              <div class="bg-black/90 px-6 py-4 border-t border-zinc-800 text-center text-xs md:text-sm text-[#ffffff] font-medium leading-relaxed select-text">
+              <div class="comic-caption-bar select-text">
                 {{ comicPages[currentPageIndex].caption }}
               </div>
             </div>
@@ -359,7 +343,7 @@ onBeforeUnmount(() => {
             <!-- Left Navigation Button -->
             <button
               v-show="currentPageIndex > 0"
-              class="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/70 hover:bg-black text-white hover:text-[#ef4444] border border-zinc-800 flex items-center justify-center transition-all cursor-pointer z-20 md:opacity-0 group-hover:opacity-100"
+              class="nav-btn prev"
               aria-label="Previous Page"
               @click="prevPage"
             >
@@ -369,7 +353,7 @@ onBeforeUnmount(() => {
             <!-- Right Navigation Button -->
             <button
               v-show="currentPageIndex < comicPages.length - 1"
-              class="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/70 hover:bg-black text-white hover:text-[#ef4444] border border-zinc-800 flex items-center justify-center transition-all cursor-pointer z-20 md:opacity-0 group-hover:opacity-100"
+              class="nav-btn next"
               aria-label="Next Page"
               @click="nextPage"
             >
@@ -378,9 +362,9 @@ onBeforeUnmount(() => {
           </div>
 
           <!-- Bottom Control Bar (Navigation Controls) -->
-          <div class="flex items-center justify-between gap-4 max-w-2xl mx-auto w-full px-4 text-xs font-semibold">
+          <div class="reader-controls">
             <button
-              class="px-4 py-2 border border-zinc-800 bg-[#10151f] hover:bg-zinc-900 rounded-lg text-[#bdbdbd] hover:text-white transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+              class="ctrl-btn"
               :disabled="currentPageIndex === 0"
               @click="prevPage"
             >
@@ -388,25 +372,24 @@ onBeforeUnmount(() => {
             </button>
 
             <!-- Keyboard helper -->
-            <div class="text-zinc-600 hidden md:block">
+            <div class="kbd-hint">
               Use &larr; &rarr; arrow keys to turn pages
             </div>
 
-            <div class="flex items-center gap-2">
-              <span class="text-zinc-500">Jump to:</span>
+            <div class="jump-select-wrap">
+              <span>Jump to:</span>
               <select
                 :value="currentPageIndex"
-                class="bg-[#10151f] border border-zinc-800 text-white px-2 py-1 rounded cursor-pointer text-xs font-medium focus:outline-none focus:border-[#ef4444]"
                 @change="jumpToPage(Number(($event.target as HTMLSelectElement).value))"
               >
                 <option v-for="(page, idx) in comicPages" :key="idx" :value="idx">
-                  Page {{ page.pageNumber }}: {{ page.title.slice(0, 20) }}...
+                  Page {{ page.pageNumber }}: {{ page.title.slice(0, 25) }}...
                 </option>
               </select>
             </div>
 
             <button
-              class="px-4 py-2 border border-zinc-800 bg-[#10151f] hover:bg-zinc-900 rounded-lg text-[#bdbdbd] hover:text-white transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+              class="ctrl-btn"
               :disabled="currentPageIndex === comicPages.length - 1"
               @click="nextPage"
             >
@@ -416,84 +399,89 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Comic Reader Layout: Continuous Stacked Vertical Scroll -->
-        <div v-else class="flex flex-col gap-8 max-w-2xl mx-auto w-full">
+        <div v-else class="scroll-comic-layout">
           <div
             v-for="(page, idx) in comicPages"
             :key="idx"
-            class="w-full bg-[#10151f] border border-[#ef4444]/20 rounded-2xl overflow-hidden shadow-xl flex flex-col"
+            class="scroll-page-card"
           >
             <!-- Content -->
-            <div v-if="page.imageUrl" class="w-full aspect-[4/5] bg-black">
-              <img
-                :src="page.imageUrl"
-                :alt="page.caption"
-                class="w-full h-full object-contain"
-                loading="lazy"
-              >
-            </div>
-            <div v-else class="w-full aspect-[4/5] p-8 flex flex-col items-center justify-center text-center relative bg-gradient-to-br from-[#10151f] to-zinc-950">
-              <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#ef4444_1px,transparent_1px)] [background-size:16px_16px]" />
-              <div class="relative z-10 max-w-md flex flex-col items-center gap-4">
-                <div class="w-16 h-16 rounded-lg border border-[#ef4444]/40 bg-black/40 flex items-center justify-center text-[#ef4444]">
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="36" height="36">
-                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4 6h-4v2h4v2h-4v2h4v2H9V7h6v2z" />
-                  </svg>
+            <div class="comic-viewport">
+              <div class="comic-content-area">
+                <div v-if="page.imageUrl" class="comic-image-wrap">
+                  <img
+                    :src="page.imageUrl"
+                    :alt="page.caption"
+                    loading="lazy"
+                  >
                 </div>
-                <div class="text-[#ef4444] text-xs font-bold uppercase tracking-widest">
-                  PANEL {{ page.pageNumber }} OF 12
+                <div v-else class="comic-placeholder-wrap">
+                  <div class="dots-overlay" />
+                  <div class="placeholder-content">
+                    <div class="placeholder-icon">
+                      <svg viewBox="0 0 24 24" fill="currentColor" width="36" height="36">
+                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4 6h-4v2h4v2h-4v2h4v2H9V7h6v2z" />
+                      </svg>
+                    </div>
+                    <div class="placeholder-tag">
+                      PANEL {{ page.pageNumber }} OF {{ comicPages.length }}
+                    </div>
+                    <h3 class="placeholder-title">
+                      {{ page.title }}
+                    </h3>
+                    <div class="placeholder-divider" />
+                    <p class="placeholder-desc">
+                      "{{ page.caption }}"
+                    </p>
+                  </div>
                 </div>
-                <h3 class="text-xl md:text-2xl font-black tracking-tight text-white uppercase">
-                  {{ page.title }}
-                </h3>
-                <div class="h-px w-24 bg-gradient-to-r from-transparent via-[#ef4444] to-transparent my-1" />
-                <p class="text-sm md:text-base text-[#bdbdbd] leading-relaxed italic">
-                  "{{ page.caption }}"
-                </p>
-              </div>
-            </div>
 
-            <!-- Page Caption Banner at Bottom -->
-            <div class="bg-black/90 px-6 py-4 border-t border-zinc-800 text-center text-xs md:text-sm text-[#ffffff] font-medium leading-relaxed">
-              {{ page.caption }}
+                <!-- Page Caption Banner at Bottom -->
+                <div class="comic-caption-bar">
+                  {{ page.caption }}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       <!-- SECTION 3: BAZZITE DISCORD QUOTES -->
-      <section id="bazzite-quotes" class="flex flex-col gap-6">
-        <div>
-          <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight uppercase">
-            Bazzite Dispatch
-          </h2>
-          <p class="text-sm text-[#bdbdbd]">
-            Direct dispatches from Bazzite gaming operatives via the Project Bluefin Discord.
-          </p>
+      <section id="bazzite-quotes" class="comic-reader-section">
+        <div class="section-title-wrap">
+          <div>
+            <h2 class="title-h2">
+              Bazzite Dispatch
+            </h2>
+            <p class="title-p">
+              Direct dispatches from Bazzite gaming operatives via the Project Bluefin Discord.
+            </p>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="quotes-grid">
           <div
             v-for="(item, idx) in bazziteQuotes"
             :key="idx"
-            class="bg-[#10151f] border border-zinc-800 hover:border-[#ef4444]/40 p-6 rounded-2xl flex flex-col justify-between gap-6 transition-all duration-300 shadow-lg relative group"
+            class="quote-card"
           >
             <!-- Decorative quote icon -->
-            <div class="absolute top-4 right-6 text-zinc-800 group-hover:text-[#ef4444]/10 text-6xl font-serif select-none pointer-events-none leading-none transition-colors">
+            <div class="quote-symbol">
               &ldquo;
             </div>
 
             <!-- Quote Text -->
-            <p class="text-sm md:text-base text-[#ffffff] leading-relaxed font-medium italic relative z-10">
+            <p class="quote-text">
               "{{ item.quote }}"
             </p>
 
             <!-- Citation Metadata -->
-            <div class="flex flex-col gap-1 text-[11px] border-t border-zinc-800/60 pt-4 mt-auto">
-              <div class="flex items-center justify-between text-[#ffffff] font-bold">
+            <div class="quote-meta">
+              <div class="meta-top">
                 <span>@{{ item.attribution }}</span>
-                <span class="text-zinc-500 font-medium">{{ item.date }}</span>
+                <span class="meta-date">{{ item.date }}</span>
               </div>
-              <div class="text-[#ef4444] font-semibold uppercase tracking-wider">
+              <div class="meta-context">
                 {{ item.context }}
               </div>
             </div>
@@ -501,63 +489,62 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Discord hook commentary -->
-        <div class="text-[11px] text-[#bdbdbd]/40 italic text-center mt-2">
-          <!-- Sourced directly from Discord API dump: automatic ingestion hook scheduled to run weekly -->
+        <div class="quotes-footnote">
           Quotes sourced from verified Discord testimonials. Additional quotes can be added in src/data/bazzite-quotes.json.
         </div>
       </section>
 
       <!-- SECTION 4: QR CODES SECTION -->
-      <section id="wolves-support" class="flex flex-col gap-6 border-t border-[#ef4444]/20 pt-16">
-        <div class="text-center max-w-2xl mx-auto flex flex-col gap-2">
-          <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight uppercase">
+      <section id="wolves-support" class="comic-reader-section">
+        <div class="support-wrap">
+          <h2 class="title-h2">
             Support the Mission
           </h2>
-          <p class="text-sm text-[#bdbdbd]">
+          <p class="title-p">
             Secure official gear or donate directly to fuel next-generation Linux workstation research, hardware enablement, and future comic releases.
           </p>
         </div>
 
-        <div class="flex flex-col md:flex-row items-stretch justify-center gap-8 max-w-2xl mx-auto w-full mt-4">
+        <div class="qr-grid">
           <!-- QR Card 1: Official Store -->
-          <div class="flex-1 bg-[#10151f] border border-zinc-800 p-6 rounded-2xl flex flex-col items-center gap-6 shadow-xl text-center">
-            <h3 class="text-base font-extrabold tracking-tight uppercase text-white leading-none">
+          <div class="qr-card">
+            <h3 class="qr-title">
               Official Store
             </h3>
-            <div class="w-48 h-48 bg-[#0c1016] border border-zinc-800 rounded-xl p-4 flex items-center justify-center transition-transform hover:scale-105 duration-300">
-              <img :src="qrStore" alt="QR Code linking to Store" class="w-full h-full object-contain">
+            <div class="qr-image-box">
+              <img :src="qrStore" alt="QR Code linking to Store">
             </div>
-            <div class="flex flex-col gap-2">
+            <div class="qr-action-wrap">
               <a
                 href="https://store.projectbluefin.io"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-block bg-[#ef4444] hover:bg-red-600 text-white font-bold text-xs uppercase tracking-widest px-6 py-2.5 rounded-full transition-colors"
+                class="qr-btn red"
               >
                 Go to Store &rarr;
               </a>
-              <span class="text-[11px] text-zinc-500">store.projectbluefin.io</span>
+              <span class="qr-domain">store.projectbluefin.io</span>
             </div>
           </div>
 
           <!-- QR Card 2: Donate to Project -->
-          <div class="flex-1 bg-[#10151f] border border-zinc-800 p-6 rounded-2xl flex flex-col items-center gap-6 shadow-xl text-center">
-            <h3 class="text-base font-extrabold tracking-tight uppercase text-white leading-none">
+          <div class="qr-card">
+            <h3 class="qr-title">
               Donate to Bluefin
             </h3>
-            <div class="w-48 h-48 bg-[#0c1016] border border-zinc-800 rounded-xl p-4 flex items-center justify-center transition-transform hover:scale-105 duration-300">
-              <img :src="qrDonate" alt="QR Code to Donate" class="w-full h-full object-contain">
+            <div class="qr-image-box">
+              <img :src="qrDonate" alt="QR Code to Donate">
             </div>
-            <div class="flex flex-col gap-2">
+            <div class="qr-action-wrap">
               <a
                 href="https://docs.projectbluefin.io/donations"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-block bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs uppercase tracking-widest px-6 py-2.5 rounded-full transition-colors"
+                class="qr-btn dark"
               >
                 Donate Now &rarr;
               </a>
-              <span class="text-[11px] text-zinc-500">docs.projectbluefin.io/donations</span>
+              <span class="qr-domain">docs.projectbluefin.io/donations</span>
             </div>
           </div>
         </div>
@@ -572,7 +559,10 @@ onBeforeUnmount(() => {
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
+  min-height: 100vh;
+  position: relative;
   overflow-x: hidden;
+  box-sizing: border-box;
 
   &::after {
     content: '';
@@ -581,15 +571,810 @@ onBeforeUnmount(() => {
     left: 0;
     width: 100%;
     height: 600px;
-    background: linear-gradient(to bottom, rgba(var(--color-bg-rgb), 0.7), transparent);
+    background: linear-gradient(to bottom, rgba(12, 16, 22, 0.7), transparent);
     z-index: 0;
     pointer-events: none;
   }
 }
 
-// Custom styles for embedded iframe sizing and responsiveness
-iframe {
+.wolves-layout {
+  position: relative;
+  z-index: 1;
+  max-width: 1012px;
+  margin: 0 auto;
+  padding: 80px 24px 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+}
+
+// Sticky Soundtrack Widget (floating/sticky bar)
+.sticky-soundtrack-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background-color: rgba(16, 21, 31, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
+
+  .bar-content {
+    max-width: 1012px;
+    margin: 0 auto;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .bar-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .bar-thumbnail {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    background-color: #000;
+    flex-shrink: 0;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .bar-meta {
+    min-width: 0;
+  }
+
+  .bar-label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #ef4444;
+    line-height: 1;
+  }
+
+  .bar-title {
+    display: block;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bar-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .mini-player {
+    width: 120px;
+    height: 30px;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: #000;
+    border: 1px solid #272727;
+  }
+
+  .mini-play-btn {
+    background-color: #ef4444;
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: #dc2626;
+    }
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    color: #bdbdbd;
+    font-size: 2.2rem;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    transition: color 0.2s;
+
+    &:hover {
+      color: #ffffff;
+    }
+  }
+}
+
+// Hero Section
+.wolves-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 40px 0;
+  border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 48px;
+  }
+
+  .hero-text {
+    flex: 1;
+    text-align: center;
+
+    @media (min-width: 768px) {
+      text-align: left;
+    }
+  }
+
+  .hero-tag {
+    display: inline-block;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+  }
+
+  .hero-title {
+    font-size: 3.6rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+
+    @media (min-width: 768px) {
+      font-size: 5.4rem;
+    }
+
+    .accent {
+      color: #ef4444;
+    }
+  }
+
+  .hero-description {
+    font-size: 1.6rem;
+    line-height: 1.6;
+    color: #bdbdbd;
+    margin-bottom: 24px;
+    max-width: 600px;
+  }
+
+  .hero-footnote {
+    font-size: 1.2rem;
+    color: rgba(189, 189, 189, 0.6);
+    font-style: italic;
+  }
+
+  // Soundtrack Box inside Hero
+  .hero-soundtrack-card {
+    width: 100%;
+    background-color: #10151f;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-sizing: border-box;
+
+    @media (min-width: 768px) {
+      width: 320px;
+      flex-shrink: 0;
+    }
+  }
+
+  .soundtrack-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .soundtrack-thumbnail {
+    width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    flex-shrink: 0;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .soundtrack-meta {
+    min-width: 0;
+  }
+
+  .soundtrack-tag {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #ef4444;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .soundtrack-title {
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .soundtrack-desc {
+    font-size: 1.2rem;
+    line-height: 1.5;
+    color: #bdbdbd;
+  }
+
+  .soundtrack-player-wrapper {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background-color: #000;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #272727;
+    position: relative;
+  }
+
+  .play-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.3));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .play-btn {
+    background-color: #ef4444;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 10px 20px;
+    border-radius: 30px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+
+    &:hover {
+      background-color: #dc2626;
+      transform: scale(1.05);
+    }
+  }
+}
+
+// Comic Reader Section
+.section-title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .title-h2 {
+    font-size: 2.4rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  .title-p {
+    font-size: 1.4rem;
+    color: #bdbdbd;
+    margin: 4px 0 0;
+  }
+}
+
+.mode-selectors {
+  display: flex;
+  background-color: #10151f;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid #272727;
+  align-self: flex-start;
+
+  button {
+    background: none;
+    border: none;
+    color: #bdbdbd;
+    font-size: 1.2rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &.active {
+      background-color: #ef4444;
+      color: #ffffff;
+    }
+
+    &:hover:not(.active) {
+      color: #ffffff;
+    }
+  }
+}
+
+// Comic Page Viewer
+.comic-viewport {
+  position: relative;
   width: 100%;
-  height: 100%;
+  aspect-ratio: 4 / 5;
+  max-width: 640px;
+  margin: 0 auto;
+  background-color: #10151f;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+
+  .comic-content-area {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .comic-image-wrap {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  .comic-placeholder-wrap {
+    flex: 1;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: linear-gradient(135deg, #10151f 0%, #080a10 100%);
+    position: relative;
+
+    .dots-overlay {
+      position: absolute;
+      inset: 0;
+      opacity: 0.08;
+      background-image: radial-gradient(#ef4444 1px, transparent 1px);
+      background-size: 16px 16px;
+      pointer-events: none;
+    }
+
+    .placeholder-content {
+      position: relative;
+      z-index: 1;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .placeholder-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      border: 1px solid rgba(239, 68, 68, 0.5);
+      background-color: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ef4444;
+    }
+
+    .placeholder-tag {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #ef4444;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .placeholder-title {
+      font-size: 2rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: #ffffff;
+      margin: 0;
+    }
+
+    .placeholder-divider {
+      width: 80px;
+      height: 2px;
+      background: linear-gradient(to right, transparent, #ef4444, transparent);
+    }
+
+    .placeholder-desc {
+      font-size: 1.4rem;
+      line-height: 1.6;
+      color: #bdbdbd;
+      font-style: italic;
+      margin: 0;
+    }
+  }
+
+  .comic-caption-bar {
+    background-color: rgba(0, 0, 0, 0.9);
+    padding: 16px 24px;
+    border-top: 1px solid #272727;
+    text-align: center;
+    font-size: 1.3rem;
+    color: #ffffff;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  .nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 1px solid #272727;
+    color: #ffffff;
+    font-size: 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10;
+
+    &:hover {
+      background-color: #000;
+      color: #ef4444;
+      border-color: #ef4444;
+    }
+
+    &.prev {
+      left: 12px;
+    }
+    &.next {
+      right: 12px;
+    }
+  }
+}
+
+.reader-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 640px;
+  margin: 16px auto 0;
+  padding: 0 16px;
+
+  .ctrl-btn {
+    background-color: #10151f;
+    border: 1px solid #272727;
+    color: #bdbdbd;
+    font-size: 1.2rem;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover:not(:disabled) {
+      color: #ffffff;
+      border-color: #ef4444;
+    }
+
+    &:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+  }
+
+  .kbd-hint {
+    font-size: 1.1rem;
+    color: #616161;
+  }
+
+  .jump-select-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.2rem;
+    color: #bdbdbd;
+
+    select {
+      background-color: #10151f;
+      border: 1px solid #272727;
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 1.2rem;
+      cursor: pointer;
+
+      &:focus {
+        outline: none;
+        border-color: #ef4444;
+      }
+    }
+  }
+}
+
+// Continuous Scroll Layout
+.scroll-comic-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+
+  .scroll-page-card {
+    background-color: #10151f;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+// Bazzite Quotes Section
+.quotes-grid {
+  display: grid;
+  grid-template-cols: 1fr;
+  gap: 24px;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.quote-card {
+  background-color: #10151f;
+  border: 1px solid #272727;
+  padding: 24px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+  position: relative;
+  transition:
+    border-color 0.3s,
+    box-shadow 0.3s;
+
+  &:hover {
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  }
+
+  .quote-symbol {
+    position: absolute;
+    top: 16px;
+    right: 24px;
+    color: #272727;
+    font-size: 6rem;
+    font-family: serif;
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  &:hover .quote-symbol {
+    color: rgba(239, 68, 68, 0.1);
+  }
+
+  .quote-text {
+    font-size: 1.5rem;
+    line-height: 1.6;
+    color: #ffffff;
+    font-style: italic;
+    font-weight: 500;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .quote-meta {
+    border-top: 1px solid rgba(39, 39, 39, 0.6);
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .meta-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .meta-date {
+    color: #616161;
+    font-weight: 500;
+  }
+
+  .meta-context {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #ef4444;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+.quotes-footnote {
+  font-size: 1.1rem;
+  color: rgba(189, 189, 189, 0.4);
+  text-align: center;
+  font-style: italic;
+  margin-top: 8px;
+}
+
+// Support / QR Section
+.support-wrap {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qr-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 640px;
+  margin: 24px auto 0;
+  width: 100%;
+
+  @media (min-width: 600px) {
+    flex-direction: row;
+  }
+}
+
+.qr-card {
+  flex: 1;
+  background-color: #10151f;
+  border: 1px solid #272727;
+  padding: 24px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+
+  .qr-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #ffffff;
+    margin: 0;
+  }
+
+  .qr-image-box {
+    width: 192px;
+    height: 192px;
+    background-color: #0c1016;
+    border: 1px solid #272727;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s;
+
+    &:hover {
+      transform: scale(1.05);
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  .qr-action-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    align-items: center;
+  }
+
+  .qr-btn {
+    display: inline-block;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 8px 24px;
+    border-radius: 20px;
+    text-decoration: none;
+    transition: background-color 0.2s;
+
+    &.red {
+      background-color: #ef4444;
+      &:hover {
+        background-color: #dc2626;
+      }
+    }
+
+    &.dark {
+      background-color: #272727;
+      &:hover {
+        background-color: #1e1e1e;
+      }
+    }
+  }
+
+  .qr-domain {
+    font-size: 1.1rem;
+    color: #616161;
+  }
 }
 </style>
