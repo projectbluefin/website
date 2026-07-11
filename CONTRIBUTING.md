@@ -55,7 +55,17 @@ locale JSON are reflected instantly without a full page reload.
 | `npm run lint` | Check for linting / formatting issues |
 | `npm run lint:fix` | Auto-fix linting and formatting issues |
 | `npm run typecheck` | TypeScript type check (via `vue-tsc`) |
+| `npm run test:run` | Run the Vitest suite |
 | `just build` / `npm run build` | Build for production (not needed for PRs) |
+
+### Visual regression
+
+The navbar is validated against docs.projectbluefin.io with a standalone Playwright script:
+
+```bash
+npm run dev      # start the dev server first
+node tests/navbar-visual.mjs
+```
 
 ---
 
@@ -88,8 +98,7 @@ website/
 ├── scripts/              # Build helper scripts
 ├── tests/                # Playwright end-to-end tests
 ├── vite.config.ts        # Vite config — defines multi-page inputs
-├── eslint.config.js      # ESLint config (@antfu/eslint-config)
-└── tailwind.config.js    # Tailwind CSS config
+└── eslint.config.js      # ESLint config (@antfu/eslint-config)
 ```
 
 The site uses Vite's

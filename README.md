@@ -6,9 +6,10 @@ The marketing website for [Project Bluefin](https://projectbluefin.io) — a col
 
 | Directory | Live at | Purpose |
 |-----------|---------|---------|
-| `bluespeed/` | [projectbluefin.io](https://projectbluefin.io) | Main Bluefin landing page |
+| root (`index.html`) | [projectbluefin.io](https://projectbluefin.io) | Main Bluefin landing page |
 | `dakota/` | [projectbluefin.io/dakota](https://projectbluefin.io/dakota) | Dakota variant landing page |
 | `knuckle/` | [projectbluefin.io/knuckle](https://projectbluefin.io/knuckle) | Knuckle bare-metal installer page |
+| `bluespeed/` | unlisted / `noindex` | Bluespeed sub-app; hidden from nav and search engines |
 
 For user-facing documentation, see [docs.projectbluefin.io](https://docs.projectbluefin.io).
 
@@ -16,7 +17,7 @@ For user-facing documentation, see [docs.projectbluefin.io](https://docs.project
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) v18 or higher
+- [Node.js](https://nodejs.org/) 24 or higher (current LTS)
 - [npm](https://www.npmjs.com/)
 - Optional: [just](https://github.com/casey/just) (`brew install just` or `cargo install just`)
 
