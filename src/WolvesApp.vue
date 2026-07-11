@@ -415,9 +415,6 @@ onBeforeUnmount(() => {
       <!-- SECTION 1: HERO SECTION -->
       <header class="wolves-hero">
         <div class="hero-text">
-          <div class="hero-tag">
-            Upcoming Release Teaser
-          </div>
           <!-- Aggressive display typography with heavy scale -->
           <h1 class="hero-title">
             Seven Days to the <span class="accent">Wolves</span>
@@ -429,244 +426,253 @@ onBeforeUnmount(() => {
             Comic book release slated for late 2026. Review placeholder governance comic below.
           </div>
         </div>
+      </header>
 
-        <!-- Hero Soundtrack Widget Box -->
-        <div class="hero-soundtrack-card">
-          <div class="soundtrack-header">
-            <div class="soundtrack-thumbnail">
-              <img :src="coverArtUrl" :alt="playlistTitle">
+      <!-- Two-column desktop layout: Comic Reader on the left, a pinned
+           Soundtrack Widget + Bazzite Dispatch sidebar on the right. Falls
+           back to a single vertical stack below 1024px. -->
+      <div class="content-grid">
+        <div class="col-left">
+          <!-- SECTION 2: COMIC READER -->
+          <section id="comic-reader" class="comic-reader-section">
+            <div class="section-title-wrap">
+              <div>
+                <h2 class="title-h2">
+                  Comic Reader
+                </h2>
+                <p class="title-p">
+                  Read "Color with Bluefin" right in your browser, rendered live from the source PDF.
+                </p>
+              </div>
+
+              <!-- Mode Selector Toggles -->
+              <div class="mode-selectors">
+                <button
+                  :class="{ active: readingMode === 'flip' }"
+                  @click="readingMode = 'flip'"
+                >
+                  Page By Page
+                </button>
+                <button
+                  :class="{ active: readingMode === 'scroll' }"
+                  @click="readingMode = 'scroll'"
+                >
+                  Continuous Scroll
+                </button>
+              </div>
             </div>
-            <div class="soundtrack-meta">
-              <span class="soundtrack-tag">Soundtrack Invite</span>
-              <span class="soundtrack-title">{{ playlistTitle }}</span>
+
+            <!-- Comic Reader Layout: Page by Page (Slideshow) -->
+            <div v-if="readingMode === 'flip'" class="page-flip-comic-layout">
+              <div ref="flipViewport" class="comic-viewport">
+                <!-- Page Contents -->
+                <div class="comic-content-area">
+                  <div v-if="pdfLoading" class="comic-status-wrap">
+                    <div class="spinner" />
+                    <p>Loading comic pages&hellip;</p>
+                  </div>
+                  <div v-else-if="pdfError" class="comic-status-wrap is-error">
+                    <p>{{ pdfError }}</p>
+                    <button class="ctrl-btn" @click="loadComicPdf">
+                      Retry
+                    </button>
+                  </div>
+                  <canvas
+                    v-show="!pdfLoading && !pdfError"
+                    ref="flipCanvas"
+                    class="pdf-page-canvas"
+                    role="img"
+                    :aria-label="`Comic page ${currentPageIndex + 1} of ${totalPages}`"
+                  />
+                </div>
+
+                <!-- Left Navigation Button -->
+                <button
+                  v-show="!pdfLoading && !pdfError && currentPageIndex > 0"
+                  class="nav-btn prev"
+                  aria-label="Previous Page"
+                  @click="prevPage"
+                >
+                  &larr;
+                </button>
+
+                <!-- Right Navigation Button -->
+                <button
+                  v-show="!pdfLoading && !pdfError && currentPageIndex < totalPages - 1"
+                  class="nav-btn next"
+                  aria-label="Next Page"
+                  @click="nextPage"
+                >
+                  &rarr;
+                </button>
+              </div>
+
+              <!-- Bottom Control Bar (Navigation Controls) -->
+              <div class="reader-controls">
+                <button
+                  class="ctrl-btn"
+                  :disabled="pdfLoading || !!pdfError || currentPageIndex === 0"
+                  @click="prevPage"
+                >
+                  &larr; Previous
+                </button>
+
+                <!-- Keyboard helper -->
+                <div class="kbd-hint">
+                  Use &larr; &rarr; arrow keys to turn pages &middot; Page {{ currentPageIndex + 1 }} of {{ totalPages || '—' }}
+                </div>
+
+                <div class="jump-select-wrap">
+                  <span>Jump to:</span>
+                  <select
+                    :value="currentPageIndex"
+                    :disabled="pdfLoading || !!pdfError || !totalPages"
+                    @change="jumpToPage(Number(($event.target as HTMLSelectElement).value))"
+                  >
+                    <option v-for="n in totalPages" :key="n" :value="n - 1">
+                      Page {{ n }}
+                    </option>
+                  </select>
+                </div>
+
+                <button
+                  class="ctrl-btn"
+                  :disabled="pdfLoading || !!pdfError || currentPageIndex === totalPages - 1"
+                  @click="nextPage"
+                >
+                  Next &rarr;
+                </button>
+              </div>
+            </div>
+
+            <!-- Comic Reader Layout: Continuous Stacked Vertical Scroll -->
+            <div v-else ref="scrollContainer" class="scroll-comic-layout">
+              <template v-if="pdfLoading">
+                <div class="comic-status-wrap">
+                  <div class="spinner" />
+                  <p>Loading comic pages&hellip;</p>
+                </div>
+              </template>
+              <template v-else-if="pdfError">
+                <div class="comic-status-wrap is-error">
+                  <p>{{ pdfError }}</p>
+                  <button class="ctrl-btn" @click="loadComicPdf">
+                    Retry
+                  </button>
+                </div>
+              </template>
+              <template v-else>
+                <div
+                  v-for="n in totalPages"
+                  :key="n"
+                  class="scroll-page-card"
+                >
+                  <div class="comic-viewport">
+                    <div class="comic-content-area">
+                      <canvas
+                        :ref="(el) => setScrollCanvasRef(el as Element | null, n - 1)"
+                        class="pdf-page-canvas"
+                        role="img"
+                        :aria-label="`Page ${n} of ${totalPages}`"
+                      />
+                    </div>
+                  </div>
+                  <div class="comic-caption-bar">
+                    Page {{ n }} of {{ totalPages }}
+                  </div>
+                </div>
+              </template>
+            </div>
+          </section>
+        </div>
+
+        <div class="col-right">
+          <!-- Pinned Soundtrack Widget -->
+          <div class="hero-soundtrack-card">
+            <div class="soundtrack-header">
+              <div class="soundtrack-thumbnail">
+                <img :src="coverArtUrl" :alt="playlistTitle">
+              </div>
+              <div class="soundtrack-meta">
+                <span class="soundtrack-tag">Soundtrack Invite</span>
+                <span class="soundtrack-title">{{ playlistTitle }}</span>
+              </div>
+            </div>
+            <p class="soundtrack-desc">
+              {{ playlistDescription }}. Activate playback to lock in the metal atmosphere while scrolling the story panels.
+            </p>
+            <div class="soundtrack-player-wrapper">
+              <div v-if="isPlaying" class="playing-state-overlay">
+                <div class="visualizer-content">
+                  <span class="visualizer-icon">🎵</span>
+                  <span class="visualizer-text">Soundtrack Active</span>
+                  <p class="visualizer-sub">
+                    Enjoy the heavy metal companion soundtrack! You can pause or dismiss it using the floating player in the bottom-right corner.
+                  </p>
+                </div>
+              </div>
+              <div v-else class="play-overlay">
+                <button
+                  class="play-btn"
+                  @click="startSoundtrack"
+                >
+                  ▶ Start Soundtrack
+                </button>
+              </div>
             </div>
           </div>
-          <p class="soundtrack-desc">
-            {{ playlistDescription }}. Activate playback to lock in the metal atmosphere while scrolling the story panels.
-          </p>
-          <div class="soundtrack-player-wrapper">
-            <div v-if="isPlaying" class="playing-state-overlay">
-              <div class="visualizer-content">
-                <span class="visualizer-icon">🎵</span>
-                <span class="visualizer-text">Soundtrack Active</span>
-                <p class="visualizer-sub">
-                  Enjoy the heavy metal companion soundtrack! You can pause or dismiss it using the floating player in the bottom-right corner.
+
+          <!-- SECTION 3: BAZZITE DISCORD QUOTES -->
+          <section id="bazzite-quotes" class="comic-reader-section">
+            <div class="section-title-wrap">
+              <div>
+                <h2 class="title-h2">
+                  Bazzite Dispatch
+                </h2>
+                <p class="title-p">
+                  Direct dispatches from Bazzite gaming operatives via the Project Bluefin Discord.
                 </p>
               </div>
             </div>
-            <div v-else class="play-overlay">
-              <button
-                class="play-btn"
-                @click="startSoundtrack"
-              >
-                ▶ Start Soundtrack
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
 
-      <!-- SECTION 2: COMIC READER -->
-      <section id="comic-reader" class="comic-reader-section">
-        <div class="section-title-wrap">
-          <div>
-            <h2 class="title-h2">
-              Comic Reader
-            </h2>
-            <p class="title-p">
-              Read "Color with Bluefin" right in your browser, rendered live from the source PDF.
-            </p>
-          </div>
+            <div class="quotes-single-wrap">
+              <Transition name="quote-fade">
+                <div
+                  :key="currentQuoteIndex"
+                  class="quote-card"
+                >
+                  <!-- Decorative quote icon -->
+                  <div class="quote-symbol">
+                    &ldquo;
+                  </div>
 
-          <!-- Mode Selector Toggles -->
-          <div class="mode-selectors">
-            <button
-              :class="{ active: readingMode === 'flip' }"
-              @click="readingMode = 'flip'"
-            >
-              Page By Page
-            </button>
-            <button
-              :class="{ active: readingMode === 'scroll' }"
-              @click="readingMode = 'scroll'"
-            >
-              Continuous Scroll
-            </button>
-          </div>
-        </div>
+                  <!-- Quote Text -->
+                  <p class="quote-text">
+                    "{{ bazziteQuotes[currentQuoteIndex].quote }}"
+                  </p>
 
-        <!-- Comic Reader Layout: Page by Page (Slideshow) -->
-        <div v-if="readingMode === 'flip'" class="page-flip-comic-layout">
-          <div ref="flipViewport" class="comic-viewport">
-            <!-- Page Contents -->
-            <div class="comic-content-area">
-              <div v-if="pdfLoading" class="comic-status-wrap">
-                <div class="spinner" />
-                <p>Loading comic pages&hellip;</p>
-              </div>
-              <div v-else-if="pdfError" class="comic-status-wrap is-error">
-                <p>{{ pdfError }}</p>
-                <button class="ctrl-btn" @click="loadComicPdf">
-                  Retry
-                </button>
-              </div>
-              <canvas
-                v-show="!pdfLoading && !pdfError"
-                ref="flipCanvas"
-                class="pdf-page-canvas"
-                role="img"
-                :aria-label="`Comic page ${currentPageIndex + 1} of ${totalPages}`"
-              />
-            </div>
-
-            <!-- Left Navigation Button -->
-            <button
-              v-show="!pdfLoading && !pdfError && currentPageIndex > 0"
-              class="nav-btn prev"
-              aria-label="Previous Page"
-              @click="prevPage"
-            >
-              &larr;
-            </button>
-
-            <!-- Right Navigation Button -->
-            <button
-              v-show="!pdfLoading && !pdfError && currentPageIndex < totalPages - 1"
-              class="nav-btn next"
-              aria-label="Next Page"
-              @click="nextPage"
-            >
-              &rarr;
-            </button>
-          </div>
-
-          <!-- Bottom Control Bar (Navigation Controls) -->
-          <div class="reader-controls">
-            <button
-              class="ctrl-btn"
-              :disabled="pdfLoading || !!pdfError || currentPageIndex === 0"
-              @click="prevPage"
-            >
-              &larr; Previous
-            </button>
-
-            <!-- Keyboard helper -->
-            <div class="kbd-hint">
-              Use &larr; &rarr; arrow keys to turn pages &middot; Page {{ currentPageIndex + 1 }} of {{ totalPages || '—' }}
-            </div>
-
-            <div class="jump-select-wrap">
-              <span>Jump to:</span>
-              <select
-                :value="currentPageIndex"
-                :disabled="pdfLoading || !!pdfError || !totalPages"
-                @change="jumpToPage(Number(($event.target as HTMLSelectElement).value))"
-              >
-                <option v-for="n in totalPages" :key="n" :value="n - 1">
-                  Page {{ n }}
-                </option>
-              </select>
-            </div>
-
-            <button
-              class="ctrl-btn"
-              :disabled="pdfLoading || !!pdfError || currentPageIndex === totalPages - 1"
-              @click="nextPage"
-            >
-              Next &rarr;
-            </button>
-          </div>
-        </div>
-
-        <!-- Comic Reader Layout: Continuous Stacked Vertical Scroll -->
-        <div v-else ref="scrollContainer" class="scroll-comic-layout">
-          <template v-if="pdfLoading">
-            <div class="comic-status-wrap">
-              <div class="spinner" />
-              <p>Loading comic pages&hellip;</p>
-            </div>
-          </template>
-          <template v-else-if="pdfError">
-            <div class="comic-status-wrap is-error">
-              <p>{{ pdfError }}</p>
-              <button class="ctrl-btn" @click="loadComicPdf">
-                Retry
-              </button>
-            </div>
-          </template>
-          <template v-else>
-            <div
-              v-for="n in totalPages"
-              :key="n"
-              class="scroll-page-card"
-            >
-              <div class="comic-viewport">
-                <div class="comic-content-area">
-                  <canvas
-                    :ref="(el) => setScrollCanvasRef(el as Element | null, n - 1)"
-                    class="pdf-page-canvas"
-                    role="img"
-                    :aria-label="`Page ${n} of ${totalPages}`"
-                  />
+                  <!-- Citation Metadata -->
+                  <div class="quote-meta">
+                    <div class="meta-top">
+                      <span>John Bazzite</span>
+                    </div>
+                    <div class="meta-context">
+                      Bluefin Discord Teaser Dispatch
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div class="comic-caption-bar">
-                Page {{ n }} of {{ totalPages }}
-              </div>
+              </Transition>
             </div>
-          </template>
-        </div>
-      </section>
 
-      <!-- SECTION 3: BAZZITE DISCORD QUOTES -->
-      <section id="bazzite-quotes" class="comic-reader-section">
-        <div class="section-title-wrap">
-          <div>
-            <h2 class="title-h2">
-              Bazzite Dispatch
-            </h2>
-            <p class="title-p">
-              Direct dispatches from Bazzite gaming operatives via the Project Bluefin Discord.
-            </p>
-          </div>
-        </div>
-
-        <div class="quotes-single-wrap">
-          <Transition name="quote-fade">
-            <div
-              :key="currentQuoteIndex"
-              class="quote-card"
-            >
-              <!-- Decorative quote icon -->
-              <div class="quote-symbol">
-                &ldquo;
-              </div>
-
-              <!-- Quote Text -->
-              <p class="quote-text">
-                "{{ bazziteQuotes[currentQuoteIndex].quote }}"
-              </p>
-
-              <!-- Citation Metadata -->
-              <div class="quote-meta">
-                <div class="meta-top">
-                  <span>John Bazzite</span>
-                </div>
-                <div class="meta-context">
-                  Bluefin Discord Teaser Dispatch
-                </div>
-              </div>
+            <!-- Discord hook commentary -->
+            <div class="quotes-footnote">
+              Quotes sourced from verified Discord testimonials. Additional quotes can be added in src/data/bazzite-quotes.json.
             </div>
-          </Transition>
+          </section>
         </div>
+      </div>
 
-        <!-- Discord hook commentary -->
-        <div class="quotes-footnote">
-          Quotes sourced from verified Discord testimonials. Additional quotes can be added in src/data/bazzite-quotes.json.
-        </div>
-      </section>
-
-      <!-- SECTION 4: QR CODES SECTION -->
+      <!-- SECTION 4: QR CODES SECTION (full-width, below the two-column grid) -->
       <section id="wolves-support" class="comic-reader-section">
         <div class="support-wrap">
           <h2 class="title-h2">
@@ -728,9 +734,11 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .wolves-teaser-page {
   background-image: url('/evening/10-bluefin-night.webp');
-  background-size: cover;
-  background-position: center top;
-  background-repeat: no-repeat;
+  // Full-width crisp tiling (image is 6300x2700) instead of `cover`, which
+  // would blur/stretch it to fill the viewport.
+  background-size: 100% auto;
+  background-position: top center;
+  background-repeat: repeat-y;
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
@@ -752,12 +760,57 @@ onBeforeUnmount(() => {
 .wolves-layout {
   position: relative;
   z-index: 1;
-  max-width: 1012px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 80px 24px 100px;
   display: flex;
   flex-direction: column;
   gap: 60px;
+}
+
+// Two-column desktop grid: Comic Reader (left) + pinned Soundtrack Widget /
+// Bazzite Dispatch sidebar (right). Falls back to a vertical stack below
+// 1024px.
+.content-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+  width: 100%;
+
+  @media (min-width: 1024px) {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+    align-items: start;
+    gap: 40px;
+  }
+}
+
+.col-left {
+  min-width: 0;
+
+  // Left-align the comic reader within its column instead of the
+  // page-wide auto-centering used when the reader is the sole column.
+  .comic-viewport,
+  .scroll-comic-layout,
+  .reader-controls {
+    margin-left: 0;
+    margin-right: 0;
+    max-width: 100%;
+  }
+}
+
+.col-right {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+
+  @media (min-width: 1024px) {
+    position: sticky;
+    // Sit below the persistent floating soundtrack bar's own space so it
+    // never overlaps the fixed navbar.
+    top: 24px;
+  }
 }
 
 // Persistent Floating Soundtrack Widget
@@ -1013,33 +1066,12 @@ onBeforeUnmount(() => {
   padding: 40px 0;
   border-bottom: 1px solid rgba(var(--color-blue-rgb), 0.2);
 
-  @media (min-width: 768px) {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 48px;
-  }
-
   .hero-text {
-    flex: 1;
     text-align: center;
 
     @media (min-width: 768px) {
       text-align: left;
     }
-  }
-
-  .hero-tag {
-    display: inline-block;
-    border: 1px solid var(--color-blue-light);
-    color: var(--color-blue-light);
-    font-size: 1.1rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    padding: 4px 14px;
-    border-radius: 20px;
-    margin-bottom: 16px;
   }
 
   .hero-title {
@@ -1072,177 +1104,172 @@ onBeforeUnmount(() => {
     color: rgba(189, 189, 189, 0.6);
     font-style: italic;
   }
+}
 
-  // Soundtrack Box inside Hero
-  .hero-soundtrack-card {
+// Soundtrack Widget (pinned at the top of the right-hand sidebar)
+.hero-soundtrack-card {
+  width: 100%;
+  background-color: #10151f;
+  border: 1px solid rgba(var(--color-blue-rgb), 0.4);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+.soundtrack-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.soundtrack-thumbnail {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(var(--color-blue-rgb), 0.3);
+  flex-shrink: 0;
+
+  img {
     width: 100%;
-    background-color: #10151f;
-    border: 1px solid rgba(var(--color-blue-rgb), 0.4);
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    box-sizing: border-box;
-
-    @media (min-width: 768px) {
-      width: 320px;
-      flex-shrink: 0;
-    }
+    height: 100%;
+    object-fit: cover;
   }
+}
 
-  .soundtrack-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.soundtrack-meta {
+  min-width: 0;
+}
+
+.soundtrack-tag {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--color-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.soundtrack-title {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.soundtrack-desc {
+  font-size: 1.2rem;
+  line-height: 1.5;
+  color: #bdbdbd;
+}
+
+.soundtrack-player-wrapper {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #272727;
+  position: relative;
+}
+
+.playing-state-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #10151f 0%, #0c1016 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  text-align: center;
+}
+
+.visualizer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.visualizer-icon {
+  font-size: 2.4rem;
+  animation: bounce 1.5s infinite;
+}
+
+.visualizer-text {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.visualizer-sub {
+  font-size: 1.1rem;
+  color: #bdbdbd;
+  margin: 0;
+  max-width: 240px;
+}
+
+.play-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.play-btn {
+  background-color: var(--color-blue);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px 20px;
+  border-radius: 30px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(var(--color-blue-rgb), 0.4);
+
+  &:hover {
+    background-color: var(--color-blue-light);
+    transform: scale(1.05);
   }
+}
 
-  .soundtrack-thumbnail {
-    width: 48px;
-    height: 48px;
-    border-radius: 4px;
-    overflow: hidden;
-    border: 1px solid rgba(var(--color-blue-rgb), 0.3);
-    flex-shrink: 0;
-
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
   }
-
-  .soundtrack-meta {
-    min-width: 0;
+  50% {
+    transform: translateY(-6px);
   }
+}
 
-  .soundtrack-tag {
-    display: block;
-    font-size: 0.8rem;
-    font-weight: 800;
-    color: var(--color-blue);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
   }
-
-  .soundtrack-title {
-    display: block;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin-top: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
   }
-
-  .soundtrack-desc {
-    font-size: 1.2rem;
-    line-height: 1.5;
-    color: #bdbdbd;
-  }
-
-  .soundtrack-player-wrapper {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    background-color: #000;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid #272727;
-    position: relative;
-  }
-
-  .playing-state-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, #10151f 0%, #0c1016 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    text-align: center;
-  }
-
-  .visualizer-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .visualizer-icon {
-    font-size: 2.4rem;
-    animation: bounce 1.5s infinite;
-  }
-
-  .visualizer-text {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--color-blue);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .visualizer-sub {
-    font-size: 1.1rem;
-    color: #bdbdbd;
-    margin: 0;
-    max-width: 240px;
-  }
-
-  .play-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.3));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .play-btn {
-    background-color: var(--color-blue);
-    color: #ffffff;
-    font-weight: 700;
-    font-size: 1.2rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 10px 20px;
-    border-radius: 30px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 15px rgba(var(--color-blue-rgb), 0.4);
-
-    &:hover {
-      background-color: var(--color-blue-light);
-      transform: scale(1.05);
-    }
-  }
-
-  @keyframes bounce {
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-6px);
-    }
-  }
-
-  @keyframes pulse {
-    0% {
-      transform: scale(1);
-      opacity: 0.8;
-    }
-    50% {
-      transform: scale(1.1);
-      opacity: 1;
-    }
-    100% {
-      transform: scale(1);
-      opacity: 0.8;
-    }
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
   }
 }
 
