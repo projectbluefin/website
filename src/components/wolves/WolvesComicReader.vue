@@ -173,8 +173,19 @@ const activeFlickrIndex = computed(() => {
   }
 
   // Precomputed interval in seconds per slide (avoiding double-floor snapping)
-  const interval = currentTrack.value.slideInterval
+  let interval = currentTrack.value.slideInterval
     || (currentTrack.value.bpm ? (currentTrack.value.phraseBeats || 32) * 60 / currentTrack.value.bpm : 19.2)
+
+  // Enforce minimal and maximum bounds while keeping changes beat-aligned
+  const minTime = 5.0
+  const maxTime = 12.0
+
+  while (interval > maxTime) {
+    interval /= 2
+  }
+  while (interval < minTime) {
+    interval *= 2
+  }
 
   if (props.playlistCurrentTime === undefined) {
     return 0

@@ -129,11 +129,11 @@ describe('wolvesComicReader', () => {
 
     const len = (wrapper.vm as any).mixedPhotos.length
     expect((wrapper.vm as any).currentBeat).toBe(24)
-    expect((wrapper.vm as any).activeFlickrIndex).toBe(3 % len)
+    expect((wrapper.vm as any).activeFlickrIndex).toBe(1 % len)
 
     await wrapper.setProps({ playlistCurrentTime: 18 })
     expect((wrapper.vm as any).currentBeat).toBe(36)
-    expect((wrapper.vm as any).activeFlickrIndex).toBe(4 % len)
+    expect((wrapper.vm as any).activeFlickrIndex).toBe(2 % len)
   })
 
   it('hides manual navigation buttons in Live Gallery Mode (trackIndex > 0)', async () => {
@@ -195,7 +195,7 @@ describe('wolvesComicReader', () => {
     await wrapper.setProps({ playlistCurrentTime: 18 })
     await wrapper.vm.$nextTick()
 
-    expect((wrapper.vm as any).activePhotoIndex).toBe((4 % len))
+    expect((wrapper.vm as any).activePhotoIndex).toBe((2 % len))
     expect((wrapper.vm as any).previousPhotoIndex).toBe(0 % len)
     expect((wrapper.vm as any).isPhotoTransitioning).toBe(true)
 
