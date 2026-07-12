@@ -70,6 +70,16 @@ const wallpapers = [
   { type: 'single', name: 'aurora-jonatan-pie-aurora.webp', title: 'Jonatan Pie' }
 ]
 
+// Programmatically append randomized Maintainer Summit Europe 2026 slides
+for (let i = 1; i <= 40; i++) {
+  const numStr = String(i).padStart(2, '0')
+  wallpapers.push({
+    type: 'single',
+    name: `summit-${numStr}.webp`,
+    title: `Maintainer Summit Europe 2026 - Scene ${numStr}`
+  })
+}
+
 const duskIsNight = ref(false)
 let duskTimer: ReturnType<typeof setInterval> | null = null
 
