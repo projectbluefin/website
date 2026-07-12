@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "vite",
-    "build": "vue-tsc && vite build",
+    "dev": "node scripts/generate-wallpapers.js && vite",
+    "build": "node scripts/generate-wallpapers.js && vue-tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
