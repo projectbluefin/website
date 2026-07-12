@@ -43,7 +43,7 @@ import { bazziteQuotes } from './lore'
         </li>
       </ol>
 
-      <WolvesQrCodes />
+      <WolvesQrCodes data-testid="wolves-qr-codes" />
     </div>
   </section>
 </template>

@@ -32,7 +32,9 @@ describe('wolvesLoreColumn', () => {
 
     const wrapper = mount(WolvesLoreColumn)
     expect(wrapper.get('ol').attributes('aria-label')).toBe('Recovered transmissions')
-    expect(wrapper.findAll('article')).toHaveLength(5)
+    expect(wrapper.findAll('.lore-entry')).toHaveLength(5)
+    expect(wrapper.findAll('.qr-grid')).toHaveLength(1)
+    expect(wrapper.get('[data-testid="wolves-qr-codes"]').attributes('data-testid')).toBe('wolves-qr-codes')
     expect(wrapper.text()).toContain(quotes[0].quote)
     expect(quotes.every(entry => wrapper.text().includes(entry.attribution))).toBe(true)
   })

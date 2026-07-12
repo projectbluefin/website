@@ -82,6 +82,6 @@ describe('content exports', () => {
 
     expect(html).toContain('<title>Bluefin: Seven Days to the Wolves</title>')
     expect(html).toContain('property="og:url" content="https://projectbluefin.io/wolves/"')
-    expect(html).toContain('src="/src/wolves-main.ts"')
+    expect(html).toContain('src="%BASE_URL%src/wolves-main.ts"')
   })
 })

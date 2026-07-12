@@ -23,13 +23,9 @@ vi.mock('../components/wolves/WolvesComicReader.vue', () => ({
         default: () => [],
       },
     },
-    emits: ['update:page'],
-    setup(_, { attrs, emit }) {
+    setup(_, { attrs }) {
       comicReaderAttrsSpy({ ...attrs })
-      return () => h('button', {
-        class: 'comic-reader',
-        onClick: () => emit('update:page', 6),
-      }, 'WolvesComicReader')
+      return () => h('div', { class: 'comic-reader' }, 'WolvesComicReader')
     },
   }),
 }))
@@ -40,41 +36,37 @@ vi.mock('../components/wolves/WolvesSoundtrack.vue', () => ({
     inheritAttrs: false,
     setup(_, { attrs }) {
       soundtrackAttrsSpy({ ...attrs })
-      return () => h('div', 'WolvesSoundtrack')
+      return () => h('div', { ...attrs }, 'WolvesSoundtrack')
     },
   }),
 }))
 
 describe('wolvesApp.vue', () => {
-  it('does not couple comic or soundtrack playback through parent bindings', () => {
-    mount(WolvesApp)
-
-    expect(comicReaderAttrsSpy).toHaveBeenCalled()
-    expect(soundtrackAttrsSpy).toHaveBeenCalled()
-
-    expect(comicReaderAttrsSpy.mock.lastCall?.[0]).not.toHaveProperty('autoplay')
-    expect(soundtrackAttrsSpy.mock.lastCall?.[0]).not.toHaveProperty('playing')
-    expect(soundtrackAttrsSpy.mock.lastCall?.[0]).not.toHaveProperty('chapter')
-  })
-
-  it('renders title, static lore sidebar once, newsletter console, and discord mesh link', () => {
+  it('orders the mobile landmarks comic, soundtrack, lore, and QR codes', () => {
     const wrapper = mount(WolvesApp)
+    const ids = wrapper.findAll('[data-testid]').map(node => node.attributes('data-testid'))
 
+    expect(ids).toEqual([
+      'wolves-comic-column',
+      'wolves-soundtrack',
+      'wolves-lore-column',
+      'wolves-qr-codes',
+    ])
     expect(wrapper.text()).toContain('Seven Days to the Wolves')
-    expect(wrapper.text()).toContain('JOIN THE MESH (DISCORD)')
-    expect(wrapper.text()).toContain('DECRYPTION_STATUS')
     expect(wrapper.text()).toContain(bazziteQuotes[0].attribution)
     expect(wrapper.findAll('.qr-grid')).toHaveLength(1)
-    expect(wrapper.findAll('a[href="#"]')).toHaveLength(1)
+    expect(wrapper.text()).not.toContain('JOIN THE MESH (DISCORD)')
   })
 
-  it('handles email submission in the terminal console card', async () => {
+  it('does not couple comic page events to the soundtrack', () => {
     const wrapper = mount(WolvesApp)
+    const comicReader = wrapper.findComponent({ name: 'WolvesComicReaderStub' })
+    const soundtrack = wrapper.findComponent({ name: 'WolvesSoundtrackStub' })
 
-    const input = wrapper.find('.console-input')
-    await input.setValue('operative@projectbluefin.io')
-    await wrapper.find('.console-form').trigger('submit')
-
-    expect(wrapper.find('.console-feedback').text()).toContain('kubectl rollout status')
+    expect(comicReader.props()).not.toHaveProperty('autoplay')
+    expect(comicReaderAttrsSpy.mock.lastCall?.[0]).not.toHaveProperty('autoplay')
+    expect(soundtrack.props()).toEqual({})
+    expect(soundtrackAttrsSpy.mock.lastCall?.[0]).not.toHaveProperty('playing')
+    expect(soundtrackAttrsSpy.mock.lastCall?.[0]).not.toHaveProperty('chapter')
   })
 })
