@@ -145,7 +145,20 @@ async function renderPageOnCanvas(pageNumber: number, canvas: HTMLCanvasElement,
   }
   const pdfPage = await pdfDocument.getPage(pageNumber)
   const baseViewport = pdfPage.getViewport({ scale: 1 })
-  const scale = containerWidth / baseViewport.width
+
+  // Find container available height to prevent clipping tall pages inside a fixed aspect-ratio box
+  const host = canvas.parentElement as HTMLElement | null
+  const paddingY = host ? (Number.parseFloat(window.getComputedStyle(host).paddingTop) || 0) + (Number.parseFloat(window.getComputedStyle(host).paddingBottom) || 0) : 24
+  const containerHeight = host ? Math.max(0, host.clientHeight - paddingY) : 0
+
+  let scale = containerWidth / baseViewport.width
+  if (containerHeight > 0) {
+    const scaledHeight = baseViewport.height * scale
+    if (scaledHeight > containerHeight) {
+      scale = containerHeight / baseViewport.height
+    }
+  }
+
   const viewport = pdfPage.getViewport({ scale })
   const context = canvas.getContext('2d')
   if (!context) {
@@ -615,7 +628,7 @@ onBeforeUnmount(() => {
                 role="img"
                 :aria-label="`Page ${n} of ${totalPages}`"
               />
-              <div v-else class="wallpaper-viewport-wrapper scroll-layout-card">
+              <div v-else class="wallpaper-viewport-wrapper">
                 <div v-if="wallpapers[n - 2].type === 'single'" class="wallpaper-container">
                   <img
                     :src="`${baseUrl}img/wallpapers/${wallpapers[n - 2].name}`"
@@ -740,6 +753,7 @@ onBeforeUnmount(() => {
 .comic-viewport {
   position: relative;
   width: 100%;
+  aspect-ratio: 16 / 10;
   min-height: 220px;
   max-width: 760px;
   max-height: min(74dvh, 760px);
@@ -946,14 +960,6 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-
-  &.scroll-layout-card {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    max-height: 420px;
-    border-radius: 12px;
-  }
 }
 
 .wallpaper-display-card {
