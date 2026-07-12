@@ -387,6 +387,7 @@ function startAutoplayTimer() {
   if (autoplayTimer) {
     return
   }
+  const delay = page.value === 1 ? 1500 : autoplayInterval.value
   autoplayTimer = setInterval(() => {
     if (page.value < totalPages.value) {
       setPage(page.value + 1)
@@ -397,7 +398,7 @@ function startAutoplayTimer() {
       shuffledWallpapers.value = shuffleArray([...wallpapers])
       setPage(2)
     }
-  }, autoplayInterval.value)
+  }, delay)
 }
 
 watch(() => props.autoplay, (val) => {
