@@ -9,6 +9,7 @@ The marketing website for [Project Bluefin](https://projectbluefin.io) — a col
 | root (`index.html`) | [projectbluefin.io](https://projectbluefin.io) | Main Bluefin landing page |
 | `dakota/` | [projectbluefin.io/dakota](https://projectbluefin.io/dakota) | Dakota variant landing page |
 | `knuckle/` | [projectbluefin.io/knuckle](https://projectbluefin.io/knuckle) | Knuckle bare-metal installer page |
+| `wolves/` | [projectbluefin.io/wolves](https://projectbluefin.io/wolves) | Seven Days to the Wolves teaser page with the documented soundtrack playlist |
 | `bluespeed/` | unlisted / `noindex` | Bluespeed sub-app; hidden from nav and search engines |
 
 For user-facing documentation, see [docs.projectbluefin.io](https://docs.projectbluefin.io).
