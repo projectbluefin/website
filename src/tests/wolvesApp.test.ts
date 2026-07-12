@@ -10,7 +10,7 @@ vi.mock('../components/wolves/WolvesComicReader.vue', () => ({
   default: {
     props: ['chapters', 'autoplay'],
     emits: ['update:page'],
-    template: '<button class="comic-reader" @click="$emit(`update:page`, 6)">WolvesComicReader</button>',
+    template: '<button class="comic-reader" @click="$emit(`update:page`, 8)">WolvesComicReader</button>',
   },
 }))
 

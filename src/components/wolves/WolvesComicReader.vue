@@ -53,11 +53,16 @@ const wallpapers = [
   { type: 'daynight', name: 'bluefin-dusk', dayName: 'bluefin-dusk-day.webp', nightName: 'bluefin-dusk-night.webp', title: 'Dusk (Day & Night)' },
   { type: 'single', name: 'bluefin-lazy-days.webp', title: 'Lazy Days' },
   { type: 'single', name: 'bluefin-chicken.webp', title: 'Chicken' },
+  { type: 'single', name: 'bluefin-eyes.webp', title: 'Eyes' },
+  { type: 'daynight', name: 'bluefin-duality', dayName: 'bluefin-duality-day.webp', nightName: 'bluefin-duality-night.webp', title: 'Duality (Day & Night)' },
+  { type: 'daynight', name: 'bluefin-prey', dayName: 'bluefin-prey-day.webp', nightName: 'bluefin-prey-night.webp', title: 'Prey (Day & Night)' },
+  { type: 'daynight', name: 'bluefin-collapse', dayName: 'bluefin-collapse-day.webp', nightName: 'bluefin-collapse-night.webp', title: 'Collapse (Day & Night)' },
   { type: 'single', name: 'bluefin-xe_sunset.webp', title: 'Sunset' },
   { type: 'single', name: 'bluefin-xe_space_needle.webp', title: 'Space Needle' },
   { type: 'single', name: 'bluefin-xe_red_tulip.webp', title: 'Red Tulip' },
   { type: 'single', name: 'bluefin-xe_foothills.webp', title: 'Foothills' },
   { type: 'single', name: 'bluefin-xe_clouds.webp', title: 'Clouds' },
+  { type: 'daynight', name: 'bluefin-tenacious', dayName: 'bluefin-tenacious-day.webp', nightName: 'bluefin-tenacious-night.webp', title: 'Tenacious Pterosaur (Day & Night)' },
   { type: 'single', name: 'aurora-xe_sunset.webp', title: 'Aurora Sunset' },
   { type: 'single', name: 'aurora-xe_space_needle.webp', title: 'Aurora Space Needle' },
   { type: 'single', name: 'aurora-xe_foothills.webp', title: 'Aurora Foothills' },
@@ -200,7 +205,7 @@ async function loadComicPdf() {
   try {
     const lib = await loadPdfJs()
     pdfDocument = await lib.getDocument(pdfUrl).promise
-    totalPages.value = 15 // 1 Cover + 14 Wallpapers from projectbluefin/documentation/artwork
+    totalPages.value = wallpapers.length + 1 // 1 Cover + Wallpapers from projectbluefin/documentation/artwork
     pdfLoading.value = false
     await nextTick()
     setupFlipResizeObserver()
