@@ -1,19 +1,50 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
+import { defineComponent, h } from 'vue'
 import WolvesApp from '../WolvesApp.vue'
+
+const { comicReaderAttrsSpy, soundtrackAttrsSpy } = vi.hoisted(() => ({
+  comicReaderAttrsSpy: vi.fn(),
+  soundtrackAttrsSpy: vi.fn(),
+}))
 
 // Mock child components to isolate WolvesApp
 vi.mock('../components/TopNavbar.vue', () => ({
   default: { template: '<div>TopNavbar</div>' },
 }))
 vi.mock('../components/wolves/WolvesComicReader.vue', () => ({
-  default: { template: '<div>WolvesComicReader</div>' },
+  default: defineComponent({
+    name: 'WolvesComicReaderStub',
+    inheritAttrs: false,
+    setup(_, { attrs }) {
+      comicReaderAttrsSpy({ ...attrs })
+      return () => h('div', 'WolvesComicReader')
+    },
+  }),
 }))
 vi.mock('../components/wolves/WolvesSoundtrack.vue', () => ({
-  default: { template: '<div>WolvesSoundtrack</div>' },
+  default: defineComponent({
+    name: 'WolvesSoundtrackStub',
+    inheritAttrs: false,
+    setup(_, { attrs }) {
+      soundtrackAttrsSpy({ ...attrs })
+      return () => h('div', 'WolvesSoundtrack')
+    },
+  }),
 }))
 
 describe('wolvesApp.vue', () => {
+  it('does not couple comic or soundtrack playback through parent bindings', () => {
+    mount(WolvesApp)
+
+    expect(comicReaderAttrsSpy).toHaveBeenCalled()
+    expect(soundtrackAttrsSpy).toHaveBeenCalled()
+
+    expect(comicReaderAttrsSpy.mock.lastCall?.[0]).not.toHaveProperty('autoplay')
+    expect(soundtrackAttrsSpy.mock.lastCall?.[0]).not.toHaveProperty('playing')
+    expect(soundtrackAttrsSpy.mock.lastCall?.[0]).not.toHaveProperty('chapter')
+  })
+
   it('renders title, dispatch card, newsletter console, and discord mesh link', () => {
     const wrapper = mount(WolvesApp)
 

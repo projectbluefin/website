@@ -60,10 +60,7 @@ const loreEntries = shuffleLoreEntries([
   ...conversations.map(data => ({ type: 'conversation' as const, data })),
 ])
 
-// Soundtrack playback and comic autoplay state
-const isPlaying = ref(false)
-
-// Current page (1-based) tracked here so the chapter can be passed to WolvesSoundtrack.
+// Current page (1-based) tracked here so chapter-aware lore stays in sync with the reader.
 const currentPage = ref(1)
 const activeChapter = computed<WolvesChapter | undefined>(() => getChapterForPage(currentPage.value))
 
@@ -350,15 +347,11 @@ onBeforeUnmount(() => {
           <!-- SECTION 2: COMIC READER -->
           <WolvesComicReader
             :chapters="wolvesRelease.chapters"
-            :autoplay="isPlaying"
             @update:page="currentPage = $event"
           />
 
           <!-- Soundtrack Control Widget (Moved below slides, expanded) -->
-          <WolvesSoundtrack
-            v-model:playing="isPlaying"
-            :chapter="activeChapter"
-          />
+          <WolvesSoundtrack />
         </div>
 
         <div class="col-right">

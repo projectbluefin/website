@@ -3,11 +3,6 @@ import type { SoundtrackSource, SoundtrackTrack, WolvesSoundtrackManifest } from
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
 
-defineProps<{
-  chapter?: unknown
-  playing?: boolean
-}>()
-
 type PlayerStatus = 'idle' | 'loading' | 'ready' | 'playing' | 'paused' | 'error'
 
 interface YouTubePlayer {
