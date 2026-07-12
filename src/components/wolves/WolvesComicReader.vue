@@ -141,29 +141,48 @@ const mixedPhotos = computed(() => {
   const remainingShowcase = shuffledShowcase.slice(3)
 
   if (trackIdx === 1) {
-    // Track 1 (First Song): Bias showcase at start and fade into people
-    const scoredRemaining = [
-      ...remainingShowcase.map(p => ({ p, score: Math.random() * 0.4 })),
-      ...shuffledPeople.map(p => ({ p, score: 0.2 + Math.random() * 0.8 }))
-    ]
-    scoredRemaining.sort((a, b) => a.score - b.score)
+    // Track 1 (First Song of Slideshow): Bias showcase at start and fade smoothly into people/Flickr photos
+    const result: any[] = [...pinnedStart]
+    const remainingShowcaseCopy = [...remainingShowcase]
+    const shuffledPeopleCopy = [...shuffledPeople]
 
-    return [
-      ...pinnedStart,
-      ...scoredRemaining.map(x => x.p)
-    ]
+    const totalRemaining = remainingShowcaseCopy.length + shuffledPeopleCopy.length
+    for (let i = 0; i < totalRemaining; i++) {
+      // Linear fade-out of showcase probability from 0.8 to 0.0 over 40 slides
+      const showcaseProb = Math.max(0, 0.8 * (1 - i / 40))
+      if (remainingShowcaseCopy.length > 0 && (shuffledPeopleCopy.length === 0 || Math.random() < showcaseProb)) {
+        result.push(remainingShowcaseCopy.shift())
+      }
+      else if (shuffledPeopleCopy.length > 0) {
+        result.push(shuffledPeopleCopy.shift())
+      }
+      else {
+        result.push(remainingShowcaseCopy.shift())
+      }
+    }
+    return result
   }
   else {
-    // Other Tracks: Uniformly mix showcase, people, and Flickr photos for healthy diversity
-    const fullyMixedRemaining = shuffleArray([
-      ...remainingShowcase,
-      ...shuffledPeople
-    ])
+    // Other Tracks: Healthy, interesting mix of people, showcase, and others
+    // We interleave: 1 showcase for every 2 people/Flickr photos (33% showcase, 67% people/others)
+    // This ensures showcase is consistently visible while Flickr photos (the bulk of content) are heavily present
+    const result: any[] = [...pinnedStart]
+    const remainingShowcaseCopy = [...remainingShowcase]
+    const shuffledPeopleCopy = [...shuffledPeople]
 
-    return [
-      ...pinnedStart,
-      ...fullyMixedRemaining
-    ]
+    while (remainingShowcaseCopy.length > 0 || shuffledPeopleCopy.length > 0) {
+      // Add up to 2 people/Flickr photos
+      for (let k = 0; k < 2; k++) {
+        if (shuffledPeopleCopy.length > 0) {
+          result.push(shuffledPeopleCopy.shift())
+        }
+      }
+      // Add 1 showcase photo
+      if (remainingShowcaseCopy.length > 0) {
+        result.push(remainingShowcaseCopy.shift())
+      }
+    }
+    return result
   }
 })
 
@@ -1112,6 +1131,24 @@ onBeforeUnmount(() => {
 
   .caption-label {
     font-weight: bold;
+  }
+}
+
+@keyframes fadeInBuffer {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOutBuffer {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }
 </style>
