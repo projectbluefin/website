@@ -84,7 +84,27 @@ const wallpapers = [
   { type: 'single', name: 'kubecon-55164466574.webp', title: 'Maintainer Summit Breaks & Lunch - LM 018' },
   { type: 'single', name: 'kubecon-55164385253.webp', title: 'Maintainer Summit Breakouts - MN 048' },
   { type: 'single', name: 'kubecon-55164222611.webp', title: 'Maintainer Summit Breakouts - MN 041' },
-  { type: 'single', name: 'kubecon-55164464359.webp', title: 'Maintainer Summit Breakouts - LM 025' }
+  { type: 'single', name: 'kubecon-55164464359.webp', title: 'Maintainer Summit Breakouts - LM 025' },
+  { type: 'single', name: 'showcase-1.png', title: 'Community Showcase by ki' },
+  { type: 'single', name: 'showcase-2.png', title: 'Community Showcase by ki' },
+  { type: 'single', name: 'showcase-3.png', title: 'Community Showcase by ki' },
+  { type: 'single', name: 'showcase-4.png', title: 'Community Showcase by ki' },
+  { type: 'single', name: 'showcase-5.png', title: 'Community Showcase by Killishness' },
+  { type: 'single', name: 'showcase-6.png', title: 'Community Showcase by ki' },
+  { type: 'single', name: 'showcase-7.png', title: 'Community Showcase by ki' },
+  { type: 'single', name: 'showcase-8.png', title: 'Community Showcase by ki' },
+  { type: 'single', name: 'showcase-9.png', title: 'Community Showcase by AlgoCompSynth by znmeb' },
+  { type: 'single', name: 'showcase-10.png', title: 'Community Showcase by David' },
+  { type: 'single', name: 'showcase-11.png', title: 'Community Showcase by Corpacra' },
+  { type: 'single', name: 'showcase-12.jpg', title: 'Community Showcase by Falco404' },
+  { type: 'single', name: 'showcase-13.png', title: 'Community Showcase by Amy' },
+  { type: 'single', name: 'showcase-14.png', title: 'Community Showcase by Pires' },
+  { type: 'single', name: 'showcase-15.png', title: 'Community Showcase by Idris' },
+  { type: 'single', name: 'showcase-16.png', title: 'Community Showcase by G. Murdzheff' },
+  { type: 'single', name: 'showcase-17.png', title: 'Community Showcase by JumpyVi' },
+  { type: 'single', name: 'showcase-18.jpg', title: 'Community Showcase by Giklab' },
+  { type: 'single', name: 'showcase-19.png', title: 'Community Showcase by CTW' },
+  { type: 'single', name: 'showcase-20.png', title: 'Community Showcase by AlgoCompSynth by znmeb' }
 ]
 
 const duskIsNight = ref(false)
