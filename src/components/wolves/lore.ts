@@ -86,7 +86,7 @@ export function getChapterIdForLore(entry: WolvesLoreEntry): string {
 
 export function getLoreEntriesForChapter(chapter: WolvesChapter | undefined): WolvesLoreEntry[] {
   if (!chapter) {
-    return []
+    return loreEntries
   }
 
   return loreEntries.filter(entry => getChapterIdForLore(entry) === chapter.id)
