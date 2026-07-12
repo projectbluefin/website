@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 import * as content from '../content'
 
 const TEXT_EXPORTS = [
@@ -73,5 +75,13 @@ describe('content exports', () => {
         expect(item.projectUrl.startsWith('https://')).toBe(true)
       }
     }
+  })
+
+  it('publishes the Wolves campaign entrypoint', async () => {
+    const html = await readFile(resolve(process.cwd(), 'wolves/index.html'), 'utf8')
+
+    expect(html).toContain('<title>Bluefin: Seven Days to the Wolves</title>')
+    expect(html).toContain('property="og:url" content="https://projectbluefin.io/wolves/"')
+    expect(html).toContain('src="/src/wolves-main.ts"')
   })
 })
