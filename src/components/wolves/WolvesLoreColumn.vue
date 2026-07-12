@@ -51,10 +51,9 @@ function runTypewriter() {
     typedMessagesText.value = []
     const targetText = entry.data.quote
     let index = 0
-    const step = Math.max(1, Math.ceil(targetText.length / 100))
 
     typewriterTimer = setInterval(() => {
-      index += step
+      index++
       if (index >= targetText.length) {
         typedQuoteText.value = targetText
         clearTypewriter()
@@ -70,29 +69,32 @@ function runTypewriter() {
 
   typedQuoteText.value = ''
   typedMessagesText.value = entry.data.messages.map(() => '')
-  let frame = 0
+
+  // Track which message index we are currently typing. We type sequentially.
+  let currentMsgIndex = 0
+  let currentLength = 0
 
   typewriterTimer = setInterval(() => {
-    frame++
-    let allDone = true
-
-    for (let index = 0; index < entry.data.messages.length; index++) {
-      const targetText = entry.data.messages[index].text
-      const step = Math.max(1, Math.ceil(targetText.length / 100))
-      const currentLength = frame * step
-      if (currentLength < targetText.length) {
-        const cyberChars = '01#$@&%<>_+'
-        const randChar = cyberChars[Math.floor(Math.random() * cyberChars.length)]
-        typedMessagesText.value[index] = targetText.slice(0, currentLength) + randChar
-        allDone = false
-      }
-      else {
-        typedMessagesText.value[index] = targetText
-      }
+    if (currentMsgIndex >= entry.data.messages.length) {
+      clearTypewriter()
+      return
     }
 
-    if (allDone) {
-      clearTypewriter()
+    const currentMessage = entry.data.messages[currentMsgIndex]
+    const targetText = currentMessage.text
+    // We increment letter by letter for a realistic human typing tempo.
+    currentLength++
+
+    if (currentLength <= targetText.length) {
+      const cyberChars = '01#$@&%<>_+'
+      const randChar = cyberChars[Math.floor(Math.random() * cyberChars.length)]
+      typedMessagesText.value[currentMsgIndex] = targetText.slice(0, currentLength) + randChar
+    }
+    else {
+      typedMessagesText.value[currentMsgIndex] = targetText
+      // Once a message completes, proceed to the next after a brief pause
+      currentMsgIndex++
+      currentLength = 0
     }
   }, 35)
 }
