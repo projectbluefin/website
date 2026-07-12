@@ -360,18 +360,6 @@ const nightWallpaperUrl = computed(() => {
   // effect.
   overflow-x: clip;
   box-sizing: border-box;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 600px;
-    background: linear-gradient(to bottom, rgba(12, 16, 22, 0.7), transparent);
-    z-index: 2;
-    pointer-events: none;
-  }
 }
 
 .wolves-layout {
