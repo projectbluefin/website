@@ -386,26 +386,8 @@ watch(currentTrackIndex, (newIndex) => {
   emit('trackChange', newIndex)
 })
 
-watch(() => props.chapter, (newChapter) => {
-  if (!newChapter) {
-    return
-  }
-
-  let targetIndex = 0
-  if (newChapter.id === 'pursuit') {
-    targetIndex = 1
-  }
-  else if (newChapter.id === 'awakening') {
-    targetIndex = 6
-  }
-
-  if (currentTrackIndex.value !== targetIndex) {
-    currentTrackIndex.value = targetIndex
-    if (player && typeof player.playVideoAt === 'function' && isPlaying.value) {
-      player.playVideoAt(targetIndex)
-    }
-  }
-})
+// props.chapter changes do not drive soundtrack playback to prevent track restarts during reading
+watch(() => props.chapter, () => {})
 
 watch(() => props.playing, (newPlaying) => {
   if (newPlaying && status.value !== 'playing') {
