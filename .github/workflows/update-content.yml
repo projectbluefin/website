@@ -2,9 +2,9 @@ name: Update Live Data
 
 on:
   schedule:
-    # Run daily at 10:00 UTC — after projectbluefin/documentation SBOM
+    # Run weekly on Sundays at 10:00 UTC — after projectbluefin/documentation SBOM
     # pipeline completes at ~04:00–06:00 UTC so we always get fresh data.
-    - cron: '0 10 * * *'
+    - cron: '0 10 * * 0'
   workflow_dispatch:
 
 permissions: {}
