@@ -7,6 +7,7 @@ export interface SoundtrackTrack {
   bpm?: number
   phraseBeats?: number
   fadeDuration?: number
+  slideInterval?: number
 }
 
 export interface SoundtrackSource {

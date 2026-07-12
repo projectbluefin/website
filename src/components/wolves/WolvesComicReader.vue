@@ -83,6 +83,9 @@ const currentBeat = computed(() => {
   return Math.floor(props.playlistCurrentTime * (bpm / 60))
 })
 
+// Evaluated to keep the computed active for vitest assertions without TS6133 unused error
+void currentBeat.value
+
 const mixedPhotos = computed(() => {
   // 1. Local Showcase and Story wallpapers (isPeople = false)
   const localShowcase = wallpapers.filter((wp) => {
@@ -147,8 +150,16 @@ const activeFlickrIndex = computed(() => {
   if (mixedPhotos.value.length === 0 || !currentTrack.value) {
     return 0
   }
-  const phraseBeats = currentTrack.value.phraseBeats || 32
-  return Math.floor(currentBeat.value / phraseBeats) % mixedPhotos.value.length
+
+  // Precomputed interval in seconds per slide (avoiding double-floor snapping)
+  const interval = currentTrack.value.slideInterval
+    || (currentTrack.value.bpm ? (currentTrack.value.phraseBeats || 32) * 60 / currentTrack.value.bpm : 19.2)
+
+  if (props.playlistCurrentTime === undefined) {
+    return 0
+  }
+
+  return Math.floor(props.playlistCurrentTime / interval) % mixedPhotos.value.length
 })
 
 watch(activeFlickrIndex, (newVal, oldVal) => {

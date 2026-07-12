@@ -22,7 +22,8 @@
       "artwork": "wolves-artwork/amKIngGUvCk.jpg",
       "bpm": 100,
       "phraseBeats": 32,
-      "fadeDuration": 1500
+      "fadeDuration": 1500,
+      "slideInterval": 19.2
     },
     {
       "id": "9skBT5TUqzo",
@@ -32,7 +33,8 @@
       "artwork": "wolves-artwork/9skBT5TUqzo.jpg",
       "bpm": 168,
       "phraseBeats": 48,
-      "fadeDuration": 1000
+      "fadeDuration": 1000,
+      "slideInterval": 17.14
     },
     {
       "id": "Z--vLaXdlgk",
@@ -42,7 +44,8 @@
       "artwork": "wolves-artwork/Z--vLaXdlgk.jpg",
       "bpm": 86,
       "phraseBeats": 24,
-      "fadeDuration": 2000
+      "fadeDuration": 2000,
+      "slideInterval": 16.74
     },
     {
       "id": "5OFLFVC11Cg",
@@ -52,7 +55,8 @@
       "artwork": "wolves-artwork/5OFLFVC11Cg.jpg",
       "bpm": 95,
       "phraseBeats": 16,
-      "fadeDuration": 800
+      "fadeDuration": 800,
+      "slideInterval": 10.11
     },
     {
       "id": "san94Q93IcY",
@@ -62,7 +66,8 @@
       "artwork": "wolves-artwork/san94Q93IcY.jpg",
       "bpm": 124,
       "phraseBeats": 32,
-      "fadeDuration": 1200
+      "fadeDuration": 1200,
+      "slideInterval": 15.48
     },
     {
       "id": "rYkYLIYvI18",
@@ -72,7 +77,8 @@
       "artwork": "wolves-artwork/rYkYLIYvI18.jpg",
       "bpm": 174,
       "phraseBeats": 64,
-      "fadeDuration": 2500
+      "fadeDuration": 2500,
+      "slideInterval": 22.07
     }
   ]
 }
