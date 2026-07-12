@@ -50,7 +50,7 @@ const pdfError = ref('')
 // Base path for public assets
 const baseUrl = import.meta.env.BASE_URL
 
-const shuffledWallpapers = ref<any[]>(shuffleArray([...wallpapers]))
+const shuffledWallpapers = ref<any[]>(shuffleWallpapers([...wallpapers]))
 const totalPages = ref(wallpapers.length + 1)
 const duskIsNight = ref(false)
 let duskTimer: ReturnType<typeof setInterval> | null = null
@@ -181,12 +181,20 @@ function setupFlipResizeObserver() {
   flipResizeObserver.observe(flipViewport.value)
 }
 
-function shuffleArray<T>(array: T[]): T[] {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]]
-  }
-  return array
+function shuffleWallpapers(array: any[]): any[] {
+  const itemsWithScores = array.map((item) => {
+    const isPeople = item.name?.includes('/people/') || item.dayName?.includes('/people/') || item.nightName?.includes('/people/')
+    const r = Math.random()
+    // if people, score is in [0.45, 1.05] (tends toward end)
+    // if showcase or story illustration, score is in [0.0, 0.6] (tends toward start)
+    const score = isPeople ? 0.45 + r * 0.6 : r * 0.6
+    return { item, score }
+  })
+
+  // Sort by the assigned score
+  itemsWithScores.sort((a, b) => a.score - b.score)
+
+  return itemsWithScores.map(x => x.item)
 }
 
 async function loadComicPdf() {
@@ -239,7 +247,7 @@ function startAutoplayTimer() {
     }
     else {
       // Reshuffle the local playlist copy for the next loop
-      shuffledWallpapers.value = shuffleArray([...wallpapers])
+      shuffledWallpapers.value = shuffleWallpapers([...wallpapers])
       setPage(1)
     }
   }, delay)
