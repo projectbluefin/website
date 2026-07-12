@@ -1,6 +1,6 @@
 ---
 name: wolves-theater-experience
-description: Guidelines for managing the fullscreen cinematic immersive experience, double-buffered wallpaper transitions, and single-use cover logic on the Wolves sub-page.
+description: Guidelines for managing the fullscreen cinematic immersive experience, double-buffered wallpaper transitions, and integrated cover navigation on the Wolves sub-page.
 metadata:
   context7-sources: []
 ---
@@ -22,7 +22,7 @@ Use this skill when modifying the immersive fullscreen dashboard, background wal
 
 1. **State Isolation (`isImmersive`):** Toggle layout nodes reactively. Standard page containers (Navbar, standard footer, newsletter block) must be completely hidden using `.immersive-experience-active` wrappers on the body/root nodes.
 2. **Double-Buffered Wallpaper Transitions:** Avoid snapping wallpapers. Maintain both an `activeMonth` and a `previousMonth` state. Copy the old index to `previousMonth`, update the new one in `activeMonth`, and apply a smooth transition CSS rule (1.5s crossfade) using a transient transition class.
-3. **Single-Use Cover Page Logic:** The comic book cover (Page 1) must be shown strictly on initial mount. The navigation controls, keyboard bindings, and dropdown jumpers must prevent the user from decrementing back to Page 1 or looping back to Page 1 on autoplay end. Wrap all loops and left limits to Page 2.
+3. **Integrated Cover Page Navigation:** The comic book cover (Page 1) is a fully integrated, standard part of the theater presentation. Navigation controls, keyboard bindings, and dropdown jumpers must allow the user to freely navigate back to Page 1, step backwards, and loop back to Page 1 upon autoplay completion.
 4. **VFC Base URL Variable Prefixing:** Never bind `import.meta.env` properties directly inside Vue SFC `<template>` elements. Always declare a script-level constant (e.g., `const baseUrl = import.meta.env.BASE_URL`) and reference that in the template to avoid build compiler parser errors.
 5. **High-Density Typography:** Telemetry, headers, and footers in immersive mode must remain legible with large scale typography (1.5x larger font sizes) and appropriately budgeted heights (80px header, 120px footer) to prevent vertical layout overflowing.
 6. **Content-Aware Dynamic Pacing:** Never use a fixed interval (e.g., static 15s) for rotating sequential texts or dialogue transcripts of variable lengths. Calculate delay dynamically based on character counts (baseline 8s + 45ms per character) and clamp between 10s and 45s.
@@ -40,7 +40,7 @@ Use this skill when modifying the immersive fullscreen dashboard, background wal
 |---|---|
 | "A 50/50 desktop split is fine for the Wolves page." | The Wolves page desktop layout has a strict mandate to use a `2fr 1fr` grid template to allocate 66% width to the slides and 33% width to the lore column. |
 | "It's fine to bind `import.meta.env` directly in the template." | This causes fragile VFC parser compiler failures on specific bundlers/minifiers. Expose it via a script-level constant. |
-| "We can let the user go back to the cover page." | The cover is a high-impact intro that gets the user into the experience. Letting them step back into it is visual clutter that interrupts the wallpaper-fading show. |
+| "We can let the user go back to the cover page." | The cover is an essential part of the presentation that must remain accessible for reading the first quote and viewing the coloring book, so all standard navigation back to page 1 must be preserved. |
 | "A randomized array in-place is good enough for shuffling." | Mutation of a global constant array breaks Vue reactivity and causes severe repeats or missed slides. Local reactive loop-back shuffle is required. |
 | "Solid backgrounds are safer for text readability." | Completely solid backgrounds hide the seasonal fading artworks that are critical to the theater experience. Use rgba(16, 21, 31, 0.45) with blur(12px) to maximize both artwork visibility and text contrast. |
 

@@ -385,16 +385,15 @@ function startAutoplayTimer() {
   if (autoplayTimer) {
     return
   }
-  const delay = page.value === 1 ? 1500 : autoplayInterval.value
+  const delay = autoplayInterval.value
   autoplayTimer = setInterval(() => {
     if (page.value < totalPages.value) {
       setPage(page.value + 1)
     }
     else {
-      /* Loop back to page 2 (instead of page 1) at the end */
       // Reshuffle the local playlist copy for the next loop
       shuffledWallpapers.value = shuffleArray([...wallpapers])
-      setPage(2)
+      setPage(1)
     }
   }, delay)
 }
@@ -453,7 +452,7 @@ function handleKeyDown(event: KeyboardEvent) {
     }
   }
   else if (event.key === 'ArrowLeft' || event.key === 'Left') {
-    if (page.value > 2) { /* Once past page 1 (cover), never let user go back to 1 */
+    if (page.value > 1) {
       setPage(page.value - 1)
     }
   }
@@ -538,7 +537,7 @@ onBeforeUnmount(() => {
         </div>
 
         <button
-          v-show="!pdfLoading && !pdfError && page > 2"
+          v-show="!pdfLoading && !pdfError && page > 1"
           class="nav-btn prev"
           aria-label="Previous page"
           @click="setPage(page - 1)"
@@ -561,7 +560,7 @@ onBeforeUnmount(() => {
         <button
           class="ctrl-btn"
           aria-label="Previous page"
-          :disabled="page <= 2"
+          :disabled="page === 1"
           @click="setPage(page - 1)"
         >
           &larr; Previous
@@ -580,11 +579,9 @@ onBeforeUnmount(() => {
             :disabled="pdfLoading || !!pdfError || !totalPages"
             @change="setPage(Number(($event.target as HTMLSelectElement).value))"
           >
-            <template v-for="n in totalPages" :key="n">
-              <option v-if="n === 1 ? page === 1 : true" :value="n">
-                Page {{ n === 1 ? '1 (Cover)' : n }}
-              </option>
-            </template>
+            <option v-for="n in totalPages" :key="n" :value="n">
+              Page {{ n === 1 ? '1 (Cover)' : n }}
+            </option>
           </select>
         </div>
 

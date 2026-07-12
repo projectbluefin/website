@@ -56,7 +56,7 @@ To fix the jarring snap between monthly wallpapers during playlist progression:
 
 ### 2.4 Seamless Autoplay and View Transitions
 * **View Transitions API:** Integrated browser-native `document.startViewTransition()` around the layout rendering changes to perform clean screenshot-crossfading transitions.
-* **Cover Transition Pace:** To optimize the entry feel, the static Cover PDF (Page 1) is automatically shown for a reduced delay of 1.5 seconds under active autoplay before transitioning immediately to the dynamic wallpaper slideshow. Subsequent slides respect standard pacing (10 seconds).
+* **Cover Transition Pace:** To support standard presentation reading, the static Cover PDF (Page 1) is automatically shown for a delay of 10 seconds under active autoplay, just like subsequent wallpaper slideshow pages, so that the user can read the first quote and see the coloring book cover before transitioning.
 * **Vue 3 Mounted Race-free Watchers:** Unified state synchronization watchers in `WolvesComicReader.vue` and `WolvesSoundtrack.vue` under `{ immediate: true }` so that synchrony mounting updates are successfully registered and evaluated without race condition locks on startup.
 
 ---
