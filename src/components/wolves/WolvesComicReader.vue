@@ -59,10 +59,7 @@ const wallpapers = [
   { type: 'daynight', name: 'bluefin-prey', dayName: 'bluefin-prey-day.webp', nightName: 'bluefin-prey-night.webp', title: 'Prey (Day & Night)' },
   { type: 'daynight', name: 'bluefin-collapse', dayName: 'bluefin-collapse-day.webp', nightName: 'bluefin-collapse-night.webp', title: 'Collapse (Day & Night)' },
   { type: 'single', name: 'bluefin-xe_sunset.webp', title: 'Sunset' },
-  { type: 'single', name: 'bluefin-xe_space_needle.webp', title: 'Space Needle' },
   { type: 'single', name: 'bluefin-xe_red_tulip.webp', title: 'Red Tulip' },
-  { type: 'single', name: 'bluefin-xe_foothills.webp', title: 'Foothills' },
-  { type: 'single', name: 'bluefin-xe_clouds.webp', title: 'Clouds' },
   { type: 'daynight', name: 'bluefin-tenacious', dayName: 'bluefin-tenacious-day.webp', nightName: 'bluefin-tenacious-night.webp', title: 'Tenacious Pterosaur (Day & Night)' }
 ]
 
@@ -253,8 +250,8 @@ function startAutoplayTimer() {
       setPage(page.value + 1)
     }
     else {
-      // Loop back to page 1 at the end
-      setPage(1)
+      /* Loop back to page 2 (instead of page 1) at the end */
+      setPage(2)
     }
   }, 10000) // Paced at 10 seconds per page
 }
@@ -309,7 +306,7 @@ function handleKeyDown(event: KeyboardEvent) {
     }
   }
   else if (event.key === 'ArrowLeft' || event.key === 'Left') {
-    if (page.value > 1) {
+    if (page.value > 2) { /* Once past page 1 (cover), never let user go back to 1 */
       setPage(page.value - 1)
     }
   }
@@ -394,7 +391,7 @@ onBeforeUnmount(() => {
         </div>
 
         <button
-          v-show="!pdfLoading && !pdfError && page > 1"
+          v-show="!pdfLoading && !pdfError && page > 2"
           class="nav-btn prev"
           aria-label="Previous page"
           @click="setPage(page - 1)"
@@ -417,7 +414,7 @@ onBeforeUnmount(() => {
         <button
           class="ctrl-btn"
           aria-label="Previous page"
-          :disabled="page === 1"
+          :disabled="page <= 2"
           @click="setPage(page - 1)"
         >
           &larr; Previous
@@ -446,9 +443,11 @@ onBeforeUnmount(() => {
             :disabled="pdfLoading || !!pdfError || !totalPages"
             @change="setPage(Number(($event.target as HTMLSelectElement).value))"
           >
-            <option v-for="n in totalPages" :key="n" :value="n">
-              Page {{ n }}
-            </option>
+            <template v-for="n in totalPages" :key="n">
+              <option v-if="n === 1 ? page === 1 : true" :value="n">
+                Page {{ n === 1 ? '1 (Cover)' : n }}
+              </option>
+            </template>
           </select>
         </div>
 
