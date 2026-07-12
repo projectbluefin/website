@@ -456,15 +456,20 @@ npm run lint:fix             # Lints and fixes issues in the project
 
 ## Git / Fork Workflow
 
-**Fork setup:**
+**Operator override (castrojo):** push directly to `main` by default unless explicitly asked to use a feature branch.
+
+**Default direct-to-main flow:**
 ```bash
-git remote add origin git@github.com:<your-fork>/website.git
 git remote add upstream git@github.com:projectbluefin/website.git
 git fetch upstream
-git checkout -b <feature-branch> upstream/main
+git checkout main
+git pull --ff-only upstream main
+# make fix
+git commit -m "<type>: <summary>"
+git push upstream main
 ```
 
-**When ready to ship upstream:** provide compare URL for human review; never open PRs to `projectbluefin/*` directly.
+**When a branch is specifically requested:** provide compare URL for human review; never open PRs to `projectbluefin/*` directly.
 
 **Public asset fetches in Vue components** — MUST use `import.meta.env.BASE_URL` prefix, not absolute `/` paths, so fork preview and production both work:
 ```ts
