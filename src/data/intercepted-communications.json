@@ -329,5 +329,49 @@
         "text": "—by bread alone. Yes, I know—but this is the first age in which every man was sure of getting even that."
       }
     ]
+  },
+  {
+    "title": "Glorious Eggroll",
+    "channel": "NBR-3/0//GLORIOUS-EGGROLL//PRIVATE-LOG",
+    "date": "2326-07-12",
+    "messages": [
+      {
+        "speaker": "Thomas",
+        "text": "I'm glad we ran into each other, this trip is usually much harder alone.",
+        "timestamp": "14:22:05"
+      },
+      {
+        "speaker": "Kyle",
+        "text": "Thanks man I don't know what I would have done back there without you.",
+        "timestamp": "14:22:18"
+      },
+      {
+        "speaker": "Thomas",
+        "text": "Relax man, just because the entire galaxy is after you doesn't mean you need to break a sweat. It is kind of creepy though, you look just like him. No one needs this heat right now.",
+        "timestamp": "14:22:45"
+      },
+      {
+        "speaker": "Kyle",
+        "text": "Look man I just wanted to play video games on Linux ...",
+        "timestamp": "14:23:12"
+      },
+      {
+        "speaker": "Thomas",
+        "text": "And I should have been a Feudal Lord in Japan. We need to get moving but I need to make repairs. Look at this shitty sound chip for me would ya? Some Fyra Lab thing that never made it to production ... if we're lucky we'll be inside this thing before we boil to death.",
+        "timestamp": "14:23:40"
+      }
+    ]
+  },
+  {
+    "title": "Project Neptune",
+    "channel": "BLUE-UNIVERSAL//PRJ-TM//DIRECTIVE",
+    "date": "2326-07-15",
+    "messages": [
+      {
+        "speaker": "BLUE UNIVERSAL",
+        "text": "We have only one rule. Everybody contributes, no one quits. If you don't do your job, we'll ban you ourselves!\n\nWelcome to paradise.",
+        "timestamp": "00:00:01"
+      }
+    ]
   }
 ]
