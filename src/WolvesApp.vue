@@ -19,6 +19,7 @@ README: Bluefin Wolves Teaser Landing Page Component
 import type { WolvesChapter } from './data/wolves-story'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import TopNavbar from './components/TopNavbar.vue'
+import { wallpapers } from './components/wolves/wallpapers-list'
 import WolvesComicReader from './components/wolves/WolvesComicReader.vue'
 import WolvesLoreColumn from './components/wolves/WolvesLoreColumn.vue'
 import WolvesQrCodes from './components/wolves/WolvesQrCodes.vue'
@@ -33,6 +34,7 @@ const isPlaying = ref(false)
 
 // Current page (1-based) tracked here so the chapter can be passed to WolvesSoundtrack.
 const currentPage = ref(1)
+const totalPages = wallpapers.length + 1
 const activeChapter = computed<WolvesChapter | undefined>(() => getChapterForPage(currentPage.value))
 
 const loreColumnRef = ref<any>(null)
@@ -374,6 +376,7 @@ onBeforeUnmount(() => {
             v-model:autoplay="isComicAutoplay"
             :chapters="wolvesRelease.chapters"
             :pacing-mode="pacingMode"
+            :page="currentPage"
             @update:page="currentPage = $event"
           />
         </div>
@@ -423,6 +426,9 @@ onBeforeUnmount(() => {
             v-model:playing="isPlaying"
             :chapter="activeChapter"
             :lore-copied="isLoreCopied"
+            :page="currentPage"
+            :total-pages="totalPages"
+            @update:page="currentPage = $event"
             @track-change="handleTrackChange"
             @prev-lore="handlePrevLore"
             @next-lore="handleNextLore"

@@ -70,11 +70,6 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     "type": "single",
-    "name": "wolves/showcase/PXL_20221221_164552857.jpg",
-    "title": "PXL 20221221 164552857"
-  },
-  {
-    "type": "single",
     "name": "wolves/showcase/PXL_20230315_162515981.jpg",
     "title": "PXL 20230315 162515981"
   },
@@ -97,11 +92,6 @@ export const wallpapers: Wallpaper[] = [
     "type": "single",
     "name": "wolves/showcase/PXL_20230922_195227218.jpg",
     "title": "PXL 20230922 195227218"
-  },
-  {
-    "type": "single",
-    "name": "wolves/showcase/PXL_20230926_003445977.jpg",
-    "title": "PXL 20230926 003445977"
   },
   {
     "type": "single",

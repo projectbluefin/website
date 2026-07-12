@@ -8,6 +8,8 @@ const props = defineProps<{
   chapter?: WolvesChapter
   playing?: boolean
   loreCopied?: boolean
+  page?: number
+  totalPages?: number
 }>()
 
 const emit = defineEmits<{
@@ -17,6 +19,7 @@ const emit = defineEmits<{
   (e: 'nextLore'): void
   (e: 'shareLore'): void
   (e: 'progress', data: { currentTime: number, duration: number, playlistIndex: number }): void
+  (e: 'update:page', page: number): void
 }>()
 
 type PlayerStatus = 'idle' | 'loading' | 'ready' | 'playing' | 'paused' | 'error'
@@ -410,6 +413,12 @@ onBeforeUnmount(() => {
   player = null
   playerMount = null
 })
+
+function setPage(n: number) {
+  if (props.totalPages && n >= 1 && n <= props.totalPages) {
+    emit('update:page', n)
+  }
+}
 </script>
 
 <template>
@@ -533,6 +542,44 @@ onBeforeUnmount(() => {
         />
       </div>
     </section>
+
+    <!-- Fused Comic Slideshow Controls -->
+    <div v-if="page && totalPages" class="soundtrack-comic-controls">
+      <button
+        type="button"
+        class="comic-ctrl-btn"
+        aria-label="Previous page"
+        :disabled="page === 1"
+        @click="setPage(page - 1)"
+      >
+        &larr; Prev
+      </button>
+
+      <span class="comic-page-counter font-mono">
+        {{ page }} / {{ totalPages }}
+      </span>
+
+      <div class="comic-jump-select-wrap">
+        <select
+          :value="page"
+          @change="setPage(Number(($event.target as HTMLSelectElement).value))"
+        >
+          <option v-for="n in totalPages" :key="n" :value="n">
+            Page {{ n === 1 ? '1 (Cover)' : n }}
+          </option>
+        </select>
+      </div>
+
+      <button
+        type="button"
+        class="comic-ctrl-btn"
+        aria-label="Next page"
+        :disabled="page === totalPages"
+        @click="setPage(page + 1)"
+      >
+        Next &rarr;
+      </button>
+    </div>
 
     <div
       v-if="isStarted"
@@ -896,6 +943,63 @@ onBeforeUnmount(() => {
 
   .soundtrack-action {
     width: 100%;
+  }
+}
+
+.soundtrack-comic-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(16, 21, 31, 0.95);
+  border: 1px solid rgba(66, 133, 244, 0.22);
+  border-radius: 12px;
+  padding: 8px 12px;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+  .comic-ctrl-btn {
+    background: rgba(66, 133, 244, 0.08);
+    border: 1px solid rgba(102, 179, 255, 0.35);
+    color: #e0f2fe;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover:not(:disabled) {
+      background: rgba(66, 133, 244, 0.18);
+      border-color: rgba(125, 211, 252, 0.8);
+    }
+
+    &:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+  }
+
+  .comic-page-counter {
+    font-size: 1.1rem;
+    color: #bdbdbd;
+    font-weight: 500;
+  }
+
+  .comic-jump-select-wrap {
+    select {
+      background-color: #10151f;
+      border: 1px solid #272727;
+      color: #ffffff;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      cursor: pointer;
+
+      &:focus {
+        outline: none;
+        border-color: var(--color-blue);
+      }
+    }
   }
 }
 </style>

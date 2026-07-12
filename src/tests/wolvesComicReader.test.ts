@@ -45,12 +45,6 @@ describe('wolvesComicReader', () => {
     expect(loadingEl.text()).toContain('Loading comic pages')
   })
 
-  it('previous page button is disabled on first page', () => {
-    const wrapper = mount(WolvesComicReader, { props: { chapters: [] } })
-    const prevBtn = wrapper.get('.reader-controls button[aria-label="Previous page"]')
-    expect(prevBtn.attributes('disabled')).toBeDefined()
-  })
-
   it('emits update:page with 1-based page on Next click', async () => {
     const wrapper = mount(WolvesComicReader, { props: { chapters: [] } })
     await wrapper.get('button[aria-label="Next page"]').trigger('click')

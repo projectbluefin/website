@@ -21,6 +21,7 @@ const props = defineProps<{
   chapters: WolvesChapter[]
   autoplay?: boolean
   pacingMode?: 'normal' | 'fast' | 'hyper'
+  page?: number
 }>()
 
 const emit = defineEmits<{
@@ -288,6 +289,12 @@ watch(page, () => {
   }
 })
 
+watch(() => props.page, (newVal) => {
+  if (newVal !== undefined && newVal !== page.value) {
+    page.value = newVal
+  }
+})
+
 watch(activeChapter, (chapter) => {
   if (chapter) {
     emit('chapterChange', chapter.id)
@@ -410,45 +417,7 @@ onBeforeUnmount(() => {
         </button>
       </div>
 
-      <!-- Bottom control bar (Tightened & high density) -->
-      <div class="reader-controls">
-        <button
-          class="ctrl-btn"
-          aria-label="Previous page"
-          :disabled="page === 1"
-          @click="setPage(page - 1)"
-        >
-          &larr; Previous
-        </button>
-
-        <!-- Removed duplicate autoplay toggle -->
-
-        <div class="kbd-hint font-mono">
-          Page {{ page }} / {{ totalPages || '—' }}
-        </div>
-
-        <div class="jump-select-wrap">
-          <span>Jump to:</span>
-          <select
-            :value="page"
-            :disabled="pdfLoading || !!pdfError || !totalPages"
-            @change="setPage(Number(($event.target as HTMLSelectElement).value))"
-          >
-            <option v-for="n in totalPages" :key="n" :value="n">
-              Page {{ n === 1 ? '1 (Cover)' : n }}
-            </option>
-          </select>
-        </div>
-
-        <button
-          class="ctrl-btn"
-          aria-label="Next page"
-          :disabled="page === totalPages"
-          @click="setPage(page + 1)"
-        >
-          Next &rarr;
-        </button>
-      </div>
+      <!-- Bottom control bar removed (fused into soundtrack widget) -->
     </div>
   </section>
 </template>
