@@ -10,10 +10,10 @@ const embedUrl = 'https://www.youtube.com/embed/videoseries?list=PLA78oiE-RGAE&a
 
 const hasStarted = ref(false)
 const playerLoaded = ref(false)
-const isMuted = ref(false)
 const isCollapsed = ref(false)
+// Only skip the gate if the user explicitly dismissed; "started" alone does not auto-start on reload.
 const isDismissed = ref(sessionStorage.getItem('wolves_soundtrack_dismissed') === 'true')
-const hasEntered = ref(sessionStorage.getItem('wolves_soundtrack_dismissed') === 'true' || sessionStorage.getItem('wolves_soundtrack_started') === 'true')
+const hasEntered = ref(isDismissed.value)
 
 function start() {
   hasStarted.value = true
@@ -120,20 +120,13 @@ onUnmounted(() => {
 
       <!-- Hidden iframe loads audio; visible once playerLoaded -->
       <iframe
-        :src="isMuted ? `${embedUrl}&mute=1` : embedUrl"
+        :src="embedUrl"
         title="Wolves soundtrack player"
         allow="autoplay; encrypted-media"
         @load="playerLoaded = true"
       />
 
       <div class="bar-controls">
-        <button
-          type="button"
-          aria-label="Toggle mute"
-          @click="isMuted = !isMuted"
-        >
-          {{ isMuted ? '🔇' : '🔊' }}
-        </button>
         <button
           type="button"
           aria-label="Collapse player"
@@ -183,6 +176,7 @@ onUnmounted(() => {
 
   .entry-btn {
     padding: 12px 28px;
+    min-height: 44px;
     border-radius: 8px;
     font-size: 1rem;
     font-weight: 700;
@@ -253,6 +247,8 @@ onUnmounted(() => {
       font-weight: 700;
       cursor: pointer;
       white-space: nowrap;
+      min-height: 44px;
+      padding: 0 4px;
     }
 
     .pill-close-btn {
@@ -262,6 +258,8 @@ onUnmounted(() => {
       font-size: 1.5rem;
       cursor: pointer;
       line-height: 1;
+      min-height: 44px;
+      min-width: 44px;
 
       &:hover {
         color: #fff;
@@ -302,7 +300,8 @@ onUnmounted(() => {
         cursor: pointer;
         font-size: 1.1rem;
         line-height: 1;
-        padding: 2px 4px;
+        min-height: 44px;
+        min-width: 44px;
         transition: color 0.2s;
 
         &:hover {
