@@ -31,36 +31,11 @@ describe('wolvesComicReader', () => {
     })
   })
 
-  it('starts in paged mode and reports the active page', async () => {
+  it('reports the active page and allows page turning', async () => {
     const wrapper = mount(WolvesComicReader, { props: { chapters: [] } })
 
-    expect(wrapper.get('[role="tab"][aria-selected="true"]').text()).toBe('Page By Page')
     await wrapper.get('button[aria-label="Next page"]').trigger('click')
     expect(wrapper.emitted('update:page')?.[0]).toEqual([2])
-  })
-
-  it('renders a tablist with Page By Page and Continuous Scroll tabs', () => {
-    const wrapper = mount(WolvesComicReader, { props: { chapters: [] } })
-    const tablist = wrapper.get('[role="tablist"]')
-    const tabs = tablist.findAll('[role="tab"]')
-    expect(tabs).toHaveLength(2)
-    expect(tabs[0].text()).toBe('Page By Page')
-    expect(tabs[1].text()).toBe('Continuous Scroll')
-  })
-
-  it('defaults to paged mode with first tab aria-selected=true', () => {
-    const wrapper = mount(WolvesComicReader, { props: { chapters: [] } })
-    const tabs = wrapper.findAll('[role="tab"]')
-    expect(tabs[0].attributes('aria-selected')).toBe('true')
-    expect(tabs[1].attributes('aria-selected')).toBe('false')
-  })
-
-  it('switches to continuous mode when Continuous Scroll tab is clicked', async () => {
-    const wrapper = mount(WolvesComicReader, { props: { chapters: [] } })
-    await wrapper.findAll('[role="tab"]')[1].trigger('click')
-    const tabs = wrapper.findAll('[role="tab"]')
-    expect(tabs[1].attributes('aria-selected')).toBe('true')
-    expect(tabs[0].attributes('aria-selected')).toBe('false')
   })
 
   it('shows loading state while PDF is loading', () => {
@@ -72,7 +47,6 @@ describe('wolvesComicReader', () => {
 
   it('previous page button is disabled on first page', () => {
     const wrapper = mount(WolvesComicReader, { props: { chapters: [] } })
-    // The control bar's "Previous page" button (inside .reader-controls) should be disabled on page 1.
     const prevBtn = wrapper.get('.reader-controls button[aria-label="Previous page"]')
     expect(prevBtn.attributes('disabled')).toBeDefined()
   })
@@ -87,7 +61,6 @@ describe('wolvesComicReader', () => {
 
   it('emits chapter-change when chapter boundary is crossed', async () => {
     const wrapper = mount(WolvesComicReader, { props: { chapters: CHAPTERS } })
-    // Navigate through pages to cross from prologue (1-5) to pursuit (6-10)
     for (let i = 0; i < 5; i++) {
       await wrapper.get('button[aria-label="Next page"]').trigger('click')
     }
@@ -104,53 +77,6 @@ describe('wolvesComicReader', () => {
     expect(removeListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function))
   })
 
-  // ARIA relations tests
-  it('has stable tab IDs: tab-paged and tab-continuous', () => {
-    const wrapper = mount(WolvesComicReader, { props: { chapters: [] } })
-    const tabs = wrapper.findAll('[role="tab"]')
-    expect(tabs[0].attributes('id')).toBe('tab-paged')
-    expect(tabs[1].attributes('id')).toBe('tab-continuous')
-  })
-
-  it('tabs have aria-controls linking to panel IDs', () => {
-    const wrapper = mount(WolvesComicReader, { props: { chapters: [] } })
-    const tabs = wrapper.findAll('[role="tab"]')
-    expect(tabs[0].attributes('aria-controls')).toBe('panel-paged')
-    expect(tabs[1].attributes('aria-controls')).toBe('panel-continuous')
-  })
-
-  it('paged panel has role=tabpanel with matching id and aria-labelledby', () => {
-    const wrapper = mount(WolvesComicReader, { props: { chapters: [] } })
-    const pagedPanel = wrapper.find('#panel-paged')
-    expect(pagedPanel.attributes('role')).toBe('tabpanel')
-    expect(pagedPanel.attributes('aria-labelledby')).toBe('tab-paged')
-  })
-
-  it('continuous panel has role=tabpanel with matching id and aria-labelledby', async () => {
-    const wrapper = mount(WolvesComicReader, { props: { chapters: [] } })
-    await wrapper.findAll('[role="tab"]')[1].trigger('click')
-    const continuousPanel = wrapper.find('#panel-continuous')
-    expect(continuousPanel.attributes('role')).toBe('tabpanel')
-    expect(continuousPanel.attributes('aria-labelledby')).toBe('tab-continuous')
-  })
-
-  it('arrow keys prevent page navigation when focus is inside tablist', async () => {
-    const wrapper = mount(WolvesComicReader, { props: { chapters: [] } })
-
-    // Set activeElement to the paged tab
-    const pagedTab = wrapper.findAll('[role="tab"]')[0]
-    Object.defineProperty(document, 'activeElement', { value: pagedTab.element, writable: true, configurable: true })
-
-    // Dispatch arrow key event
-    const event = new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })
-    window.dispatchEvent(event)
-
-    await wrapper.vm.$nextTick()
-
-    // Should not emit update:page when arrow key is in tablist
-    expect(wrapper.emitted('update:page')).toBeFalsy()
-  })
-
   it('renders autoplay toggle button and allows toggling it off/on', async () => {
     const wrapper = mount(WolvesComicReader, {
       props: {
@@ -160,9 +86,9 @@ describe('wolvesComicReader', () => {
     })
 
     const toggleBtn = wrapper.get('.autoplay-toggle-btn')
-    expect(toggleBtn.text()).toContain('AUTOPLAY: ACTIVE')
+    expect(toggleBtn.text()).toContain('AUTO')
 
     await toggleBtn.trigger('click')
-    expect(toggleBtn.text()).toContain('AUTOPLAY: PAUSED')
+    expect(toggleBtn.text()).toContain('MANUAL')
   })
 })

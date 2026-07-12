@@ -393,7 +393,7 @@ onBeforeUnmount(() => {
             <span class="telemetry-label text-cyan">METADATA_DOWNLINK //</span> COMM_ESTABLISHED
           </div>
           <p class="telemetry-text">
-            {{ activeTrack.commentary }}
+            Chapter {{ props.chapter ? props.chapter.id.toUpperCase() : 'PROLOGUE' }}: {{ props.chapter ? props.chapter.title : 'The Signal' }} &mdash; {{ props.chapter ? props.chapter.description : 'The archive opens.' }}
           </p>
         </div>
       </div>
@@ -567,6 +567,8 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 4px;
   color: #94a3b8;
+  height: 80px;
+  overflow-y: auto;
 
   .telemetry-header {
     font-weight: 700;
@@ -588,8 +590,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 10px;
   color: #e2e8f0;
-  height: 100%;
-  min-height: 170px;
+  height: 170px;
 
   .lyrics-header {
     font-weight: 700;

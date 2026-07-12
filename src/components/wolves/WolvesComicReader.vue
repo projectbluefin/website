@@ -41,7 +41,6 @@ const renderTasks = new Map<HTMLCanvasElement, any>()
 // State ────────────────────────────────────────────────────────────────────
 const totalPages = ref(0)
 const page = ref(1) // 1-based
-const readingMode = ref<'paged' | 'continuous'>('paged')
 const pdfLoading = ref(true)
 const pdfError = ref('')
 
@@ -77,21 +76,8 @@ const activeChapter = computed(() =>
 // Template refs ────────────────────────────────────────────────────────────
 const flipViewport = ref<HTMLElement | null>(null)
 const flipCanvas = ref<HTMLCanvasElement | null>(null)
-const scrollContainer = ref<HTMLElement | null>(null)
-const scrollCanvases = ref<(HTMLCanvasElement | null)[]>([])
-const scrollCards = ref<(HTMLElement | null)[]>([])
 
 let flipResizeObserver: ResizeObserver | null = null
-let intersectionObserver: IntersectionObserver | null = null
-let activePageObserver: IntersectionObserver | null = null
-
-function setScrollCanvasRef(el: Element | null, index: number) {
-  scrollCanvases.value[index] = el as HTMLCanvasElement | null
-}
-
-function setScrollCardRef(el: Element | null, index: number) {
-  scrollCards.value[index] = el as HTMLElement | null
-}
 
 // Script injection ─────────────────────────────────────────────────────────
 function loadScript(src: string, integrity?: string): Promise<void> {
@@ -208,53 +194,6 @@ function setupFlipResizeObserver() {
   flipResizeObserver.observe(flipViewport.value)
 }
 
-function setupIntersectionObserver() {
-  intersectionObserver?.disconnect()
-  activePageObserver?.disconnect()
-  if (typeof IntersectionObserver === 'undefined') {
-    return
-  }
-  // Render observer: preloads canvas elements before they hit the viewport
-  intersectionObserver = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      if (entry.isIntersecting) {
-        const n = Number((entry.target as HTMLElement).dataset.page)
-        if (n === 1) {
-          const canvas = scrollCanvases.value[0]
-          if (canvas) {
-            const host = canvas.parentElement as HTMLElement | null
-            const width = host ? getContentWidth(host) : (scrollContainer.value?.clientWidth ?? 0)
-            void renderPageOnCanvas(1, canvas, width)
-          }
-        }
-      }
-    }
-  }, { rootMargin: '800px 0px' })
-
-  // Active page detector: updates active page state as user manually scrolls
-  activePageObserver = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      if (entry.isIntersecting) {
-        const n = Number((entry.target as HTMLElement).dataset.page)
-        if (n !== page.value) {
-          setPage(n, false)
-        }
-      }
-    }
-  }, {
-    root: null,
-    rootMargin: '-35% 0px -45% 0px',
-    threshold: 0,
-  })
-
-  for (const card of scrollCards.value) {
-    if (card) {
-      intersectionObserver.observe(card)
-      activePageObserver.observe(card)
-    }
-  }
-}
-
 async function loadComicPdf() {
   pdfLoading.value = true
   pdfError.value = ''
@@ -264,13 +203,8 @@ async function loadComicPdf() {
     totalPages.value = 15 // 1 Cover + 14 Wallpapers from projectbluefin/documentation/artwork
     pdfLoading.value = false
     await nextTick()
-    if (readingMode.value === 'paged') {
-      setupFlipResizeObserver()
-      renderFlipPage()
-    }
-    else {
-      setupIntersectionObserver()
-    }
+    setupFlipResizeObserver()
+    renderFlipPage()
   }
   catch (err) {
     console.error('[wolves] Failed to load comic PDF', err)
@@ -282,7 +216,6 @@ async function loadComicPdf() {
 // Autoplay / Autoscroll Timer
 let autoplayTimer: ReturnType<typeof setInterval> | null = null
 const localAutoplay = ref(false)
-const isProgrammaticScroll = ref(false)
 
 function stopAutoplayTimer() {
   if (autoplayTimer) {
@@ -297,11 +230,11 @@ function startAutoplayTimer() {
   }
   autoplayTimer = setInterval(() => {
     if (page.value < totalPages.value) {
-      setPage(page.value + 1, true)
+      setPage(page.value + 1)
     }
     else {
       // Loop back to page 1 at the end
-      setPage(1, true)
+      setPage(1)
     }
   }, 10000) // Paced at 10 seconds per page
 }
@@ -320,56 +253,25 @@ watch(localAutoplay, (val) => {
 })
 
 // Navigation ───────────────────────────────────────────────────────────────
-function setPage(n: number, programmatic = true) {
-  if (programmatic) {
-    isProgrammaticScroll.value = true
-  }
+function setPage(n: number) {
   page.value = n
   emit('update:page', n)
-  if (localAutoplay.value && programmatic) {
+  if (localAutoplay.value) {
     stopAutoplayTimer()
     startAutoplayTimer()
   }
 }
 
 // Watchers ─────────────────────────────────────────────────────────────────
-watch(page, (n) => {
-  if (readingMode.value === 'paged') {
-    if (!pdfLoading.value) {
-      renderFlipPage()
-    }
-  }
-  else {
-    if (isProgrammaticScroll.value) {
-      const card = scrollCards.value[n - 1]
-      if (card) {
-        card.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }
-    }
-    isProgrammaticScroll.value = false
+watch(page, () => {
+  if (!pdfLoading.value) {
+    renderFlipPage()
   }
 })
 
 watch(activeChapter, (chapter) => {
   if (chapter) {
     emit('chapterChange', chapter.id)
-  }
-})
-
-watch(readingMode, async (mode) => {
-  if (pdfLoading.value || pdfError.value) {
-    return
-  }
-  await nextTick()
-  if (mode === 'paged') {
-    intersectionObserver?.disconnect()
-    activePageObserver?.disconnect()
-    setupFlipResizeObserver()
-    renderFlipPage()
-  }
-  else {
-    flipResizeObserver?.disconnect()
-    setupIntersectionObserver()
   }
 })
 
@@ -380,35 +282,6 @@ function handleKeyDown(event: KeyboardEvent) {
     return
   }
 
-  // Check if focus is inside tablist
-  const tablist = document.querySelector('[role="tablist"]') as HTMLElement | null
-  const activeElement = document.activeElement as HTMLElement | null
-  const isInTablist = tablist && activeElement ? tablist.contains(activeElement) : false
-
-  // Tab switching via Left/Right arrows when focus is inside tablist
-  if (isInTablist && (event.key === 'ArrowRight' || event.key === 'Right' || event.key === 'ArrowLeft' || event.key === 'Left')) {
-    if (event.key === 'ArrowRight' || event.key === 'Right') {
-      readingMode.value = readingMode.value === 'paged' ? 'continuous' : 'paged'
-    }
-    else if (event.key === 'ArrowLeft' || event.key === 'Left') {
-      readingMode.value = readingMode.value === 'continuous' ? 'paged' : 'continuous'
-    }
-    event.preventDefault()
-    // Focus the selected tab after mode changes
-    nextTick(() => {
-      const selectedTab = document.querySelector('[role="tab"][aria-selected="true"]') as HTMLButtonElement
-      selectedTab?.focus()
-    })
-    return
-  }
-
-  // Page navigation via Left/Right arrows when focus is NOT in tablist
-  if (isInTablist) {
-    return
-  }
-  if (readingMode.value !== 'paged') {
-    return
-  }
   if (event.key === 'ArrowRight' || event.key === 'Right') {
     if (page.value < totalPages.value) {
       setPage(page.value + 1)
@@ -437,8 +310,6 @@ onBeforeUnmount(() => {
   }
   window.removeEventListener('keydown', handleKeyDown)
   flipResizeObserver?.disconnect()
-  intersectionObserver?.disconnect()
-  activePageObserver?.disconnect()
   renderTasks.forEach(task => task.cancel())
   renderTasks.clear()
   pdfDocument?.destroy()
@@ -448,43 +319,7 @@ onBeforeUnmount(() => {
 
 <template>
   <section id="comic-reader" class="comic-reader-section">
-    <div class="comic-toolbar">
-      <div role="tablist" class="mode-selectors">
-        <button
-          id="tab-paged"
-          role="tab"
-          aria-controls="panel-paged"
-          :aria-selected="readingMode === 'paged'"
-          @click="readingMode = 'paged'"
-        >
-          Page By Page
-        </button>
-        <button
-          id="tab-continuous"
-          role="tab"
-          aria-controls="panel-continuous"
-          :aria-selected="readingMode === 'continuous'"
-          @click="readingMode = 'continuous'"
-        >
-          Continuous Scroll
-        </button>
-      </div>
-
-      <!-- Autoplay Toggle -->
-      <button
-        class="autoplay-toggle-btn font-mono"
-        :class="{ 'is-active': localAutoplay }"
-        :aria-label="localAutoplay ? 'Disable page autoplay' : 'Enable page autoplay'"
-        type="button"
-        @click="localAutoplay = !localAutoplay"
-      >
-        <span class="indicator-dot" />
-        {{ localAutoplay ? 'AUTOPLAY: ACTIVE' : 'AUTOPLAY: PAUSED' }}
-      </button>
-    </div>
-
-    <!-- Paged mode -->
-    <div v-if="readingMode === 'paged'" id="panel-paged" role="tabpanel" aria-labelledby="tab-paged" class="page-flip-comic-layout">
+    <div class="page-flip-comic-layout">
       <div ref="flipViewport" class="comic-viewport">
         <div class="comic-content-area">
           <div v-if="pdfLoading" class="comic-status-wrap">
@@ -556,7 +391,7 @@ onBeforeUnmount(() => {
         </button>
       </div>
 
-      <!-- Bottom control bar -->
+      <!-- Bottom control bar (Tightened & high density) -->
       <div class="reader-controls">
         <button
           class="ctrl-btn"
@@ -567,8 +402,20 @@ onBeforeUnmount(() => {
           &larr; Previous
         </button>
 
-        <div class="kbd-hint">
-          Use &larr; &rarr; arrow keys to turn pages &middot; Page {{ page }} of {{ totalPages || '—' }}
+        <!-- Autoplay Toggle aligned in control bar -->
+        <button
+          class="autoplay-toggle-btn font-mono"
+          :class="{ 'is-active': localAutoplay }"
+          :aria-label="localAutoplay ? 'Disable page autoplay' : 'Enable page autoplay'"
+          type="button"
+          @click="localAutoplay = !localAutoplay"
+        >
+          <span class="indicator-dot" />
+          {{ localAutoplay ? 'AUTO' : 'MANUAL' }}
+        </button>
+
+        <div class="kbd-hint font-mono">
+          Page {{ page }} / {{ totalPages || '—' }}
         </div>
 
         <div class="jump-select-wrap">
@@ -593,71 +440,6 @@ onBeforeUnmount(() => {
           Next &rarr;
         </button>
       </div>
-    </div>
-
-    <!-- Continuous scroll mode -->
-    <div v-else id="panel-continuous" ref="scrollContainer" role="tabpanel" aria-labelledby="tab-continuous" class="scroll-comic-layout">
-      <template v-if="pdfLoading">
-        <div class="comic-status-wrap">
-          <div class="spinner" />
-          <p>Loading comic pages&hellip;</p>
-        </div>
-      </template>
-      <template v-else-if="pdfError">
-        <div class="comic-status-wrap is-error">
-          <p>{{ pdfError }}</p>
-          <button class="ctrl-btn" @click="loadComicPdf">
-            Retry
-          </button>
-        </div>
-      </template>
-      <template v-else>
-        <div
-          v-for="n in totalPages"
-          :key="n"
-          :ref="(el) => setScrollCardRef(el as Element | null, n - 1)"
-          class="scroll-page-card"
-          :data-page="n"
-        >
-          <div class="comic-viewport">
-            <div class="comic-content-area">
-              <canvas
-                v-if="n === 1"
-                :ref="(el) => setScrollCanvasRef(el as Element | null, 0)"
-                class="pdf-page-canvas"
-                role="img"
-                :aria-label="`Page ${n} of ${totalPages}`"
-              />
-              <div v-else class="wallpaper-viewport-wrapper">
-                <div v-if="wallpapers[n - 2].type === 'single'" class="wallpaper-container">
-                  <img
-                    :src="`${baseUrl}img/wallpapers/${wallpapers[n - 2].name}`"
-                    class="wallpaper-img"
-                    :alt="wallpapers[n - 2].title"
-                  >
-                </div>
-                <div v-else-if="wallpapers[n - 2].type === 'daynight'" class="wallpaper-container daynight">
-                  <img
-                    :src="`${baseUrl}img/wallpapers/${wallpapers[n - 2].dayName}`"
-                    class="wallpaper-img"
-                    alt="Bluefin Dusk - Day"
-                  >
-                  <img
-                    :src="`${baseUrl}img/wallpapers/${wallpapers[n - 2].nightName}`"
-                    class="wallpaper-img night-overlay"
-                    :class="{ 'is-night': duskIsNight }"
-                    alt="Bluefin Dusk - Night"
-                  >
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="comic-caption-bar font-mono text-cyan">
-            <span v-if="n === 1">Coloring Book Cover</span>
-            <span v-else>Wallpaper Archive // {{ wallpapers[n - 2].title }}</span>
-          </div>
-        </div>
-      </template>
     </div>
   </section>
 </template>
@@ -919,33 +701,6 @@ onBeforeUnmount(() => {
         border-color: var(--color-blue-light);
       }
     }
-  }
-}
-
-.scroll-comic-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: 100%;
-  max-width: 760px;
-  margin: 0 auto;
-
-  .comic-viewport {
-    max-height: none;
-  }
-
-  .comic-content-area {
-    overflow: visible;
-  }
-
-  .scroll-page-card {
-    background-color: #10151f;
-    border: 1px solid rgba(var(--color-blue-rgb), 0.2);
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-    display: flex;
-    flex-direction: column;
   }
 }
 

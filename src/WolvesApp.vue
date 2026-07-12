@@ -757,11 +757,11 @@ onBeforeUnmount(() => {
 .dispatch-quote-card {
   background-color: #10151f;
   border: 1px solid #272727;
-  padding: 24px;
+  padding: 16px;
   border-radius: 16px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
   position: relative;
   width: 100%;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
@@ -815,8 +815,20 @@ onBeforeUnmount(() => {
 
 .conversation-rotator {
   position: relative;
-  min-height: 220px;
+  height: 290px;
+  overflow-y: auto;
   padding-top: 4px;
+  padding-right: 4px;
+
+  /* Custom thin scrollbar */
+  scrollbar-width: thin;
+  &::-webkit-scrollbar {
+    width: 3px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(var(--color-blue-rgb), 0.2);
+    border-radius: 2px;
+  }
 }
 
 .conversation-heading {
