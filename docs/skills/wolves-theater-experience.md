@@ -25,6 +25,7 @@ Use this skill when modifying the immersive fullscreen dashboard, background wal
 3. **Single-Use Cover Page Logic:** The comic book cover (Page 1) must be shown strictly on initial mount. The navigation controls, keyboard bindings, and dropdown jumpers must prevent the user from decrementing back to Page 1 or looping back to Page 1 on autoplay end. Wrap all loops and left limits to Page 2.
 4. **VFC Base URL Variable Prefixing:** Never bind `import.meta.env` properties directly inside Vue SFC `<template>` elements. Always declare a script-level constant (e.g., `const baseUrl = import.meta.env.BASE_URL`) and reference that in the template to avoid build compiler parser errors.
 5. **High-Density Typography:** Telemetry, headers, and footers in immersive mode must remain legible with large scale typography (1.5x larger font sizes) and appropriately budgeted heights (80px header, 120px footer) to prevent vertical layout overflowing.
+6. **Content-Aware Dynamic Pacing:** Never use a fixed interval (e.g., static 15s) for rotating sequential texts or dialogue transcripts of variable lengths. Calculate delay dynamically based on character counts (baseline 8s + 45ms per character) and clamp between 10s and 45s to ensure the user has sufficient time to both watch the typewriter run and comfortably read the finished blocks.
 
 ## Common Rationalizations
 
