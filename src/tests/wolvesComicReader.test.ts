@@ -103,4 +103,51 @@ describe('wolvesComicReader', () => {
     wrapper.unmount()
     expect(removeListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function))
   })
+
+  // ARIA relations tests
+  it('has stable tab IDs: tab-paged and tab-continuous', () => {
+    const wrapper = mount(WolvesComicReader, { props: { chapters: [] } })
+    const tabs = wrapper.findAll('[role="tab"]')
+    expect(tabs[0].attributes('id')).toBe('tab-paged')
+    expect(tabs[1].attributes('id')).toBe('tab-continuous')
+  })
+
+  it('tabs have aria-controls linking to panel IDs', () => {
+    const wrapper = mount(WolvesComicReader, { props: { chapters: [] } })
+    const tabs = wrapper.findAll('[role="tab"]')
+    expect(tabs[0].attributes('aria-controls')).toBe('panel-paged')
+    expect(tabs[1].attributes('aria-controls')).toBe('panel-continuous')
+  })
+
+  it('paged panel has role=tabpanel with matching id and aria-labelledby', () => {
+    const wrapper = mount(WolvesComicReader, { props: { chapters: [] } })
+    const pagedPanel = wrapper.find('#panel-paged')
+    expect(pagedPanel.attributes('role')).toBe('tabpanel')
+    expect(pagedPanel.attributes('aria-labelledby')).toBe('tab-paged')
+  })
+
+  it('continuous panel has role=tabpanel with matching id and aria-labelledby', async () => {
+    const wrapper = mount(WolvesComicReader, { props: { chapters: [] } })
+    await wrapper.findAll('[role="tab"]')[1].trigger('click')
+    const continuousPanel = wrapper.find('#panel-continuous')
+    expect(continuousPanel.attributes('role')).toBe('tabpanel')
+    expect(continuousPanel.attributes('aria-labelledby')).toBe('tab-continuous')
+  })
+
+  it('arrow keys prevent page navigation when focus is inside tablist', async () => {
+    const wrapper = mount(WolvesComicReader, { props: { chapters: [] } })
+
+    // Set activeElement to the paged tab
+    const pagedTab = wrapper.findAll('[role="tab"]')[0]
+    Object.defineProperty(document, 'activeElement', { value: pagedTab.element, writable: true, configurable: true })
+
+    // Dispatch arrow key event
+    const event = new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })
+    window.dispatchEvent(event)
+
+    await wrapper.vm.$nextTick()
+
+    // Should not emit update:page when arrow key is in tablist
+    expect(wrapper.emitted('update:page')).toBeFalsy()
+  })
 })

@@ -254,6 +254,33 @@ function handleKeyDown(event: KeyboardEvent) {
   if (target && (['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName) || target.isContentEditable)) {
     return
   }
+
+  // Check if focus is inside tablist
+  const tablist = document.querySelector('[role="tablist"]') as HTMLElement | null
+  const activeElement = document.activeElement as HTMLElement | null
+  const isInTablist = tablist && activeElement ? tablist.contains(activeElement) : false
+
+  // Tab switching via Left/Right arrows when focus is inside tablist
+  if (isInTablist && (event.key === 'ArrowRight' || event.key === 'Right' || event.key === 'ArrowLeft' || event.key === 'Left')) {
+    if (event.key === 'ArrowRight' || event.key === 'Right') {
+      readingMode.value = readingMode.value === 'paged' ? 'continuous' : 'paged'
+    }
+    else if (event.key === 'ArrowLeft' || event.key === 'Left') {
+      readingMode.value = readingMode.value === 'continuous' ? 'paged' : 'continuous'
+    }
+    event.preventDefault()
+    // Focus the selected tab after mode changes
+    nextTick(() => {
+      const selectedTab = document.querySelector('[role="tab"][aria-selected="true"]') as HTMLButtonElement
+      selectedTab?.focus()
+    })
+    return
+  }
+
+  // Page navigation via Left/Right arrows when focus is NOT in tablist
+  if (isInTablist) {
+    return
+  }
   if (readingMode.value !== 'paged') {
     return
   }
@@ -291,14 +318,18 @@ onBeforeUnmount(() => {
     <div class="comic-toolbar">
       <div role="tablist" class="mode-selectors">
         <button
+          id="tab-paged"
           role="tab"
+          aria-controls="panel-paged"
           :aria-selected="readingMode === 'paged'"
           @click="readingMode = 'paged'"
         >
           Page By Page
         </button>
         <button
+          id="tab-continuous"
           role="tab"
+          aria-controls="panel-continuous"
           :aria-selected="readingMode === 'continuous'"
           @click="readingMode = 'continuous'"
         >
@@ -308,7 +339,7 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Paged mode -->
-    <div v-if="readingMode === 'paged'" class="page-flip-comic-layout">
+    <div v-if="readingMode === 'paged'" id="panel-paged" role="tabpanel" aria-labelledby="tab-paged" class="page-flip-comic-layout">
       <div ref="flipViewport" class="comic-viewport">
         <div class="comic-content-area">
           <div v-if="pdfLoading" class="comic-status-wrap">
@@ -389,7 +420,7 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Continuous scroll mode -->
-    <div v-else ref="scrollContainer" class="scroll-comic-layout">
+    <div v-else id="panel-continuous" ref="scrollContainer" role="tabpanel" aria-labelledby="tab-continuous" class="scroll-comic-layout">
       <template v-if="pdfLoading">
         <div class="comic-status-wrap">
           <div class="spinner" />
