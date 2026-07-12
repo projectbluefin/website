@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { describe, expect, it } from 'vitest'
 
-describe('Vue component test harness', () => {
+describe('vue component test harness', () => {
   it('mounts an interactive component', async () => {
     const wrapper = mount({
       data: () => ({ count: 0 }),
