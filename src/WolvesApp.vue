@@ -83,10 +83,64 @@ function handleEmailSubmit() {
     emailFeedback.value = 'deployment "comms-relay-agent" successfully rolled out // CONNECTION SECURED.'
   }, 1500)
 }
+
+// Background Wallpaper State
+const playlistCurrentTime = ref(0)
+const playlistDuration = ref(0)
+const playlistTrackIndex = ref(0)
+const isSoundtrackActive = ref(false)
+
+function handleProgress(data: { currentTime: number, duration: number, playlistIndex: number }) {
+  playlistCurrentTime.value = data.currentTime
+  playlistDuration.value = data.duration
+  playlistTrackIndex.value = data.playlistIndex
+  isSoundtrackActive.value = true
+}
+
+const totalProgress = computed(() => {
+  if (!isSoundtrackActive.value || playlistDuration.value <= 0) {
+    return 0
+  }
+  const trackProgress = playlistCurrentTime.value / playlistDuration.value
+  return Math.min(1, Math.max(0, (playlistTrackIndex.value + trackProgress) / 7))
+})
+
+const currentPairIndex = computed(() => {
+  if (!isSoundtrackActive.value) {
+    return 9 // Pair 10 by default
+  }
+  const wallpaperIndexFloat = totalProgress.value * 12
+  return Math.floor(wallpaperIndexFloat) % 12
+})
+
+const nightOpacity = computed(() => {
+  if (!isSoundtrackActive.value) {
+    return 1.0 // Full night by default
+  }
+  const wallpaperIndexFloat = totalProgress.value * 12
+  const localProgress = wallpaperIndexFloat - Math.floor(wallpaperIndexFloat)
+  return Math.sin(localProgress * Math.PI)
+})
+
+const dayWallpaperUrl = computed(() => {
+  const pairStr = String(currentPairIndex.value + 1).padStart(2, '0')
+  return `url('${import.meta.env.BASE_URL}img/wallpapers/bluefin-${pairStr}-day.webp')`
+})
+
+const nightWallpaperUrl = computed(() => {
+  const pairStr = String(currentPairIndex.value + 1).padStart(2, '0')
+  return `url('${import.meta.env.BASE_URL}img/wallpapers/bluefin-${pairStr}-night.webp')`
+})
 </script>
 
 <template>
   <div class="wolves-teaser-page">
+    <!-- Dynamic Wallpaper Background Layers -->
+    <div class="wallpaper-container">
+      <div class="wallpaper-layer day-layer" :style="{ backgroundImage: dayWallpaperUrl }" />
+      <div class="wallpaper-layer night-layer" :style="{ backgroundImage: nightWallpaperUrl, opacity: nightOpacity }" />
+    </div>
+
     <!-- Top Global Navigation Bar -->
     <TopNavbar />
 
@@ -133,6 +187,7 @@ function handleEmailSubmit() {
             @prev-lore="handlePrevLore"
             @next-lore="handleNextLore"
             @share-lore="handleShareLore"
+            @progress="handleProgress"
           />
         </div>
 
@@ -261,13 +316,43 @@ function handleEmailSubmit() {
 </template>
 
 <style scoped lang="scss">
-.wolves-teaser-page {
-  background-image: url('/evening/10-bluefin-night.webp');
-  // Full-width crisp tiling (image is 6300x2700) instead of `cover`, which
-  // would blur/stretch it to fill the viewport.
+.wallpaper-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wallpaper-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background-size: 100% auto;
   background-position: top center;
   background-repeat: repeat-y;
+  transition: background-image 1s ease-in-out;
+  pointer-events: none;
+}
+
+.day-layer {
+  z-index: 1;
+}
+
+.night-layer {
+  z-index: 2;
+  transition:
+    background-image 1s ease-in-out,
+    opacity 0.5s ease-in-out;
+}
+
+.wolves-teaser-page {
+  background-color: #0c1016;
   min-height: 100vh;
   position: relative;
   // Firefox can break sticky descendants when an ancestor creates a scrolling
@@ -284,14 +369,14 @@ function handleEmailSubmit() {
     width: 100%;
     height: 600px;
     background: linear-gradient(to bottom, rgba(12, 16, 22, 0.7), transparent);
-    z-index: 0;
+    z-index: 2;
     pointer-events: none;
   }
 }
 
 .wolves-layout {
   position: relative;
-  z-index: 1;
+  z-index: 3;
   max-width: 1280px;
   margin: 0 auto;
   padding: 32px 24px 80px;

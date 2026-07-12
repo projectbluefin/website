@@ -16,6 +16,7 @@ const emit = defineEmits<{
   (e: 'prevLore'): void
   (e: 'nextLore'): void
   (e: 'shareLore'): void
+  (e: 'progress', data: { currentTime: number, duration: number, playlistIndex: number }): void
 }>()
 
 type PlayerStatus = 'idle' | 'loading' | 'ready' | 'playing' | 'paused' | 'error'
@@ -25,6 +26,8 @@ interface YouTubePlayer {
   pauseVideo?: () => void
   playVideoAt?: (index: number) => void
   getPlaylistIndex?: () => number
+  getCurrentTime?: () => number
+  getDuration?: () => number
   destroy?: () => void
 }
 
@@ -75,6 +78,30 @@ let player: YouTubePlayer | null = null
 let playerMount: HTMLDivElement | null = null
 let youtubeApiPromise: Promise<void> | null = null
 let shouldAutoplayOnReady = false
+let progressTimer: ReturnType<typeof setInterval> | null = null
+
+function startProgressTimer() {
+  if (progressTimer) {
+    return
+  }
+  progressTimer = setInterval(() => {
+    if (player && typeof player.getCurrentTime === 'function' && typeof player.getDuration === 'function') {
+      const currentTime = player.getCurrentTime()
+      const duration = player.getDuration()
+      const playlistIndex = typeof player.getPlaylistIndex === 'function' ? player.getPlaylistIndex() : currentTrackIndex.value
+      if (typeof currentTime === 'number' && typeof duration === 'number' && duration > 0) {
+        emit('progress', { currentTime, duration, playlistIndex })
+      }
+    }
+  }, 1000)
+}
+
+function stopProgressTimer() {
+  if (progressTimer) {
+    clearInterval(progressTimer)
+    progressTimer = null
+  }
+}
 
 const currentSource = computed(() => manifest.value?.source ?? fallbackSource)
 const currentTrack = computed(() => manifest.value?.tracks[currentTrackIndex.value] ?? fallbackTrack)
@@ -347,6 +374,12 @@ watch(isStarted, syncRootPlayerClass, { immediate: true })
 
 watch(status, (newStatus) => {
   emit('update:playing', newStatus === 'playing')
+  if (newStatus === 'playing') {
+    startProgressTimer()
+  }
+  else {
+    stopProgressTimer()
+  }
 })
 
 watch(currentTrackIndex, (newIndex) => {
@@ -389,6 +422,7 @@ watch(() => props.playing, (newPlaying) => {
 })
 
 onBeforeUnmount(() => {
+  stopProgressTimer()
   syncRootPlayerClass(false)
   player?.destroy?.()
   player = null
