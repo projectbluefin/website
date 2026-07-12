@@ -295,7 +295,7 @@ onBeforeUnmount(() => {
 
           <div class="experience-cta-wrap">
             <button class="experience-cta-btn font-mono" @click="enterImmersiveExperience">
-              [ EXPERIENCE SEVEN DAYS TO THE WOLVES ]
+              ▶ LAUNCH THE IMMERSIVE EXPERIENCE
             </button>
             <div class="experience-cta-sub font-mono">
               RECOMMENDED: HEADPHONES ON // VOLUME UP
@@ -507,10 +507,10 @@ onBeforeUnmount(() => {
   z-index: 3;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 32px 24px 80px;
+  padding: 12px 24px 40px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
 }
 
 .wolves-page-qr {
@@ -578,8 +578,8 @@ onBeforeUnmount(() => {
 .wolves-hero {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 24px 0 20px;
+  gap: 12px;
+  padding: 12px 0 10px;
 
   .hero-text {
     text-align: center;
@@ -1332,7 +1332,7 @@ onBeforeUnmount(() => {
 
 /* Experience Entrance CTA Styling */
 .experience-cta-wrap {
-  margin: 24px 0;
+  margin: 16px 0 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1344,27 +1344,40 @@ onBeforeUnmount(() => {
 }
 
 .experience-cta-btn {
-  background: linear-gradient(135deg, rgba(66, 133, 244, 0.15), rgba(102, 179, 255, 0.25));
-  border: 1px solid rgba(102, 179, 255, 0.4);
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  border: 1px solid rgba(147, 197, 253, 0.4);
   color: #ffffff;
-  padding: 14px 28px;
+  padding: 16px 32px;
   font-size: 1.65rem; /* Upgraded 50% from 1.1rem! */
   font-weight: bold;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 15px rgba(66, 133, 244, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 20px rgba(37, 99, 235, 0.5);
   letter-spacing: 0.05em;
+  animation: pulse-glow 2.5s infinite;
 
   &:hover {
-    background: linear-gradient(135deg, rgba(102, 179, 255, 0.25), rgba(125, 211, 252, 0.35));
-    border-color: #7dd3fc;
-    box-shadow: 0 0 25px rgba(66, 133, 244, 0.3);
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+    border-color: #93c5fd;
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
+    transform: translateY(-2px) scale(1.02);
   }
 
   &:active {
-    transform: translateY(1px);
+    transform: translateY(1px) scale(0.98);
+  }
+}
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
   }
 }
 
