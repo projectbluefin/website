@@ -51,7 +51,7 @@ function runTypewriter() {
     typedMessagesText.value = []
     const targetText = entry.data.quote
     let index = 0
-    const step = Math.max(1, Math.ceil(targetText.length / 30))
+    const step = Math.max(1, Math.ceil(targetText.length / 100))
 
     typewriterTimer = setInterval(() => {
       index += step
@@ -64,7 +64,7 @@ function runTypewriter() {
         const randChar = cyberChars[Math.floor(Math.random() * cyberChars.length)]
         typedQuoteText.value = targetText.slice(0, index) + randChar
       }
-    }, 20)
+    }, 35)
     return
   }
 
@@ -78,7 +78,7 @@ function runTypewriter() {
 
     for (let index = 0; index < entry.data.messages.length; index++) {
       const targetText = entry.data.messages[index].text
-      const step = Math.max(1, Math.ceil(targetText.length / 30))
+      const step = Math.max(1, Math.ceil(targetText.length / 100))
       const currentLength = frame * step
       if (currentLength < targetText.length) {
         const cyberChars = '01#$@&%<>_+'
@@ -94,7 +94,7 @@ function runTypewriter() {
     if (allDone) {
       clearTypewriter()
     }
-  }, 20)
+  }, 35)
 }
 
 function skipTypewriter() {
