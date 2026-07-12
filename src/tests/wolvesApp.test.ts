@@ -1,6 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
+import { bazziteQuotes } from '../components/wolves/lore'
 import WolvesApp from '../WolvesApp.vue'
 
 const { comicReaderAttrsSpy, soundtrackAttrsSpy } = vi.hoisted(() => ({
@@ -44,13 +45,6 @@ vi.mock('../components/wolves/WolvesSoundtrack.vue', () => ({
   }),
 }))
 
-vi.mock('../components/wolves/WolvesLoreColumn.vue', () => ({
-  default: {
-    props: ['chapter'],
-    template: '<div class="lore-chapter">{{ chapter?.id ?? `none` }}</div>',
-  },
-}))
-
 describe('wolvesApp.vue', () => {
   it('does not couple comic or soundtrack playback through parent bindings', () => {
     mount(WolvesApp)
@@ -63,21 +57,14 @@ describe('wolvesApp.vue', () => {
     expect(soundtrackAttrsSpy.mock.lastCall?.[0]).not.toHaveProperty('chapter')
   })
 
-  it('renders title, lore column, newsletter console, and discord mesh link', () => {
+  it('renders title, static lore, qr donate placeholder, newsletter console, and discord mesh link', () => {
     const wrapper = mount(WolvesApp)
 
     expect(wrapper.text()).toContain('Seven Days to the Wolves')
     expect(wrapper.text()).toContain('JOIN THE MESH (DISCORD)')
     expect(wrapper.text()).toContain('DECRYPTION_STATUS')
-    expect(wrapper.find('.lore-chapter').text()).toBe('prologue')
-  })
-
-  it('passes the active chapter to the lore column when the comic page changes', async () => {
-    const wrapper = mount(WolvesApp)
-
-    await wrapper.find('.comic-reader').trigger('click')
-
-    expect(wrapper.find('.lore-chapter').text()).toBe('pursuit')
+    expect(wrapper.text()).toContain(bazziteQuotes[0].attribution)
+    expect(wrapper.findAll('a[href="#"]')).toHaveLength(1)
   })
 
   it('handles email submission in the terminal console card', async () => {

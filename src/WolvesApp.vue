@@ -5,25 +5,21 @@ README: Bluefin Wolves Teaser Landing Page Component
 - Comic Content: Delegated to WolvesComicReader.vue. PDF URL is managed
   by the component itself (BASE_URL + color-with-bluefin.pdf).
 - Intercepted Communications: Rendered by `src/components/wolves/WolvesLoreColumn.vue`.
+- QR Sidebar: Rendered by `src/components/wolves/WolvesQrCodes.vue`.
 - Quotes: Sourced from `src/data/bazzite-quotes.json` with fields
- `quote`, `attribution`, optional `context`, and optional `date`.
-- Donate QR Code: Pointing to `https://docs.projectbluefin.io/donations`.
+`quote`, `attribution`, optional `context`, and optional `date`.
+- Donate QR Code: Placeholder target is `#` until the final donation URL is approved.
   To change the donation target URL, update `scripts/generate-qrs.js` and re-run.
 - Playlist ID in use: `PLA78oiE-RGAE` ("Bluefin: Seven Days to the Wolves" on YouTube).
 -->
 <script setup lang="ts">
-import type { WolvesChapter } from './data/wolves-story'
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import TopNavbar from './components/TopNavbar.vue'
 import WolvesComicReader from './components/wolves/WolvesComicReader.vue'
 import WolvesLoreColumn from './components/wolves/WolvesLoreColumn.vue'
+import WolvesQrCodes from './components/wolves/WolvesQrCodes.vue'
 import WolvesSoundtrack from './components/wolves/WolvesSoundtrack.vue'
 import { wolvesRelease } from './data/wolves-story'
-import { getChapterForPage } from './utils/wolvesStory'
-
-// Current page (1-based) tracked here so chapter-aware lore stays in sync with the reader.
-const currentPage = ref(1)
-const activeChapter = computed<WolvesChapter | undefined>(() => getChapterForPage(currentPage.value))
 
 // Console Email Submission
 const emailInput = ref('')
@@ -73,14 +69,14 @@ function handleEmailSubmit() {
         <div class="col-left">
           <WolvesComicReader
             :chapters="wolvesRelease.chapters"
-            @update:page="currentPage = $event"
           />
 
           <WolvesSoundtrack />
         </div>
 
         <div class="col-right">
-          <WolvesLoreColumn :chapter="activeChapter" />
+          <WolvesLoreColumn />
+          <WolvesQrCodes />
 
           <div class="decryption-meter-card">
             <div class="meter-header">

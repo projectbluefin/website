@@ -2,7 +2,6 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import WolvesLoreColumn from '../components/wolves/WolvesLoreColumn.vue'
 import quoteData from '../data/bazzite-quotes.json'
-import { wolvesRelease } from '../data/wolves-story'
 
 interface BazziteQuote {
   quote: string
@@ -14,26 +13,27 @@ interface BazziteQuote {
 const quotes = quoteData as BazziteQuote[]
 
 describe('wolvesLoreColumn', () => {
-  it('uses only the final quote schema and renders attribution', () => {
-    expect(quotes.length).toBeGreaterThan(0)
-    expect(quotes[0]).toMatchObject({
-      quote: expect.any(String),
-      attribution: expect.any(String),
-    })
+  it('contains exactly five final-schema lorem ipsum placeholders', () => {
+    expect(quotes).toHaveLength(5)
 
-    for (const entry of quotes) {
+    for (const [index, entry] of quotes.entries()) {
+      expect(Object.keys(entry).sort()).toEqual(['attribution', 'context', 'date', 'quote'])
+      expect(entry).toMatchObject({
+        quote: expect.stringMatching(/^Lorem ipsum/i),
+        attribution: `Placeholder Dispatch 0${index + 1}`,
+        context: 'Approved Discord quote placeholder',
+        date: `2099-01-0${index + 1}`,
+      })
       expect(entry).not.toHaveProperty('person')
       expect(entry).not.toHaveProperty('sourceType')
       expect(entry).not.toHaveProperty('sourceTitle')
       expect(entry).not.toHaveProperty('sourceDetail')
     }
 
-    const wrapper = mount(WolvesLoreColumn, {
-      props: {
-        chapter: wolvesRelease.chapters[1],
-      },
-    })
-    expect(wrapper.findAll('article').length).toBeGreaterThan(0)
-    expect(quotes.some(entry => wrapper.text().includes(entry.attribution))).toBe(true)
+    const wrapper = mount(WolvesLoreColumn)
+    expect(wrapper.get('ol').attributes('aria-label')).toBe('Recovered transmissions')
+    expect(wrapper.findAll('article')).toHaveLength(5)
+    expect(wrapper.text()).toContain(quotes[0].quote)
+    expect(quotes.every(entry => wrapper.text().includes(entry.attribution))).toBe(true)
   })
 })
