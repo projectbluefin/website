@@ -12,7 +12,7 @@ describe('wolvesLoreColumn.vue', () => {
   it('renders quote-schema entries from bazzite quotes data', async () => {
     const wrapper = mount(WolvesLoreColumn, {
       props: {
-        chapter: wolvesRelease.chapters[0],
+        chapter: wolvesRelease.chapters[1],
       },
     })
 
