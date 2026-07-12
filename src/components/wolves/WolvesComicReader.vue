@@ -41,7 +41,6 @@ let pdfDocument: any = null
 const renderTasks = new Map<HTMLCanvasElement, any>()
 
 // State ────────────────────────────────────────────────────────────────────
-const totalPages = ref(0)
 const page = ref(1) // 1-based
 const pdfLoading = ref(true)
 const pdfError = ref('')
@@ -204,7 +203,8 @@ const wallpapers = [
   { type: 'single', name: 'flickr-55344186409.webp', title: 'DSC04181' },
 ]
 
-const shuffledWallpapers = ref<any[]>([])
+const shuffledWallpapers = ref<any[]>(shuffleArray([...wallpapers]))
+const totalPages = ref(wallpapers.length + 1)
 const duskIsNight = ref(false)
 let duskTimer: ReturnType<typeof setInterval> | null = null
 
@@ -348,8 +348,6 @@ async function loadComicPdf() {
   try {
     const lib = await loadPdfJs()
     pdfDocument = await lib.getDocument(pdfUrl).promise
-    shuffledWallpapers.value = shuffleArray([...wallpapers])
-    totalPages.value = shuffledWallpapers.value.length + 1 // 1 Cover + Wallpapers from projectbluefin/documentation/artwork
     pdfLoading.value = false
     await nextTick()
     setupFlipResizeObserver()
@@ -357,7 +355,7 @@ async function loadComicPdf() {
   }
   catch (err) {
     console.error('[wolves] Failed to load comic PDF', err)
-    pdfError.value = 'Unable to load the comic book right now. Please try again in a moment.'
+    pdfError.value = 'Unable to load the comic book cover right now. Wallpapers will still play.'
     pdfLoading.value = false
   }
 }
@@ -492,11 +490,11 @@ onBeforeUnmount(() => {
     <div class="page-flip-comic-layout">
       <div ref="flipViewport" class="comic-viewport">
         <div class="comic-content-area">
-          <div v-if="pdfLoading" class="comic-status-wrap">
+          <div v-if="pdfLoading && page === 1" class="comic-status-wrap">
             <div class="spinner" />
             <p>Loading comic pages&hellip;</p>
           </div>
-          <div v-else-if="pdfError" class="comic-status-wrap is-error">
+          <div v-else-if="pdfError && page === 1" class="comic-status-wrap is-error">
             <p>{{ pdfError }}</p>
             <button class="ctrl-btn" @click="loadComicPdf">
               Retry
@@ -510,7 +508,7 @@ onBeforeUnmount(() => {
             :aria-label="`Comic page ${page} of ${totalPages}`"
           />
           <!-- Wallpaper Pages (Pages 2-15) -->
-          <div v-if="!pdfLoading && !pdfError && page > 1" class="wallpaper-viewport-wrapper">
+          <div v-if="page > 1" class="wallpaper-viewport-wrapper">
             <template v-for="(wp, idx) in shuffledWallpapers" :key="idx">
               <div v-if="page === idx + 2" class="wallpaper-display-card animate-fade">
                 <div v-if="wp.type === 'single'" class="wallpaper-container">
