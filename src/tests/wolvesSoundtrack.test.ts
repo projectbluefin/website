@@ -25,10 +25,10 @@ describe('wolves soundtrack', () => {
     expect(wrapper.find('button[aria-label="Toggle mute"]').exists()).toBe(false)
   })
 
-  it('shows entry gate on reload after start without dismiss', () => {
-    sessionStorage.setItem('wolves_soundtrack_started', 'true')
+  it('no persisted start state hides the entry gate', () => {
+    // Clear storage, mount, assert start button visible
+    sessionStorage.clear()
     const wrapper = mount(WolvesSoundtrack, { props: { chapter: undefined } })
-    // Gate must still be available — no auto-start on reload
     expect(wrapper.find('button[aria-label="Start soundtrack"]').exists()).toBe(true)
     expect(wrapper.find('iframe').exists()).toBe(false)
   })

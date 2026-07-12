@@ -18,7 +18,6 @@ const hasEntered = ref(isDismissed.value)
 function start() {
   hasStarted.value = true
   hasEntered.value = true
-  sessionStorage.setItem('wolves_soundtrack_started', 'true')
   emit('entered')
 }
 
