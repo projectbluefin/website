@@ -109,15 +109,15 @@ const currentPairIndex = computed(() => {
   if (!isSoundtrackActive.value) {
     return 6 // Start with July (index 6, Month 7) by default
   }
-  const wallpaperIndexFloat = totalProgress.value * 12
+  const wallpaperIndexFloat = totalProgress.value * 12 + 6
   return Math.floor(wallpaperIndexFloat) % 12
 })
 
 const nightOpacity = computed(() => {
   if (!isSoundtrackActive.value) {
-    return 0.0 // Start with July day (night layer opacity 0) by default
+    return 1.0 // Start with July night by default
   }
-  const wallpaperIndexFloat = totalProgress.value * 12
+  const wallpaperIndexFloat = totalProgress.value * 12 + 6
   const localProgress = wallpaperIndexFloat - Math.floor(wallpaperIndexFloat)
   return Math.sin(localProgress * Math.PI)
 })
