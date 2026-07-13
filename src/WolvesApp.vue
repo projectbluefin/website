@@ -25,6 +25,7 @@ import WolvesComicReader from './components/wolves/WolvesComicReader.vue'
 import WolvesLoreColumn from './components/wolves/WolvesLoreColumn.vue'
 import WolvesQrCodes from './components/wolves/WolvesQrCodes.vue'
 import WolvesSoundtrack from './components/wolves/WolvesSoundtrack.vue'
+import WolvesTimelineSlider from './components/wolves/WolvesTimelineSlider.vue'
 import { loadWolvesSoundtrack } from './data/wolves-soundtrack'
 import { wolvesRelease } from './data/wolves-story'
 
@@ -40,6 +41,13 @@ const soundtrackManifest = ref<WolvesSoundtrackManifest | null>(null)
 // Current page (1-based) tracked here so the chapter can be passed to WolvesSoundtrack.
 const currentPage = ref(1)
 const totalPages = wallpapers.length + 1
+const isSliderPrototype = ref(false)
+
+onMounted(() => {
+  if (typeof window !== 'undefined' && window.location.search.includes('prototype=slider')) {
+    isSliderPrototype.value = true
+  }
+})
 const activeChapter = computed<WolvesChapter | undefined>(() => getChapterForPage(currentPage.value))
 
 const loreColumnRef = ref<any>(null)
@@ -427,6 +435,13 @@ onBeforeUnmount(() => {
           />
         </div>
       </div>
+
+      <!-- PROTOTYPE SLIDER -->
+      <WolvesTimelineSlider
+        v-if="isSliderPrototype"
+        v-model="currentPage"
+        :max="totalPages"
+      />
 
       <!-- EQUINOX OVERLAY -->
       <transition name="equinox-fade">
