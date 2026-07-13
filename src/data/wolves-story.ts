@@ -86,15 +86,15 @@ export const wolvesRelease: WolvesRelease = {
       chapterId: 'prologue',
       type: 'transmission',
       publishedAt: '2326-06-16',
-      title: 'Placeholder Transmission',
+      title: 'The Artifact',
       body: parseBody(loreFiles['./lore/lorem-prologue-1.md'] || ''),
     },
     {
       id: 'lorem-prologue-2',
       chapterId: 'prologue',
-      type: 'quote',
+      type: 'transmission',
       publishedAt: '2326-06-17',
-      title: 'Placeholder Quote',
+      title: 'The Children',
       body: parseBody(loreFiles['./lore/lorem-prologue-2.md'] || ''),
     },
     // --- Pursuit: transmissions ---
@@ -162,9 +162,9 @@ export const wolvesRelease: WolvesRelease = {
     {
       id: 'lorem-pursuit-1',
       chapterId: 'pursuit',
-      type: 'news',
+      type: 'transmission',
       publishedAt: '2326-05-26',
-      title: 'Placeholder News',
+      title: 'The Golden Era',
       body: parseBody(loreFiles['./lore/lorem-pursuit-1.md'] || ''),
     },
     // --- Awakening: archival transmissions ---
@@ -195,9 +195,9 @@ export const wolvesRelease: WolvesRelease = {
     {
       id: 'lorem-awakening-1',
       chapterId: 'awakening',
-      type: 'quote',
+      type: 'transmission',
       publishedAt: '2326-01-02',
-      title: 'Placeholder Insight',
+      title: 'Betrayal',
       body: parseBody(loreFiles['./lore/lorem-awakening-1.md'] || ''),
     },
     // --- Source: Ishtar Collective / Unveiling (archival) ---

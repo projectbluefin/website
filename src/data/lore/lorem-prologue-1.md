@@ -3,4 +3,6 @@ _editor_prompt: >-
   STORY CONTEXT: Prologue: 'The Kube' - Who left this here? (Pages 1-7). This
   acts as a prompt for your editing.
 ---
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+Berkus: It is said that we should not touch that, let alone bring it out in the open.
+Laura: Where's your sense of fun it'll look great with the stuffed little dinos.
+Joseph: I don't know it gives me the creeps. Anyone seen Colin? We're late.
