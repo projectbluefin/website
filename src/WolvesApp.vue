@@ -1417,49 +1417,6 @@ onBeforeUnmount(() => {
     letter-spacing: 0.05em;
   }
 
-  .thesis-overlay {
-    position: absolute;
-    inset: auto 0 0;
-    height: 33.333%;
-    z-index: 30;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    color: #ffffff;
-    text-align: center;
-    text-shadow:
-      0 0 24px #7dd3fc,
-      0 0 52px rgba(255, 255, 255, 0.7);
-
-    h1 {
-      margin: 0;
-      font-size: clamp(2rem, 6vw, 6rem);
-      font-weight: 900;
-    }
-    p {
-      margin: 0 0 16px;
-      font-size: clamp(1rem, 2vw, 2rem);
-      letter-spacing: 0.15em;
-    }
-    span {
-      font-size: clamp(1.2rem, 3vw, 3rem);
-      letter-spacing: 0.12em;
-    }
-
-    &.is-welcome,
-    &.is-universal-blue,
-    &.is-evolve {
-      h1 {
-        font-size: clamp(1.5rem, 3.5vw, 3.5rem);
-      }
-    }
-    &.is-legend {
-      background: radial-gradient(circle, rgba(26, 71, 105, 0.45), transparent 65%);
-    }
-  }
-
   .hud-indicator-dot {
     width: 8px;
     height: 8px;
@@ -1485,6 +1442,49 @@ onBeforeUnmount(() => {
       color: #ffffff;
       box-shadow: 0 0 15px rgba(248, 113, 113, 0.25);
     }
+  }
+}
+
+.thesis-overlay {
+  position: absolute;
+  inset: auto 0 0;
+  height: 33.333%;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: #ffffff;
+  text-align: center;
+  text-shadow:
+    0 0 24px #7dd3fc,
+    0 0 52px rgba(255, 255, 255, 0.7);
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2rem, 6vw, 6rem);
+    font-weight: 900;
+  }
+  p {
+    margin: 0 0 16px;
+    font-size: clamp(1rem, 2vw, 2rem);
+    letter-spacing: 0.15em;
+  }
+  span {
+    font-size: clamp(1.2rem, 3vw, 3rem);
+    letter-spacing: 0.12em;
+  }
+
+  &.is-welcome,
+  &.is-universal-blue,
+  &.is-evolve {
+    h1 {
+      font-size: clamp(1.5rem, 3.5vw, 3.5rem);
+    }
+  }
+  &.is-legend {
+    background: radial-gradient(circle, rgba(26, 71, 105, 0.45), transparent 65%);
   }
 }
 
