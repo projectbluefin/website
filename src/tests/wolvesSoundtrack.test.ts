@@ -47,6 +47,8 @@ interface MockPlayerRecord {
   playlistIndex: number
   playVideo: ReturnType<typeof vi.fn>
   pauseVideo: ReturnType<typeof vi.fn>
+  nextVideo: ReturnType<typeof vi.fn>
+  previousVideo: ReturnType<typeof vi.fn>
   getPlaylistIndex: ReturnType<typeof vi.fn>
   destroy: ReturnType<typeof vi.fn>
   triggerReady: () => void
@@ -76,6 +78,8 @@ function installMockIframeApi() {
       })
     })
 
+    nextVideo = vi.fn()
+    previousVideo = vi.fn()
     getPlaylistIndex = vi.fn(() => this.playlistIndex)
     destroy = vi.fn()
 
@@ -157,12 +161,43 @@ describe('wolves soundtrack', () => {
     expect(wrapper.get('.soundtrack-label').text()).toBe('MUSIC TO HUNT BY')
   })
 
-  it('does not expose controls that can change narrative position', () => {
+  it('renders disabled skip controls before the player is ready', () => {
     const wrapper = mount(WolvesSoundtrack)
 
-    expect(wrapper.find('button[aria-label="Previous track"]').exists()).toBe(false)
-    expect(wrapper.find('button[aria-label="Next track"]').exists()).toBe(false)
-    expect(wrapper.find('[role="slider"]').exists()).toBe(false)
+    expect(wrapper.findAll('button[aria-label="Previous track"]')).toHaveLength(1)
+    expect(wrapper.findAll('button[aria-label="Next track"]')).toHaveLength(1)
+    expect(wrapper.get('button[aria-label="Previous track"]').attributes('disabled')).toBeDefined()
+    expect(wrapper.get('button[aria-label="Next track"]').attributes('disabled')).toBeDefined()
+  })
+
+  it('uses native playlist controls and disables their boundaries', async () => {
+    const wrapper = mount(WolvesSoundtrack)
+
+    await wrapper.get('button[aria-label="Start soundtrack"]').trigger('click')
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+    players[0].triggerReady()
+    await flushPromises()
+
+    const previousButtons = wrapper.findAll('button[aria-label="Previous track"]')
+    const nextButtons = wrapper.findAll('button[aria-label="Next track"]')
+    expect(previousButtons).toHaveLength(2)
+    expect(nextButtons).toHaveLength(2)
+    expect(previousButtons.every(button => button.attributes('disabled') !== undefined)).toBe(true)
+    expect(nextButtons.every(button => button.attributes('disabled') === undefined)).toBe(true)
+
+    await wrapper.get('.soundtrack-controls-group button[aria-label="Next track"]').trigger('click')
+    expect(players[0].nextVideo).toHaveBeenCalledOnce()
+
+    players[0].triggerPlaylistItem(1)
+    await flushPromises()
+
+    expect(wrapper.findAll('button[aria-label="Previous track"]').every(button => button.attributes('disabled') === undefined)).toBe(true)
+    expect(wrapper.findAll('button[aria-label="Next track"]').every(button => button.attributes('disabled') !== undefined)).toBe(true)
+
+    await wrapper.get('.soundtrack-controls-group button[aria-label="Previous track"]').trigger('click')
+    expect(players[0].previousVideo).toHaveBeenCalledOnce()
   })
 
   it('does not request the IFrame API until Start Soundtrack is clicked', async () => {

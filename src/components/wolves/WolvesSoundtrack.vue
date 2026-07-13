@@ -129,6 +129,15 @@ const currentSource = computed(() => manifest.value?.source ?? fallbackSource)
 const currentTrack = computed(() => manifest.value?.tracks[currentTrackIndex.value] ?? fallbackTrack)
 const isStarted = computed(() => status.value !== 'idle')
 const isPlaying = computed(() => status.value === 'playing')
+const canSkipTracks = computed(() =>
+  (status.value === 'ready' || status.value === 'playing' || status.value === 'paused')
+  && player !== null
+  && manifest.value !== null,
+)
+const canGoToPreviousTrack = computed(() => canSkipTracks.value && currentTrackIndex.value > 0)
+const canGoToNextTrack = computed(() =>
+  canSkipTracks.value && currentTrackIndex.value < (manifest.value?.tracks.length ?? 0) - 1,
+)
 const artworkUrl = computed(() => `${import.meta.env.BASE_URL}${currentTrack.value.artwork}`)
 const currentLyricsUrl = computed(() => officialLyricsUrls[currentTrack.value.youtubeVideoId])
 
@@ -376,6 +385,20 @@ function handlePrimaryAction() {
   resumePlayback()
 }
 
+function handlePreviousTrack() {
+  if (!canGoToPreviousTrack.value) {
+    return
+  }
+  player?.previousVideo?.()
+}
+
+function handleNextTrack() {
+  if (!canGoToNextTrack.value) {
+    return
+  }
+  player?.nextVideo?.()
+}
+
 watch(isStarted, syncRootPlayerClass, { immediate: true })
 
 watch(status, (newStatus) => {
@@ -470,6 +493,15 @@ onBeforeUnmount(() => {
         <div class="soundtrack-controls-group">
           <button
             type="button"
+            class="soundtrack-icon-btn prev"
+            aria-label="Previous track"
+            :disabled="!canGoToPreviousTrack"
+            @click="handlePreviousTrack"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 6h2v12H6zm3 6 9 6V6z" /></svg>
+          </button>
+          <button
+            type="button"
             class="soundtrack-icon-btn play-pause soundtrack-action"
             :aria-label="actionAriaLabel"
             :disabled="status === 'loading'"
@@ -477,6 +509,15 @@ onBeforeUnmount(() => {
           >
             <svg v-if="isPlaying" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
             <svg v-else class="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+          </button>
+          <button
+            type="button"
+            class="soundtrack-icon-btn next"
+            aria-label="Next track"
+            :disabled="!canGoToNextTrack"
+            @click="handleNextTrack"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16 6h2v12h-2zm-1 6-9 6V6z" /></svg>
           </button>
         </div>
       </div>
@@ -572,16 +613,36 @@ onBeforeUnmount(() => {
         <span class="soundtrack-mobile-artist font-mono">{{ currentTrack.artist }}</span>
       </div>
 
-      <button
-        type="button"
-        class="soundtrack-icon-btn mobile-play-pause"
-        :aria-label="actionAriaLabel"
-        :disabled="status === 'loading'"
-        @click="handlePrimaryAction"
-      >
-        <svg v-if="isPlaying" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
-        <svg v-else class="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-      </button>
+      <div class="soundtrack-controls-group">
+        <button
+          type="button"
+          class="soundtrack-icon-btn prev"
+          aria-label="Previous track"
+          :disabled="!canGoToPreviousTrack"
+          @click="handlePreviousTrack"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 6h2v12H6zm3 6 9 6V6z" /></svg>
+        </button>
+        <button
+          type="button"
+          class="soundtrack-icon-btn mobile-play-pause"
+          :aria-label="actionAriaLabel"
+          :disabled="status === 'loading'"
+          @click="handlePrimaryAction"
+        >
+          <svg v-if="isPlaying" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+          <svg v-else class="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+        </button>
+        <button
+          type="button"
+          class="soundtrack-icon-btn next"
+          aria-label="Next track"
+          :disabled="!canGoToNextTrack"
+          @click="handleNextTrack"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16 6h2v12h-2zm-1 6-9 6V6z" /></svg>
+        </button>
+      </div>
     </div>
   </div>
 </template>
