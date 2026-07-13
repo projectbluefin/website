@@ -27,14 +27,16 @@ export interface InterceptedConversation {
 }
 
 export type WolvesLoreEntry
-  = { type: 'quote', data: BazziteQuote }
-    | { type: 'conversation', data: InterceptedConversation }
+  = { id: string, chapterId: string, type: 'quote', data: BazziteQuote }
+    | { id: string, chapterId: string, type: 'conversation', data: InterceptedConversation }
 
 // Map wolvesRelease artifacts directly to Lore Entries
 export const loreEntries: WolvesLoreEntry[] = wolvesRelease.artifacts.map((artifact) => {
   if (artifact.type === 'quote') {
     const parts = (artifact.sourceLabel || artifact.title || '').split('—')
     return {
+      id: artifact.id,
+      chapterId: artifact.chapterId,
       type: 'quote',
       data: {
         quote: artifact.body,
@@ -73,6 +75,8 @@ export const loreEntries: WolvesLoreEntry[] = wolvesRelease.artifacts.map((artif
     })
 
     return {
+      id: artifact.id,
+      chapterId: artifact.chapterId,
       type: 'conversation',
       data: {
         title: artifact.title,
@@ -84,12 +88,15 @@ export const loreEntries: WolvesLoreEntry[] = wolvesRelease.artifacts.map((artif
   }
 })
 
-export function getChapterIdForLore(_entry: WolvesLoreEntry): string {
-  return 'prologue'
+export function getChapterIdForLore(entry: WolvesLoreEntry): string {
+  return entry.chapterId
 }
 
-export function getLoreEntriesForChapter(_chapter: WolvesChapter | undefined): WolvesLoreEntry[] {
-  return loreEntries
+export function getLoreEntriesForChapter(chapter: WolvesChapter | undefined): WolvesLoreEntry[] {
+  if (!chapter) {
+    return loreEntries
+  }
+  return loreEntries.filter(entry => entry.chapterId === chapter.id)
 }
 
 export function formatQuoteSource(quote: BazziteQuote): string | null {
