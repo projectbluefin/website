@@ -7,7 +7,7 @@ describe('wolves story manifest', () => {
     expect(getChapterForPage(1)?.id).toBe('prologue')
     expect(getChapterForPage(15)?.id).toBe('awakening')
     expect(getChapterForPage(20)?.id).toBe('awakening')
-    expect(getChapterForPage(21)).toBeUndefined()
+    expect(getChapterForPage(21)?.id).toBe('awakening')
   })
 
   it('keeps archive artifacts in their chapter order', () => {

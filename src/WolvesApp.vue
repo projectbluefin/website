@@ -66,10 +66,10 @@ function handleTrackChange(index: number) {
     currentPage.value = 1
   }
   else if (index === 1) {
-    currentPage.value = 6
+    currentPage.value = 8
   }
   else if (index === 6) {
-    currentPage.value = 11
+    currentPage.value = 15
   }
 }
 
@@ -2016,22 +2016,19 @@ onBeforeUnmount(() => {
   padding: 0 16px;
   overflow: hidden;
   height: 110px;
-  width: 50%;
+  width: 100%;
+  max-width: 400px;
   border: 1px dashed rgba(102, 179, 255, 0.15);
   border-radius: 4px;
   background: rgba(16, 21, 31, 0.3);
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none; /* Let clicks pass through to dock if they overlap */
   z-index: 10;
 
-  @media (max-width: 767px) {
-    position: relative;
-    left: auto;
-    transform: none;
-    width: 100%;
+  @media (max-width: 1200px) {
+    max-width: 250px;
+  }
+
+  @media (max-width: 1023px) {
+    display: none;
   }
 
   .announcement-standby {
@@ -2042,7 +2039,7 @@ onBeforeUnmount(() => {
 
   .announcement-message {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    font-size: clamp(1.1rem, 1.8vw, 1.4rem);
     font-style: normal;
     font-weight: 900;
     color: #ffffff;
@@ -2052,7 +2049,6 @@ onBeforeUnmount(() => {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    position: absolute;
     text-align: center;
     width: 100%;
 

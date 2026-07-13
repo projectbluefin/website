@@ -15,9 +15,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:playing', playing: boolean): void
   (e: 'trackChange', index: number): void
-  (e: 'prevLore'): void
-  (e: 'nextLore'): void
-  (e: 'shareLore'): void
   (e: 'progress', data: { currentTime: number, duration: number, playlistIndex: number }): void
   (e: 'update:page', page: number): void
 }>()
@@ -616,33 +613,7 @@ function prevTrack() {
       </div>
     </section>
 
-    <!-- Lore Navigation Controls -->
-    <div class="lore-nav-controls">
-      <button
-        type="button"
-        class="quote-nav-btn prev"
-        aria-label="Previous transcript"
-        @click="emit('prevLore')"
-      >
-        &larr;
-      </button>
-      <button
-        type="button"
-        class="quote-nav-btn next"
-        aria-label="Next transcript"
-        @click="emit('nextLore')"
-      >
-        &rarr;
-      </button>
-      <button
-        type="button"
-        class="quote-nav-btn share-btn font-mono"
-        :aria-label="loreCopied ? 'Transcript copied' : 'Share transcript'"
-        @click="emit('shareLore')"
-      >
-        {{ loreCopied ? 'COPIED!' : 'SHARE' }}
-      </button>
-    </div>
+    <!-- Removed -->
 
     <!-- Fused Comic Slideshow Controls -->
     <div v-if="page && totalPages" class="soundtrack-comic-controls">
