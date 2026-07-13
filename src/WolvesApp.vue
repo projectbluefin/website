@@ -26,6 +26,7 @@ import WolvesSoundtrack from './components/wolves/WolvesSoundtrack.vue'
 import { getNarrativeSlotForTime } from './data/wolves-narrative-timeline'
 import { loadWolvesSoundtrack } from './data/wolves-soundtrack'
 import { wolvesRelease } from './data/wolves-story'
+import { getWolvesThesisState } from './data/wolves-thesis-sequence'
 
 const isPlaying = ref(false)
 const isEquinoxActive = ref(false)
@@ -40,6 +41,9 @@ const playlistTrackIndex = ref(0)
 const isSoundtrackActive = ref(false)
 const currentNarrativeSlot = computed(() =>
   getNarrativeSlotForTime(playlistTrackIndex.value === 0 ? playlistCurrentTime.value : Number.POSITIVE_INFINITY),
+)
+const thesisState = computed(() =>
+  playlistTrackIndex.value === 0 ? getWolvesThesisState(playlistCurrentTime.value) : getWolvesThesisState(-1),
 )
 
 const activeNarrativeArtifact = computed(() =>
@@ -94,21 +98,20 @@ const totalProgress = computed(() => {
   return Math.min(1, Math.max(0, (playlistTrackIndex.value + trackProgress) / 7))
 })
 
+const wallpaperNightOpacity = computed(() => {
+  if (thesisState.value.dayPulse || !isSoundtrackActive.value) {
+    return 0
+  }
+  const wallpaperIndexFloat = totalProgress.value * 12 + 6
+  return Math.sin((wallpaperIndexFloat - Math.floor(wallpaperIndexFloat)) * Math.PI)
+})
+
 const currentPairIndex = computed(() => {
   if (!isSoundtrackActive.value) {
     return 6 // Start with July (index 6, Month 7) by default
   }
   const wallpaperIndexFloat = totalProgress.value * 12 + 6
   return Math.floor(wallpaperIndexFloat) % 12
-})
-
-const nightOpacity = computed(() => {
-  if (!isSoundtrackActive.value) {
-    return 1.0 // Start with July night by default
-  }
-  const wallpaperIndexFloat = totalProgress.value * 12 + 6
-  const localProgress = wallpaperIndexFloat - Math.floor(wallpaperIndexFloat)
-  return Math.sin(localProgress * Math.PI)
 })
 
 const activeMonth = ref(6)
@@ -205,13 +208,13 @@ onBeforeUnmount(() => {
       <!-- Previous Month Buffer (fading out) -->
       <div v-if="previousMonth !== null" class="wallpaper-buffer-layer fading-out">
         <div class="wallpaper-layer day-layer" :style="{ backgroundImage: getDayWallpaperUrl(previousMonth) }" />
-        <div class="wallpaper-layer night-layer" :style="{ backgroundImage: getNightWallpaperUrl(previousMonth), opacity: nightOpacity }" />
+        <div class="wallpaper-layer night-layer" :style="{ backgroundImage: getNightWallpaperUrl(previousMonth), opacity: wallpaperNightOpacity }" />
       </div>
 
       <!-- Active Month Buffer (fading in) -->
       <div class="wallpaper-buffer-layer" :class="{ 'is-transitioning': isTransitioning }">
         <div class="wallpaper-layer day-layer" :style="{ backgroundImage: getDayWallpaperUrl(activeMonth) }" />
-        <div class="wallpaper-layer night-layer" :style="{ backgroundImage: getNightWallpaperUrl(activeMonth), opacity: nightOpacity }" />
+        <div class="wallpaper-layer night-layer" :style="{ backgroundImage: getNightWallpaperUrl(activeMonth), opacity: wallpaperNightOpacity }" />
       </div>
     </div>
 
@@ -258,10 +261,10 @@ onBeforeUnmount(() => {
     <!-- Immersive Fullscreen Theater Experience -->
     <div v-else class="immersive-layout">
       <!-- TOP STATUS BAR HUD -->
-      <header class="immersive-hud-header">
+      <header class="immersive-hud-header" :class="{ 'is-thesis-active': thesisState.active }">
         <div class="hud-left font-mono">
           <span class="hud-indicator-dot animate-pulse-fast" />
-          kubectl get pods -n wolves --selector=app=seven-days-to-the-wolves --watch
+          {{ thesisState.hudLabel || 'kubectl get pods -n wolves --selector=app=seven-days-to-the-wolves --watch' }}
         </div>
         <button class="hud-exit-btn font-mono" @click="exitImmersiveExperience">
           [ EXIT EXPERIENCE ]
@@ -281,7 +284,18 @@ onBeforeUnmount(() => {
           <WolvesLoreColumn
             :artifact-id="currentNarrativeSlot.artifactId"
             :duration="currentNarrativeSlot.endTime - currentNarrativeSlot.startTime"
+            :warning="thesisState.warning"
           />
+        </div>
+
+        <div v-if="thesisState.active" class="thesis-overlay font-mono" :class="`is-${thesisState.mode}`">
+          <p v-if="thesisState.subtitle">
+            {{ thesisState.subtitle }}
+          </p>
+          <h1 v-if="thesisState.text">
+            {{ thesisState.text }}
+          </h1>
+          <span v-if="thesisState.mode === 'corruption' || thesisState.mode === 'growing-corruption'">!&lt;&gt;-_\\/[]{}—=+*^?#________X01</span>
         </div>
       </div>
 
@@ -1339,6 +1353,12 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   flex-shrink: 0;
 
+  &.is-thesis-active {
+    border-color: #7dd3fc;
+    background: rgba(8, 28, 45, 0.78);
+    box-shadow: 0 0 24px rgba(125, 211, 252, 0.55);
+  }
+
   .hud-left {
     display: flex;
     align-items: center;
@@ -1347,6 +1367,48 @@ onBeforeUnmount(() => {
     font-weight: bold;
     color: #e2e8f0;
     letter-spacing: 0.05em;
+  }
+
+  .thesis-overlay {
+    position: fixed;
+    inset: 80px 0 140px;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    color: #ffffff;
+    text-align: center;
+    text-shadow:
+      0 0 24px #7dd3fc,
+      0 0 52px rgba(255, 255, 255, 0.7);
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 6vw, 6rem);
+      font-weight: 900;
+    }
+    p {
+      margin: 0 0 16px;
+      font-size: clamp(1rem, 2vw, 2rem);
+      letter-spacing: 0.15em;
+    }
+    span {
+      font-size: clamp(1.2rem, 3vw, 3rem);
+      letter-spacing: 0.12em;
+    }
+
+    &.is-welcome,
+    &.is-universal-blue,
+    &.is-evolve {
+      h1 {
+        font-size: clamp(1.5rem, 3.5vw, 3.5rem);
+      }
+    }
+    &.is-legend {
+      background: radial-gradient(circle, rgba(26, 71, 105, 0.45), transparent 65%);
+    }
   }
 
   .hud-indicator-dot {

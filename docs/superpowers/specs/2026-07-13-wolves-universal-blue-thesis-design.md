@@ -22,6 +22,8 @@ Track 0's Universal Blue call-to-action is the thesis sequence of the Wolves vid
 - From 5:45 through 7:05, the immersive top bar reads `Incoming Signal: Universal Blue`.
 - The day-mode pulse occurs only at 5:45. Normal soundtrack-driven wallpaper behavior resumes after the thesis sequence.
 - The `Become Legend` banner is the visual foreground from 6:45 through 7:05. The final lore remains held underneath it.
+- The final `blue-universal-acquires-wayland-yutani` lore artifact remains intact in the lore card, including the full surrounding context for `truly a great loss for humanity.`
+- From 6:45 through 7:05, render `truly a great loss for humanity.` as a separate, slow, fading warning in the lore column. It is an echo of the unchanged lore line, not a replacement or an edit to the lore.
 
 ## Narrative Pacing
 

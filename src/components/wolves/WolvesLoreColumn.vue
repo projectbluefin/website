@@ -7,6 +7,7 @@ import { loreEntries } from './lore'
 const props = defineProps<{
   artifactId: string
   duration: number
+  warning?: string
 }>()
 
 const baseUrl = import.meta.env.BASE_URL
@@ -290,6 +291,9 @@ onBeforeUnmount(() => {
         </div>
 
         <div ref="quoteViewportRef" class="quote-viewport" @click="skipTypewriter">
+          <p v-if="warning" class="thesis-warning">
+            {{ warning }}
+          </p>
           <Transition name="quote-fade">
             <div
               v-if="currentLoreEntry"
@@ -469,6 +473,28 @@ onBeforeUnmount(() => {
 
   &::-webkit-scrollbar {
     width: 6px;
+  }
+
+  .thesis-warning {
+    margin: 0 0 18px;
+    border-left: 2px solid var(--color-blue-light);
+    padding-left: 12px;
+    color: #d9f4ff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    font-size: 1.3rem;
+    font-style: italic;
+    line-height: 1.6;
+    opacity: 0.8;
+    animation: thesis-warning-fade 20s linear forwards;
+  }
+
+  @keyframes thesis-warning-fade {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0.35;
+    }
   }
   &::-webkit-scrollbar-thumb {
     background: rgba(102, 179, 255, 0.3);

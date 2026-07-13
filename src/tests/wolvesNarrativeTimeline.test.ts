@@ -52,14 +52,21 @@ describe('wolves narrative timeline', () => {
     expect(getNarrativeSlotForTime(398)).toMatchObject({
       artifactId: 'blue-universal-acquires-wayland-yutani',
       startTime: 398,
-      endTime: 423,
+      endTime: 425,
     })
   })
 
   it('uses the next slot at exact boundaries and holds the final entry afterward', () => {
     expect(getNarrativeSlotForTime(20)?.artifactId).toBe('lorem-prologue-1')
     expect(getNarrativeSlotForTime(220)?.artifactId).toBe('quote-natasha-woods')
-    expect(getNarrativeSlotForTime(423)?.artifactId).toBe('blue-universal-acquires-wayland-yutani')
+    expect(getNarrativeSlotForTime(425)?.artifactId).toBe('blue-universal-acquires-wayland-yutani')
     expect(getNarrativeSlotForTime(1_000)?.artifactId).toBe('blue-universal-acquires-wayland-yutani')
+  })
+
+  it('gives longer lore entries longer non-anchor slots', () => {
+    const short = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'quote-natasha-woods')!
+    const long = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'john-seager')!
+
+    expect(long.endTime - long.startTime).toBeGreaterThan(short.endTime - short.startTime)
   })
 })
