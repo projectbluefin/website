@@ -125,7 +125,7 @@ describe('wolvesComicReader', () => {
     })
   })
 
-  it('keeps the first 15 seconds of Track 0 unchanged', async () => {
+  it('keeps the first 20 seconds of Track 0 unchanged', async () => {
     const wrapper = mount(WolvesComicReader, {
       props: {
         trackIndex: 0,
@@ -140,6 +140,35 @@ describe('wolvesComicReader', () => {
 
     await wrapper.setProps({ playlistCurrentTime: 14.99 })
     expect(activeTimelineImage(wrapper)).toContain('bluefin-prey-day.webp')
+
+    await wrapper.setProps({ playlistCurrentTime: 16.8 })
+    expect(activeTimelineImage(wrapper)).toContain('bluefin-dusk-day.webp')
+
+    await wrapper.setProps({ playlistCurrentTime: 19.99 })
+    expect(activeTimelineImage(wrapper)).toContain('bluefin-dusk-day.webp')
+  })
+
+  it('uses each Track 0 People wallpaper once', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        trackIndex: 0,
+        playlistCurrentTime: 127,
+      },
+    })
+    const shownPeople: string[] = []
+    let previousImage = ''
+
+    for (let time = 127; time < 423; time += 0.5) {
+      await wrapper.setProps({ playlistCurrentTime: time })
+      const image = activeTimelineImage(wrapper) ?? ''
+      if (image.includes('/people/') && image !== previousImage) {
+        shownPeople.push(image)
+      }
+      previousImage = image
+    }
+
+    expect(new Set(shownPeople).size).toBe(shownPeople.length)
+    expect(new Set(shownPeople).size).toBe(wallpapers.filter(wallpaper => wallpaper.name?.includes('/people/')).length)
   })
 
   it('keeps each later-track Flickr sequence stable and refreshes it for the next track', async () => {

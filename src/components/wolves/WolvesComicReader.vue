@@ -322,9 +322,9 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   }
 
   // 5. Heavy Build-Up [277, 345] seconds (68s total) -> 34 people wallpapers
-  const peoplePool3 = shuffledPeople.slice(23, 57)
+  const peoplePool3 = shuffledPeople.slice(39, 73)
   if (heartPhoto) {
-    peoplePool3[21] = heartPhoto
+    peoplePool3.splice(21, 0, heartPhoto)
   }
   const sec5BaseDuration = 68 / peoplePool3.length
   for (const item of peoplePool3) {
@@ -368,7 +368,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     remainingSec6 -= freezeDuration
   }
 
-  const peoplePool4 = shuffledPeople.slice(57)
+  const peoplePool4 = shuffledPeople.slice(73)
   const sec6BaseDuration = remainingSec6 / peoplePool4.length
   for (const item of peoplePool4) {
     const duration = sec6BaseDuration
