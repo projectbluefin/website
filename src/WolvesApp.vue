@@ -2141,7 +2141,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(12, 16, 22, 0.4);
+  background-color: rgba(12, 16, 22, 0.8);
   backdrop-filter: blur(4px);
   pointer-events: none;
 }
