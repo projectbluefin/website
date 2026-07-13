@@ -289,8 +289,8 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     currentTime += duration
   }
 
-  // 4. Chanting Bridge [229, 277] seconds (48s total) -> 8 people wallpapers shown slowly
-  const peoplePool2 = shuffledPeople.slice(15, 23)
+  // 4. Chanting Bridge [229, 277] seconds (48s total) -> 24 people wallpapers shown faster
+  const peoplePool2 = shuffledPeople.slice(15, 39)
   const sec4BaseDuration = 48 / peoplePool2.length
   for (const item of peoplePool2) {
     const duration = sec4BaseDuration
