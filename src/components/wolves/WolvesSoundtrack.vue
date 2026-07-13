@@ -452,11 +452,7 @@ onBeforeUnmount(() => {
   // Deliberately skipping player?.destroy() so the iframe survives Vite HMR during development.
 })
 
-function setPage(n: number) {
-  if (props.totalPages && n >= 1 && n <= props.totalPages) {
-    emit('update:page', n)
-  }
-}
+// setPage removed
 
 function nextTrack() {
   if (player && typeof player.nextVideo === 'function') {
@@ -615,43 +611,7 @@ function prevTrack() {
 
     <!-- Removed -->
 
-    <!-- Fused Comic Slideshow Controls -->
-    <div v-if="page && totalPages" class="soundtrack-comic-controls">
-      <button
-        type="button"
-        class="comic-ctrl-btn"
-        aria-label="Previous page"
-        :disabled="page === 1"
-        @click="setPage(page - 1)"
-      >
-        &larr; Prev
-      </button>
-
-      <span class="comic-page-counter font-mono">
-        {{ page }} / {{ totalPages }}
-      </span>
-
-      <div class="comic-jump-select-wrap">
-        <select
-          :value="page"
-          @change="setPage(Number(($event.target as HTMLSelectElement).value))"
-        >
-          <option v-for="n in totalPages" :key="n" :value="n">
-            Page {{ n === 1 ? '1 (Cover)' : n }}
-          </option>
-        </select>
-      </div>
-
-      <button
-        type="button"
-        class="comic-ctrl-btn"
-        aria-label="Next page"
-        :disabled="page === totalPages"
-        @click="setPage(page + 1)"
-      >
-        Next &rarr;
-      </button>
-    </div>
+    <!-- Controls moved to Lore Column -->
 
     <div
       v-if="isStarted"

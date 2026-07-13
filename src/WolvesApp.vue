@@ -422,8 +422,11 @@ onBeforeUnmount(() => {
           <WolvesLoreColumn
             ref="loreColumnRef"
             :chapter="activeChapter"
+            :page="currentPage"
+            :total-pages="totalPages"
             @copied-status="handleCopiedStatus"
             @first-finished="handleFirstLoreFinished"
+            @update:page="currentPage = $event"
           />
         </div>
       </div>
