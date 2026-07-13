@@ -16,7 +16,7 @@ vi.mock('../components/TopNavbar.vue', () => ({
 vi.mock('../components/wolves/WolvesComicReader.vue', () => ({
   default: {
     props: ['trackIndex', 'playlistCurrentTime'],
-    template: '<div class="comic-reader" :data-track-index="trackIndex">WolvesComicReader</div>',
+    template: '<div class="comic-reader" :data-track-index="trackIndex" :data-current-time="playlistCurrentTime">WolvesComicReader</div>',
   },
 }))
 
@@ -84,14 +84,20 @@ describe('wolvesApp.vue', () => {
     expect(wrapper.find('.lore-artifact').text()).toBe('lorem-pursuit-1')
   })
 
-  it('keeps the Track 0 presentation under the entering Equinox overlay', async () => {
+  it('keeps the Track 0 reader time and lore under the entering Equinox overlay', async () => {
     vi.useFakeTimers()
 
     try {
       const wrapper = mount(WolvesApp)
 
       await wrapper.get('.experience-cta-btn').trigger('click')
-      await wrapper.findComponent({ name: 'WolvesSoundtrack' }).vm.$emit('progress', {
+      const soundtrack = wrapper.findComponent({ name: 'WolvesSoundtrack' })
+      await soundtrack.vm.$emit('progress', {
+        currentTime: 180,
+        duration: 240,
+        playlistIndex: 0,
+      })
+      await soundtrack.vm.$emit('progress', {
         currentTime: 0,
         duration: 240,
         playlistIndex: 1,
@@ -100,21 +106,24 @@ describe('wolvesApp.vue', () => {
       expect(wrapper.find('.equinox-overlay').exists()).toBe(true)
       expect(wrapper.get('.immersive-content-grid').attributes('data-presentation')).toBe('narrative-split')
       expect(wrapper.get('.immersive-content-grid').classes()).not.toContain('equinox-active')
-      expect(wrapper.find('.lore-artifact').exists()).toBe(true)
+      expect(wrapper.find('.lore-artifact').text()).toBe('lorem-pursuit-1')
       expect(wrapper.get('.comic-reader').attributes('data-track-index')).toBe('0')
+      expect(wrapper.get('.comic-reader').attributes('data-current-time')).toBe('180')
 
       await vi.advanceTimersByTimeAsync(1499)
 
       expect(wrapper.find('.equinox-overlay').exists()).toBe(true)
       expect(wrapper.get('.immersive-content-grid').attributes('data-presentation')).toBe('narrative-split')
-      expect(wrapper.find('.lore-artifact').exists()).toBe(true)
+      expect(wrapper.find('.lore-artifact').text()).toBe('lorem-pursuit-1')
       expect(wrapper.get('.comic-reader').attributes('data-track-index')).toBe('0')
+      expect(wrapper.get('.comic-reader').attributes('data-current-time')).toBe('180')
 
       await vi.advanceTimersByTimeAsync(1)
 
       expect(wrapper.get('.immersive-content-grid').attributes('data-presentation')).toBe('centered-gallery')
       expect(wrapper.find('.comic-reader').exists()).toBe(true)
       expect(wrapper.get('.comic-reader').attributes('data-track-index')).toBe('1')
+      expect(wrapper.get('.comic-reader').attributes('data-current-time')).toBe('0')
       expect(wrapper.find('.lore-artifact').exists()).toBe(false)
     }
     finally {
@@ -130,6 +139,7 @@ describe('wolvesApp.vue', () => {
 
       await wrapper.get('.experience-cta-btn').trigger('click')
       const soundtrack = wrapper.findComponent({ name: 'WolvesSoundtrack' })
+      await soundtrack.vm.$emit('progress', { currentTime: 180, duration: 240, playlistIndex: 0 })
       await soundtrack.vm.$emit('progress', { currentTime: 0, duration: 240, playlistIndex: 1 })
       await vi.advanceTimersByTimeAsync(1000)
       await soundtrack.vm.$emit('progress', { currentTime: 0, duration: 240, playlistIndex: 2 })
@@ -137,11 +147,13 @@ describe('wolvesApp.vue', () => {
 
       expect(wrapper.get('.immersive-content-grid').attributes('data-presentation')).toBe('narrative-split')
       expect(wrapper.get('.comic-reader').attributes('data-track-index')).toBe('0')
+      expect(wrapper.get('.comic-reader').attributes('data-current-time')).toBe('180')
 
       await vi.advanceTimersByTimeAsync(1000)
 
       expect(wrapper.get('.immersive-content-grid').attributes('data-presentation')).toBe('centered-gallery')
       expect(wrapper.get('.comic-reader').attributes('data-track-index')).toBe('2')
+      expect(wrapper.get('.comic-reader').attributes('data-current-time')).toBe('0')
     }
     finally {
       vi.useRealTimers()

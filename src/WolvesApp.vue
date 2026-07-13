@@ -38,14 +38,16 @@ const soundtrackManifest = ref<WolvesSoundtrackManifest | null>(null)
 const playlistCurrentTime = ref(0)
 const playlistDuration = ref(0)
 const playlistTrackIndex = ref(0)
-const presentationTrackIndex = ref(0)
+const presentationSnapshot = ref<{ trackIndex: number, currentTime: number } | null>(null)
+const presentationTrackIndex = computed(() => presentationSnapshot.value?.trackIndex ?? playlistTrackIndex.value)
+const presentationCurrentTime = computed(() => presentationSnapshot.value?.currentTime ?? playlistCurrentTime.value)
 const isSoundtrackActive = ref(false)
 const isGalleryPresentation = computed(() => presentationTrackIndex.value > 0)
 const currentNarrativeSlot = computed(() =>
-  getNarrativeSlotForTime(playlistTrackIndex.value === 0 ? playlistCurrentTime.value : Number.POSITIVE_INFINITY),
+  getNarrativeSlotForTime(presentationTrackIndex.value === 0 ? presentationCurrentTime.value : Number.POSITIVE_INFINITY),
 )
 const thesisState = computed(() =>
-  playlistTrackIndex.value === 0 ? getWolvesThesisState(playlistCurrentTime.value) : getWolvesThesisState(-1),
+  presentationTrackIndex.value === 0 ? getWolvesThesisState(presentationCurrentTime.value) : getWolvesThesisState(-1),
 )
 
 const activeNarrativeArtifact = computed(() =>
@@ -89,7 +91,7 @@ watch(playlistTrackIndex, (newVal) => {
 
   presentationTimeout = setTimeout(() => {
     if (transitionId === equinoxTransitionId) {
-      presentationTrackIndex.value = newVal
+      presentationSnapshot.value = null
       presentationTimeout = null
     }
   }, EQUINOX_ENTER_DURATION)
@@ -103,6 +105,12 @@ watch(playlistTrackIndex, (newVal) => {
 })
 
 function handleProgress(data: { currentTime: number, duration: number, playlistIndex: number }) {
+  if (isSoundtrackActive.value && data.playlistIndex !== playlistTrackIndex.value) {
+    presentationSnapshot.value = {
+      trackIndex: presentationTrackIndex.value,
+      currentTime: presentationCurrentTime.value,
+    }
+  }
   playlistCurrentTime.value = data.currentTime
   playlistDuration.value = data.duration
   playlistTrackIndex.value = data.playlistIndex
@@ -304,7 +312,7 @@ onBeforeUnmount(() => {
         <div class="immersive-col-left">
           <WolvesComicReader
             :track-index="isSoundtrackActive ? presentationTrackIndex : undefined"
-            :playlist-current-time="playlistCurrentTime"
+            :playlist-current-time="presentationCurrentTime"
           />
         </div>
 
