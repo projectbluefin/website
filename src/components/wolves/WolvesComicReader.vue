@@ -340,22 +340,16 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     currentTime += duration
   }
 
-  // 6. Fast Solo Climax & Outro [345, 423] seconds (78s total) -> remaining 66 people wallpapers shown fast (quick edit style!)
-  const peoplePool4 = shuffledPeople.slice(57)
+  // 6. Fast Solo Climax & Outro [345, 423] seconds (78s total) -> Pivotal photo frozen for the entire climax
   if (pivotalPhoto) {
-    peoplePool4.unshift(pivotalPhoto)
-  }
-  const sec6BaseDuration = 78 / peoplePool4.length
-  for (const item of peoplePool4) {
-    const duration = sec6BaseDuration
     result.push({
-      ...item,
-      path: item.path || '',
+      ...pivotalPhoto,
+      path: pivotalPhoto.path || '',
       startTime: currentTime,
-      duration,
-      endTime: currentTime + duration
+      duration: 78,
+      endTime: currentTime + 78
     })
-    currentTime += duration
+    currentTime += 78
   }
 
   return result
