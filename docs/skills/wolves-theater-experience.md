@@ -2,7 +2,8 @@
 name: wolves-theater-experience
 description: Guidelines for managing the fullscreen cinematic immersive experience, double-buffered wallpaper transitions, and integrated cover navigation on the Wolves sub-page.
 metadata:
-  context7-sources: []
+  context7-sources:
+    - /websites/tailwindcss
 ---
 
 # Wolves Theater Experience
