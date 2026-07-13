@@ -4,6 +4,7 @@ description: Use when modifying the Wolves fullscreen cinematic experience, soun
 metadata:
   context7-sources:
     - /websites/tailwindcss
+    - /websites/vuejs_guide
     - /websites/vuejs_api
     - /vuejs/vue
     - /nodeca/js-yaml
@@ -105,3 +106,4 @@ Use this skill when modifying the immersive fullscreen dashboard, background wal
 37. **Track 0 Narrative Boundary and Later-Track Gallery:** Track 0 is the only authored comic/lore mode. Later tracks render no lore sidebar and show the centered gallery beneath the equinox/title transition. For later tracks, cap fades at 25% of the hold; when BPM is missing, use the deterministic 7/8/10-second fallback cadence.
 38. **Equinox Presentation Handoff:** Before live progress updates at a track change, latch the currently rendered track index and time in one temporary presentation snapshot. During the 1.5-second overlay enter gate, derive the reader, grid/lore slot, and thesis state from that snapshot; do not delay only the reader track index. Clear the snapshot only from the latest handoff callback, which atomically reveals the latest live playback state. Cancel pending callbacks on every track change and unmount; a rapid handoff must retain the rendered snapshot until the final gate completes. Cover this timing with fake timers: Track 0 lore and reader time remain stable before 1.5 seconds and the latest later-track state appears after it.
 39. **Immersive Session Reset:** On exit, clear both Equinox and presentation handoff timeouts, invalidate their transition id, clear the presentation snapshot, and reset the existing Track 0 playback values before re-entry. Guard the track watcher while immersive mode is inactive so that its batched reset does not create a new handoff. Cover exit and re-entry before fresh player progress with fake timers, asserting the Track 0 split, lore, and reader state persist after the former handoff deadline.
+40. **SFX Rendering:** The lore parser marks angle-bracket-only blocks as `isSfx`. Render them in a dedicated conditional branch with the established centered `.sfx-message` / `.sfx-text` treatment and no speaker header. Preserve the parsed text exactly; do not rewrite sound effects into decorative glyphs.

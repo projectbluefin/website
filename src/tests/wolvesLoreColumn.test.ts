@@ -62,6 +62,27 @@ describe('wolvesLoreColumn Logic', () => {
     expect(entry.data.messages[0].text.startsWith(renderedMessage)).toBe(true)
   })
 
+  it('renders The Children sound effects with the established SFX treatment', async () => {
+    vi.useFakeTimers()
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId: 'lorem-prologue-2',
+        duration: 0.01,
+      },
+    })
+
+    await wrapper.find('.quote-viewport').trigger('click')
+
+    const soundEffects = wrapper.findAll('.sfx-message')
+    expect(soundEffects).toHaveLength(3)
+    expect(soundEffects.map(effect => effect.find('.sfx-text').text())).toEqual([
+      'static noise and distant explosions',
+      'heavy static',
+      'connection dropping',
+    ])
+    expect(soundEffects.every(effect => !effect.find('.conversation-message-header').exists())).toBe(true)
+  })
+
   it('keeps two mascot layers mounted during rotation', async () => {
     vi.useFakeTimers()
     const wrapper = mount(WolvesLoreColumn, {

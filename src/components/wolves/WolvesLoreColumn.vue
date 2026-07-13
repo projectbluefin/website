@@ -364,20 +364,26 @@ onBeforeUnmount(() => {
                   v-show="index <= activeMessageIndex"
                   :key="`${currentLoreEntry.id}-${index}`"
                   class="conversation-message"
+                  :class="{ 'sfx-message': message.isSfx }"
                 >
-                  <div class="conversation-message-header">
-                    <span class="conversation-speaker">{{ message.speaker }}</span>
-                    <time v-if="message.timestamp">{{ message.timestamp }}</time>
-                  </div>
-                  <p>
+                  <p v-if="message.isSfx" class="sfx-text">
                     {{ typedMessagesText[index] ?? '' }}
-                    <Transition name="climax-fade">
-                      <span
-                        v-if="index === climaxMessageIndex && revealedClimaxSentence"
-                        class="climax-sentence"
-                      >{{ revealedClimaxSentence }}</span>
-                    </Transition>
                   </p>
+                  <template v-else>
+                    <div class="conversation-message-header">
+                      <span class="conversation-speaker">{{ message.speaker }}</span>
+                      <time v-if="message.timestamp">{{ message.timestamp }}</time>
+                    </div>
+                    <p>
+                      {{ typedMessagesText[index] ?? '' }}
+                      <Transition name="climax-fade">
+                        <span
+                          v-if="index === climaxMessageIndex && revealedClimaxSentence"
+                          class="climax-sentence"
+                        >{{ revealedClimaxSentence }}</span>
+                      </Transition>
+                    </p>
+                  </template>
                 </li>
               </ol>
               <div v-else-if="currentLoreEntry.type === 'quote'" class="lore-quote">
