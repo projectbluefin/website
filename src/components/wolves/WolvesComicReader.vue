@@ -228,7 +228,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     pivotalPhoto = localPeople.splice(targetIndex, 1)[0]
   }
 
-  const bkTarget = 'wolves/people/bketelsen.jpeg'
+  const bkTarget = 'wolves/people/bketelsen.webp'
   const bkTargetIndex = localPeople.findIndex(wp => wp.id === bkTarget)
   let bkPhoto: any = null
   if (bkTargetIndex !== -1) {
