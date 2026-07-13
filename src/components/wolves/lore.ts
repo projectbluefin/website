@@ -1,5 +1,5 @@
 import type { WolvesChapter } from '../../data/wolves-story'
-import yaml from 'js-yaml'
+import { wolvesRelease } from '../../data/wolves-story'
 
 export interface BazziteQuote {
   quote: string
@@ -29,62 +29,47 @@ export type WolvesLoreEntry
   = { type: 'quote', data: BazziteQuote }
     | { type: 'conversation', data: InterceptedConversation }
 
-function parseMarkdown<T>(rawContent: string): { metadata: T, body: string } {
-  const match = rawContent.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/)
-  if (match) {
-    const metadata = yaml.load(match[1]) as T
-    const body = match[2].trim()
-    return { metadata, body }
-  }
-  return { metadata: {} as T, body: rawContent.trim() }
-}
-
-const rawQuotesFiles = import.meta.glob('../../data/lore/sidebar-quote-*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
-const rawCommsFiles = import.meta.glob('../../data/lore/sidebar-comm-*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
-
-export const bazziteQuotes: BazziteQuote[] = Object.values(rawQuotesFiles).map((raw) => {
-  const { metadata, body } = parseMarkdown<Omit<BazziteQuote, 'quote'>>(raw)
-  return {
-    ...metadata,
-    quote: body
-  }
-})
-
-export const interceptedCommunications: InterceptedConversation[] = Object.values(rawCommsFiles).map((raw) => {
-  const { metadata, body } = parseMarkdown<Omit<InterceptedConversation, 'messages'>>(raw)
-
-  // Parse body into messages
-  const messageBlocks = body.split(/\n{2,}/)
-  const messages: InterceptedMessage[] = messageBlocks.map((block) => {
-    // Format: **SPEAKER** [03:14:22]: text OR **SPEAKER**: text
-    const match = block.match(/^\*\*([^*]+)\*\*(?:\s+\[(.*?)\])?:(.*)$/s)
-    if (match) {
-      return {
-        speaker: match[1],
-        timestamp: match[2] || undefined,
-        text: match[3].replace(/<br>/g, '\n').trim()
+// Map wolvesRelease artifacts directly to Lore Entries
+export const loreEntries: WolvesLoreEntry[] = wolvesRelease.artifacts.map((artifact) => {
+  if (artifact.type === 'quote') {
+    const parts = (artifact.sourceLabel || artifact.title || '').split('—')
+    return {
+      type: 'quote',
+      data: {
+        quote: artifact.body,
+        attribution: parts[0]?.trim() || artifact.title,
+        context: parts[1]?.trim() || '',
+        date: artifact.publishedAt
       }
     }
-    // Fallback if parsing fails
-    return { speaker: 'UNKNOWN', text: block }
-  })
+  }
+  else {
+    // parse body into messages
+    const messageBlocks = artifact.body.split(/\n{2,}/)
+    const messages = messageBlocks.map((block) => {
+      // support **Speaker**: or SPEAKER:
+      const match = block.match(/^(?:\*\*([^*]+)\*\*|([A-Z0-9-]+))(?:\s+\[([^\]]+)\])?:\s*(\S[\s\S]*)$/i)
+      if (match) {
+        return {
+          speaker: (match[1] || match[2]).trim(),
+          timestamp: match[3] || undefined,
+          text: match[4].replace(/<br>/g, '\n').trim()
+        }
+      }
+      return { speaker: 'SYSTEM', text: block }
+    })
 
-  return {
-    ...metadata,
-    messages
+    return {
+      type: 'conversation',
+      data: {
+        title: artifact.title,
+        channel: artifact.channel || 'ARCHIVE//LOG',
+        date: artifact.publishedAt,
+        messages
+      }
+    }
   }
 })
-
-const targetQuoteText = 'In the space of a few days, humanity had lost its future, for the heart of any race is destroyed, and its will to survive is utterly broken, when its children are taken from it.'
-
-const firstQuote = bazziteQuotes.find(q => q.quote === targetQuoteText)
-const remainingQuotes = bazziteQuotes.filter(q => q.quote !== targetQuoteText)
-
-export const loreEntries: WolvesLoreEntry[] = [
-  ...(firstQuote ? [{ type: 'quote' as const, data: firstQuote }] : []),
-  ...remainingQuotes.map(data => ({ type: 'quote' as const, data })),
-  ...interceptedCommunications.map(data => ({ type: 'conversation' as const, data }))
-]
 
 export function getChapterIdForLore(_entry: WolvesLoreEntry): string {
   return 'prologue'

@@ -18,6 +18,7 @@ export interface WolvesArtifact {
   body: string
   sourceUrl?: string
   sourceLabel?: string
+  channel?: string
 }
 
 export interface WolvesRelease {
@@ -66,7 +67,26 @@ export const wolvesRelease: WolvesRelease = {
   artifacts: [
     // --- Prologue: transmissions ---
     {
+      id: 'lorem-prologue-1',
+      channel: 'EXPLORATION//TEAM-ALPHA',
+      chapterId: 'prologue',
+      type: 'transmission',
+      publishedAt: '2326-06-16',
+      title: 'The Artifact',
+      body: parseBody(loreFiles['./lore/lorem-prologue-1.md'] || ''),
+    },
+    {
+      id: 'lorem-prologue-2',
+      channel: 'EXPLORATION//TEAM-ALPHA',
+      chapterId: 'prologue',
+      type: 'transmission',
+      publishedAt: '2326-06-17',
+      title: 'The Children',
+      body: parseBody(loreFiles['./lore/lorem-prologue-2.md'] || ''),
+    },
+    {
       id: 'forbidden-factory',
+      channel: 'GNME-3//JORDAN//PRIVATE',
       chapterId: 'prologue',
       type: 'transmission',
       publishedAt: '2326-07-09',
@@ -75,6 +95,7 @@ export const wolvesRelease: WolvesRelease = {
     },
     {
       id: 'maintenance-window',
+      channel: 'RENNER//PRIVATE',
       chapterId: 'prologue',
       type: 'transmission',
       publishedAt: '2326-06-15',
@@ -82,6 +103,15 @@ export const wolvesRelease: WolvesRelease = {
       body: parseBody(loreFiles['./lore/maintenance-window.md'] || ''),
     },
     // --- Pursuit: transmissions ---
+    {
+      id: 'lorem-pursuit-1',
+      channel: 'ANCIENT//RECORDS',
+      chapterId: 'pursuit',
+      type: 'transmission',
+      publishedAt: '2326-05-26',
+      title: 'The Golden Era',
+      body: parseBody(loreFiles['./lore/lorem-pursuit-1.md'] || ''),
+    },
     {
       id: 'do-not-reply',
       chapterId: 'pursuit',
@@ -102,6 +132,7 @@ export const wolvesRelease: WolvesRelease = {
     },
     {
       id: 'childhoods-end-wager',
+      channel: 'ZONKER//ARCHIVE-033',
       chapterId: 'pursuit',
       type: 'transmission',
       publishedAt: '2326-07-09',
@@ -145,7 +176,44 @@ export const wolvesRelease: WolvesRelease = {
     },
     // --- Awakening: archival transmissions ---
     {
+      id: 'lorem-awakening-1',
+      channel: 'SECURITY//INCIDENT',
+      chapterId: 'awakening',
+      type: 'transmission',
+      publishedAt: '2326-01-02',
+      title: 'Betrayal',
+      body: parseBody(loreFiles['./lore/lorem-awakening-1.md'] || ''),
+    },
+    {
+      id: 'glorious-eggroll',
+      channel: 'NBR-3/0//GLORIOUS-EGGROLL//PRIVATE-LOG',
+      chapterId: 'awakening',
+      type: 'transmission',
+      publishedAt: '2326-07-12',
+      title: 'Glorious Eggroll',
+      body: parseBody(loreFiles['./lore/glorious-eggroll.md'] || ''),
+    },
+    {
+      id: 'project-neptune',
+      channel: 'BLUE-UNIVERSAL//PRJ-TM//DIRECTIVE',
+      chapterId: 'awakening',
+      type: 'transmission',
+      publishedAt: '2326-07-15',
+      title: 'Project Neptune',
+      body: parseBody(loreFiles['./lore/project-neptune.md'] || ''),
+    },
+    {
+      id: 'john-seager',
+      channel: 'UBUNTU//SECURE',
+      chapterId: 'awakening',
+      type: 'transmission',
+      publishedAt: '2326-08-01',
+      title: 'The Warthog and the Raptor',
+      body: parseBody(loreFiles['./lore/john-seager.md'] || ''),
+    },
+    {
       id: 'reckoning-of-the-three',
+      channel: 'HARBRINGER//ARCHIVE-01',
       chapterId: 'awakening',
       type: 'transmission',
       publishedAt: '2326-01-01',
@@ -154,6 +222,7 @@ export const wolvesRelease: WolvesRelease = {
     },
     {
       id: 'committee-report-personal-transmission',
+      channel: 'TOPH//ARCHIVE-072',
       chapterId: 'awakening',
       type: 'transmission',
       publishedAt: '2326-01-01',
@@ -162,6 +231,7 @@ export const wolvesRelease: WolvesRelease = {
     },
     {
       id: 'john-bazzite-interview',
+      channel: 'ZONKER//ARCHIVE-032',
       chapterId: 'awakening',
       type: 'news',
       publishedAt: '2326-01-01',
@@ -180,6 +250,7 @@ export const wolvesRelease: WolvesRelease = {
     },
     {
       id: 'ishtar-flower-game',
+      channel: 'ISHTAR//UNVEILING-02',
       chapterId: 'awakening',
       type: 'source',
       publishedAt: '2326-01-01',
@@ -189,6 +260,7 @@ export const wolvesRelease: WolvesRelease = {
     },
     {
       id: 'ishtar-first-knife',
+      channel: 'ISHTAR//UNVEILING-03',
       chapterId: 'awakening',
       type: 'source',
       publishedAt: '2326-01-01',
@@ -198,6 +270,7 @@ export const wolvesRelease: WolvesRelease = {
     },
     {
       id: 'ishtar-the-wager',
+      channel: 'ISHTAR//UNVEILING-04',
       chapterId: 'awakening',
       type: 'source',
       publishedAt: '2326-01-01',
@@ -207,6 +280,7 @@ export const wolvesRelease: WolvesRelease = {
     },
     {
       id: 'ishtar-patternfall',
+      channel: 'ISHTAR//UNVEILING-05',
       chapterId: 'awakening',
       type: 'source',
       publishedAt: '2326-01-01',
@@ -217,6 +291,7 @@ export const wolvesRelease: WolvesRelease = {
     },
     {
       id: 'ishtar-cambrian-explosion',
+      channel: 'ISHTAR//UNVEILING-06',
       chapterId: 'awakening',
       type: 'source',
       publishedAt: '2326-01-01',
@@ -226,6 +301,7 @@ export const wolvesRelease: WolvesRelease = {
     },
     {
       id: 'ishtar-final-shape',
+      channel: 'ISHTAR//UNVEILING-07',
       chapterId: 'awakening',
       type: 'source',
       publishedAt: '2326-01-01',

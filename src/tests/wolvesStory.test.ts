@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { bazziteQuotes } from '../components/wolves/lore'
 import { wolvesRelease } from '../data/wolves-story'
 import { getArtifactsForChapter, getChapterForPage, getNewArtifactIds } from '../utils/wolvesStory'
 
@@ -19,9 +18,5 @@ describe('wolves story manifest', () => {
   it('identifies artifacts added after a stored release', () => {
     expect(getNewArtifactIds('2026-07-11-r1')).toEqual([])
     expect(getNewArtifactIds('unknown-release')).toEqual(wolvesRelease.artifacts.map(artifact => artifact.id))
-  })
-
-  it('keeps placeholder lore quote data available', () => {
-    expect(bazziteQuotes.length).toBeGreaterThanOrEqual(3)
   })
 })
