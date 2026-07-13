@@ -737,12 +737,28 @@ watch(() => props.playlistCurrentTime, (newTime) => {
       const activeIdx = activeDisplayIndex.value
       const pct = Math.min(1, Math.max(0, activeIdx / totalSlides))
 
-      if (props.trackIndex >= 1 && props.trackIndex <= 5) {
-        // Pursuit: pages 8-14 (7 pages)
-        targetPage = Math.min(14, Math.floor(pct * 7) + 8)
+      if (props.trackIndex === 1) {
+        // Track 1: pages 8-9 (Pursuit start)
+        targetPage = Math.min(9, Math.floor(pct * 2) + 8)
+      }
+      else if (props.trackIndex === 2) {
+        // Track 2: page 10
+        targetPage = 10
+      }
+      else if (props.trackIndex === 3) {
+        // Track 3: page 11
+        targetPage = 11
+      }
+      else if (props.trackIndex === 4) {
+        // Track 4: page 12
+        targetPage = 12
+      }
+      else if (props.trackIndex === 5) {
+        // Track 5: pages 13-14 (Pursuit end)
+        targetPage = Math.min(14, Math.floor(pct * 2) + 13)
       }
       else if (props.trackIndex === 6) {
-        // Awakening: pages 15-20 (6 pages)
+        // Track 6: pages 15-20 (Awakening)
         targetPage = Math.min(20, Math.floor(pct * 6) + 15)
       }
     }
