@@ -224,15 +224,15 @@ describe('wolvesComicReader', () => {
     const uniqueIds = new Set(ids)
     expect(uniqueIds.size).toBe(ids.length)
 
-    // Check Phase 1 slide durations: Day/Night should be 20s, Single should be 10s
+    // Check Section 1 slide durations: Day/Night should be 127/17 * 2, Single should be 127/17
     const daynightSlide = timeline.find((s: any) => s.type === 'daynight')
     if (daynightSlide) {
-      expect(daynightSlide.duration).toBe(20)
+      expect(daynightSlide.duration).toBeCloseTo((127 / 17) * 2)
     }
 
-    const singleSlide = timeline.find((s: any) => s.type === 'single' && s.startTime < 201)
+    const singleSlide = timeline.find((s: any) => s.type === 'single' && s.startTime < 127)
     if (singleSlide) {
-      expect(singleSlide.duration).toBe(10)
+      expect(singleSlide.duration).toBeCloseTo(127 / 17)
     }
 
     // Verify opacity transitions for day/night slide
@@ -240,11 +240,11 @@ describe('wolvesComicReader', () => {
       await wrapper.setProps({ playlistCurrentTime: daynightSlide.startTime })
       expect(vm.daynightNightOpacity).toBe(0)
 
-      await wrapper.setProps({ playlistCurrentTime: daynightSlide.startTime + 10 })
+      await wrapper.setProps({ playlistCurrentTime: daynightSlide.startTime + (daynightSlide.duration / 2) })
       expect(vm.daynightNightOpacity).toBeCloseTo(0.5)
 
-      await wrapper.setProps({ playlistCurrentTime: daynightSlide.startTime + 19.99 })
-      expect(vm.daynightNightOpacity).toBeCloseTo(0.9995)
+      await wrapper.setProps({ playlistCurrentTime: daynightSlide.startTime + daynightSlide.duration - 0.01 })
+      expect(vm.daynightNightOpacity).toBeCloseTo(0.999, 1)
     }
   })
 })

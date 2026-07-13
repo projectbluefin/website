@@ -239,26 +239,43 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     nightName: wp.nightName
   }))
 
-  const remotePeople = flickrPhotos.value.map(p => ({
-    id: p.id,
-    isLocal: false,
-    path: `https://live.staticflickr.com/${p.server}/${p.id}_${p.secret}_b.jpg`,
-    title: p.title,
-    type: 'single' as const,
-    dayName: undefined,
-    nightName: undefined
-  }))
+  const daynightShowcase = localShowcase.filter(wp => wp.type === 'daynight')
+  const normalShowcase = localShowcase.filter(wp => wp.type !== 'daynight')
 
-  const showcasePool = [...localShowcase]
-  const localPeoplePool = [...localPeople]
-  const remotePeoplePool = [...remotePeople]
+  const shuffledDaynight = deterministicShuffle(daynightShowcase, 101)
+  const shuffledNormalShowcase = deterministicShuffle(normalShowcase, 202)
+  const shuffledPeople = deterministicShuffle(localPeople, 303)
 
   const result: TimelineSlide[] = []
   let currentTime = 0
 
-  while (currentTime < 201 && (showcasePool.length > 0 || localPeoplePool.length > 0)) {
-    const item = showcasePool.length > 0 ? showcasePool.shift()! : localPeoplePool.shift()!
-    const duration = item.type === 'daynight' ? 20 : 10
+  // Section 1 (Intro & Verse 1): [0, 127] seconds
+  // Target: 5 Day/Night and 7 normal showcase items
+  const numDn1 = Math.min(shuffledDaynight.length, 5)
+  const numNormal1 = Math.min(shuffledNormalShowcase.length, 7)
+
+  const sec1Items: any[] = []
+  const dnPool = shuffledDaynight.slice(0, numDn1)
+  const normalPool1 = shuffledNormalShowcase.slice(0, numNormal1)
+  const remainingShowcase = shuffledNormalShowcase.slice(numNormal1)
+
+  const totalSec1Items = numDn1 + numNormal1
+  for (let i = 0; i < totalSec1Items; i++) {
+    if (i % 2 === 1 && dnPool.length > 0) {
+      sec1Items.push(dnPool.shift()!)
+    }
+    else if (normalPool1.length > 0) {
+      sec1Items.push(normalPool1.shift()!)
+    }
+    else {
+      sec1Items.push(dnPool.shift()!)
+    }
+  }
+
+  const sec1Weight = numNormal1 + (numDn1 * 2)
+  const sec1BaseDuration = sec1Weight > 0 ? 127 / sec1Weight : 10
+  for (const item of sec1Items) {
+    const duration = item.type === 'daynight' ? sec1BaseDuration * 2 : sec1BaseDuration
     result.push({
       ...item,
       path: item.path || '',
@@ -269,11 +286,15 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     currentTime += duration
   }
 
-  while (currentTime < 257 && (localPeoplePool.length > 0 || remotePeoplePool.length > 0 || showcasePool.length > 0)) {
-    const item = localPeoplePool.length > 0
-      ? localPeoplePool.shift()!
-      : (remotePeoplePool.length > 0 ? remotePeoplePool.shift()! : showcasePool.shift()!)
-    const duration = 2
+  // Section 2 (Chorus 1 & Verse 2 & Chorus 2): [127, 229] seconds
+  // Target: 25 normal showcase items
+  const numNormal2 = Math.min(remainingShowcase.length, 25)
+  const normalPool2 = remainingShowcase.slice(0, numNormal2)
+  const leftoverShowcase = remainingShowcase.slice(numNormal2)
+
+  const sec2BaseDuration = numNormal2 > 0 ? 102 / numNormal2 : 4.08
+  for (const item of normalPool2) {
+    const duration = sec2BaseDuration
     result.push({
       ...item,
       path: item.path || '',
@@ -284,9 +305,52 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     currentTime += duration
   }
 
-  while (currentTime < 423 && remotePeoplePool.length > 0) {
-    const item = remotePeoplePool.shift()!
-    const duration = 1
+  // Section 3 (Bridge): [229, 277] seconds
+  // Leftover showcase items and first few people item (to fill exactly 8 items)
+  const sec3Items: any[] = [...leftoverShowcase]
+  const numPeopleNeeded3 = Math.max(0, 8 - sec3Items.length)
+  const peoplePool3 = shuffledPeople.slice(0, Math.min(shuffledPeople.length, numPeopleNeeded3))
+  sec3Items.push(...peoplePool3)
+
+  const sec3BaseDuration = sec3Items.length > 0 ? 48 / sec3Items.length : 6
+  for (const item of sec3Items) {
+    const duration = sec3BaseDuration
+    result.push({
+      ...item,
+      path: item.path || '',
+      startTime: currentTime,
+      duration,
+      endTime: currentTime + duration
+    })
+    currentTime += duration
+  }
+
+  // Section 4 (Build-Up): [277, 345] seconds
+  // Target: 34 people items
+  const startPeopleIdx4 = peoplePool3.length
+  const endPeopleIdx4 = Math.min(shuffledPeople.length, startPeopleIdx4 + 34)
+  const sec4Items = shuffledPeople.slice(startPeopleIdx4, endPeopleIdx4)
+
+  const sec4BaseDuration = sec4Items.length > 0 ? 68 / sec4Items.length : 2
+  for (const item of sec4Items) {
+    const duration = sec4BaseDuration
+    result.push({
+      ...item,
+      path: item.path || '',
+      startTime: currentTime,
+      duration,
+      endTime: currentTime + duration
+    })
+    currentTime += duration
+  }
+
+  // Section 5 (Climax & Outro): [345, 423] seconds
+  // Remaining people items
+  const sec5Items = shuffledPeople.slice(endPeopleIdx4)
+
+  const sec5BaseDuration = sec5Items.length > 0 ? 78 / sec5Items.length : 0.85
+  for (const item of sec5Items) {
+    const duration = sec5BaseDuration
     result.push({
       ...item,
       path: item.path || '',
@@ -411,6 +475,20 @@ function shuffleArray<T>(array: T[]): T[] {
   const copy = [...array]
   for (let i = copy.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]]
+  }
+  return copy
+}
+
+function deterministicShuffle<T>(array: T[], seed = 42): T[] {
+  const copy = [...array]
+  let currentSeed = seed
+  const random = () => {
+    const x = Math.sin(currentSeed++) * 10000
+    return x - Math.floor(x)
+  }
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
     [copy[i], copy[j]] = [copy[j], copy[i]]
   }
   return copy

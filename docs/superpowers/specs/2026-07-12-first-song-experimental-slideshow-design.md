@@ -15,14 +15,16 @@ To ensure the experiment is fully and safely reversible, the new slideshow engin
 - `isExperimental`: Set to `true` to enable this restructured slideshow. Set to `false` to immediately revert to the original "Alpha 1" static PDF/wallpaper page behavior.
 
 ### 1.2 Non-Repeating, Unique Image Sequence
-- Each image/photo in the slideshow is displayed exactly once.
-- The total length of the song is divided into three distinct pacing phases based on the song's playhead:
-  1. **Phase 1 (0s to 201s):** Standard pacing. Focuses on local showcase/product wallpapers. Day/night wallpapers are interspersed.
-  2. **Phase 2 (201s to 257s):** Fast pacing. Focuses on local people and community photos to transition into the "hero" theme.
-  3. **Phase 3 (257s to end of song):** Hyper pacing. Populated with unique CNCF Flickr photos to maintain accelerated dramatic momentum without any duplicates or repetition.
+- Each image/photo in our local collection (168 wallpapers) is displayed exactly once.
+- The total length of the song (423s) is divided into five distinct pacing sections aligned with the song's musical sections:
+  1. **Section 1: Intro & Verse 1 (0s to 127s):** Dramatic slow build. Displays 5 Day/Night and 7 normal showcase/product images. Normal slides show for ~7.47s, Day/Night slides show for ~14.94s.
+  2. **Section 2: Chorus 1 & Verse 2 & Chorus 2 (127s to 229s):** Medium intensity. Displays 25 normal showcase/product images showing for ~4.08s each.
+  3. **Section 3: Bridge (229s to 277s):** Atmospheric pause. Displays 7 leftover showcase/product images and 1 people image showing for ~6.0s each, completing the transition from showcase to people.
+  4. **Section 4: Build-Up (277s to 345s):** Fast buildup. Displays 34 people images showing for ~2.0s each.
+  5. **Section 5: Climax & Outro (345s to 423s):** "Full blast" climax. Displays the remaining 89 people images at a rapid-fire rate of ~0.876s each, aligning with the bass drum beat.
 
 ### 1.3 Special Day/Night Fader (Light to Dark)
-- Day/night wallpapers (type `daynight`) are assigned double the active pacing duration of their phase (e.g., 20 seconds during Phase 1).
+- Day/night wallpapers (type `daynight`) are assigned double the active pacing duration of their phase (e.g., ~14.94 seconds during Section 1).
 - Over the course of their display window, the image transitions smoothly from Day to Night.
 - The opacity of the night overlay is calculated as:
   $$\text{opacity} = \frac{\text{currentTime} - \text{startTime}}{\text{duration}}$$
@@ -48,10 +50,12 @@ interface SlideTimelineItem {
   endTime: number
 }
 ```
-The timeline is built chronologically by pushing unique slides from the filtered lists (`localShowcase`, `localPeople`, `remotePeople`) and tracking `currentTime`:
-- From `0` to `201` seconds, push showcase and single/daynight wallpapers. Each `single` takes 10 seconds. Each `daynight` takes 20 seconds.
-- From `201` to `257` seconds, push people photos. Each takes 2 seconds.
-- From `257` seconds to `423` seconds (end of song), push unique CNCF Flickr photos. Each takes 1 second.
+The timeline is built chronologically by partition calculations across the sorted and deterministically shuffled collection pools (`shuffledDaynight`, `shuffledNormalShowcase`, `shuffledPeople`), assigning exact boundaries and durations for all 168 wallpapers:
+- From `0` to `127` seconds, push 5 Day/Night and 7 normal showcase items.
+- From `127` to `229` seconds, push 25 normal showcase items.
+- From `229` to `277` seconds, push 7 leftover showcase items and 1 people item.
+- From `277` to `345` seconds, push 34 people items.
+- From `345` to `423` seconds, push the remaining 89 people items.
 - This deterministic timeline is generated once when the first song begins, ensuring no runtime drift, repeats, or out-of-order slides.
 
 ### 2.2 Active Slide Selection
