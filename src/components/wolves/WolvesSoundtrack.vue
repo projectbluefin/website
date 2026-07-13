@@ -388,6 +388,29 @@ watch(status, (newStatus) => {
   }
 })
 
+function handleSeek(event: MouseEvent) {
+  if (status.value === 'idle' || status.value === 'loading' || status.value === 'error') {
+    return
+  }
+  if (!player || duration.value <= 0) {
+    return
+  }
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const clickX = event.clientX - rect.left
+  const percentage = Math.min(1, Math.max(0, clickX / rect.width))
+  const targetTime = percentage * duration.value
+
+  if (typeof player.seekTo === 'function') {
+    player.seekTo(targetTime, true)
+    currentTime.value = targetTime
+    emit('progress', {
+      currentTime: targetTime,
+      duration: duration.value,
+      playlistIndex: currentTrackIndex.value,
+    })
+  }
+}
+
 watch(() => props.playing, (newPlaying) => {
   if (newPlaying && status.value !== 'playing') {
     if (status.value === 'idle' || status.value === 'error') {
@@ -435,6 +458,7 @@ onBeforeUnmount(() => {
             <span class="soundtrack-time font-mono">{{ formattedCurrentTime }}</span>
             <div
               class="soundtrack-progress-bar group"
+              @click="handleSeek"
             >
               <div class="soundtrack-progress-fill group-hover:bg-[#7dd3fc]" :style="{ width: `${progressPercent}%` }" />
             </div>
@@ -534,7 +558,7 @@ onBeforeUnmount(() => {
       :class="{ 'is-playing': isPlaying }"
     >
       <!-- Mobile Progress Indicator pinned to top -->
-      <div class="soundtrack-mobile-progress-wrap">
+      <div class="soundtrack-mobile-progress-wrap" @click="handleSeek">
         <div class="soundtrack-progress-fill" :style="{ width: `${progressPercent}%` }" />
       </div>
 
@@ -855,6 +879,7 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 16px 16px 0 0;
   overflow: hidden;
+  cursor: pointer;
 }
 
 /* Utility to ensure text truncates correctly */
