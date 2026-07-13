@@ -598,18 +598,14 @@ function snapshotLaterTrackPhotos(trackIndex: number) {
       nightName: undefined,
       rawPhoto: photo
     }))
-  const localPhotos = wallpapers.map(wallpaper => ({
-    id: wallpaper.name || wallpaper.dayName || wallpaper.nightName || '',
-    isLocal: true,
-    path: wallpaper.name,
-    title: wallpaper.title,
-    type: wallpaper.type,
-    dayName: wallpaper.dayName,
-    nightName: wallpaper.nightName
-  }))
-  const sourcePhotos = remotePhotos.length > 0 ? remotePhotos : localPhotos
-  if (galleryCycle.value.length === 0 || galleryCycle.value[0]?.isLocal !== sourcePhotos[0]?.isLocal) {
-    galleryCycle.value = shuffleArray(sourcePhotos)
+  if (remotePhotos.length === 0) {
+    galleryCycle.value = []
+    laterTrackPhotos.value = []
+    return
+  }
+
+  if (galleryCycle.value.length === 0) {
+    galleryCycle.value = shuffleArray(remotePhotos)
   }
 
   const startIndex = galleryCycle.value.length > 0

@@ -309,7 +309,7 @@ describe('wolvesComicReader', () => {
     expect(galleryCaption(wrapper)).not.toContain('Track 0 duplicate')
   })
 
-  it('uses local images for later tracks only when the Flickr feed is unavailable', async () => {
+  it('does not show local images for later tracks when Flickr is unavailable', async () => {
     mockGalleryData(
       [
         coverTrack,
@@ -330,7 +330,8 @@ describe('wolvesComicReader', () => {
     })
     await flushPromises()
 
-    expect(galleryCaption(wrapper)).toContain('BLUEFIN SHOWCASE //')
+    expect(wrapper.find('.flickr-caption').exists()).toBe(false)
+    expect(wrapper.findAll('.flickr-img')).toHaveLength(0)
   })
 
   it('switches an active later track to Flickr when the cache finishes loading', async () => {
@@ -370,13 +371,11 @@ describe('wolvesComicReader', () => {
     })
     await flushPromises()
 
-    const fallbackCaption = galleryCaption(wrapper)
-    expect(fallbackCaption).toContain('BLUEFIN SHOWCASE //')
+    expect(wrapper.find('.flickr-caption').exists()).toBe(false)
 
     resolveFlickr(new Response(JSON.stringify(galleryPhotos)))
     await flushPromises()
     expect(galleryCaption(wrapper)).toContain('CNCF STREAM //')
-    expect(galleryCaption(wrapper)).not.toBe(fallbackCaption)
 
     await wrapper.setProps({ trackIndex: 2, playlistCurrentTime: 0 })
     expect(galleryCaption(wrapper)).toContain('CNCF STREAM //')
