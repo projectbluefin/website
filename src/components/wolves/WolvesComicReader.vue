@@ -249,6 +249,13 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   const daynightShowcase = localShowcase.filter(wp => wp.type === 'daynight')
   const normalShowcase = localShowcase.filter(wp => wp.type !== 'daynight')
 
+  const pivotalTarget = 'wolves/people/kubecon-54927705495.webp'
+  const targetIndex = localPeople.findIndex(wp => wp.id === pivotalTarget)
+  let pivotalPhoto: any = null
+  if (targetIndex !== -1) {
+    pivotalPhoto = localPeople.splice(targetIndex, 1)[0]
+  }
+
   const shuffledDaynight = deterministicShuffle(daynightShowcase, 101)
   const shuffledNormalShowcase = deterministicShuffle(normalShowcase, 202)
   const shuffledPeople = deterministicShuffle(localPeople, 303)
@@ -335,6 +342,9 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
 
   // 6. Fast Solo Climax & Outro [345, 423] seconds (78s total) -> remaining 66 people wallpapers shown fast (quick edit style!)
   const peoplePool4 = shuffledPeople.slice(57)
+  if (pivotalPhoto) {
+    peoplePool4.unshift(pivotalPhoto)
+  }
   const sec6BaseDuration = 78 / peoplePool4.length
   for (const item of peoplePool4) {
     const duration = sec6BaseDuration
