@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { getNarrativeSlotForTime, wolvesNarrativeTimeline } from '../data/wolves-narrative-timeline'
+import {
+  getNarrativeSlotForTime,
+  lockedNarrativeSlots,
+  wolvesNarrativeTimeline,
+} from '../data/wolves-narrative-timeline'
 
 describe('wolves narrative timeline', () => {
   it('contains every release artifact exactly once in release order', () => {
     expect(wolvesNarrativeTimeline).toHaveLength(31)
+    expect(new Set(wolvesNarrativeTimeline.map(slot => slot.artifactId))).toHaveLength(wolvesNarrativeTimeline.length)
     expect(wolvesNarrativeTimeline.map(slot => slot.artifactId)).toEqual([
       'arthur-c-clarke-4',
       'lorem-prologue-1',
@@ -54,6 +59,17 @@ describe('wolves narrative timeline', () => {
       startTime: 398,
       endTime: 425,
     })
+  })
+
+  it('keeps every registered narrative lock at its declared time', () => {
+    for (const lock of lockedNarrativeSlots) {
+      const slot = wolvesNarrativeTimeline.find(slot => slot.artifactId === lock.artifactId)
+
+      expect(slot?.startTime).toBe(lock.startTime)
+      if (lock.endTime !== undefined) {
+        expect(slot?.endTime).toBe(lock.endTime)
+      }
+    }
   })
 
   it('uses the next slot at exact boundaries and holds the final entry afterward', () => {

@@ -6,12 +6,17 @@ export interface WolvesNarrativeSlot {
   endTime: number
 }
 
-const MIDDLE_ARTIFACT_INDEX = 9
-const FINAL_ARTIFACT_INDEX = wolvesRelease.artifacts.length - 1
-const MIDDLE_START_TIME = 180
-const MIDDLE_END_TIME = 220
-const FINAL_START_TIME = 398
-const TRACK_END_TIME = 425
+interface WolvesNarrativeLock {
+  artifactId: string
+  startTime: number
+  endTime?: number
+}
+
+export const lockedNarrativeSlots: readonly WolvesNarrativeLock[] = [
+  { artifactId: 'arthur-c-clarke-4', startTime: 0 },
+  { artifactId: 'lorem-pursuit-1', startTime: 180, endTime: 220 },
+  { artifactId: 'blue-universal-acquires-wayland-yutani', startTime: 398, endTime: 425 },
+]
 
 function createWeightedSlots(startIndex: number, endIndex: number, startTime: number, endTime: number) {
   const artifacts = wolvesRelease.artifacts.slice(startIndex, endIndex)
@@ -29,20 +34,44 @@ function createWeightedSlots(startIndex: number, endIndex: number, startTime: nu
   })
 }
 
-export const wolvesNarrativeTimeline: WolvesNarrativeSlot[] = [
-  ...createWeightedSlots(0, MIDDLE_ARTIFACT_INDEX, 0, MIDDLE_START_TIME),
-  {
-    artifactId: wolvesRelease.artifacts[MIDDLE_ARTIFACT_INDEX].id,
-    startTime: MIDDLE_START_TIME,
-    endTime: MIDDLE_END_TIME,
-  },
-  ...createWeightedSlots(MIDDLE_ARTIFACT_INDEX + 1, FINAL_ARTIFACT_INDEX, MIDDLE_END_TIME, FINAL_START_TIME),
-  {
-    artifactId: wolvesRelease.artifacts[FINAL_ARTIFACT_INDEX].id,
-    startTime: FINAL_START_TIME,
-    endTime: TRACK_END_TIME,
-  },
-]
+function getArtifactIndex(artifactId: string): number {
+  const index = wolvesRelease.artifacts.findIndex(artifact => artifact.id === artifactId)
+  if (index === -1) {
+    throw new Error(`Missing locked narrative artifact: ${artifactId}`)
+  }
+  return index
+}
+
+function createNarrativeTimeline(): WolvesNarrativeSlot[] {
+  const [firstLock, ...fixedLocks] = lockedNarrativeSlots
+  if (!firstLock) {
+    throw new Error('At least one narrative lock is required')
+  }
+
+  const timeline: WolvesNarrativeSlot[] = []
+  let startIndex = getArtifactIndex(firstLock.artifactId)
+  let startTime = firstLock.startTime
+
+  for (const lock of fixedLocks) {
+    if (lock.endTime === undefined) {
+      throw new Error(`Locked narrative artifact requires an end time: ${lock.artifactId}`)
+    }
+
+    const lockIndex = getArtifactIndex(lock.artifactId)
+    timeline.push(...createWeightedSlots(startIndex, lockIndex, startTime, lock.startTime))
+    timeline.push({
+      artifactId: lock.artifactId,
+      startTime: lock.startTime,
+      endTime: lock.endTime,
+    })
+    startIndex = lockIndex + 1
+    startTime = lock.endTime
+  }
+
+  return timeline
+}
+
+export const wolvesNarrativeTimeline = createNarrativeTimeline()
 
 export function getNarrativeSlotForTime(time: number): WolvesNarrativeSlot {
   const normalizedTime = Math.max(0, time)

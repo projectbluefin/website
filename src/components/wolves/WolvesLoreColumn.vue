@@ -46,7 +46,7 @@ function runTypewriter() {
     typedMessagesText.value = []
     const targetText = entry.data.quote
 
-    stepTime = Math.max(1, Math.min(50, (props.duration * 700) / targetText.length))
+    stepTime = Math.max(5, Math.min(50, (props.duration * 700) / targetText.length))
 
     let index = 0
 
@@ -57,9 +57,7 @@ function runTypewriter() {
         clearTypewriter()
       }
       else {
-        const cyberChars = '01#$@&%<>_+'
-        const randChar = cyberChars[Math.floor(Math.random() * cyberChars.length)]
-        typedQuoteText.value = targetText.slice(0, index) + randChar
+        typedQuoteText.value = targetText.slice(0, index)
       }
     }, stepTime)
     return
@@ -90,7 +88,7 @@ function runTypewriter() {
       }
       totalTicks += isSlow ? 50 : 20
     })
-    stepTime = Math.max(1, Math.min(50, (D * 0.7) / totalTicks))
+    stepTime = Math.max(5, Math.min(50, (D * 0.7) / totalTicks))
   }
 
   // Track which message index we are currently typing. We type sequentially.
@@ -117,9 +115,7 @@ function runTypewriter() {
     currentLength++
 
     if (currentLength <= targetText.length) {
-      const cyberChars = '01#$@&%<>_+'
-      const randChar = cyberChars[Math.floor(Math.random() * cyberChars.length)]
-      typedMessagesText.value[activeMessageIndex.value] = targetText.slice(0, currentLength) + randChar
+      typedMessagesText.value[activeMessageIndex.value] = targetText.slice(0, currentLength)
 
       const lastChar = targetText[currentLength - 1]
 
@@ -153,11 +149,6 @@ function runTypewriter() {
       activeMessageIndex.value++
       currentLength = 0
       pauseTicks = isSlowSpeaker ? 50 : 20
-    }
-
-    // Auto-scroll
-    if (quoteViewportRef.value) {
-      quoteViewportRef.value.scrollTop = quoteViewportRef.value.scrollHeight
     }
   }, stepTime)
 }
