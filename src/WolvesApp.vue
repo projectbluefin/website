@@ -276,12 +276,6 @@ function enterImmersiveExperience() {
   else {
     transition()
   }
-
-  if (document.documentElement.requestFullscreen) {
-    document.documentElement.requestFullscreen().catch((err) => {
-      console.warn('Could not enter fullscreen:', err)
-    })
-  }
 }
 
 function exitImmersiveExperience() {
@@ -299,33 +293,16 @@ function exitImmersiveExperience() {
   else {
     transition()
   }
-
-  if (document.fullscreenElement && document.exitFullscreen) {
-    document.exitFullscreen().catch((err) => {
-      console.warn('Could not exit fullscreen:', err)
-    })
-  }
 }
 
-function handleFullscreenChange() {
-  const transition = () => {
-    isImmersive.value = !!document.fullscreenElement
-  }
-
-  const documentWithTransition = document as Document & {
-    startViewTransition?: (cb: () => void) => void
-  }
-
-  if (documentWithTransition.startViewTransition) {
-    documentWithTransition.startViewTransition(transition)
-  }
-  else {
-    transition()
+function handleKeyDown(event: KeyboardEvent) {
+  if (event.key === 'Escape' && isImmersive.value) {
+    exitImmersiveExperience()
   }
 }
 
 onMounted(async () => {
-  document.addEventListener('fullscreenchange', handleFullscreenChange)
+  window.addEventListener('keydown', handleKeyDown)
   try {
     soundtrackManifest.value = await loadWolvesSoundtrack()
   }
@@ -335,7 +312,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
-  document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  window.removeEventListener('keydown', handleKeyDown)
   stopMascotRotation()
 })
 </script>
