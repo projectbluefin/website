@@ -148,27 +148,27 @@ describe('wolvesComicReader', () => {
     expect(activeTimelineImage(wrapper)).toContain('bluefin-dusk-day.webp')
   })
 
-  it('uses each Track 0 People wallpaper once', async () => {
+  it('uses each Track 0 wallpaper once', async () => {
     const wrapper = mount(WolvesComicReader, {
       props: {
         trackIndex: 0,
-        playlistCurrentTime: 127,
+        playlistCurrentTime: 0,
       },
     })
-    const shownPeople: string[] = []
+    const shownImages: string[] = []
     let previousImage = ''
 
-    for (let time = 127; time < 423; time += 0.5) {
+    for (let time = 0; time < 423; time += 0.5) {
       await wrapper.setProps({ playlistCurrentTime: time })
       const image = activeTimelineImage(wrapper) ?? ''
-      if (image.includes('/people/') && image !== previousImage) {
-        shownPeople.push(image)
+      if (image !== previousImage) {
+        shownImages.push(image)
       }
       previousImage = image
     }
 
-    expect(new Set(shownPeople).size).toBe(shownPeople.length)
-    expect(new Set(shownPeople).size).toBe(wallpapers.filter(wallpaper => wallpaper.name?.includes('/people/')).length)
+    expect(new Set(shownImages).size).toBe(shownImages.length)
+    expect(new Set(shownImages).size).toBe(wallpapers.length)
   })
 
   it('keeps each later-track Flickr sequence stable and refreshes it for the next track', async () => {
