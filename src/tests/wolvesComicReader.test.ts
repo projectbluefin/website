@@ -221,7 +221,7 @@ describe('wolvesComicReader', () => {
     expect(galleryCaption(wrapper)).toContain('CNCF STREAM //')
   })
 
-  it('keeps BPM-aligned slide holds above the approved minimum', async () => {
+  it('doubles short BPM beat groups to a 10-second hold', async () => {
     mockGalleryData([
       coverTrack,
       {
@@ -242,13 +242,13 @@ describe('wolvesComicReader', () => {
 
     const firstCaption = galleryCaption(wrapper)
     expect(firstCaption).toContain('//')
-    await wrapper.setProps({ playlistCurrentTime: 5.49 })
+    await wrapper.setProps({ playlistCurrentTime: 9.99 })
     expect(galleryCaption(wrapper)).toBe(firstCaption)
-    await wrapper.setProps({ playlistCurrentTime: 5.5 })
+    await wrapper.setProps({ playlistCurrentTime: 10 })
     expect(galleryCaption(wrapper)).not.toBe(firstCaption)
   })
 
-  it('limits BPM-aligned slide holds to the approved maximum', async () => {
+  it('halves long BPM beat groups to a 6-second hold', async () => {
     mockGalleryData([
       coverTrack,
       {
@@ -269,9 +269,9 @@ describe('wolvesComicReader', () => {
 
     const firstCaption = galleryCaption(slowWrapper)
     expect(firstCaption).toContain('//')
-    await slowWrapper.setProps({ playlistCurrentTime: 11.49 })
+    await slowWrapper.setProps({ playlistCurrentTime: 5.99 })
     expect(galleryCaption(slowWrapper)).toBe(firstCaption)
-    await slowWrapper.setProps({ playlistCurrentTime: 11.5 })
+    await slowWrapper.setProps({ playlistCurrentTime: 6 })
     expect(galleryCaption(slowWrapper)).not.toBe(firstCaption)
   })
 
@@ -307,14 +307,14 @@ describe('wolvesComicReader', () => {
       bpm: 120,
       phraseBeats: 5,
       fadeDuration: 1500,
-      hold: 5.5,
+      hold: 10,
     },
     {
       id: 'slow-phrases',
       bpm: 120,
       phraseBeats: 48,
       fadeDuration: 3000,
-      hold: 11.5,
+      hold: 6,
     },
     {
       id: 'metadata-paced',

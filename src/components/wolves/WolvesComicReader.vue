@@ -396,7 +396,19 @@ const laterTrackSlideHold = computed(() => {
 
   const track = currentTrack.value
   if (track?.bpm && track.phraseBeats) {
-    return Math.min(11.5, Math.max(5.5, track.phraseBeats * 60 / track.bpm))
+    let beatGroup = track.phraseBeats
+    let hold = beatGroup * 60 / track.bpm
+
+    while (hold > 11.5) {
+      beatGroup /= 2
+      hold = beatGroup * 60 / track.bpm
+    }
+    while (hold < 5.5) {
+      beatGroup *= 2
+      hold = beatGroup * 60 / track.bpm
+    }
+
+    return hold
   }
 
   return [7, 8, 10][trackIndex % 3]
