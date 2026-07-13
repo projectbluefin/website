@@ -15,13 +15,14 @@ To ensure the experiment is fully and safely reversible, the new slideshow engin
 - `isExperimental`: Set to `true` to enable this restructured slideshow. Set to `false` to immediately revert to the original "Alpha 1" static PDF/wallpaper page behavior.
 
 ### 1.2 Non-Repeating, Unique Image Sequence
-- Each image/photo in our local collection (168 wallpapers) is displayed exactly once.
-- The total length of the song (423s) is divided into five distinct pacing sections aligned with the song's musical sections:
-  1. **Section 1: Intro & Verse 1 (0s to 127s):** Dramatic slow build. Displays 5 Day/Night and 7 normal showcase/product images. Normal slides show for ~7.47s, Day/Night slides show for ~14.94s.
-  2. **Section 2: Chorus 1 & Verse 2 & Chorus 2 (127s to 229s):** Medium intensity. Displays 25 normal showcase/product images showing for ~4.08s each.
-  3. **Section 3: Bridge (229s to 277s):** Atmospheric pause. Displays 7 leftover showcase/product images and 1 people image showing for ~6.0s each, completing the transition from showcase to people.
-  4. **Section 4: Build-Up (277s to 345s):** Fast buildup. Displays 34 people images showing for ~2.0s each.
-  5. **Section 5: Climax & Outro (345s to 423s):** "Full blast" climax. Displays the remaining 89 people images at a rapid-fire rate of ~0.876s each, aligning with the bass drum beat.
+- Each image/photo in our local collection (167 wallpapers) is displayed exactly once.
+- The total length of the song (423s) is divided into six distinct pacing sections aligned with the song's musical sections:
+  1. **Intro (0s to 42s):** Atmospheric bagpipe intro. Displays 5 Day/Night showcase/product images showing for 8.4s each.
+  2. **Verse 1 (42s to 127s):** Dramatic slow build. Displays 22 normal showcase/product images showing for 3.86s each.
+  3. **Verse 2 / Chorus (127s to 229s):** Medium intensity. Displays 32 normal showcase/product images showing for 3.19s each.
+  4. **Bridge (229s to 277s):** Atmospheric pause. Displays 8 normal showcase/product images showing for 6.0s each.
+  5. **Build-Up (277s to 345s):** Fast buildup. Displays 34 people images showing for 2.0s each.
+  6. **Climax & Outro (345s to 423s):** "Full blast" climax. Displays the remaining 66 people images at a rapid-fire rate of 1.18s each, aligning with the fast-paced climax.
 
 ### 1.3 Special Day/Night Fader (Light to Dark)
 - Day/night wallpapers (type `daynight`) are assigned double the active pacing duration of their phase (e.g., ~14.94 seconds during Section 1).
@@ -50,12 +51,13 @@ interface SlideTimelineItem {
   endTime: number
 }
 ```
-The timeline is built chronologically by partition calculations across the sorted and deterministically shuffled collection pools (`shuffledDaynight`, `shuffledNormalShowcase`, `shuffledPeople`), assigning exact boundaries and durations for all 168 wallpapers:
-- From `0` to `127` seconds, push 5 Day/Night and 7 normal showcase items.
-- From `127` to `229` seconds, push 25 normal showcase items.
-- From `229` to `277` seconds, push 7 leftover showcase items and 1 people item.
-- From `277` to `345` seconds, push 34 people items.
-- From `345` to `423` seconds, push the remaining 89 people items.
+The timeline is built chronologically by partition calculations across the sorted and deterministically shuffled collection pools (`shuffledDaynight`, `shuffledNormalShowcase`, `shuffledPeople`), assigning exact boundaries and durations for all 167 wallpapers:
+- **Intro (0-42s):** 5 Day/Night showcase/product items (8.4s each).
+- **Verse 1 (42-127s):** 22 normal showcase/product items (3.86s each).
+- **Verse 2/Chorus (127-229s):** 32 normal showcase/product items (3.19s each).
+- **Bridge (229-277s):** 8 normal showcase/product items (6.0s each).
+- **Build-Up (277-345s):** 34 people items (2.0s each).
+- **Climax & Outro (345-423s):** 66 people items (1.18s each).
 - This deterministic timeline is generated once when the first song begins, ensuring no runtime drift, repeats, or out-of-order slides.
 
 ### 2.2 Active Slide Selection

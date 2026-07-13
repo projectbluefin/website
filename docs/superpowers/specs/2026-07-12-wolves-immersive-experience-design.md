@@ -18,7 +18,7 @@ This document specifies the technical design for a dedicated, immersive, theater
 * **Behavior:**
   1. Sets Vue state `isImmersive = true`.
   2. Automatically starts soundtrack playback (equivalent to clicking "Start Soundtrack" if not already playing).
-  3. Triggers native HTML5 browser fullscreen on the document's root element (`document.documentElement.requestFullscreen()`).
+  3. Runs entirely in tab-level viewport-immersive mode to prevent monitor switching/hijacking bugs on multi-monitor setups.
 
 ### 1.2 The HUD Layout (Active Immersive Experience)
 When `isImmersive = true`:
@@ -69,10 +69,12 @@ We will introduce a reactive state block inside `WolvesApp.vue`:
 const isImmersive = ref(false)
 ```
 
-To sync native browser fullscreen (e.g., when a user exits via `ESC` key):
+To support exiting the experience cleanly (e.g., when a user exits via `ESC` key), we register a keydown event listener:
 ```typescript
-function handleFullscreenChange() {
-  isImmersive.value = !!document.fullscreenElement
+function handleKeyDown(event: KeyboardEvent) {
+  if (event.key === 'Escape' && isImmersive.value) {
+    exitImmersiveExperience()
+  }
 }
 ```
 
