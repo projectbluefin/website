@@ -1,8 +1,29 @@
+import type { Plugin } from 'vite'
 import { resolve } from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
+
+const directoryEntryPaths = new Set(['/dakota', '/server', '/wolves'])
+
+function redirectDirectoryEntries(): Plugin {
+  return {
+    name: 'redirect-directory-entries',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = new URL(req.url ?? '/', 'http://localhost')
+        if (!directoryEntryPaths.has(url.pathname)) {
+          next()
+          return
+        }
+
+        res.writeHead(302, { Location: `${url.pathname}/${url.search}` })
+        res.end()
+      })
+    },
+  }
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -27,6 +48,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    redirectDirectoryEntries(),
     tailwindcss(),
     vue({
       template: {
