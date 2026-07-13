@@ -8,7 +8,14 @@ const MODULE_PATH = import.meta.url.startsWith('file:')
 const ROOT_DIR = MODULE_PATH ? dirname(dirname(MODULE_PATH)) : process.cwd()
 const TARGET_PATH = join(ROOT_DIR, 'public', 'flickr-photos.json')
 
-function shuffleArray(array) {
+const API_KEY = '49dc70cc62bfcbcde55883993d9121ce'
+const USER_ID = '143247548@N03'
+const PER_PAGE = 50
+const REQUEST_DELAY_MS = 250
+const MAX_RETRIES = 4
+const MAX_ADDITIONAL_PHOTOS = 100
+
+export function shuffleArray(array) {
   const copy = [...array]
   for (let i = copy.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -17,116 +24,187 @@ function shuffleArray(array) {
   return copy
 }
 
-async function main() {
-  const apiKey = 'af8e5133eba9983c235490e3799abe1f'
-  const userId = '143247548@N03'
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
 
+export async function fetchWithRateLimit(url, { retries = MAX_RETRIES, attempt = 0 } = {}) {
   try {
+    const res = await fetch(url)
+
+    if (res.status === 429) {
+      const retryAfter = res.headers.get('retry-after')
+      const waitSeconds = retryAfter ? Number(retryAfter) : Math.min(2 ** attempt * 2, 60)
+      if (attempt < retries) {
+        console.warn(`Rate limited (429) for ${url}. Waiting ${waitSeconds}s before retry ${attempt + 1}/${retries}...`)
+        await sleep(waitSeconds * 1000)
+        return fetchWithRateLimit(url, { retries, attempt: attempt + 1 })
+      }
+      throw new Error(`HTTP error 429 after ${retries} retries: ${url}`)
+    }
+
+    if (!res.ok) {
+      throw new Error(`HTTP error ${res.status}: ${url}`)
+    }
+
+    return res
+  }
+  catch (error) {
+    if (attempt < retries) {
+      const backoffMs = Math.min(2 ** attempt * 1000, 30000)
+      console.warn(`Fetch failed for ${url}, retrying in ${backoffMs}ms...`, error.message)
+      await sleep(backoffMs)
+      return fetchWithRateLimit(url, { retries, attempt: attempt + 1 })
+    }
+    throw error
+  }
+}
+
+function buildFlickrUrl(method, params) {
+  const searchParams = new URLSearchParams({
+    method,
+    api_key: API_KEY,
+    user_id: USER_ID,
+    format: 'json',
+    nojsoncallback: '1',
+    ...params,
+  })
+  return `https://www.flickr.com/services/rest/?${searchParams.toString()}`
+}
+
+export async function fetchPhotoPage(method, page, extraParams = {}) {
+  const url = buildFlickrUrl(method, {
+    per_page: String(PER_PAGE),
+    page: String(page),
+    ...extraParams,
+  })
+  const res = await fetchWithRateLimit(url)
+  const data = await res.json()
+  if (data.stat !== 'ok' || !data.photos || !Array.isArray(data.photos.photo)) {
+    throw new Error(`Flickr API error ${method} page ${page}: ${data.message || 'invalid'}`)
+  }
+  return data.photos
+}
+
+export async function loadExistingPhotos() {
+  try {
+    const raw = await readFile(TARGET_PATH, 'utf8')
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed)) {
+      return parsed
+    }
+  }
+  catch {
+    console.info('No existing flickr-photos.json found or invalid, starting fresh.')
+  }
+  return []
+}
+
+export function selectSpreadPages(totalPages, count) {
+  const pages = []
+  if (count <= 0) {
+    return pages
+  }
+  if (count === 1) {
+    return [1]
+  }
+  for (let i = 0; i < count; i++) {
+    const pageNum = Math.max(1, Math.floor(1 + (i * (totalPages - 1)) / (count - 1)))
+    if (!pages.includes(pageNum)) {
+      pages.push(pageNum)
+    }
+  }
+  return pages
+}
+
+export function normalizePhoto(p) {
+  return {
+    id: p.id,
+    server: p.server,
+    secret: p.secret,
+    title: p.title,
+  }
+}
+
+export function isMainModule() {
+  return MODULE_PATH !== null && process.argv[1] === MODULE_PATH
+}
+
+async function main() {
+  try {
+    console.info('Loading existing Flickr photo cache...')
+    const existingPhotos = await loadExistingPhotos()
+    const existingIds = new Set(existingPhotos.map(p => p.id))
+    console.info(`Found ${existingPhotos.length} existing photos.`)
+
     console.info('Querying CNCF Flickr account metadata...')
 
-    // 1. Get total count of Maintainer photos (from flickr.photos.search)
-    const mSearchUrl = `https://www.flickr.com/services/rest/?method=flickr.photos.search&api_key=${apiKey}&user_id=${userId}&text=Maintainer&per_page=1&format=json&nojsoncallback=1`
-    const mRes = await fetch(mSearchUrl)
-    if (!mRes.ok) {
-      throw new Error(`Flickr Maintainer metadata error: ${mRes.status}`)
-    }
-    const mData = await mRes.json()
-    if (mData.stat !== 'ok' || !mData.photos) {
-      throw new Error(`Flickr Maintainer API error: ${mData.message || 'invalid response'}`)
-    }
-    const totalMaintainer = Number(mData.photos.total) || 1400
+    const mMetadata = await fetchPhotoPage('flickr.photos.search', 1, { text: 'Maintainer', per_page: '1' })
+    await sleep(REQUEST_DELAY_MS)
+    const gMetadata = await fetchPhotoPage('flickr.people.getPublicPhotos', 1, { per_page: '1' })
+    await sleep(REQUEST_DELAY_MS)
 
-    // 2. Get total count of General public photos
-    const gSearchUrl = `https://www.flickr.com/services/rest/?method=flickr.people.getPublicPhotos&api_key=${apiKey}&user_id=${userId}&per_page=1&format=json&nojsoncallback=1`
-    const gRes = await fetch(gSearchUrl)
-    if (!gRes.ok) {
-      throw new Error(`Flickr General metadata error: ${gRes.status}`)
-    }
-    const gData = await gRes.json()
-    if (gData.stat !== 'ok' || !gData.photos) {
-      throw new Error(`Flickr General API error: ${gData.message || 'invalid response'}`)
-    }
-    const totalGeneral = Number(gData.photos.total) || 60000
+    const totalMaintainer = Number(mMetadata.total) || 1400
+    const totalGeneral = Number(gMetadata.total) || 60000
 
     console.info(`Found ${totalMaintainer} Maintainer photos and ${totalGeneral} General photos.`)
 
-    const perPage = 50
-    const maintainerPages = Math.ceil(totalMaintainer / perPage)
-    const generalPages = Math.ceil(totalGeneral / perPage)
+    const maintainerPages = Math.ceil(totalMaintainer / PER_PAGE)
+    const generalPages = Math.ceil(totalGeneral / PER_PAGE)
 
-    // Select 8 Maintainer pages spread evenly to fetch ~400 maintainer photos (the bulk!)
-    const mTargetPages = []
-    const numMPages = 8
-    for (let i = 0; i < numMPages; i++) {
-      const pageNum = Math.max(1, Math.floor(1 + (i * (maintainerPages - 1)) / (numMPages - 1)))
-      if (!mTargetPages.includes(pageNum)) {
-        mTargetPages.push(pageNum)
-      }
-    }
-
-    // Select 2 General pages spread evenly to fetch ~100 general/community/showcase photos
-    const gTargetPages = []
-    const numGPages = 2
-    for (let i = 0; i < numGPages; i++) {
-      const pageNum = Math.max(1, Math.floor(1 + (generalPages - 1) * (i / (numGPages - 1))))
-      if (!gTargetPages.includes(pageNum)) {
-        gTargetPages.push(pageNum)
-      }
-    }
+    // Select extra pages spread across the archive to find up to 100 new unique photos.
+    const mTargetPages = selectSpreadPages(maintainerPages, 12)
+    const gTargetPages = selectSpreadPages(generalPages, 3)
 
     console.info(`Fetching Maintainer pages: ${mTargetPages.join(', ')}`)
     console.info(`Fetching General pages: ${gTargetPages.join(', ')}`)
 
-    // Build parallel promises
-    const promises = [
-      ...mTargetPages.map(async (page) => {
-        const url = `https://www.flickr.com/services/rest/?method=flickr.photos.search&api_key=${apiKey}&user_id=${userId}&text=Maintainer&per_page=${perPage}&page=${page}&format=json&nojsoncallback=1`
-        const res = await fetch(url)
-        if (!res.ok) {
-          throw new Error(`HTTP error Maintainer page ${page}: ${res.status}`)
-        }
-        const data = await res.json()
-        if (data.stat !== 'ok' || !data.photos || !Array.isArray(data.photos.photo)) {
-          throw new Error(`Flickr API error Maintainer page ${page}: ${data.message || 'invalid'}`)
-        }
-        return data.photos.photo
-      }),
-      ...gTargetPages.map(async (page) => {
-        const url = `https://www.flickr.com/services/rest/?method=flickr.people.getPublicPhotos&api_key=${apiKey}&user_id=${userId}&per_page=${perPage}&page=${page}&format=json&nojsoncallback=1`
-        const res = await fetch(url)
-        if (!res.ok) {
-          throw new Error(`HTTP error General page ${page}: ${res.status}`)
-        }
-        const data = await res.json()
-        if (data.stat !== 'ok' || !data.photos || !Array.isArray(data.photos.photo)) {
-          throw new Error(`Flickr API error General page ${page}: ${data.message || 'invalid'}`)
-        }
-        return data.photos.photo
-      })
-    ]
+    const newPhotos = []
+    const seenIds = new Set(existingIds)
 
-    const pageResults = await Promise.all(promises)
-    const rawPhotos = pageResults.flat()
-
-    const photos = rawPhotos.map(p => ({
-      id: p.id,
-      server: p.server,
-      secret: p.secret,
-      title: p.title,
-    }))
-
-    // Remove duplicates if any (by id)
-    const uniquePhotosMap = new Map()
-    for (const photo of photos) {
-      uniquePhotosMap.set(photo.id, photo)
+    for (const page of mTargetPages) {
+      const data = await fetchPhotoPage('flickr.photos.search', page, { text: 'Maintainer' })
+      for (const p of data.photo) {
+        if (!seenIds.has(p.id)) {
+          newPhotos.push(normalizePhoto(p))
+          seenIds.add(p.id)
+          if (newPhotos.length >= MAX_ADDITIONAL_PHOTOS) {
+            break
+          }
+        }
+      }
+      if (newPhotos.length >= MAX_ADDITIONAL_PHOTOS) {
+        break
+      }
+      await sleep(REQUEST_DELAY_MS)
     }
-    const uniquePhotos = Array.from(uniquePhotosMap.values())
 
-    // Shuffle the final list to guarantee rich diversity in the cached file
-    const shuffledPhotos = shuffleArray(uniquePhotos)
+    if (newPhotos.length < MAX_ADDITIONAL_PHOTOS) {
+      for (const page of gTargetPages) {
+        const data = await fetchPhotoPage('flickr.people.getPublicPhotos', page)
+        for (const p of data.photo) {
+          if (!seenIds.has(p.id)) {
+            newPhotos.push(normalizePhoto(p))
+            seenIds.add(p.id)
+            if (newPhotos.length >= MAX_ADDITIONAL_PHOTOS) {
+              break
+            }
+          }
+        }
+        if (newPhotos.length >= MAX_ADDITIONAL_PHOTOS) {
+          break
+        }
+        await sleep(REQUEST_DELAY_MS)
+      }
+    }
+
+    console.info(`Harvested ${newPhotos.length} new unique photos.`)
+
+    const combinedPhotos = [...existingPhotos, ...newPhotos]
+    const shuffledPhotos = shuffleArray(combinedPhotos)
 
     await writeFile(TARGET_PATH, `${JSON.stringify(shuffledPhotos, null, 2)}\n`)
-    console.info(`Successfully harvested and shuffled ${shuffledPhotos.length} highly diverse, maintainer-focused photos and saved to public/flickr-photos.json`)
+    console.info(`Successfully updated cache with ${shuffledPhotos.length} photos (${newPhotos.length} new) and saved to public/flickr-photos.json`)
   }
   catch (error) {
     console.error('Error updating Flickr photos:', error)
@@ -141,4 +219,6 @@ async function main() {
   }
 }
 
-main()
+if (isMainModule()) {
+  main()
+}

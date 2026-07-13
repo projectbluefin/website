@@ -15,7 +15,7 @@ We will implement an automated build-time pipeline that harvests public photo re
 ### 1.1 Source Account Information
 * **Account Name:** Cloud Native Computing Foundation
 * **Flickr User NSID:** `143247548@N03`
-* **Official Client API Key:** `af8e5133eba9983c235490e3799abe1f` (the public site key used in official Flickr page scripts, extremely stable).
+* **Official Client API Key:** `49dc70cc62bfcbcde55883993d9121ce` (the public site key used in official Flickr page scripts).
 
 ### 1.2 Automated Build-Time Script
 * **Location:** `scripts/update-flickr-photos.js`

@@ -35,6 +35,7 @@ let duskTimer: ReturnType<typeof setInterval> | null = null
 
 const flickrPhotos = ref<{ id: string, server: string, secret: string, title: string }[]>([])
 const laterTrackPhotos = ref<any[]>([])
+const galleryCycle = ref<any[]>([])
 const manifest = ref<WolvesSoundtrackManifest | null>(null)
 
 const activeBuffer = ref<'A' | 'B'>('A')
@@ -44,6 +45,8 @@ const opacityA = ref(1)
 const opacityB = ref(0)
 const slideAIndex = ref(-1)
 const slideBIndex = ref(-1)
+const GALLERY_SEGMENT_SIZE = 100
+const TIMELINE_BOUNDARY_EPSILON_SECONDS = 0.001
 
 const activePhoto = computed(() => {
   return activeBuffer.value === 'A' ? photoA.value : photoB.value
@@ -381,7 +384,7 @@ const activeTimelineSlide = computed(() => {
     return null
   }
   const curTime = props.playlistCurrentTime ?? 0
-  let index = timelineSlides.value.findIndex(s => curTime < s.endTime)
+  let index = timelineSlides.value.findIndex(s => curTime < s.endTime - TIMELINE_BOUNDARY_EPSILON_SECONDS)
   if (index === -1) {
     index = timelineSlides.value.length - 1
   }
@@ -589,9 +592,15 @@ function snapshotLaterTrackPhotos(trackIndex: number) {
     dayName: wallpaper.dayName,
     nightName: wallpaper.nightName
   }))
-  const shuffledPhotos = shuffleArray(remotePhotos.length > 0 ? remotePhotos : localPhotos)
-  const startIndex = shuffledPhotos.length > 0 ? (trackIndex - 1) % shuffledPhotos.length : 0
-  laterTrackPhotos.value = [...shuffledPhotos.slice(startIndex), ...shuffledPhotos.slice(0, startIndex)]
+  const sourcePhotos = remotePhotos.length > 0 ? remotePhotos : localPhotos
+  if (galleryCycle.value.length === 0 || galleryCycle.value[0]?.isLocal !== sourcePhotos[0]?.isLocal) {
+    galleryCycle.value = shuffleArray(sourcePhotos)
+  }
+
+  const startIndex = galleryCycle.value.length > 0
+    ? ((trackIndex - 1) * GALLERY_SEGMENT_SIZE) % galleryCycle.value.length
+    : 0
+  laterTrackPhotos.value = [...galleryCycle.value.slice(startIndex), ...galleryCycle.value.slice(0, startIndex)]
 }
 
 function deterministicShuffle<T>(array: T[], seed = 42): T[] {

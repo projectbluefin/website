@@ -102,6 +102,7 @@ describe('wolvesComicReader', () => {
         playlistCurrentTime: 319, // Exactly 5:19 on Track 0
       },
     })
+    await wrapper.vm.$nextTick()
 
     // At 319s (5:19), the active slide should correspond to the heart picture (kubecon-55168460993.webp)
     const srcs = wrapper.findAll('.flickr-img').map(el => el.attributes('src') || '')
@@ -158,6 +159,51 @@ describe('wolvesComicReader', () => {
     await flushPromises()
     expect(galleryCaption(wrapper)).toContain('CNCF STREAM //')
     expect(galleryCaption(wrapper)).not.toBe(firstTrackStart)
+  })
+
+  it('uses separate Flickr photo segments for all later tracks', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const photos = Array.from({ length: 600 }, (_, index) => ({
+      id: `photo-${index}`,
+      server: '1',
+      secret: String(index),
+      title: `Photo ${index}`,
+    }))
+    const tracks = [
+      coverTrack,
+      ...Array.from({ length: 6 }, (_, index) => ({
+        id: `later-track-${index + 1}`,
+        title: `Later Track ${index + 1}`,
+        artist: 'Artist',
+        artwork: `wolves-artwork/later-track-${index + 1}.jpg`,
+        youtubeVideoId: String(index + 1),
+        bpm: 120,
+        phraseBeats: 5,
+      })),
+    ]
+    mockGalleryData(tracks, new Response(JSON.stringify(photos)))
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 0, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+    await wrapper.setProps({ trackIndex: 1, playlistCurrentTime: 0 })
+
+    const captionsForTrack = async () => {
+      const captions = new Set<string>()
+      for (const second of Array.from({ length: 10 }, (_, index) => index * 10)) {
+        await wrapper.setProps({ playlistCurrentTime: second })
+        captions.add(galleryCaption(wrapper))
+      }
+      return captions
+    }
+
+    const shownCaptions = new Set<string>()
+    for (const trackIndex of [1, 2, 3, 4, 5, 6]) {
+      await wrapper.setProps({ trackIndex, playlistCurrentTime: 0 })
+      const captions = await captionsForTrack()
+      expect([...captions].some(caption => shownCaptions.has(caption))).toBe(false)
+      captions.forEach(caption => shownCaptions.add(caption))
+    }
   })
 
   it('uses local images for later tracks only when the Flickr feed is unavailable', async () => {
