@@ -456,6 +456,7 @@ defineExpose({
 
   @media (min-width: 1024px) {
     flex: 1;
+    min-height: 0;
   }
 }
 
@@ -464,6 +465,7 @@ defineExpose({
     flex: 1;
     display: flex;
     flex-direction: column;
+    min-height: 0;
   }
 }
 
@@ -485,6 +487,7 @@ defineExpose({
 
   @media (min-width: 1024px) {
     flex: 1;
+    min-height: 0;
   }
 
   &:hover {
@@ -500,6 +503,7 @@ defineExpose({
   border-radius: 10px;
   padding: 12px 14px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
 }
 
 .dispatch-plan-command {
@@ -690,6 +694,7 @@ defineExpose({
   gap: 20px;
   padding: 10px 0;
   margin-top: 24px;
+  flex-shrink: 0;
 
   .mascot-console-ring {
     position: relative;

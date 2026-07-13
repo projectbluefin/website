@@ -1608,6 +1608,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
 
   /* 1.5x typography scale-up for all lore column elements when in immersive mode */
   :deep(.dispatch-plan-content) {
