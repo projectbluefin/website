@@ -137,7 +137,7 @@ const announcementText = computed(() => {
     }
     // Phase 6: Final Reveal (355s to 359s)
     else {
-      return 'We evolve, or die ...'
+      return 'Evolve or die ...'
     }
   }
 
