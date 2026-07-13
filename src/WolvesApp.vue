@@ -540,15 +540,17 @@ onBeforeUnmount(() => {
   height: 100%;
   opacity: 1;
   pointer-events: none;
+  will-change: opacity;
+  transform: translateZ(0);
 
   &.fading-out {
-    animation: fadeOutBuffer 1.5s ease-in-out forwards;
+    animation: fadeOutBuffer 1.5s linear forwards;
     z-index: 1;
   }
 
   &.is-transitioning {
     z-index: 2;
-    animation: fadeInBuffer 1.5s ease-in-out forwards;
+    animation: fadeInBuffer 1.5s linear forwards;
   }
 }
 
@@ -580,6 +582,7 @@ onBeforeUnmount(() => {
   background-position: center;
   background-repeat: no-repeat;
   pointer-events: none;
+  transform: translateZ(0);
 }
 
 .day-layer {
@@ -588,7 +591,9 @@ onBeforeUnmount(() => {
 
 .night-layer {
   z-index: 2;
-  transition: opacity 0.5s ease-in-out;
+  transition: opacity 0.5s linear;
+  will-change: opacity;
+  transform: translateZ(0);
 }
 
 .wolves-teaser-page {

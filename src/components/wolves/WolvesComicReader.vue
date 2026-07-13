@@ -876,7 +876,7 @@ onBeforeUnmount(() => {
               class="flickr-photo-layer"
               :style="{
                 opacity: opacityA,
-                transition: `opacity ${currentSlideTransitionDuration}ms ease-in-out`,
+                transition: `opacity ${currentSlideTransitionDuration}ms linear`,
                 zIndex: activeBuffer === 'A' ? 2 : 1,
               }"
             >
@@ -910,7 +910,7 @@ onBeforeUnmount(() => {
               class="flickr-photo-layer"
               :style="{
                 opacity: opacityB,
-                transition: `opacity ${currentSlideTransitionDuration}ms ease-in-out`,
+                transition: `opacity ${currentSlideTransitionDuration}ms linear`,
                 zIndex: activeBuffer === 'B' ? 2 : 1,
               }"
             >
@@ -1407,6 +1407,7 @@ onBeforeUnmount(() => {
   justify-content: center;
   background-color: #0c1016;
   will-change: opacity;
+  transform: translateZ(0);
 }
 
 .flickr-img {
