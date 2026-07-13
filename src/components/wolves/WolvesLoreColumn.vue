@@ -555,31 +555,6 @@ defineExpose({
           </Transition>
         </div>
 
-        <!-- Transcript Navigation Bar -->
-        <div class="lore-navigation-bar">
-          <button
-            type="button"
-            class="lore-nav-btn prev-btn"
-            aria-label="Previous transcript"
-            :disabled="page !== undefined ? page === 1 : currentLoreIndex === 0"
-            @click="prevLore"
-          >
-            &larr;
-          </button>
-          <span class="lore-counter font-mono">
-            {{ page !== undefined ? page : currentLoreIndex + 1 }} / {{ page !== undefined ? (totalPages || 20) : filteredLoreEntries.length }}
-          </span>
-          <button
-            type="button"
-            class="lore-nav-btn next-btn"
-            aria-label="Next transcript"
-            :disabled="page !== undefined ? page === (totalPages || 20) : currentLoreIndex === filteredLoreEntries.length - 1"
-            @click="nextLore"
-          >
-            &rarr;
-          </button>
-        </div>
-
         <!-- Mascot Rotating Console (circular node) integrated at bottom of card -->
         <div class="mascot-console-hud">
           <div class="mascot-console-ring">
@@ -932,50 +907,6 @@ defineExpose({
   }
   to {
     opacity: 0.85;
-  }
-}
-
-/* Transcript Navigation Bar */
-.lore-navigation-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(16, 21, 31, 0.95);
-  border: 1px solid rgba(66, 133, 244, 0.22);
-  border-radius: 12px;
-  padding: 8px 16px;
-  margin-top: 8px;
-  gap: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  flex-shrink: 0;
-
-  .lore-counter {
-    font-size: 1.1rem;
-    color: #cbd5e1;
-    font-weight: 500;
-  }
-
-  .lore-nav-btn {
-    background: rgba(66, 133, 244, 0.08);
-    border: 1px solid rgba(102, 179, 255, 0.35);
-    color: #e0f2fe;
-    font-size: 1.1rem;
-    font-weight: 700;
-    padding: 6px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover:not(:disabled) {
-      background: rgba(66, 133, 244, 0.18);
-      border-color: rgba(125, 211, 252, 0.8);
-      color: #ffffff;
-    }
-
-    &:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
-    }
   }
 }
 </style>

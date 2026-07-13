@@ -672,14 +672,17 @@ function prevTrack() {
 
 /* Update the grid to be simpler */
 .soundtrack-panel-main {
-  display: grid;
-  grid-template-columns: auto 1fr;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 16px;
   padding: 18px;
 
-  @media (min-width: 900px) {
-    grid-template-columns: auto 1fr auto;
+  @media (min-width: 640px) {
+    flex-direction: row;
     align-items: center;
+    text-align: left;
   }
 }
 
@@ -714,6 +717,12 @@ function prevTrack() {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  width: 100%;
+
+  @media (min-width: 640px) {
+    width: auto;
+    flex: 1;
+  }
 }
 
 .soundtrack-label,
@@ -1010,18 +1019,7 @@ function prevTrack() {
   display: flex;
   align-items: center;
   gap: 8px;
-  justify-self: start;
-
-  @media (min-width: 900px) {
-    justify-self: end;
-  }
-
-  @media (max-width: 767px) {
-    grid-column: 1 / -1;
-    width: 100%;
-    justify-content: center;
-    margin-top: 12px;
-  }
+  flex-shrink: 0;
 }
 
 .quote-nav-btn {
