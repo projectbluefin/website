@@ -23,6 +23,7 @@ const typedMessagesText = ref<string[]>([])
 const climaxMessageIndex = ref<number | null>(null)
 const revealedClimaxSentence = ref('')
 let typewriterTimer: ReturnType<typeof setInterval> | null = null
+let scrollPending = false
 
 const CLIMAX_ARTIFACT_ID = 'lorem-pursuit-1'
 const CLIMAX_SPEAKER = 'BUR//S'
@@ -37,9 +38,20 @@ function clearTypewriter() {
 }
 
 function scrollViewport() {
-  quoteViewportRef.value?.scrollTo({
-    top: quoteViewportRef.value.scrollHeight,
-    behavior: 'smooth',
+  if (scrollPending) {
+    return
+  }
+
+  scrollPending = true
+  void nextTick(() => {
+    const viewport = quoteViewportRef.value
+    if (viewport) {
+      viewport.scrollTo({
+        top: viewport.scrollHeight,
+        behavior: 'smooth',
+      })
+    }
+    scrollPending = false
   })
 }
 

@@ -99,6 +99,32 @@ describe('wolvesLoreColumn Logic', () => {
     })
   })
 
+  it('scrolls a completed quote after its final character renders', async () => {
+    vi.useFakeTimers()
+    const entry = loreEntries.find(entry => entry.id === 'arthur-c-clarke-3')
+    if (!entry || entry.type !== 'quote') {
+      throw new Error('Expected a quote fixture')
+    }
+
+    const renderedTextAtScroll: string[] = []
+    const scrollTo = vi.spyOn(HTMLElement.prototype, 'scrollTo')
+      .mockImplementation(function (this: HTMLElement) {
+        renderedTextAtScroll.push(this.querySelector('.lore-quote-text')?.textContent ?? '')
+      })
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId: entry.id,
+        duration: 0.01,
+      },
+    })
+
+    await vi.advanceTimersByTimeAsync(1_000)
+
+    expect(scrollTo).toHaveBeenCalled()
+    expect(renderedTextAtScroll).toContain(entry.data.quote)
+    wrapper.unmount()
+  })
+
   it('holds and fades the Golden Era vision before Sarah speaks', async () => {
     vi.useFakeTimers()
     const entry = loreEntries.find(entry => entry.id === 'lorem-pursuit-1')
