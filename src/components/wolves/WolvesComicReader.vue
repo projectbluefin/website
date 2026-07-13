@@ -15,7 +15,7 @@ Emits
 import type { SoundtrackTrack, WolvesSoundtrackManifest } from '@/data/wolves-soundtrack'
 import type { WolvesChapter } from '@/data/wolves-story'
 
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
 import { wallpapers } from './wallpapers-list'
 
@@ -37,19 +37,11 @@ const emit = defineEmits<{
 // PDF source ───────────────────────────────────────────────────────────────
 const pdfUrl = `${import.meta.env.BASE_URL}color-with-bluefin.pdf`
 
-// PDF.js CDN constants ─────────────────────────────────────────────────────
-const PDFJS_SCRIPT_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
-const PDFJS_SCRIPT_INTEGRITY = 'sha512-q+4liFwdPC/bNdhUpZx6aXDx/h77yEQtn4I1slHydcbZK34nLaR3cAeYSJshoxIOq3mjEf7xJE8YWIUHMn+oCQ=='
-const PDFJS_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
-
 // Module-level singletons (survive component re-mounts on same page)
-let pdfjsLib: any = null
-let pdfDocument: any = null
-const renderTasks = new Map<HTMLCanvasElement, any>()
 
 // State ────────────────────────────────────────────────────────────────────
 const page = ref(1) // 1-based
-const pdfLoading = ref(true)
+const pdfLoading = ref(false)
 const pdfError = ref('')
 const isExperimental = ref(true)
 
@@ -617,124 +609,8 @@ const activeChapter = computed(() =>
 
 // Template refs ────────────────────────────────────────────────────────────
 const flipViewport = ref<HTMLElement | null>(null)
-const flipCanvas = ref<HTMLCanvasElement | null>(null)
 
-let flipResizeObserver: ResizeObserver | null = null
-
-// Script injection ─────────────────────────────────────────────────────────
-function loadScript(src: string, integrity?: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) {
-      resolve()
-      return
-    }
-    const script = document.createElement('script')
-    script.src = src
-    script.async = true
-    if (integrity) {
-      script.integrity = integrity
-      script.crossOrigin = 'anonymous'
-    }
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error(`Failed to load script: ${src}`))
-    document.head.appendChild(script)
-  })
-}
-
-async function loadPdfJs(): Promise<any> {
-  if (pdfjsLib) {
-    return pdfjsLib
-  }
-  await loadScript(PDFJS_SCRIPT_URL, PDFJS_SCRIPT_INTEGRITY)
-  const lib = (window as any).pdfjsLib
-  if (!lib) {
-    throw new Error('PDF.js failed to initialize')
-  }
-  lib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER_URL
-  pdfjsLib = lib
-  return lib
-}
-
-// Rendering ────────────────────────────────────────────────────────────────
-function getContentWidth(element: HTMLElement): number {
-  const styles = window.getComputedStyle(element)
-  const paddingLeft = Number.parseFloat(styles.paddingLeft) || 0
-  const paddingRight = Number.parseFloat(styles.paddingRight) || 0
-  return Math.max(0, element.clientWidth - paddingLeft - paddingRight)
-}
-
-async function renderPageOnCanvas(pageNumber: number, canvas: HTMLCanvasElement, containerWidth: number) {
-  if (!pdfDocument || containerWidth <= 0) {
-    return
-  }
-  const existingTask = renderTasks.get(canvas)
-  if (existingTask) {
-    existingTask.cancel()
-  }
-  const pdfPage = await pdfDocument.getPage(pageNumber)
-  const baseViewport = pdfPage.getViewport({ scale: 1 })
-
-  // Find container available height to prevent clipping tall pages inside a fixed aspect-ratio box
-  const host = canvas.parentElement as HTMLElement | null
-  const paddingY = host ? (Number.parseFloat(window.getComputedStyle(host).paddingTop) || 0) + (Number.parseFloat(window.getComputedStyle(host).paddingBottom) || 0) : 24
-  const containerHeight = host ? Math.max(0, host.clientHeight - paddingY) : 0
-
-  let scale = containerWidth / baseViewport.width
-  if (containerHeight > 0) {
-    const scaledHeight = baseViewport.height * scale
-    if (scaledHeight > containerHeight) {
-      scale = containerHeight / baseViewport.height
-    }
-  }
-
-  const viewport = pdfPage.getViewport({ scale })
-  const context = canvas.getContext('2d')
-  if (!context) {
-    return
-  }
-  const outputScale = window.devicePixelRatio || 1
-  canvas.width = Math.floor(viewport.width * outputScale)
-  canvas.height = Math.floor(viewport.height * outputScale)
-  canvas.style.width = `${Math.floor(viewport.width)}px`
-  canvas.style.height = `${Math.floor(viewport.height)}px`
-  const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined
-  const renderTask = pdfPage.render({ canvasContext: context, viewport, transform })
-  renderTasks.set(canvas, renderTask)
-  renderTask.promise.then(() => {
-    if (renderTasks.get(canvas) === renderTask) {
-      renderTasks.delete(canvas)
-    }
-  }).catch(() => {})
-  try {
-    await renderTask.promise
-  }
-  catch (err: any) {
-    if (err?.name !== 'RenderingCancelledException') {
-      console.error('[wolves] Failed to render PDF page', pageNumber, err)
-    }
-  }
-}
-
-function renderFlipPage() {
-  if (page.value > 1) {
-    return
-  }
-  if (!flipCanvas.value) {
-    return
-  }
-  const host = flipCanvas.value.parentElement as HTMLElement | null
-  const width = host ? getContentWidth(host) : (flipViewport.value?.clientWidth ?? 0)
-  renderPageOnCanvas(page.value, flipCanvas.value, width)
-}
-
-function setupFlipResizeObserver() {
-  flipResizeObserver?.disconnect()
-  if (!flipViewport.value) {
-    return
-  }
-  flipResizeObserver = new ResizeObserver(() => renderFlipPage())
-  flipResizeObserver.observe(flipViewport.value)
-}
+// Utilities ────────────────────────────────────────────────────────────────
 
 function shuffleWallpapers(array: any[]): any[] {
   const itemsWithScores = array.map((item) => {
@@ -753,21 +629,8 @@ function shuffleWallpapers(array: any[]): any[] {
 }
 
 async function loadComicPdf() {
-  pdfLoading.value = true
+  pdfLoading.value = false
   pdfError.value = ''
-  try {
-    const lib = await loadPdfJs()
-    pdfDocument = await lib.getDocument(pdfUrl).promise
-    pdfLoading.value = false
-    await nextTick()
-    setupFlipResizeObserver()
-    renderFlipPage()
-  }
-  catch (err) {
-    console.error('[wolves] Failed to load comic PDF', err)
-    pdfError.value = 'Unable to load the comic book cover right now. Wallpapers will still play.'
-    pdfLoading.value = false
-  }
 }
 
 // Autoplay / Autoscroll Timer
@@ -837,11 +700,7 @@ function setPage(n: number) {
 }
 
 // Watchers ─────────────────────────────────────────────────────────────────
-watch(page, () => {
-  if (!pdfLoading.value) {
-    renderFlipPage()
-  }
-})
+// Page watch removed for static cover optimization
 
 watch(() => props.page, (newVal) => {
   if (newVal !== undefined && newVal !== page.value) {
@@ -907,11 +766,6 @@ onBeforeUnmount(() => {
     clearInterval(duskTimer)
   }
   window.removeEventListener('keydown', handleKeyDown)
-  flipResizeObserver?.disconnect()
-  renderTasks.forEach(task => task.cancel())
-  renderTasks.clear()
-  pdfDocument?.destroy()
-  pdfDocument = null
 })
 </script>
 
@@ -1000,23 +854,33 @@ onBeforeUnmount(() => {
           </div>
 
           <template v-else>
-            <div v-if="pdfLoading && page === 1" class="comic-status-wrap">
-              <div class="spinner" />
-              <p>Loading comic pages&hellip;</p>
+            <!-- Page 1 (Cover Page) -->
+            <div v-if="page === 1" class="wallpaper-viewport-wrapper">
+              <div class="wallpaper-display-card animate-fade">
+                <div class="wallpaper-container cover-container">
+                  <img
+                    :src="`${baseUrl}img/color-with-bluefin-cover.webp`"
+                    class="wallpaper-img"
+                    alt="Color with Bluefin Coloring Book Cover"
+                    loading="eager"
+                  >
+                </div>
+                <!-- Decorative caption with download link -->
+                <div class="wallpaper-caption font-mono flex items-center gap-2">
+                  <span class="caption-label text-cyan">BLUEFIN ARCHIVE //</span> Color with Bluefin
+                  <span class="text-gray-500 mx-1">|</span>
+                  <a
+                    :href="pdfUrl"
+                    download="color-with-bluefin.pdf"
+                    class="text-cyan hover:text-white transition-colors"
+                    title="Download full coloring book PDF (19MB)"
+                  >
+                    Download PDF (19MB)
+                  </a>
+                </div>
+              </div>
             </div>
-            <div v-else-if="pdfError && page === 1" class="comic-status-wrap is-error">
-              <p>{{ pdfError }}</p>
-              <button class="ctrl-btn" @click="loadComicPdf">
-                Retry
-              </button>
-            </div>
-            <canvas
-              v-show="!pdfLoading && !pdfError && page === 1"
-              ref="flipCanvas"
-              class="pdf-page-canvas"
-              role="img"
-              :aria-label="`Comic page ${page} of ${totalPages}`"
-            />
+
             <!-- Wallpaper Pages (Pages 2-15) -->
             <div v-if="page > 1" class="wallpaper-viewport-wrapper">
               <template v-for="(wp, idx) in shuffledWallpapers" :key="idx">

@@ -65,192 +65,192 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     "type": "single",
-    "name": "wolves/showcase/PXL_20220405_235648938.jpg",
+    "name": "wolves/showcase/PXL_20220405_235648938.webp",
     "title": "PXL 20220405 235648938"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/PXL_20230315_162515981.jpg",
+    "name": "wolves/showcase/PXL_20230315_162515981.webp",
     "title": "PXL 20230315 162515981"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/PXL_20230724_132635290.jpg",
+    "name": "wolves/showcase/PXL_20230724_132635290.webp",
     "title": "PXL 20230724 132635290"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/PXL_20230922_193924217.jpg",
+    "name": "wolves/showcase/PXL_20230922_193924217.webp",
     "title": "PXL 20230922 193924217"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/PXL_20230922_194447643.jpg",
+    "name": "wolves/showcase/PXL_20230922_194447643.webp",
     "title": "PXL 20230922 194447643"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/PXL_20230922_195227218.jpg",
+    "name": "wolves/showcase/PXL_20230922_195227218.webp",
     "title": "PXL 20230922 195227218"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/PXL_20231030_165334938.jpg",
+    "name": "wolves/showcase/PXL_20231030_165334938.webp",
     "title": "PXL 20231030 165334938"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/PXL_20240720_181225593.jpg",
+    "name": "wolves/showcase/PXL_20240720_181225593.webp",
     "title": "PXL 20240720 181225593"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/Pasted image (2).png",
+    "name": "wolves/showcase/Pasted image (2).webp",
     "title": "Pasted image (2)"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/Pasted image (3).png",
+    "name": "wolves/showcase/Pasted image (3).webp",
     "title": "Pasted image (3)"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/Pasted image (4).png",
+    "name": "wolves/showcase/Pasted image (4).webp",
     "title": "Pasted image (4)"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/Pasted image (5).png",
+    "name": "wolves/showcase/Pasted image (5).webp",
     "title": "Pasted image (5)"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/Pasted image (6).png",
+    "name": "wolves/showcase/Pasted image (6).webp",
     "title": "Pasted image (6)"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/Pasted image.png",
+    "name": "wolves/showcase/Pasted image.webp",
     "title": "Pasted image"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/Screenshot From 2026-01-23 09-32-12.png",
+    "name": "wolves/showcase/Screenshot From 2026-01-23 09-32-12.webp",
     "title": "Screenshot From 2026 01 23 09 32 12"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/Screenshot From 2026-02-03 17-43-17.png",
+    "name": "wolves/showcase/Screenshot From 2026-02-03 17-43-17.webp",
     "title": "Screenshot From 2026 02 03 17 43 17"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/bluespeed-cluster.png",
+    "name": "wolves/showcase/bluespeed-cluster.webp",
     "title": "Bluespeed Cluster"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/bluespeed-cpu.png",
+    "name": "wolves/showcase/bluespeed-cpu.webp",
     "title": "Bluespeed Cpu"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/bluespeed-storage.png",
+    "name": "wolves/showcase/bluespeed-storage.webp",
     "title": "Bluespeed Storage"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/knuckle-progress.png",
+    "name": "wolves/showcase/knuckle-progress.webp",
     "title": "Knuckle Progress"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/kubestellar-dashboard.png",
+    "name": "wolves/showcase/kubestellar-dashboard.webp",
     "title": "Kubestellar Dashboard"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/showcase-1.png",
+    "name": "wolves/showcase/showcase-1.webp",
     "title": "Community Showcase by ki"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/showcase-10.png",
+    "name": "wolves/showcase/showcase-10.webp",
     "title": "Community Showcase by David"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/showcase-11.png",
+    "name": "wolves/showcase/showcase-11.webp",
     "title": "Community Showcase by Corpacra"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/showcase-12.jpg",
+    "name": "wolves/showcase/showcase-12.webp",
     "title": "Community Showcase by Falco404"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/showcase-13.png",
+    "name": "wolves/showcase/showcase-13.webp",
     "title": "Community Showcase by Amy"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/showcase-14.png",
+    "name": "wolves/showcase/showcase-14.webp",
     "title": "Community Showcase by Pires"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/showcase-15.png",
+    "name": "wolves/showcase/showcase-15.webp",
     "title": "Community Showcase by Idris"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/showcase-16.png",
+    "name": "wolves/showcase/showcase-16.webp",
     "title": "Community Showcase by G. Murdzheff"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/showcase-17.png",
+    "name": "wolves/showcase/showcase-17.webp",
     "title": "Community Showcase by JumpyVi"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/showcase-18.jpg",
+    "name": "wolves/showcase/showcase-18.webp",
     "title": "Community Showcase by Giklab"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/showcase-19.png",
+    "name": "wolves/showcase/showcase-19.webp",
     "title": "Community Showcase by CTW"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/showcase-20.png",
+    "name": "wolves/showcase/showcase-20.webp",
     "title": "Community Showcase by AlgoCompSynth by znmeb"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/showcase-5.png",
+    "name": "wolves/showcase/showcase-5.webp",
     "title": "Community Showcase by Killishness"
   },
   {
     "type": "single",
-    "name": "wolves/showcase/showcase-9.png",
+    "name": "wolves/showcase/showcase-9.webp",
     "title": "Community Showcase by AlgoCompSynth by znmeb"
   },
   {
     "type": "single",
-    "name": "wolves/people/MVIMG_20180502_184727.jpg",
+    "name": "wolves/people/MVIMG_20180502_184727.webp",
     "title": "MVIMG 20180502 184727"
   },
   {
     "type": "single",
-    "name": "wolves/people/Screenshot From 2026-04-15 19-13-20.png",
+    "name": "wolves/people/Screenshot From 2026-04-15 19-13-20.webp",
     "title": "Screenshot From 2026 04 15 19 13 20"
   },
   {
     "type": "single",
-    "name": "wolves/people/bketelsen.jpeg",
+    "name": "wolves/people/bketelsen.webp",
     "title": "Bketelsen"
   },
   {
@@ -855,7 +855,7 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     "type": "single",
-    "name": "wolves/people/topheememe.jpg",
+    "name": "wolves/people/topheememe.webp",
     "title": "Topheememe"
   }
 ]

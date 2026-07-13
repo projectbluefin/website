@@ -59,11 +59,11 @@ describe('wolvesComicReader', () => {
     expect(wrapper.emitted('update:page')?.[0]).toEqual([2])
   })
 
-  it('shows loading state while PDF is loading', () => {
+  it('renders static WebP cover instantly on first load without loading spinner', () => {
     const wrapper = mount(WolvesComicReader, { props: { chapters: [] } })
-    const loadingEl = wrapper.find('.comic-status-wrap')
-    expect(loadingEl.exists()).toBe(true)
-    expect(loadingEl.text()).toContain('Loading comic pages')
+    const coverImg = wrapper.find('.cover-container img')
+    expect(coverImg.exists()).toBe(true)
+    expect(coverImg.attributes('src')).toContain('color-with-bluefin-cover.webp')
   })
 
   it('emits update:page with 1-based page on Next click', async () => {

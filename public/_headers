@@ -1,0 +1,19 @@
+# Caching headers for Cloudflare Pages
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/img/wallpapers/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/color-with-bluefin.pdf
+  Cache-Control: public, max-age=86400, must-revalidate
+
+/wolves-playlist.json
+  Cache-Control: public, max-age=3600, must-revalidate
+
+/flickr-photos.json
+  Cache-Control: public, max-age=3600, must-revalidate
