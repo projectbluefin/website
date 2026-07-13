@@ -3,7 +3,7 @@ import type { WolvesChapter } from '../../data/wolves-story'
 import type { WolvesLoreEntry } from './lore'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { LangLandingBluefinImageURLs } from '../../content'
-import { getLoreEntriesForChapter, loreEntries } from './lore'
+import { getLoreEntriesForChapter } from './lore'
 
 const props = defineProps<{
   chapter?: WolvesChapter
@@ -17,29 +17,6 @@ const emit = defineEmits<{
   (e: 'update:page', page: number): void
 }>()
 
-const pageToArtifactIdMap: Record<number, string> = {
-  1: 'arthur-c-clarke-4',
-  2: 'lorem-prologue-1',
-  3: 'arthur-c-clarke-1',
-  4: 'lorem-prologue-2',
-  5: 'arthur-c-clarke-2',
-  6: 'forbidden-factory',
-  7: 'maintenance-window',
-  8: 'quote-childhoods-end-future',
-  9: 'lorem-pursuit-1',
-  10: 'quote-natasha-woods',
-  11: 'do-not-reply',
-  12: 'quote-berkus',
-  13: 'childhoods-end-wager',
-  14: 'quote-third-disciple',
-  15: 'lorem-awakening-1',
-  16: 'ishtar-gardener-and-winnower',
-  17: 'glorious-eggroll',
-  18: 'project-neptune',
-  19: 'john-seager',
-  20: 'blue-universal-acquires-wayland-yutani'
-}
-
 const baseUrl = import.meta.env.BASE_URL
 
 const isCopied = ref(false)
@@ -49,35 +26,8 @@ watch(isCopied, (newVal) => {
 })
 
 const filteredLoreEntries = computed(() => getLoreEntriesForChapter(props.chapter))
-const localLoreIndex = ref(0)
-
-const currentLoreEntry = computed<WolvesLoreEntry | null>(() => {
-  if (props.page !== undefined) {
-    const p = Math.max(1, Math.min(20, props.page))
-    const targetId = pageToArtifactIdMap[p]
-    if (targetId) {
-      return loreEntries.find(entry => entry.id === targetId) || null
-    }
-  }
-  return filteredLoreEntries.value[localLoreIndex.value] ?? null
-})
-
-const currentLoreIndex = computed({
-  get() {
-    if (props.page !== undefined) {
-      const entry = currentLoreEntry.value
-      if (!entry) {
-        return 0
-      }
-      const idx = filteredLoreEntries.value.findIndex(e => e.id === entry.id)
-      return idx !== -1 ? idx : 0
-    }
-    return localLoreIndex.value
-  },
-  set(val) {
-    localLoreIndex.value = val
-  }
-})
+const currentLoreIndex = ref(0)
+const currentLoreEntry = computed<WolvesLoreEntry | null>(() => filteredLoreEntries.value[currentLoreIndex.value] ?? null)
 
 const quoteViewportRef = ref<HTMLElement | null>(null)
 const activeMessageIndex = ref(0)
@@ -254,9 +204,6 @@ function getDynamicDelay(entry: WolvesLoreEntry): number {
 }
 
 function startLoreTimer() {
-  if (props.page !== undefined) {
-    return
-  }
   if (filteredLoreEntries.value.length <= 1 || loreTimer) {
     return
   }
@@ -290,13 +237,6 @@ function restartLoreTimer() {
 }
 
 function nextLore() {
-  if (props.page !== undefined && props.totalPages !== undefined) {
-    if (props.page < props.totalPages) {
-      emit('update:page', props.page + 1)
-    }
-    return
-  }
-
   if (filteredLoreEntries.value.length <= 1) {
     return
   }
@@ -315,13 +255,6 @@ function nextLore() {
 }
 
 function prevLore() {
-  if (props.page !== undefined) {
-    if (props.page > 1) {
-      emit('update:page', props.page - 1)
-    }
-    return
-  }
-
   if (filteredLoreEntries.value.length <= 1) {
     return
   }
