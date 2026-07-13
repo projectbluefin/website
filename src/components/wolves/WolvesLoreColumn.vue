@@ -80,8 +80,14 @@ function runTypewriter() {
 
   // Track which message index we are currently typing. We type sequentially.
   let currentLength = 0
+  let pauseTicks = 0
 
   typewriterTimer = setInterval(() => {
+    if (pauseTicks > 0) {
+      pauseTicks--
+      return
+    }
+
     if (activeMessageIndex.value >= entry.data.messages.length) {
       clearTypewriter()
       return
@@ -89,6 +95,9 @@ function runTypewriter() {
 
     const currentMessage = entry.data.messages[activeMessageIndex.value]
     const targetText = currentMessage.text
+    const speaker = currentMessage.speaker
+    const isSlowSpeaker = speaker === 'BUR//S' || speaker === 'SARAH'
+
     // We increment letter by letter for a realistic human typing tempo.
     currentLength++
 
@@ -96,12 +105,39 @@ function runTypewriter() {
       const cyberChars = '01#$@&%<>_+'
       const randChar = cyberChars[Math.floor(Math.random() * cyberChars.length)]
       typedMessagesText.value[activeMessageIndex.value] = targetText.slice(0, currentLength) + randChar
+
+      const lastChar = targetText[currentLength - 1]
+
+      if (isSlowSpeaker) {
+        pauseTicks = 2 // Slower baseline typing speed (3x slower)
+        if (lastChar === '.' || lastChar === '?' || lastChar === '!') {
+          pauseTicks = 40 // ~1.4 seconds dramatic pause between sentences
+        }
+        else if (lastChar === '…') {
+          pauseTicks = 30 // ~1 second pause for ellipses
+        }
+        else if (lastChar === ',') {
+          pauseTicks = 15 // ~0.5 second pause for commas
+        }
+      }
+      else {
+        if (lastChar === '.' || lastChar === '?' || lastChar === '!') {
+          pauseTicks = 12 // ~0.4 second normal pause
+        }
+        else if (lastChar === '…') {
+          pauseTicks = 15 // ~0.5 second pause for ellipses
+        }
+        else if (lastChar === ',') {
+          pauseTicks = 5 // ~0.17 second pause for commas
+        }
+      }
     }
     else {
       typedMessagesText.value[activeMessageIndex.value] = targetText
       // Once a message completes, proceed to the next after a brief pause
       activeMessageIndex.value++
       currentLength = 0
+      pauseTicks = isSlowSpeaker ? 50 : 20
     }
 
     // Auto-scroll
