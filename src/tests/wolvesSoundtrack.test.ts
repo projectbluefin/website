@@ -172,6 +172,26 @@ describe('wolves soundtrack', () => {
     expect(document.querySelector(`script[src="${iframeApiSrc}"]`)).not.toBeNull()
   })
 
+  it('keeps the existing primary play button operable after playback starts', async () => {
+    const wrapper = mount(WolvesSoundtrack)
+    const primaryButton = wrapper.get('button.soundtrack-action')
+
+    expect(wrapper.findAll('button.soundtrack-action')).toHaveLength(1)
+    await primaryButton.trigger('click')
+    await flushPromises()
+
+    resolveIframeApi()
+    await flushPromises()
+    players[0].triggerReady()
+    await flushPromises()
+
+    expect(wrapper.findAll('button.soundtrack-action')).toHaveLength(1)
+    expect(wrapper.get('button.soundtrack-action').attributes('aria-label')).toBe('Pause soundtrack')
+
+    await wrapper.get('button.soundtrack-action').trigger('click')
+    expect(players[0].pauseVideo).toHaveBeenCalledTimes(1)
+  })
+
   it('keeps the same player while unrelated reader events occur', async () => {
     const wrapper = mount(WolvesSoundtrack)
     const persistentHost = wrapper.get('[data-testid="wolves-player-host"]').element

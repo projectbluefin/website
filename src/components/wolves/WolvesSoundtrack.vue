@@ -821,6 +821,12 @@ onBeforeUnmount(() => {
     border-color: rgba(102, 179, 255, 0.55);
     color: #e0f2fe;
 
+    svg {
+      width: 1.5rem;
+      height: 1.5rem;
+      flex-shrink: 0;
+    }
+
     &:hover:not(:disabled) {
       background: rgba(66, 133, 244, 0.2);
       border-color: rgba(125, 211, 252, 0.8);

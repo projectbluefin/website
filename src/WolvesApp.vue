@@ -38,12 +38,16 @@ const soundtrackManifest = ref<WolvesSoundtrackManifest | null>(null)
 const playlistCurrentTime = ref(0)
 const playlistDuration = ref(0)
 const playlistTrackIndex = ref(0)
+const presentationSnapshot = ref<{ trackIndex: number, currentTime: number } | null>(null)
+const presentationTrackIndex = computed(() => presentationSnapshot.value?.trackIndex ?? playlistTrackIndex.value)
+const presentationCurrentTime = computed(() => presentationSnapshot.value?.currentTime ?? playlistCurrentTime.value)
 const isSoundtrackActive = ref(false)
+const isGalleryPresentation = computed(() => presentationTrackIndex.value > 0)
 const currentNarrativeSlot = computed(() =>
-  getNarrativeSlotForTime(playlistTrackIndex.value === 0 ? playlistCurrentTime.value : Number.POSITIVE_INFINITY),
+  getNarrativeSlotForTime(presentationTrackIndex.value === 0 ? presentationCurrentTime.value : Number.POSITIVE_INFINITY),
 )
 const thesisState = computed(() =>
-  playlistTrackIndex.value === 0 ? getWolvesThesisState(playlistCurrentTime.value) : getWolvesThesisState(-1),
+  presentationTrackIndex.value === 0 ? getWolvesThesisState(presentationCurrentTime.value) : getWolvesThesisState(-1),
 )
 
 const activeNarrativeArtifact = computed(() =>
@@ -54,12 +58,18 @@ const activeChapter = computed(() =>
   wolvesRelease.chapters.find(chapter => chapter.id === activeNarrativeArtifact.value?.chapterId),
 )
 
+const isImmersive = ref(false)
+const EQUINOX_ENTER_DURATION = 1500
 let equinoxTimeout: ReturnType<typeof setTimeout> | null = null
+let presentationTimeout: ReturnType<typeof setTimeout> | null = null
+let equinoxTransitionId = 0
 
 watch(playlistTrackIndex, (newVal) => {
-  if (!isSoundtrackActive.value) {
+  if (!isSoundtrackActive.value || !isImmersive.value) {
     return
   }
+
+  const transitionId = ++equinoxTransitionId
 
   if (soundtrackManifest.value && soundtrackManifest.value.tracks[newVal]) {
     const track = soundtrackManifest.value.tracks[newVal]
@@ -76,14 +86,32 @@ watch(playlistTrackIndex, (newVal) => {
   if (equinoxTimeout) {
     clearTimeout(equinoxTimeout)
   }
+  if (presentationTimeout) {
+    clearTimeout(presentationTimeout)
+  }
+
+  presentationTimeout = setTimeout(() => {
+    if (transitionId === equinoxTransitionId) {
+      presentationSnapshot.value = null
+      presentationTimeout = null
+    }
+  }, EQUINOX_ENTER_DURATION)
 
   equinoxTimeout = setTimeout(() => {
-    isEquinoxActive.value = false
-    equinoxTimeout = null
+    if (transitionId === equinoxTransitionId) {
+      isEquinoxActive.value = false
+      equinoxTimeout = null
+    }
   }, 6000)
 })
 
 function handleProgress(data: { currentTime: number, duration: number, playlistIndex: number }) {
+  if (isSoundtrackActive.value && data.playlistIndex !== playlistTrackIndex.value) {
+    presentationSnapshot.value = {
+      trackIndex: presentationTrackIndex.value,
+      currentTime: presentationCurrentTime.value,
+    }
+  }
   playlistCurrentTime.value = data.currentTime
   playlistDuration.value = data.duration
   playlistTrackIndex.value = data.playlistIndex
@@ -143,8 +171,6 @@ function getNightWallpaperUrl(monthIndex: number) {
   return `url('${import.meta.env.BASE_URL}img/wallpapers/bluefin-${pairStr}-night.webp')`
 }
 
-const isImmersive = ref(false)
-
 function enterImmersiveExperience() {
   const transition = () => {
     isImmersive.value = true
@@ -166,6 +192,20 @@ function enterImmersiveExperience() {
 function exitImmersiveExperience() {
   const transition = () => {
     isImmersive.value = false
+    isEquinoxActive.value = false
+    equinoxTransitionId++
+    if (equinoxTimeout) {
+      clearTimeout(equinoxTimeout)
+      equinoxTimeout = null
+    }
+    if (presentationTimeout) {
+      clearTimeout(presentationTimeout)
+      presentationTimeout = null
+    }
+    presentationSnapshot.value = null
+    playlistCurrentTime.value = 0
+    playlistDuration.value = 0
+    playlistTrackIndex.value = 0
   }
 
   const documentWithTransition = document as Document & {
@@ -198,6 +238,12 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeyDown)
+  if (equinoxTimeout) {
+    clearTimeout(equinoxTimeout)
+  }
+  if (presentationTimeout) {
+    clearTimeout(presentationTimeout)
+  }
 })
 </script>
 
@@ -272,15 +318,18 @@ onBeforeUnmount(() => {
       </header>
 
       <!-- MIDDLE CONTENT AREA (WIDESCREEN SPLIT 2fr 1fr) -->
-      <div class="immersive-content-grid" :class="{ 'equinox-active': isEquinoxActive }">
+      <div
+        class="immersive-content-grid"
+        :data-presentation="isGalleryPresentation ? 'centered-gallery' : 'narrative-split'"
+      >
         <div class="immersive-col-left">
           <WolvesComicReader
-            :track-index="isSoundtrackActive ? playlistTrackIndex : undefined"
-            :playlist-current-time="playlistCurrentTime"
+            :track-index="isSoundtrackActive ? presentationTrackIndex : undefined"
+            :playlist-current-time="presentationCurrentTime"
           />
         </div>
 
-        <div class="immersive-col-right">
+        <div v-if="!isGalleryPresentation" class="immersive-col-right">
           <WolvesLoreColumn
             :artifact-id="currentNarrativeSlot.artifactId"
             :duration="currentNarrativeSlot.endTime - currentNarrativeSlot.startTime"
@@ -1456,6 +1505,19 @@ onBeforeUnmount(() => {
     gap: 16px;
     padding: 16px;
   }
+
+  &[data-presentation='centered-gallery'] {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+
+    @media (max-width: 1023px) {
+      grid-template-rows: 1fr;
+    }
+
+    .immersive-col-left {
+      width: min(100%, 120rem);
+    }
+  }
 }
 
 .immersive-col-left {
@@ -2072,15 +2134,6 @@ onBeforeUnmount(() => {
   }
   50% {
     opacity: 0.35;
-  }
-}
-
-/* Equinox transition styling */
-.immersive-content-grid {
-  transition: opacity 1.5s ease-in-out;
-  &.equinox-active {
-    opacity: 0 !important;
-    pointer-events: none;
   }
 }
 

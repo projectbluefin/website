@@ -34,6 +34,7 @@ const duskIsNight = ref(false)
 let duskTimer: ReturnType<typeof setInterval> | null = null
 
 const flickrPhotos = ref<{ id: string, server: string, secret: string, title: string }[]>([])
+const laterTrackPhotos = ref<any[]>([])
 const manifest = ref<WolvesSoundtrackManifest | null>(null)
 
 const activeBuffer = ref<'A' | 'B'>('A')
@@ -109,8 +110,8 @@ const mixedPhotos = computed(() => {
 
   const trackIdx = props.trackIndex ?? 1
 
-  if (trackIdx > 0 && remotePeople.length > 0) {
-    return shuffleArray([...remotePeople])
+  if (trackIdx > 0) {
+    return laterTrackPhotos.value
   }
 
   // Shuffle inputs to vary the lists per-song
@@ -387,9 +388,36 @@ const activeTimelineSlide = computed(() => {
   return timelineSlides.value[index]
 })
 
+const laterTrackSlideHold = computed(() => {
+  const trackIndex = props.trackIndex ?? 0
+  if (trackIndex <= 0) {
+    return null
+  }
+
+  const track = currentTrack.value
+  if (track?.bpm && track.phraseBeats) {
+    let beatGroup = track.phraseBeats
+    let hold = beatGroup * 60 / track.bpm
+
+    while (hold > 11.5) {
+      beatGroup /= 2
+      hold = beatGroup * 60 / track.bpm
+    }
+    while (hold < 5.5) {
+      beatGroup *= 2
+      hold = beatGroup * 60 / track.bpm
+    }
+
+    return hold
+  }
+
+  return [7, 8, 10][trackIndex % 3]
+})
+
 const currentSlideTransitionDuration = computed(() => {
-  if (props.trackIndex !== 0) {
-    return currentTrack.value?.fadeDuration ?? 1500
+  if ((props.trackIndex ?? 0) > 0) {
+    const hold = laterTrackSlideHold.value ?? 7
+    return Math.min(currentTrack.value?.fadeDuration ?? 1500, hold * 250)
   }
   const slide = activeTimelineSlide.value
   if (!slide) {
@@ -436,26 +464,11 @@ const activeFlickrIndex = computed(() => {
     return 0
   }
 
-  // Precomputed interval in seconds per slide (avoiding double-floor snapping)
-  let interval = currentTrack.value.slideInterval
-    || (currentTrack.value.bpm ? (currentTrack.value.phraseBeats || 32) * 60 / currentTrack.value.bpm : 19.2)
-
-  // Enforce minimal and maximum bounds while keeping changes beat-aligned
-  const minTime = 5.0
-  const maxTime = 12.0
-
-  while (interval > maxTime) {
-    interval /= 2
-  }
-  while (interval < minTime) {
-    interval *= 2
-  }
-
   if (props.playlistCurrentTime === undefined) {
     return 0
   }
 
-  return Math.floor(props.playlistCurrentTime / interval) % mixedPhotos.value.length
+  return Math.floor(props.playlistCurrentTime / (laterTrackSlideHold.value ?? 7)) % mixedPhotos.value.length
 })
 
 const activeDisplayIndex = computed(() => {
@@ -472,7 +485,7 @@ const mixedPhotosToUse = computed(() => {
   return mixedPhotos.value
 })
 
-watch(activeDisplayIndex, (newVal) => {
+watch([activeDisplayIndex, mixedPhotosToUse], ([newVal]) => {
   const activePhotoObj = mixedPhotosToUse.value[newVal]
   if (!activePhotoObj) {
     return
@@ -519,15 +532,20 @@ watch(activeDisplayIndex, (newVal) => {
   }
 }, { immediate: true })
 
-watch(() => props.trackIndex, () => {
-  photoA.value = null
-  photoB.value = null
-  opacityA.value = 1
-  opacityB.value = 0
-  slideAIndex.value = -1
-  slideBIndex.value = -1
-  activeBuffer.value = 'A'
-})
+watch(() => props.trackIndex, (trackIndex, previousTrackIndex) => {
+  if (previousTrackIndex !== undefined) {
+    photoA.value = null
+    photoB.value = null
+    opacityA.value = 1
+    opacityB.value = 0
+    slideAIndex.value = -1
+    slideBIndex.value = -1
+    activeBuffer.value = 'A'
+  }
+  if (trackIndex !== undefined && trackIndex > 0) {
+    snapshotLaterTrackPhotos(trackIndex)
+  }
+}, { immediate: true })
 
 function getFlickrPhotoUrl(photo: any) {
   if (!photo) {
@@ -549,6 +567,31 @@ function shuffleArray<T>(array: T[]): T[] {
     [copy[i], copy[j]] = [copy[j], copy[i]]
   }
   return copy
+}
+
+function snapshotLaterTrackPhotos(trackIndex: number) {
+  const remotePhotos = flickrPhotos.value.map(photo => ({
+    id: photo.id,
+    isLocal: false,
+    path: `https://live.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_b.jpg`,
+    title: photo.title,
+    type: 'single' as const,
+    dayName: undefined,
+    nightName: undefined,
+    rawPhoto: photo
+  }))
+  const localPhotos = wallpapers.map(wallpaper => ({
+    id: wallpaper.name || wallpaper.dayName || wallpaper.nightName || '',
+    isLocal: true,
+    path: wallpaper.name,
+    title: wallpaper.title,
+    type: wallpaper.type,
+    dayName: wallpaper.dayName,
+    nightName: wallpaper.nightName
+  }))
+  const shuffledPhotos = shuffleArray(remotePhotos.length > 0 ? remotePhotos : localPhotos)
+  const startIndex = shuffledPhotos.length > 0 ? (trackIndex - 1) % shuffledPhotos.length : 0
+  laterTrackPhotos.value = [...shuffledPhotos.slice(startIndex), ...shuffledPhotos.slice(0, startIndex)]
 }
 
 function deterministicShuffle<T>(array: T[], seed = 42): T[] {
@@ -636,7 +679,7 @@ onMounted(async () => {
     const response = await fetch(`${import.meta.env.BASE_URL}flickr-photos.json`)
     if (response.ok) {
       const rawPhotos = await response.json()
-      flickrPhotos.value = shuffleArray(rawPhotos)
+      flickrPhotos.value = Array.isArray(rawPhotos) ? rawPhotos : []
     }
   }
   catch (err) {
@@ -657,7 +700,11 @@ onBeforeUnmount(() => {
       <div ref="flipViewport" class="comic-viewport">
         <div class="comic-content-area">
           <!-- Live Gallery Mode (Tracks 1-6) -->
-          <div v-if="(props.trackIndex && props.trackIndex > 0) || (props.trackIndex === 0 && isExperimental)" class="flickr-gallery-wrapper">
+          <div
+            v-if="(props.trackIndex && props.trackIndex > 0) || (props.trackIndex === 0 && isExperimental)"
+            class="flickr-gallery-wrapper"
+            :data-crossfade-ms="currentSlideTransitionDuration"
+          >
             <!-- Layer A -->
             <div
               class="flickr-photo-layer"

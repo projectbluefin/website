@@ -1,21 +1,60 @@
-import { mount } from '@vue/test-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { SoundtrackTrack } from '../data/wolves-soundtrack'
+import { flushPromises, mount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import WolvesComicReader from '../components/wolves/WolvesComicReader.vue'
+
+const source = {
+  provider: 'youtube',
+  playlistId: '123',
+  playlistUrl: 'https://www.youtube.com/playlist?list=123',
+  musicUrl: 'https://music.youtube.com/playlist?list=123',
+  spotifyUri: null,
+}
+
+const coverTrack: SoundtrackTrack = {
+  id: 'track0',
+  title: 'Cover Track',
+  artist: 'Artist 0',
+  artwork: 'wolves-artwork/track0.jpg',
+  youtubeVideoId: '0',
+}
+
+const galleryPhotos = [
+  { id: 'photo-a', server: '1', secret: 'a', title: 'Photo A' },
+  { id: 'photo-b', server: '2', secret: 'b', title: 'Photo B' },
+  { id: 'photo-c', server: '3', secret: 'c', title: 'Photo C' },
+]
+
+function mockGalleryData(tracks = [coverTrack], flickrResponse = new Response(JSON.stringify(galleryPhotos))) {
+  vi.stubGlobal('fetch', vi.fn((url: string) => {
+    if (url.includes('wolves-playlist.json')) {
+      return Promise.resolve(new Response(JSON.stringify({ source, tracks })))
+    }
+    if (url.includes('flickr-photos.json')) {
+      return Promise.resolve(flickrResponse.clone())
+    }
+    return Promise.resolve(new Response(JSON.stringify({})))
+  }))
+}
+
+function galleryCaption(wrapper: ReturnType<typeof mount>) {
+  return wrapper.get('.flickr-caption').text()
+}
+
+function galleryCrossfadeDuration(wrapper: ReturnType<typeof mount>) {
+  const duration = wrapper.get('.flickr-gallery-wrapper').attributes('data-crossfade-ms')
+  expect(duration).toBeDefined()
+  return Number(duration)
+}
 
 describe('wolvesComicReader', () => {
   beforeEach(() => {
-    vi.stubGlobal('fetch', vi.fn((url: string) => {
-      if (url.includes('wolves-playlist.json')) {
-        return Promise.resolve(new Response(JSON.stringify({
-          source: { provider: 'youtube', playlistId: '123' },
-          tracks: [{ id: 'track0', title: 'Cover Track', artist: 'Artist 0', youtubeVideoId: '1' }],
-        })))
-      }
-      if (url.includes('flickr-photos.json')) {
-        return Promise.resolve(new Response(JSON.stringify([])))
-      }
-      return Promise.resolve(new Response(JSON.stringify({})))
-    }))
+    mockGalleryData()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
   })
 
   it('renders the static cover before the soundtrack starts', () => {
@@ -66,5 +105,301 @@ describe('wolvesComicReader', () => {
     // At 319s (5:19), the active slide should correspond to the heart picture (kubecon-55168460993.webp)
     const srcs = wrapper.findAll('.flickr-img').map(el => el.attributes('src') || '')
     expect(srcs.some(src => src.includes('kubecon-55168460993.webp'))).toBe(true)
+  })
+
+  it('keeps each later-track Flickr sequence stable and refreshes it for the next track', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    mockGalleryData([
+      coverTrack,
+      {
+        id: 'later-track-one',
+        title: 'Later Track One',
+        artist: 'Artist 1',
+        artwork: 'wolves-artwork/later-track-one.jpg',
+        youtubeVideoId: '1',
+        bpm: 120,
+        phraseBeats: 8,
+      },
+      {
+        id: 'later-track-two',
+        title: 'Later Track Two',
+        artist: 'Artist 2',
+        artwork: 'wolves-artwork/later-track-two.jpg',
+        youtubeVideoId: '2',
+        bpm: 120,
+        phraseBeats: 8,
+      },
+    ])
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 0, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+    await wrapper.setProps({ trackIndex: 1, playlistCurrentTime: 0 })
+
+    const firstTrackStart = galleryCaption(wrapper)
+    expect(firstTrackStart).toContain('CNCF STREAM //')
+
+    await wrapper.setProps({ playlistCurrentTime: 10 })
+    await wrapper.setProps({ playlistCurrentTime: 0 })
+    expect(galleryCaption(wrapper)).toBe(firstTrackStart)
+
+    await wrapper.setProps({ trackIndex: 2, playlistCurrentTime: 0 })
+    await flushPromises()
+    expect(galleryCaption(wrapper)).toContain('CNCF STREAM //')
+    expect(galleryCaption(wrapper)).not.toBe(firstTrackStart)
+  })
+
+  it('uses local images for later tracks only when the Flickr feed is unavailable', async () => {
+    mockGalleryData(
+      [
+        coverTrack,
+        {
+          id: 'later-track',
+          title: 'Later Track',
+          artist: 'Artist',
+          artwork: 'wolves-artwork/later-track.jpg',
+          youtubeVideoId: '1',
+          bpm: 120,
+          phraseBeats: 8,
+        },
+      ],
+      new Response('Flickr unavailable', { status: 503 }),
+    )
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 1, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+
+    expect(galleryCaption(wrapper)).toContain('BLUEFIN SHOWCASE //')
+  })
+
+  it('keeps a later track fallback snapshot when Flickr finishes loading', async () => {
+    const tracks = [
+      coverTrack,
+      {
+        id: 'later-track-one',
+        title: 'Later Track One',
+        artist: 'Artist 1',
+        artwork: 'wolves-artwork/later-track-one.jpg',
+        youtubeVideoId: '1',
+      },
+      {
+        id: 'later-track-two',
+        title: 'Later Track Two',
+        artist: 'Artist 2',
+        artwork: 'wolves-artwork/later-track-two.jpg',
+        youtubeVideoId: '2',
+      },
+    ]
+    let resolveFlickr!: (response: Response) => void
+    const flickrResponse = new Promise<Response>((resolve) => {
+      resolveFlickr = resolve
+    })
+    vi.stubGlobal('fetch', vi.fn((url: string) => {
+      if (url.includes('wolves-playlist.json')) {
+        return Promise.resolve(new Response(JSON.stringify({ source, tracks })))
+      }
+      if (url.includes('flickr-photos.json')) {
+        return flickrResponse
+      }
+      return Promise.resolve(new Response(JSON.stringify({})))
+    }))
+
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 1, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+
+    const fallbackCaption = galleryCaption(wrapper)
+    expect(fallbackCaption).toContain('BLUEFIN SHOWCASE //')
+
+    resolveFlickr(new Response(JSON.stringify(galleryPhotos)))
+    await flushPromises()
+    expect(galleryCaption(wrapper)).toBe(fallbackCaption)
+
+    await wrapper.setProps({ trackIndex: 2, playlistCurrentTime: 0 })
+    expect(galleryCaption(wrapper)).toContain('CNCF STREAM //')
+  })
+
+  it('doubles short BPM beat groups to a 10-second hold', async () => {
+    mockGalleryData([
+      coverTrack,
+      {
+        id: 'fast-phrases',
+        title: 'Fast Phrases',
+        artist: 'Artist',
+        artwork: 'wolves-artwork/fast-phrases.jpg',
+        youtubeVideoId: '1',
+        bpm: 120,
+        phraseBeats: 5,
+        fadeDuration: 1500,
+      },
+    ])
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 1, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+
+    const firstCaption = galleryCaption(wrapper)
+    expect(firstCaption).toContain('//')
+    await wrapper.setProps({ playlistCurrentTime: 9.99 })
+    expect(galleryCaption(wrapper)).toBe(firstCaption)
+    await wrapper.setProps({ playlistCurrentTime: 10 })
+    expect(galleryCaption(wrapper)).not.toBe(firstCaption)
+  })
+
+  it('halves long BPM beat groups to a 6-second hold', async () => {
+    mockGalleryData([
+      coverTrack,
+      {
+        id: 'slow-phrases',
+        title: 'Slow Phrases',
+        artist: 'Artist',
+        artwork: 'wolves-artwork/slow-phrases.jpg',
+        youtubeVideoId: '2',
+        bpm: 120,
+        phraseBeats: 48,
+        fadeDuration: 3000,
+      },
+    ])
+    const slowWrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 1, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+
+    const firstCaption = galleryCaption(slowWrapper)
+    expect(firstCaption).toContain('//')
+    await slowWrapper.setProps({ playlistCurrentTime: 5.99 })
+    expect(galleryCaption(slowWrapper)).toBe(firstCaption)
+    await slowWrapper.setProps({ playlistCurrentTime: 6 })
+    expect(galleryCaption(slowWrapper)).not.toBe(firstCaption)
+  })
+
+  it('changes slides at the non-clamped boundary derived from BPM metadata', async () => {
+    mockGalleryData([
+      coverTrack,
+      {
+        id: 'metadata-paced',
+        title: 'Metadata Paced',
+        artist: 'Artist',
+        artwork: 'wolves-artwork/metadata-paced.jpg',
+        youtubeVideoId: '3',
+        bpm: 100,
+        phraseBeats: 12,
+      },
+    ])
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 1, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+
+    const firstCaption = galleryCaption(wrapper)
+    expect(firstCaption).toContain('//')
+    await wrapper.setProps({ playlistCurrentTime: 7.19 })
+    expect(galleryCaption(wrapper)).toBe(firstCaption)
+    await wrapper.setProps({ playlistCurrentTime: 7.2 })
+    expect(galleryCaption(wrapper)).not.toBe(firstCaption)
+  })
+
+  it.each([
+    {
+      id: 'fast-phrases',
+      bpm: 120,
+      phraseBeats: 5,
+      fadeDuration: 1500,
+      hold: 10,
+    },
+    {
+      id: 'slow-phrases',
+      bpm: 120,
+      phraseBeats: 48,
+      fadeDuration: 3000,
+      hold: 6,
+    },
+    {
+      id: 'metadata-paced',
+      bpm: 100,
+      phraseBeats: 12,
+      fadeDuration: undefined,
+      hold: 7.2,
+    },
+  ])('keeps the $id crossfade within one quarter of its BPM-derived hold', async ({ id, bpm, phraseBeats, fadeDuration, hold }) => {
+    mockGalleryData([
+      coverTrack,
+      {
+        id,
+        title: id,
+        artist: 'Artist',
+        artwork: `wolves-artwork/${id}.jpg`,
+        youtubeVideoId: '1',
+        bpm,
+        phraseBeats,
+        fadeDuration,
+      },
+    ])
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 1, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+
+    const firstCaption = galleryCaption(wrapper)
+    expect(firstCaption).toContain('//')
+    await wrapper.setProps({ playlistCurrentTime: hold - 0.01 })
+    expect(galleryCaption(wrapper)).toBe(firstCaption)
+    await wrapper.setProps({ playlistCurrentTime: hold })
+    expect(galleryCaption(wrapper)).not.toBe(firstCaption)
+    expect(galleryCrossfadeDuration(wrapper)).toBeLessThanOrEqual(hold * 1000 * 0.25)
+  })
+
+  it('uses the same permitted fallback cadence across equivalent mounts and subsequent slides without BPM metadata', async () => {
+    mockGalleryData([
+      coverTrack,
+      {
+        id: 'fallback-tempo',
+        title: 'Fallback Tempo',
+        artist: 'Artist',
+        artwork: 'wolves-artwork/fallback-tempo.jpg',
+        youtubeVideoId: '1',
+      },
+    ])
+    const firstRun = mount(WolvesComicReader, {
+      props: { trackIndex: 1, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+
+    const firstCaption = galleryCaption(firstRun)
+    expect(firstCaption).toContain('//')
+
+    async function findFallbackHold(wrapper: ReturnType<typeof mount>, initialCaption: string) {
+      for (const hold of [7, 8, 10]) {
+        await wrapper.setProps({ playlistCurrentTime: hold - 0.01 })
+        const captionBeforeBoundary = galleryCaption(wrapper)
+        await wrapper.setProps({ playlistCurrentTime: hold })
+
+        if (captionBeforeBoundary === initialCaption && galleryCaption(wrapper) !== initialCaption) {
+          return hold
+        }
+      }
+
+      return undefined
+    }
+
+    const firstRunHold = await findFallbackHold(firstRun, firstCaption)
+    expect(firstRunHold).toBeDefined()
+    expect([7, 8, 10]).toContain(firstRunHold)
+
+    const secondRun = mount(WolvesComicReader, {
+      props: { trackIndex: 1, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+    const secondRunHold = await findFallbackHold(secondRun, galleryCaption(secondRun))
+    expect(secondRunHold).toBe(firstRunHold)
+
+    for (const slideNumber of [2, 3]) {
+      await firstRun.setProps({ playlistCurrentTime: firstRunHold! * slideNumber - 0.01 })
+      const captionBeforeBoundary = galleryCaption(firstRun)
+      await firstRun.setProps({ playlistCurrentTime: firstRunHold! * slideNumber })
+      expect(galleryCaption(firstRun)).not.toBe(captionBeforeBoundary)
+    }
   })
 })
