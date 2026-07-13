@@ -67,39 +67,22 @@ export const wolvesRelease: WolvesRelease = {
   artifacts: [
     // --- Prologue: Arthur C. Clarke Quotes ---
     {
-      id: 'arthur-c-clarke-1',
-      chapterId: 'prologue',
-      type: 'quote',
-      publishedAt: '1953-07-09',
-      title: 'Childhood\'s End',
-      body: parseBody(loreFiles['./lore/arthur-c-clarke-1.md'] || ''),
-      sourceLabel: 'Arthur C. Clarke — Childhood\'s End',
-    },
-    {
-      id: 'arthur-c-clarke-2',
-      chapterId: 'prologue',
-      type: 'quote',
-      publishedAt: '1953-07-09',
-      title: 'Childhood\'s End',
-      body: parseBody(loreFiles['./lore/arthur-c-clarke-2.md'] || ''),
-      sourceLabel: 'Arthur C. Clarke — Childhood\'s End',
-    },
-    {
-      id: 'arthur-c-clarke-3',
-      chapterId: 'prologue',
-      type: 'quote',
-      publishedAt: '1953-07-09',
-      title: 'Childhood\'s End',
-      body: parseBody(loreFiles['./lore/arthur-c-clarke-3.md'] || ''),
-      sourceLabel: 'Arthur C. Clarke — Inspired by: Childhood\'s End',
-    },
-    {
       id: 'arthur-c-clarke-4',
       chapterId: 'prologue',
       type: 'quote',
       publishedAt: '1953-07-09',
       title: 'Childhood\'s End',
       body: parseBody(loreFiles['./lore/arthur-c-clarke-4.md'] || ''),
+      sourceLabel: 'Arthur C. Clarke — Childhood\'s End',
+    },
+
+    {
+      id: 'arthur-c-clarke-1',
+      chapterId: 'prologue',
+      type: 'quote',
+      publishedAt: '1953-07-09',
+      title: 'Childhood\'s End',
+      body: parseBody(loreFiles['./lore/arthur-c-clarke-1.md'] || ''),
       sourceLabel: 'Arthur C. Clarke — Childhood\'s End',
     },
     // --- Prologue: transmissions ---
@@ -138,6 +121,15 @@ export const wolvesRelease: WolvesRelease = {
       publishedAt: '2326-06-15',
       title: 'Maintenance Window',
       body: parseBody(loreFiles['./lore/maintenance-window.md'] || ''),
+    },
+    {
+      id: 'arthur-c-clarke-2',
+      chapterId: 'prologue',
+      type: 'quote',
+      publishedAt: '1953-07-09',
+      title: 'Childhood\'s End',
+      body: parseBody(loreFiles['./lore/arthur-c-clarke-2.md'] || ''),
+      sourceLabel: 'Arthur C. Clarke — Childhood\'s End',
     },
     // --- Pursuit: transmissions ---
     {
@@ -211,6 +203,15 @@ export const wolvesRelease: WolvesRelease = {
       body: parseBody(loreFiles['./lore/quote-third-disciple.md'] || ''),
       sourceLabel: 'Third Disciple of Renner — The Chronicles of Blue Universal',
     },
+    {
+      id: 'arthur-c-clarke-3',
+      chapterId: 'prologue',
+      type: 'quote',
+      publishedAt: '1953-07-09',
+      title: 'Childhood\'s End',
+      body: parseBody(loreFiles['./lore/arthur-c-clarke-3.md'] || ''),
+      sourceLabel: 'Arthur C. Clarke — Inspired by: Childhood\'s End',
+    },
     // --- Awakening: archival transmissions ---
     {
       id: 'lorem-awakening-1',
@@ -229,15 +230,6 @@ export const wolvesRelease: WolvesRelease = {
       publishedAt: '2326-07-12',
       title: 'Glorious Eggroll',
       body: parseBody(loreFiles['./lore/glorious-eggroll.md'] || ''),
-    },
-    {
-      id: 'project-neptune',
-      channel: 'BLUE-UNIVERSAL//PRJ-TM//DIRECTIVE',
-      chapterId: 'awakening',
-      type: 'transmission',
-      publishedAt: '2326-07-15',
-      title: 'Project Neptune',
-      body: parseBody(loreFiles['./lore/project-neptune.md'] || ''),
     },
     {
       id: 'john-seager',

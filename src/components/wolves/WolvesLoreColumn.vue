@@ -169,7 +169,7 @@ function startLoreTimer() {
   }
 
   const isInitial = currentLoreIndex.value === 0 && isInitialQuote.value
-  const delay = isInitial ? 15000 : getDynamicDelay(currentEntry)
+  const delay = isInitial ? 28000 : getDynamicDelay(currentEntry)
 
   loreTimer = setTimeout(() => {
     if (currentLoreIndex.value === 0 && isInitialQuote.value) {
