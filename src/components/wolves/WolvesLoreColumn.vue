@@ -178,6 +178,10 @@ function runTypewriter() {
 
       const lastChar = targetText[currentLength - 1]
 
+      if (lastChar === '.' || lastChar === '?' || lastChar === '!' || lastChar === '…') {
+        scrollViewport()
+      }
+
       if (isSlowSpeaker) {
         pauseTicks = 2 // Slower baseline typing speed (3x slower)
         if (lastChar === '.' || lastChar === '?' || lastChar === '!') {

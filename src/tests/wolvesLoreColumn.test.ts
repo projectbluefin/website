@@ -187,6 +187,39 @@ describe('wolvesLoreColumn Logic', () => {
       .map(message => message.find('.conversation-speaker').text())).toContain('SARAH')
   })
 
+  it('keeps Golden Era dialogue visible while Sarah is still typing', async () => {
+    vi.useFakeTimers()
+    const entry = loreEntries.find(entry => entry.id === 'lorem-pursuit-1')
+    if (!entry || entry.type !== 'conversation') {
+      throw new Error('Expected the Golden Era transmission fixture')
+    }
+
+    const sarah = entry.data.messages.find(message => message.speaker === 'SARAH')
+    if (!sarah) {
+      throw new Error('Expected the Golden Era Sarah fixture')
+    }
+
+    const scrollTo = vi.spyOn(HTMLElement.prototype, 'scrollTo')
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId: entry.id,
+        duration: 0.01,
+      },
+    })
+
+    await vi.advanceTimersByTimeAsync(9_900)
+    scrollTo.mockClear()
+
+    await vi.advanceTimersByTimeAsync(500)
+
+    const sarahText = wrapper.findAll('.conversation-message')
+      .find(message => message.find('.conversation-speaker').text() === 'SARAH')
+      ?.find('p')
+      .text() ?? ''
+    expect(sarahText).not.toBe(sarah.text)
+    expect(scrollTo).toHaveBeenCalled()
+  })
+
   afterEach(() => {
     vi.useRealTimers()
     vi.restoreAllMocks()
