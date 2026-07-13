@@ -437,7 +437,6 @@ defineExpose({
                 >
               </template>
             </div>
-            <div class="hud-ring-overlay" />
           </div>
           <div class="mascot-telemetry-text font-mono">
             <span>POD: wolves-telemetry-controller-7</span>
@@ -684,32 +683,22 @@ defineExpose({
 .mascot-console-hud {
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: rgba(12, 16, 22, 0.45);
-  border: 1px solid rgba(102, 179, 255, 0.2);
-  padding: 10px 14px;
-  border-radius: 12px;
-  margin-top: 16px;
+  gap: 20px;
+  padding: 10px 0;
+  margin-top: 24px;
 
   .mascot-console-ring {
     position: relative;
-    width: 80px;
-    height: 80px;
-    border: 1px solid rgba(102, 179, 255, 0.3);
-    background: rgba(9, 13, 22, 0.65);
-    padding: 6px;
-    box-sizing: border-box;
+    width: 180px;
+    height: 180px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
   }
 
   .mascot-display-area {
     width: 100%;
     height: 100%;
-    border-radius: 4px;
-    overflow: hidden;
     position: relative;
     display: flex;
     align-items: center;
@@ -724,6 +713,7 @@ defineExpose({
     top: 0;
     left: 0;
     transition: opacity 1s ease-in-out;
+    opacity: 0.85;
 
     &.fading-out {
       opacity: 0;
@@ -733,25 +723,14 @@ defineExpose({
     }
   }
 
-  .hud-ring-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border-radius: 4px;
-    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
-    pointer-events: none;
-  }
-
   .mascot-telemetry-text {
     display: flex;
     flex-direction: column;
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     font-weight: bold;
     letter-spacing: 0.05em;
     color: #94a3b8;
-    line-height: 1.3;
+    line-height: 1.4;
   }
 }
 
@@ -760,7 +739,7 @@ defineExpose({
     opacity: 0;
   }
   to {
-    opacity: 1;
+    opacity: 0.85;
   }
 }
 </style>
