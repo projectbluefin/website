@@ -112,6 +112,9 @@ onBeforeUnmount(clearTypewriter)
               </p>
               <div class="lore-quote-meta">
                 <strong>{{ quote.attribution }}</strong>
+                <span v-if="quote.context" data-lore-quote-context>
+                  {{ quote.context }}
+                </span>
                 <time v-if="quote.date" :datetime="quote.date">
                   {{ quote.date }}
                 </time>

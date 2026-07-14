@@ -2,7 +2,9 @@ import { mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getChatlogLore, getQuoteLore, loreRecords } from '../components/wolves/lore'
 import WolvesLoreColumn from '../components/wolves/WolvesLoreColumn.vue'
+import { parseLoreRecord } from '../data/wolves-lore-records'
 import { getNarrativeSlotForTime } from '../data/wolves-narrative-timeline'
+import { wolvesRelease } from '../data/wolves-story'
 import { getWolvesThesisState } from '../data/wolves-thesis-sequence'
 import { wolvesLoreRecordFixtures } from './fixtures/wolves-lore-records'
 
@@ -61,6 +63,51 @@ describe('wolvesLoreColumn Logic', () => {
 
     expect(record.diagnostics).toEqual([])
     expect(wrapper.get('.lore-quote-meta strong').text()).toBe('Arthur C. Clarke')
+  })
+
+  it.each(loreRecords.filter(record => record.kind === 'quote'))(
+    'renders authored quote attribution and context for $id',
+    (record) => {
+      const wrapper = mount(WolvesLoreColumn, {
+        props: {
+          artifactId: record.id,
+          duration: 20,
+        },
+      })
+
+      expect(wrapper.get('.lore-quote-meta strong').text()).toBe(record.metadata.attribution)
+      const context = wrapper.find('[data-lore-quote-context]')
+      if (record.metadata.context) {
+        expect(context.text()).toBe(record.metadata.context.trimEnd())
+      }
+      else {
+        expect(context.exists()).toBe(false)
+      }
+    },
+  )
+
+  it('rejects quote rendering without authored attribution instead of falling back to a legacy label', () => {
+    const record = parseLoreRecord('legacy-quote', 'prologue', './lore/legacy-quote.md', [
+      '---',
+      'kind: quote',
+      'title: Legacy source label',
+      'timestamp: \'2326-07-14\'',
+      '---',
+      '',
+      'Authored body',
+    ].join('\n'))
+
+    expect(() => getQuoteLore(record)).toThrow('missing authored attribution')
+  })
+
+  it('does not retain legacy source labels for migrated quote identity', () => {
+    const quoteIds = new Set(loreRecords
+      .filter(record => record.kind === 'quote')
+      .map(record => record.id))
+    const quoteArtifacts = wolvesRelease.artifacts.filter(artifact => quoteIds.has(artifact.id))
+
+    expect(quoteArtifacts).toHaveLength(9)
+    expect(quoteArtifacts.every(artifact => !Object.prototype.hasOwnProperty.call(artifact, 'sourceLabel'))).toBe(true)
   })
 
   it('types transmission source characters without generated glyphs', async () => {
@@ -274,6 +321,7 @@ describe('wolvesLoreColumn Logic', () => {
     })
     expect(thesisState.warning).toBe('truly a great loss for humanity.')
     expect(wrapper.find('[data-lore-view="news-bulletin"]').exists()).toBe(true)
+    expect(wrapper.get('[data-lore-warning]').classes()).toContain('thesis-warning-fade')
     expect(wrapper.get('[data-lore-warning]').text()).toBe(thesisState.warning)
     expect(wrapper.text()).not.toContain(thesisState.text)
   })

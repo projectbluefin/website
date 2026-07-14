@@ -96,6 +96,43 @@ describe('wolves lore records', () => {
     })
   })
 
+  it('requires authored attribution for quote identity', () => {
+    const record = parseLoreRecord('quote', 'prologue', './lore/quote.md', [
+      '---',
+      'kind: quote',
+      'title: Legacy title',
+      'timestamp: \'2326-07-14\'',
+      '---',
+      '',
+      'Authored body',
+    ].join('\n'))
+
+    expect(record.diagnostics).toContain('frontmatter is missing attribution for quote identity')
+    expect(record.body).toBe('Authored body')
+  })
+
+  it('loads every quote with authored identity and no diagnostics', () => {
+    const quotes = loadAllLoreRecords().filter(record => record.kind === 'quote')
+
+    expect(quotes).toHaveLength(9)
+    for (const quote of quotes) {
+      expect(quote.metadata.attribution, quote.relativePath).toEqual(expect.any(String))
+      expect(quote.metadata.attribution?.trim(), quote.relativePath).not.toBe('')
+      expect(quote.diagnostics, quote.relativePath).toEqual([])
+    }
+  })
+
+  it.each([
+    ['quote-natasha-woods', 'Natasha Woods VI', 'CNCF Marketing Material, Circa 2349'],
+    ['quote-berkus', 'Berkus the Wise', 'The Cosmos, Volume 3 (Blue Universal Red Letter Edition)'],
+    ['quote-unmarked-grave', 'Unmarked Grave', 'Eulogy: The Horror of Thousands'],
+    ['quote-third-disciple', 'Third Disciple of Renner', 'The Chronicles of Blue Universal'],
+  ])('parses migrated legacy quote identity for %s', (id, attribution, context) => {
+    const record = loadAllLoreRecords().find(item => item.id === id)
+
+    expect(record?.metadata).toMatchObject({ attribution, context })
+  })
+
   it('preserves every authored lore body byte-for-byte through the frontmatter migration', () => {
     const sourceBodies = loadAllLoreRecords().map((record) => {
       const raw = loreSources[`../data${record.relativePath.slice(1)}`]

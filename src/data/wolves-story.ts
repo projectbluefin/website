@@ -20,7 +20,6 @@ export interface WolvesArtifact {
   title: string
   body: string
   sourceUrl?: string
-  sourceLabel?: string
   channel?: string
 }
 
@@ -31,26 +30,14 @@ export interface WolvesRelease {
   artifacts: WolvesArtifact[]
 }
 
-interface ArtifactSource {
-  sourceLabel?: string
-  sourceUrl?: string
-}
-
-const artifactSources: Readonly<Record<string, ArtifactSource>> = {
-  'arthur-c-clarke-4': { sourceLabel: 'Arthur C. Clarke — Childhood\'s End' },
-  'arthur-c-clarke-1': { sourceLabel: 'Arthur C. Clarke — Childhood\'s End' },
-  'arthur-c-clarke-3': { sourceLabel: 'Arthur C. Clarke — Inspired by: Childhood\'s End' },
-  'quote-natasha-woods': { sourceLabel: 'Natasha Woods VI — CNCF Marketing Material, Circa 2349' },
-  'quote-berkus': { sourceLabel: 'Berkus the Wise — The Cosmos, Volume 3 (Blue Universal Red Letter Edition)' },
-  'quote-unmarked-grave': { sourceLabel: 'Unmarked Grave — Eulogy: The Horror of Thousands' },
-  'quote-third-disciple': { sourceLabel: 'Third Disciple of Renner — The Chronicles of Blue Universal' },
-  'ishtar-gardener-and-winnower': { sourceUrl: 'https://www.ishtar-collective.net/entries/gardener-and-winnower' },
-  'ishtar-flower-game': { sourceUrl: 'https://www.ishtar-collective.net/entries/the-flower-game' },
-  'ishtar-first-knife': { sourceUrl: 'https://www.ishtar-collective.net/entries/the-first-knife' },
-  'ishtar-the-wager': { sourceUrl: 'https://www.ishtar-collective.net/entries/the-wager' },
-  'ishtar-patternfall': { sourceUrl: 'https://www.ishtar-collective.net/entries/patternfall' },
-  'ishtar-cambrian-explosion': { sourceUrl: 'https://www.ishtar-collective.net/entries/the-cambrian-explosion' },
-  'ishtar-final-shape': { sourceUrl: 'https://www.ishtar-collective.net/entries/the-final-shape' },
+const sourceUrlsByRecordId: Readonly<Record<string, string>> = {
+  'ishtar-gardener-and-winnower': 'https://www.ishtar-collective.net/entries/gardener-and-winnower',
+  'ishtar-flower-game': 'https://www.ishtar-collective.net/entries/the-flower-game',
+  'ishtar-first-knife': 'https://www.ishtar-collective.net/entries/the-first-knife',
+  'ishtar-the-wager': 'https://www.ishtar-collective.net/entries/the-wager',
+  'ishtar-patternfall': 'https://www.ishtar-collective.net/entries/patternfall',
+  'ishtar-cambrian-explosion': 'https://www.ishtar-collective.net/entries/the-cambrian-explosion',
+  'ishtar-final-shape': 'https://www.ishtar-collective.net/entries/the-final-shape',
 }
 
 function requiredMetadata(record: LoreRecord, field: 'title' | 'timestamp'): string {
@@ -70,7 +57,7 @@ function loadArtifact(record: LoreRecord): WolvesArtifact {
     title: requiredMetadata(record, 'title'),
     body: record.body,
     channel: record.metadata.channel,
-    ...artifactSources[record.id],
+    sourceUrl: sourceUrlsByRecordId[record.id],
   }
 }
 

@@ -46,12 +46,15 @@ function artifactFor(record: LoreRecord) {
 }
 
 export function getQuoteLore(record: LoreRecord): BazziteQuote {
-  const artifact = artifactFor(record)
-  const parts = (artifact?.sourceLabel || record.metadata.title || '').split('—')
+  const attribution = record.metadata.attribution
+  if (!attribution?.trim()) {
+    throw new TypeError(`Quote lore record "${record.id}" is missing authored attribution`)
+  }
+
   return {
     quote: record.body,
-    attribution: record.metadata.attribution ?? (parts[0]?.trim() || record.metadata.title || ''),
-    context: record.metadata.context ?? (parts[1]?.trim() || ''),
+    attribution,
+    context: record.metadata.context,
     date: record.metadata.timestamp,
   }
 }

@@ -32,7 +32,7 @@ const telemetry = computed(() => deriveLoreTelemetry(props.record))
 
     <aside
       v-if="warning"
-      class="mt-4 border-l-2 border-blue-300 pl-3 text-lg italic leading-6 text-blue-100"
+      class="thesis-warning-fade mt-4 border-l-2 border-blue-300 pl-3 text-lg italic leading-6 text-blue-100"
       data-lore-warning
     >
       {{ warning }}
@@ -47,3 +47,19 @@ const telemetry = computed(() => deriveLoreTelemetry(props.record))
     </footer>
   </section>
 </template>
+
+<style scoped>
+.thesis-warning-fade {
+  animation: thesis-warning-fade 20s linear forwards;
+}
+
+@keyframes thesis-warning-fade {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0.35;
+  }
+}
+</style>

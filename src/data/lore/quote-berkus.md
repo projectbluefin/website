@@ -2,6 +2,8 @@
 kind: quote
 title: 'The Cosmos'
 timestamp: '2326-06-15'
+attribution: Berkus the Wise
+context: The Cosmos, Volume 3 (Blue Universal Red Letter Edition)
 _editor_prompt: >-
   STORY CONTEXT: Pursuit: 'The Illustrius' - The maintainers are gods. (Pages
   8-14). This acts as a prompt for your editing.

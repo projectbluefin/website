@@ -245,15 +245,18 @@ export function parseLoreRecord(
 ): LoreRecord {
   const { metadata: authoredMetadata, body } = parseFrontmatter(relativePath, raw)
   const metadata = Object.fromEntries(Object.entries(authoredMetadata).filter(([, value]) => value !== undefined)) as LoreFrontmatter
+  const kind = authoredMetadata.kind === 'transmission' ? 'chatlog' : authoredMetadata.kind
   const diagnostics = [
     ...(authoredMetadata.kind === undefined ? ['frontmatter is missing kind'] : []),
     ...(authoredMetadata.title === undefined ? ['frontmatter is missing title'] : []),
     ...(authoredMetadata.timestamp === undefined ? ['frontmatter is missing timestamp'] : []),
+    ...(kind === 'quote' && !authoredMetadata.attribution?.trim()
+      ? ['frontmatter is missing attribution for quote identity']
+      : []),
     ...(authoredMetadata.kind === 'transmission'
       ? ['kind "transmission" is a staged alias for "chatlog"']
       : []),
   ]
-  const kind = authoredMetadata.kind === 'transmission' ? 'chatlog' : authoredMetadata.kind
 
   return {
     id,
