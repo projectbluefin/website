@@ -41,6 +41,7 @@ describe('wolves lore records', () => {
     const record = parseLoreRecord('record', 'prologue', './lore/record.md', '---\ntitle: Record\n---\n\nBody')
 
     expect(record.diagnostics).toContain('frontmatter is missing kind')
+    expect(record.diagnostics).toContain('frontmatter is missing timestamp')
     expect(record.body).toBe('Body')
   })
 

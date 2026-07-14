@@ -244,6 +244,7 @@ export function parseLoreRecord(
   const diagnostics = [
     ...(authoredMetadata.kind === undefined ? ['frontmatter is missing kind'] : []),
     ...(authoredMetadata.title === undefined ? ['frontmatter is missing title'] : []),
+    ...(authoredMetadata.timestamp === undefined ? ['frontmatter is missing timestamp'] : []),
     ...(authoredMetadata.kind === 'transmission'
       ? ['kind "transmission" is a staged alias for "chatlog"']
       : []),
