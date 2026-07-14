@@ -73,7 +73,7 @@ describe('wolves lore records', () => {
     const records = loadAllLoreRecords()
     const artifact = records.find(record => record.id === 'lorem-prologue-1')
 
-    expect(records).toHaveLength(32)
+    expect(records).toHaveLength(41)
     expect(records.flatMap(record => record.diagnostics)).toEqual([])
     expect(artifact).toMatchObject({
       chapterId: 'prologue',

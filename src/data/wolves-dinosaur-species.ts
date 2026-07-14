@@ -42,4 +42,16 @@ export const dinosaurSpecies = [
     documentationUrl: 'https://docs.projectbluefin.io/dinosaurs/#-redacted--1',
     artwork: './characters/utah.webp',
   },
+  {
+    id: 'torosaurus',
+    scientificName: 'Torosaurus latus',
+    documentationUrl: 'https://docs.projectbluefin.io/dinosaurs/#-redacted--2',
+    artwork: './characters/torosaurus.webp',
+  },
+  {
+    id: 'alamosaurus',
+    scientificName: 'Alamosaurus sanjuanensis',
+    documentationUrl: 'https://docs.projectbluefin.io/dinosaurs/#-redacted--3',
+    artwork: './characters/alamosaurus.webp',
+  },
 ] as const satisfies readonly DinosaurSpecies[]

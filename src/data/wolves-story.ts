@@ -90,5 +90,7 @@ export const wolvesRelease: WolvesRelease = {
       soundtrackLabel: 'Resistance',
     },
   ],
-  artifacts: loadAllLoreRecords().map(loadArtifact),
+  artifacts: loadAllLoreRecords()
+    .filter(record => record.kind !== 'character-sheet' && record.kind !== 'guardian-bond')
+    .map(loadArtifact),
 }

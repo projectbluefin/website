@@ -10,6 +10,8 @@ describe('wolves dinosaur species', () => {
       'Dimetrodon limbatus': 'https://docs.projectbluefin.io/dinosaurs/#flathub',
       'Dakotaraptor steini': 'https://docs.projectbluefin.io/dinosaurs/#-redacted-',
       'Utahraptor ostrommaysi': 'https://docs.projectbluefin.io/dinosaurs/#-redacted--1',
+      'Torosaurus latus': 'https://docs.projectbluefin.io/dinosaurs/#-redacted--2',
+      'Alamosaurus sanjuanensis': 'https://docs.projectbluefin.io/dinosaurs/#-redacted--3',
     } as const
 
     expect(Object.keys(citationsByScientificName)).toHaveLength(dinosaurSpecies.length)

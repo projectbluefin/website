@@ -372,6 +372,15 @@ const loreManifest = [
   { id: 'john-bazzite-interview', chapterId: 'awakening', relativePath: './lore/john-bazzite-interview.md' },
   { id: 'ishtar-final-shape', chapterId: 'awakening', relativePath: './lore/ishtar-final-shape.md' },
   { id: 'blue-universal-acquires-wayland-yutani', chapterId: 'awakening', relativePath: './lore/blue-universal-acquires-wayland-yutani.md' },
+  { id: 'subjectprofile/kat-cosgrove', chapterId: 'awakening', relativePath: './lore/kat-cosgrove.md' },
+  { id: 'subjectprofile/karl', chapterId: 'awakening', relativePath: './lore/karl.md' },
+  { id: 'guardian-bond/kat-cosgrove-karl', chapterId: 'awakening', relativePath: './lore/kat-cosgrove-karl.md' },
+  { id: 'subjectprofile/jeefy', chapterId: 'awakening', relativePath: './lore/jeefy.md' },
+  { id: 'subjectprofile/mountaintop', chapterId: 'awakening', relativePath: './lore/mountaintop.md' },
+  { id: 'guardian-bond/jeefy-mountaintop', chapterId: 'awakening', relativePath: './lore/jeefy-mountaintop.md' },
+  { id: 'subjectprofile/natalie', chapterId: 'awakening', relativePath: './lore/natalie.md' },
+  { id: 'subjectprofile/alamo', chapterId: 'awakening', relativePath: './lore/alamo.md' },
+  { id: 'guardian-bond/natalie-alamo', chapterId: 'awakening', relativePath: './lore/natalie-alamo.md' },
 ] as const satisfies readonly LoreManifestEntry[]
 
 const loreFiles = import.meta.glob('./lore/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
