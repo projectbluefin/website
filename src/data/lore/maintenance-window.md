@@ -1,4 +1,8 @@
 ---
+kind: chatlog
+title: 'Maintenance Window'
+timestamp: '2326-06-15'
+channel: 'RENNER//PRIVATE'
 _editor_prompt: >-
   STORY CONTEXT: Prologue: 'The Kube' - Who left this here? (Pages 1-7). This
   acts as a prompt for your editing.

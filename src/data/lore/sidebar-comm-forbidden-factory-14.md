@@ -1,7 +1,8 @@
 ---
-title: Forbidden Factory
-channel: GNME-3//JORDAN//PRIVATE
-date: '2326-07-09'
+kind: chatlog
+title: 'Forbidden Factory'
+timestamp: '2326-07-09'
+channel: 'GNME-3//JORDAN//PRIVATE'
 _editor_prompt: >-
   STORY CONTEXT: General Lore (Appears in the Lore sidebar / Chat window). This
   acts as a prompt for your editing.

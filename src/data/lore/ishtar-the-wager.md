@@ -1,4 +1,8 @@
 ---
+kind: source
+title: 'The Wager'
+timestamp: '2326-01-01'
+channel: 'ISHTAR//UNVEILING-04'
 _editor_prompt: >-
   STORY CONTEXT: Awakening: 'The Wolves' - The maintainers are the hunted.
   (Pages 15-20). This acts as a prompt for your editing.

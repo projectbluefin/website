@@ -1,7 +1,8 @@
 ---
-title: The Warthog and the Raptor
-channel: UBUNTU//SECURE
-date: '2326-08-01'
+kind: chatlog
+title: 'The Warthog and the Raptor'
+timestamp: '2326-08-01'
+channel: 'UBUNTU//SECURE'
 _editor_prompt: >-
   STORY CONTEXT: General Lore (Appears in the Lore sidebar / Chat window). This
   acts as a prompt for your editing.

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import {
   deriveLoreTelemetry,
@@ -6,6 +7,20 @@ import {
   validateGuardianBonds,
 } from '../data/wolves-lore-records'
 import { wolvesRelease } from '../data/wolves-story'
+
+const loreSources = import.meta.glob('../data/lore/*.md', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+}) as Record<string, string>
+
+function sourceBody(raw: string): string {
+  const match = raw.match(/^---\r?\n[\s\S]*?\r?\n---([\s\S]*)$/)
+  if (!match) {
+    throw new Error('Expected lore source frontmatter')
+  }
+  return match[1]
+}
 
 describe('wolves lore records', () => {
   it('normalizes the legacy transmission kind to chatlog with a diagnostic', () => {
@@ -22,10 +37,15 @@ describe('wolves lore records', () => {
     expect(record.diagnostics).toContain('kind "transmission" is a staged alias for "chatlog"')
   })
 
-  it('keeps an authored body byte-for-byte after frontmatter parsing', () => {
-    const raw = '---\ntitle: Record\n---\n\n**SENDER**: Do not rewrite this.'
-    expect(parseLoreRecord('record', 'prologue', './lore/record.md', raw).body)
-      .toBe('**SENDER**: Do not rewrite this.')
+  it('reports a missing kind during staged parsing without changing body text', () => {
+    const record = parseLoreRecord('record', 'prologue', './lore/record.md', '---\ntitle: Record\n---\n\nBody')
+
+    expect(record.diagnostics).toContain('frontmatter is missing kind')
+    expect(record.body).toBe('Body')
+  })
+
+  it('does not expose a permanent legacy identity fallback after migration', () => {
+    expect(parseLoreRecord).toHaveLength(4)
   })
 
   it('surfaces malformed YAML and non-mapping frontmatter', () => {
@@ -42,12 +62,12 @@ describe('wolves lore records', () => {
       .toThrow('Lore front matter must be a mapping')
   })
 
-  it('loads every staged record with authored identity taking precedence over its fallback', () => {
+  it('loads every migrated record with complete authored identity and no diagnostics', () => {
     const records = loadAllLoreRecords()
     const artifact = records.find(record => record.id === 'lorem-prologue-1')
-    const fallbackRecord = records.find(record => record.id === 'forbidden-factory')
 
     expect(records).toHaveLength(32)
+    expect(records.flatMap(record => record.diagnostics)).toEqual([])
     expect(artifact).toMatchObject({
       chapterId: 'prologue',
       relativePath: './lore/lorem-prologue-1.md',
@@ -58,15 +78,19 @@ describe('wolves lore records', () => {
         channel: 'EXPLORATION//TEAM-ALPHA',
       },
     })
-    expect(artifact?.diagnostics).toContain('frontmatter is missing kind')
-    expect(fallbackRecord).toMatchObject({
-      metadata: {
-        title: 'Forbidden Factory',
-        timestamp: '2326-07-09',
-        channel: 'GNME-3//JORDAN//PRIVATE',
-      },
+  })
+
+  it('preserves every authored lore body byte-for-byte through the frontmatter migration', () => {
+    const sourceBodies = loadAllLoreRecords().map((record) => {
+      const raw = loreSources[`../data${record.relativePath.slice(1)}`]
+      if (raw === undefined) {
+        throw new Error(`Missing lore source ${record.relativePath}`)
+      }
+      return `${record.id}\0${sourceBody(raw)}`
     })
-    expect(fallbackRecord?.diagnostics).toContain('frontmatter is missing title')
+
+    expect(createHash('sha256').update(sourceBodies.join('\0')).digest('hex'))
+      .toBe('2974fce6ad475690b2a0382515c5e1e82910b2a4f9d0c6c27f646d7fa3443079')
   })
 
   it('exposes normalized staged record identity through the Wolves release', () => {

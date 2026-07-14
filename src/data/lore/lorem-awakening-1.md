@@ -1,7 +1,8 @@
 ---
-title: Betrayal
-channel: SECURITY//INCIDENT
-date: '2326-01-02'
+kind: chatlog
+title: 'Betrayal'
+timestamp: '2326-01-02'
+channel: 'SECURITY//INCIDENT'
 _editor_prompt: >-
   STORY CONTEXT: Awakening: 'The Wolves' - The maintainers are the hunted.
   (Pages 15-20). This acts as a prompt for your editing.

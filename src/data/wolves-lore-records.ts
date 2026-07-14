@@ -64,13 +64,6 @@ export interface DerivedLoreTelemetry {
   recordFingerprint: `fnv1a:${string}`
 }
 
-export interface LegacyLoreIdentity {
-  kind: LoreKind
-  title: string
-  timestamp?: string
-  channel?: string
-}
-
 function isMapping(value: unknown): value is Record<string, unknown> {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) {
     return false
@@ -245,27 +238,17 @@ export function parseLoreRecord(
   chapterId: string,
   relativePath: string,
   raw: string,
-  legacyFallback?: Readonly<LegacyLoreIdentity>,
 ): LoreRecord {
   const { metadata: authoredMetadata, body } = parseFrontmatter(relativePath, raw)
-  const metadata = {
-    ...legacyFallback,
-    ...Object.fromEntries(Object.entries(authoredMetadata).filter(([, value]) => value !== undefined)),
-  }
+  const metadata = Object.fromEntries(Object.entries(authoredMetadata).filter(([, value]) => value !== undefined)) as LoreFrontmatter
   const diagnostics = [
     ...(authoredMetadata.kind === undefined ? ['frontmatter is missing kind'] : []),
     ...(authoredMetadata.title === undefined ? ['frontmatter is missing title'] : []),
-    ...(legacyFallback?.timestamp !== undefined && authoredMetadata.timestamp === undefined
-      ? ['frontmatter is missing timestamp']
-      : []),
-    ...(legacyFallback?.channel !== undefined && authoredMetadata.channel === undefined
-      ? ['frontmatter is missing channel']
-      : []),
     ...(authoredMetadata.kind === 'transmission'
       ? ['kind "transmission" is a staged alias for "chatlog"']
       : []),
   ]
-  const kind = authoredMetadata.kind === 'transmission' ? 'chatlog' : metadata.kind
+  const kind = authoredMetadata.kind === 'transmission' ? 'chatlog' : authoredMetadata.kind
 
   return {
     id,
@@ -346,52 +329,51 @@ interface LoreManifestEntry {
   id: string
   chapterId: string
   relativePath: string
-  legacyFallback: LegacyLoreIdentity
 }
 
 const loreManifest = [
-  { id: 'arthur-c-clarke-4', chapterId: 'prologue', relativePath: './lore/arthur-c-clarke-4.md', legacyFallback: { kind: 'quote', title: 'Childhood\'s End', timestamp: '1953-07-09' } },
-  { id: 'lorem-prologue-1', chapterId: 'prologue', relativePath: './lore/lorem-prologue-1.md', legacyFallback: { kind: 'chatlog', title: 'The Artifact', timestamp: '2326-06-16', channel: 'EXPLORATION//TEAM-ALPHA' } },
-  { id: 'arthur-c-clarke-1', chapterId: 'prologue', relativePath: './lore/arthur-c-clarke-1.md', legacyFallback: { kind: 'quote', title: 'Childhood\'s End', timestamp: '1953-07-09' } },
-  { id: 'lorem-prologue-2', chapterId: 'prologue', relativePath: './lore/lorem-prologue-2.md', legacyFallback: { kind: 'chatlog', title: 'The Children', timestamp: '2326-06-17', channel: 'EXPLORATION//TEAM-ALPHA' } },
-  { id: 'arthur-c-clarke-2', chapterId: 'prologue', relativePath: './lore/arthur-c-clarke-2.md', legacyFallback: { kind: 'quote', title: 'Childhood\'s End', timestamp: '1953-07-09' } },
-  { id: 'forbidden-factory', chapterId: 'prologue', relativePath: './lore/forbidden-factory.md', legacyFallback: { kind: 'chatlog', title: 'Forbidden Factory', timestamp: '2326-07-09', channel: 'GNME-3//JORDAN//PRIVATE' } },
-  { id: 'jordan-adrian', chapterId: 'prologue', relativePath: './lore/sidebar-comm-forbidden-factory-14.md', legacyFallback: { kind: 'chatlog', title: 'Forbidden Factory', timestamp: '2326-07-09', channel: 'GNME-3//JORDAN//PRIVATE' } },
-  { id: 'arthur-c-clarke-3', chapterId: 'prologue', relativePath: './lore/arthur-c-clarke-3.md', legacyFallback: { kind: 'quote', title: 'Childhood\'s End', timestamp: '1953-07-09' } },
-  { id: 'maintenance-window', chapterId: 'prologue', relativePath: './lore/maintenance-window.md', legacyFallback: { kind: 'chatlog', title: 'Maintenance Window', timestamp: '2326-06-15', channel: 'RENNER//PRIVATE' } },
-  { id: 'quote-childhoods-end-future', chapterId: 'pursuit', relativePath: './lore/quote-childhoods-end-future.md', legacyFallback: { kind: 'quote', title: 'Childhood\'s End', timestamp: '2326-07-09' } },
-  { id: 'lorem-pursuit-1', chapterId: 'pursuit', relativePath: './lore/lorem-pursuit-1.md', legacyFallback: { kind: 'chatlog', title: 'The Golden Era', timestamp: '2326-05-26', channel: 'ANCIENT//RECORDS' } },
-  { id: 'quote-natasha-woods', chapterId: 'pursuit', relativePath: './lore/quote-natasha-woods.md', legacyFallback: { kind: 'quote', title: 'Marketing Material', timestamp: '2326-07-09' } },
-  { id: 'do-not-reply', chapterId: 'pursuit', relativePath: './lore/do-not-reply.md', legacyFallback: { kind: 'chatlog', title: 'Do Not Reply', timestamp: '2326-05-24' } },
-  { id: 'quote-berkus', chapterId: 'pursuit', relativePath: './lore/quote-berkus.md', legacyFallback: { kind: 'quote', title: 'The Cosmos', timestamp: '2326-06-15' } },
-  { id: 'childhoods-end-wager', chapterId: 'pursuit', relativePath: './lore/childhoods-end-wager.md', legacyFallback: { kind: 'chatlog', title: 'The Wager', timestamp: '2326-07-09', channel: 'ZONKER//ARCHIVE-033' } },
-  { id: 'quote-unmarked-grave', chapterId: 'pursuit', relativePath: './lore/quote-unmarked-grave.md', legacyFallback: { kind: 'quote', title: 'The Horror of Thousands', timestamp: '2326-05-24' } },
-  { id: 'quote-third-disciple', chapterId: 'pursuit', relativePath: './lore/quote-third-disciple.md', legacyFallback: { kind: 'quote', title: 'The Chronicles of Blue Universal', timestamp: '2326-05-25' } },
-  { id: 'lorem-awakening-1', chapterId: 'awakening', relativePath: './lore/lorem-awakening-1.md', legacyFallback: { kind: 'chatlog', title: 'Betrayal', timestamp: '2326-01-02', channel: 'SECURITY//INCIDENT' } },
-  { id: 'ishtar-gardener-and-winnower', chapterId: 'awakening', relativePath: './lore/ishtar-gardener-and-winnower.md', legacyFallback: { kind: 'source', title: 'The Garden Before Time', timestamp: '2326-01-01' } },
-  { id: 'glorious-eggroll', chapterId: 'awakening', relativePath: './lore/glorious-eggroll.md', legacyFallback: { kind: 'chatlog', title: 'Glorious Eggroll', timestamp: '2326-07-12', channel: 'NBR-3/0//GLORIOUS-EGGROLL//PRIVATE-LOG' } },
-  { id: 'ishtar-flower-game', chapterId: 'awakening', relativePath: './lore/ishtar-flower-game.md', legacyFallback: { kind: 'source', title: 'Rules of the Flower Game', timestamp: '2326-01-01', channel: 'ISHTAR//UNVEILING-02' } },
-  { id: 'project-neptune', chapterId: 'awakening', relativePath: './lore/project-neptune.md', legacyFallback: { kind: 'chatlog', title: 'Project Neptune', timestamp: '2326-07-15', channel: 'BLUE-UNIVERSAL//PRJ-TM//DIRECTIVE' } },
-  { id: 'ishtar-first-knife', chapterId: 'awakening', relativePath: './lore/ishtar-first-knife.md', legacyFallback: { kind: 'source', title: 'The First Knife', timestamp: '2326-01-01', channel: 'ISHTAR//UNVEILING-03' } },
-  { id: 'john-seager', chapterId: 'awakening', relativePath: './lore/john-seager.md', legacyFallback: { kind: 'chatlog', title: 'The Warthog and the Raptor', timestamp: '2326-08-01', channel: 'UBUNTU//SECURE' } },
-  { id: 'ishtar-the-wager', chapterId: 'awakening', relativePath: './lore/ishtar-the-wager.md', legacyFallback: { kind: 'source', title: 'The Wager', timestamp: '2326-01-01', channel: 'ISHTAR//UNVEILING-04' } },
-  { id: 'reckoning-of-the-three', chapterId: 'awakening', relativePath: './lore/reckoning-of-the-three.md', legacyFallback: { kind: 'chatlog', title: 'Reckoning of the Three', timestamp: '2326-01-01', channel: 'HARBRINGER//ARCHIVE-01' } },
-  { id: 'ishtar-patternfall', chapterId: 'awakening', relativePath: './lore/ishtar-patternfall.md', legacyFallback: { kind: 'source', title: 'Patternfall', timestamp: '2326-01-01', channel: 'ISHTAR//UNVEILING-05' } },
-  { id: 'committee-report-personal-transmission', chapterId: 'awakening', relativePath: './lore/committee-report-personal-transmission.md', legacyFallback: { kind: 'chatlog', title: 'COMMITEE REPORT: Personal Transmission', timestamp: '2326-01-01', channel: 'TOPH//ARCHIVE-072' } },
-  { id: 'ishtar-cambrian-explosion', chapterId: 'awakening', relativePath: './lore/ishtar-cambrian-explosion.md', legacyFallback: { kind: 'source', title: 'The Cambrian Explosion', timestamp: '2326-01-01', channel: 'ISHTAR//UNVEILING-06' } },
-  { id: 'john-bazzite-interview', chapterId: 'awakening', relativePath: './lore/john-bazzite-interview.md', legacyFallback: { kind: 'news', title: 'John Bazzite Exclusive Interview', timestamp: '2326-01-01', channel: 'ZONKER//ARCHIVE-032' } },
-  { id: 'ishtar-final-shape', chapterId: 'awakening', relativePath: './lore/ishtar-final-shape.md', legacyFallback: { kind: 'source', title: 'The Final Shape', timestamp: '2326-01-01', channel: 'ISHTAR//UNVEILING-07' } },
-  { id: 'blue-universal-acquires-wayland-yutani', chapterId: 'awakening', relativePath: './lore/blue-universal-acquires-wayland-yutani.md', legacyFallback: { kind: 'news', title: 'Blue Universal to Acquire Wayland-Yutani', timestamp: '2326-01-01' } },
+  { id: 'arthur-c-clarke-4', chapterId: 'prologue', relativePath: './lore/arthur-c-clarke-4.md' },
+  { id: 'lorem-prologue-1', chapterId: 'prologue', relativePath: './lore/lorem-prologue-1.md' },
+  { id: 'arthur-c-clarke-1', chapterId: 'prologue', relativePath: './lore/arthur-c-clarke-1.md' },
+  { id: 'lorem-prologue-2', chapterId: 'prologue', relativePath: './lore/lorem-prologue-2.md' },
+  { id: 'arthur-c-clarke-2', chapterId: 'prologue', relativePath: './lore/arthur-c-clarke-2.md' },
+  { id: 'forbidden-factory', chapterId: 'prologue', relativePath: './lore/forbidden-factory.md' },
+  { id: 'jordan-adrian', chapterId: 'prologue', relativePath: './lore/sidebar-comm-forbidden-factory-14.md' },
+  { id: 'arthur-c-clarke-3', chapterId: 'prologue', relativePath: './lore/arthur-c-clarke-3.md' },
+  { id: 'maintenance-window', chapterId: 'prologue', relativePath: './lore/maintenance-window.md' },
+  { id: 'quote-childhoods-end-future', chapterId: 'pursuit', relativePath: './lore/quote-childhoods-end-future.md' },
+  { id: 'lorem-pursuit-1', chapterId: 'pursuit', relativePath: './lore/lorem-pursuit-1.md' },
+  { id: 'quote-natasha-woods', chapterId: 'pursuit', relativePath: './lore/quote-natasha-woods.md' },
+  { id: 'do-not-reply', chapterId: 'pursuit', relativePath: './lore/do-not-reply.md' },
+  { id: 'quote-berkus', chapterId: 'pursuit', relativePath: './lore/quote-berkus.md' },
+  { id: 'childhoods-end-wager', chapterId: 'pursuit', relativePath: './lore/childhoods-end-wager.md' },
+  { id: 'quote-unmarked-grave', chapterId: 'pursuit', relativePath: './lore/quote-unmarked-grave.md' },
+  { id: 'quote-third-disciple', chapterId: 'pursuit', relativePath: './lore/quote-third-disciple.md' },
+  { id: 'lorem-awakening-1', chapterId: 'awakening', relativePath: './lore/lorem-awakening-1.md' },
+  { id: 'ishtar-gardener-and-winnower', chapterId: 'awakening', relativePath: './lore/ishtar-gardener-and-winnower.md' },
+  { id: 'glorious-eggroll', chapterId: 'awakening', relativePath: './lore/glorious-eggroll.md' },
+  { id: 'ishtar-flower-game', chapterId: 'awakening', relativePath: './lore/ishtar-flower-game.md' },
+  { id: 'project-neptune', chapterId: 'awakening', relativePath: './lore/project-neptune.md' },
+  { id: 'ishtar-first-knife', chapterId: 'awakening', relativePath: './lore/ishtar-first-knife.md' },
+  { id: 'john-seager', chapterId: 'awakening', relativePath: './lore/john-seager.md' },
+  { id: 'ishtar-the-wager', chapterId: 'awakening', relativePath: './lore/ishtar-the-wager.md' },
+  { id: 'reckoning-of-the-three', chapterId: 'awakening', relativePath: './lore/reckoning-of-the-three.md' },
+  { id: 'ishtar-patternfall', chapterId: 'awakening', relativePath: './lore/ishtar-patternfall.md' },
+  { id: 'committee-report-personal-transmission', chapterId: 'awakening', relativePath: './lore/committee-report-personal-transmission.md' },
+  { id: 'ishtar-cambrian-explosion', chapterId: 'awakening', relativePath: './lore/ishtar-cambrian-explosion.md' },
+  { id: 'john-bazzite-interview', chapterId: 'awakening', relativePath: './lore/john-bazzite-interview.md' },
+  { id: 'ishtar-final-shape', chapterId: 'awakening', relativePath: './lore/ishtar-final-shape.md' },
+  { id: 'blue-universal-acquires-wayland-yutani', chapterId: 'awakening', relativePath: './lore/blue-universal-acquires-wayland-yutani.md' },
 ] as const satisfies readonly LoreManifestEntry[]
 
 const loreFiles = import.meta.glob('./lore/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
 
 export function loadAllLoreRecords(): readonly LoreRecord[] {
-  return Object.freeze(loreManifest.map(({ id, chapterId, relativePath, legacyFallback }) => {
+  return Object.freeze(loreManifest.map(({ id, chapterId, relativePath }) => {
     const raw = loreFiles[relativePath]
     if (raw === undefined) {
       throw new Error(`Missing staged lore file "${relativePath}"`)
     }
-    return parseLoreRecord(id, chapterId, relativePath, raw, legacyFallback)
+    return parseLoreRecord(id, chapterId, relativePath, raw)
   }))
 }

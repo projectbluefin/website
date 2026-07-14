@@ -1,7 +1,8 @@
 ---
-title: The Golden Era
-channel: ANCIENT//RECORDS
-date: '2326-05-26'
+kind: chatlog
+title: 'The Golden Era'
+timestamp: '2326-05-26'
+channel: 'ANCIENT//RECORDS'
 _editor_prompt: >-
   STORY CONTEXT: Pursuit: 'The Illustrius' - The maintainers are gods. (Pages
   8-14). This acts as a prompt for your editing.

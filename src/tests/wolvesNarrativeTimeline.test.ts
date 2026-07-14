@@ -14,6 +14,43 @@ describe('wolves narrative timeline', () => {
       .toEqual(new Set(wolvesRelease.artifacts.map(artifact => artifact.id)))
   })
 
+  it('keeps the authored release chapter and artifact order fixed', () => {
+    expect(wolvesRelease.artifacts.map(({ id, chapterId }) => ({ id, chapterId }))).toEqual([
+      { id: 'arthur-c-clarke-4', chapterId: 'prologue' },
+      { id: 'lorem-prologue-1', chapterId: 'prologue' },
+      { id: 'arthur-c-clarke-1', chapterId: 'prologue' },
+      { id: 'lorem-prologue-2', chapterId: 'prologue' },
+      { id: 'arthur-c-clarke-2', chapterId: 'prologue' },
+      { id: 'forbidden-factory', chapterId: 'prologue' },
+      { id: 'jordan-adrian', chapterId: 'prologue' },
+      { id: 'arthur-c-clarke-3', chapterId: 'prologue' },
+      { id: 'maintenance-window', chapterId: 'prologue' },
+      { id: 'quote-childhoods-end-future', chapterId: 'pursuit' },
+      { id: 'lorem-pursuit-1', chapterId: 'pursuit' },
+      { id: 'quote-natasha-woods', chapterId: 'pursuit' },
+      { id: 'do-not-reply', chapterId: 'pursuit' },
+      { id: 'quote-berkus', chapterId: 'pursuit' },
+      { id: 'childhoods-end-wager', chapterId: 'pursuit' },
+      { id: 'quote-unmarked-grave', chapterId: 'pursuit' },
+      { id: 'quote-third-disciple', chapterId: 'pursuit' },
+      { id: 'lorem-awakening-1', chapterId: 'awakening' },
+      { id: 'ishtar-gardener-and-winnower', chapterId: 'awakening' },
+      { id: 'glorious-eggroll', chapterId: 'awakening' },
+      { id: 'ishtar-flower-game', chapterId: 'awakening' },
+      { id: 'project-neptune', chapterId: 'awakening' },
+      { id: 'ishtar-first-knife', chapterId: 'awakening' },
+      { id: 'john-seager', chapterId: 'awakening' },
+      { id: 'ishtar-the-wager', chapterId: 'awakening' },
+      { id: 'reckoning-of-the-three', chapterId: 'awakening' },
+      { id: 'ishtar-patternfall', chapterId: 'awakening' },
+      { id: 'committee-report-personal-transmission', chapterId: 'awakening' },
+      { id: 'ishtar-cambrian-explosion', chapterId: 'awakening' },
+      { id: 'john-bazzite-interview', chapterId: 'awakening' },
+      { id: 'ishtar-final-shape', chapterId: 'awakening' },
+      { id: 'blue-universal-acquires-wayland-yutani', chapterId: 'awakening' },
+    ])
+  })
+
   it('preserves the approved first, middle, and final anchors', () => {
     expect(getNarrativeSlotForTime(0)).toMatchObject({
       artifactId: 'arthur-c-clarke-4',

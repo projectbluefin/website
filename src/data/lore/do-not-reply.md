@@ -1,4 +1,7 @@
 ---
+kind: chatlog
+title: 'Do Not Reply'
+timestamp: '2326-05-24'
 _editor_prompt: >-
   STORY CONTEXT: Pursuit: 'The Illustrius' - The maintainers are gods. (Pages
   8-14). This acts as a prompt for your editing.

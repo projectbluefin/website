@@ -1,7 +1,8 @@
 ---
-title: The Children
-channel: EXPLORATION//TEAM-ALPHA
-date: '2326-06-17'
+kind: chatlog
+title: 'The Children'
+timestamp: '2326-06-17'
+channel: 'EXPLORATION//TEAM-ALPHA'
 _editor_prompt: >-
   STORY CONTEXT: Prologue: 'The Kube' - Who left this here? (Pages 1-7). This
   acts as a prompt for your editing.

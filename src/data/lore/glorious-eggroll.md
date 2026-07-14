@@ -1,7 +1,8 @@
 ---
-title: Glorious Eggroll
-channel: NBR-3/0//GLORIOUS-EGGROLL//PRIVATE-LOG
-date: '2326-07-12'
+kind: chatlog
+title: 'Glorious Eggroll'
+timestamp: '2326-07-12'
+channel: 'NBR-3/0//GLORIOUS-EGGROLL//PRIVATE-LOG'
 _editor_prompt: >-
   STORY CONTEXT: General Lore (Appears in the Lore sidebar / Chat window). This
   acts as a prompt for your editing.

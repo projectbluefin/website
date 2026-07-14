@@ -1,4 +1,8 @@
 ---
+kind: news
+title: 'John Bazzite Exclusive Interview'
+timestamp: '2326-01-01'
+channel: 'ZONKER//ARCHIVE-032'
 _editor_prompt: >-
   STORY CONTEXT: Awakening: 'The Wolves' - The maintainers are the hunted.
   (Pages 15-20). This acts as a prompt for your editing.

@@ -1,7 +1,8 @@
 ---
-title: The Artifact
-channel: EXPLORATION//TEAM-ALPHA
-date: '2326-06-16'
+kind: chatlog
+title: 'The Artifact'
+timestamp: '2326-06-16'
+channel: 'EXPLORATION//TEAM-ALPHA'
 _editor_prompt: >-
   STORY CONTEXT: Prologue: 'The Kube' - Who left this here? (Pages 1-7). This
   acts as a prompt for your editing.

@@ -1,7 +1,8 @@
 ---
-title: Project Neptune
-channel: BLUE-UNIVERSAL//PRJ-TM//DIRECTIVE
-date: '2326-07-15'
+kind: chatlog
+title: 'Project Neptune'
+timestamp: '2326-07-15'
+channel: 'BLUE-UNIVERSAL//PRJ-TM//DIRECTIVE'
 _editor_prompt: >-
   STORY CONTEXT: General Lore (Appears in the Lore sidebar / Chat window). This
   acts as a prompt for your editing.
