@@ -10,16 +10,17 @@ Universal Blue`.
 
 - Add `src/data/wolves-incoming-signal.txt`.
 - Each non-empty line is one message, in presentation order.
-- The file is the sole editable message source. Its initial contents preserve
-  the approved thesis phrases currently embedded in the thesis sequence.
+- The file is the sole editable message source. Its initial contents use the
+  approved thesis phrases without ellipsis-based truncation.
 
 ## Presentation
 
 - The existing Track 0 thesis window remains 5:45 through 7:05.
 - At 5:45, the HUD changes to `Incoming Signal: Universal Blue` before the
   cycling sequence begins.
-- The active line advances every eight soundtrack beats. The selection is
-  deterministic and wraps to the first line after the final line.
+- Track 0 uses its verified 152 BPM tempo. The active line advances every
+  eight soundtrack beats, starting with the first line at 5:45. The selection
+  is deterministic and wraps to the first line after the final line.
 - Existing day-pulse, corruption, and legend modes remain intact. During the
   active thesis window, their displayed text is supplied by the editable
   sequence.
@@ -28,10 +29,8 @@ Universal Blue`.
 
 - The thesis data module imports and parses the text file into an ordered,
   immutable list of non-empty lines.
-- `WolvesApp` derives Track 0's beat position from current playback time and
-  its BPM, then passes it to the thesis-state resolver.
-- The resolver chooses `floor(beat / 8) % messageCount` while the thesis is
-  active.
+- The thesis-state resolver calculates each phrase from Track 0 playback time,
+  using `floor((time - 345) * 152 / 60 / 8) % messageCount`.
 
 ## Empty Source
 
