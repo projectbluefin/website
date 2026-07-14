@@ -11,6 +11,7 @@ metadata:
     - /flickr/flickr-sdk
     - /websites/developers_google_youtube
     - /vitejs/vite
+    - /microsoft/playwright/v1.61.0
 ---
 
 # Wolves Theater Experience
@@ -54,6 +55,7 @@ Use this skill when modifying the immersive fullscreen dashboard, background wal
 24. **High-Frequency Audio Progress Sync:** Standard 1000ms \`setInterval\` polling for media player progress creates up to 999ms of latency, which ruins the timing of tight HUD-synced animations (like typewriter or glitch effects). Increase broadcast intervals to 100ms (10Hz) to enable smooth UI synchronization without thrashing the main thread.
 25. **Legacy Markdown Speaker/SFX Standardization:** Legacy lore files lacking proper markdown formatting (missing bold **SPEAKER** tags or lacking double-newlines) will collapse into Monolithic "SYSTEM" dumps. Run a fast normalization regex across the body before split (`/\\n(?=(?:\\*\\*[^*]+\\*\\*|[A-Z0-9-]+)(?:\\s+\\[[^\\]]+\\])?:|<[^>]+>)/gi`) to insert \`\\n\\n\` padding, guaranteeing proper speaker mapping.
 26. **Immersive HUD Layout Aspect-Ratio Avoidance:** Do not let a fixed-aspect-ratio child component (like a 16:10 \`.comic-viewport\`) dictate the size of its parent grid row and force sibling rows off-screen on extreme viewports. Cascade \`min-height: 0\` and \`min-width: 0\` down the DOM hierarchy of all flex/grid parents enclosing it to ensure flex containers compress correctly. Absolute UI widgets (e.g. \`.hud-announcement-area\`) should use absolute centering (\`left: 50%; top: 50%; transform: translate(-50%, -50%)\`) within padded footers to prevent flex-box squeezing/truncation of peers like the soundtrack dock.
+27. **Mobile Lore-Column Shrinking:** The lore-column router is a flex child of a bounded mobile grid row. Apply \`flex: 1\` and \`min-height: 0\` at every breakpoint, not only desktop, so a record surface shrinks into its scrollable viewport instead of being clipped by the region's hidden overflow. Cover this with a Chromium bounds assertion that opens immersive mode at a mobile viewport and checks the lore column's \`getBoundingClientRect().bottom\` does not exceed its region. Use Playwright's role locator for the entry action and close the browser in \`finally\`. Source: \`/microsoft/playwright/v1.61.0\`.
 
 ### Typed Lore Records
 
@@ -109,6 +111,7 @@ Use this skill when modifying the immersive fullscreen dashboard, background wal
 - [ ] Hardware acceleration (\`translateZ(0)\` and \`will-change: opacity\`) is applied to fullscreen crossfading layers.
 - [ ] Timeline boundaries use a 1ms tolerance with \`findIndex(s => time < s.endTime - 0.001)\`.
 - [ ] Flex grids scale proportionally on 16:9 1080p, 1440p, and mobile views without overflowing the 100vh viewport due to missing \`min-height: 0\`.
+- [ ] `node tests/wolves-immersive-layout.mjs` passes against a local dev server, proving the mobile lore column remains within the bounded immersive region.
 - [ ] Playlist Previous and Next controls are disabled before player readiness and at their respective first/last-track boundaries.
 - [ ] The selected finale image is active from `408.0s` through `423.0s`, with no repeated Track 0 image.
 - [ ] The soundtrack CTA renders its complete authored copy and retains visible, descriptive Playlist and Music actions.
