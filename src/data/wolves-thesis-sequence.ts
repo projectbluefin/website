@@ -16,7 +16,8 @@ const THESIS_START_SECONDS = 345
 const THESIS_END_SECONDS = 425
 const TRACK_ZERO_BPM = 152
 const PHRASE_BEATS = 16
-const WELCOME_TEXT = 'We\'ve got your back, welcome to the path.'
+const WELCOME_TEXT = 'We\'ve got your back.'
+const SUPPORT_TEXT = 'You\'ll never walk alone ...'
 const UNIVERSAL_BLUE_TEXT = 'We are Universal Blue.'
 const EVOLVE_TEXT = 'Evolve or die ...'
 const ASCENDED_TEXT = 'You have ascended ...'
@@ -69,19 +70,16 @@ export function getWolvesThesisState(time: number): WolvesThesisState {
   if (time < THESIS_START_SECONDS || time > THESIS_END_SECONDS) {
     return inactive
   }
-  if (time < 349) {
+  if (time < 347.75) {
     return active('welcome', WELCOME_TEXT, '', '', true, incomingSignalLabel(time))
   }
   if (time < 350.5) {
-    return active('corruption', '', '', '', false, incomingSignalLabel(time))
-  }
-  if (time < 353.5) {
-    return active('universal-blue', UNIVERSAL_BLUE_TEXT, '', '', false, incomingSignalLabel(time))
-  }
-  if (time < 355) {
-    return active('corruption', '', '', '', false, incomingSignalLabel(time))
+    return active('welcome', SUPPORT_TEXT, '', '', true, incomingSignalLabel(time))
   }
   if (time < 359) {
+    return active('universal-blue', UNIVERSAL_BLUE_TEXT, '', '', false, incomingSignalLabel(time))
+  }
+  if (time < 365) {
     return active('evolve', EVOLVE_TEXT, '', '', false, incomingSignalLabel(time))
   }
   if (time < 395) {

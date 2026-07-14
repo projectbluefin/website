@@ -114,7 +114,7 @@ describe('wolvesApp.vue', () => {
 
       expect(wrapper.get('.immersive-hud-header').classes()).toContain('is-thesis-active')
       expect(wrapper.get('.hud-left').text()).toContain('INCOMING SIGNAL:')
-      expect(wrapper.get('.thesis-overlay h1').text()).toBe('We\'ve got your back, welcome to the path.')
+      expect(wrapper.get('.thesis-overlay h1').text()).toBe('We\'ve got your back.')
 
       await soundtrack.vm.$emit('progress', {
         currentTime: 345,

@@ -49,7 +49,7 @@ describe('wolves thesis sequence', () => {
       expect(reloadedSequence.wolvesIncomingSignalMessages).toEqual([])
       expect(reloadedSequence.getWolvesThesisState(THESIS_START_SECONDS)).toMatchObject({
         active: true,
-        text: 'We\'ve got your back, welcome to the path.',
+        text: 'We\'ve got your back.',
         hudLabel: 'Incoming Signal: Universal Blue',
       })
       expect(reloadedSequence.getWolvesThesisState(350.5).text).toBe('We are Universal Blue.')
@@ -61,12 +61,12 @@ describe('wolves thesis sequence', () => {
   })
 
   it('restores the complete approved thesis sequence through the finale', () => {
-    expect(getWolvesThesisState(THESIS_START_SECONDS).text).toBe('We\'ve got your back, welcome to the path.')
-    expect(getWolvesThesisState(348.999).text).toBe('We\'ve got your back, welcome to the path.')
-    expect(getWolvesThesisState(349).text).toBe('')
+    expect(getWolvesThesisState(THESIS_START_SECONDS).text).toBe('We\'ve got your back.')
+    expect(getWolvesThesisState(347.749).text).toBe('We\'ve got your back.')
+    expect(getWolvesThesisState(347.75).text).toBe('You\'ll never walk alone ...')
     expect(getWolvesThesisState(350.5).text).toBe('We are Universal Blue.')
-    expect(getWolvesThesisState(353.5).text).toBe('')
-    expect(getWolvesThesisState(355).text).toBe('Evolve or die ...')
+    expect(getWolvesThesisState(359).text).toBe('Evolve or die ...')
+    expect(getWolvesThesisState(365).active).toBe(false)
     expect(getWolvesThesisState(405).text).toBe('You have ascended ...')
     expect(getWolvesThesisState(408).text).toBe('Become Legend')
     expect(getWolvesThesisState(425).text).toBe('Become Legend')
@@ -87,7 +87,7 @@ describe('wolves thesis sequence', () => {
     })
     expect(getWolvesThesisState(349)).toMatchObject({
       active: true,
-      mode: 'corruption',
+      mode: 'welcome',
       hudLabel: 'INCOMING SIGNAL:',
     })
     expect(getWolvesThesisState(395)).toMatchObject({ active: true, mode: 'growing-corruption' })
