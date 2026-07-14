@@ -1,42 +1,52 @@
 <script setup lang="ts">
 import type { Component } from 'vue'
-import type { LoreKind } from '../../data/wolves-lore-records'
+import type { LoreKind, LoreRecord } from '../../data/wolves-lore-records'
 import { computed } from 'vue'
 import { loreRecords } from './lore'
 import ChatlogLoreView from './lore/ChatlogLoreView.vue'
+import DinosaurDossierView from './lore/DinosaurDossierView.vue'
+import FieldReportLoreView from './lore/FieldReportLoreView.vue'
+import GuardianBondLoreView from './lore/GuardianBondLoreView.vue'
+import GuardianDossierView from './lore/GuardianDossierView.vue'
+import LocationDossierView from './lore/LocationDossierView.vue'
+import NewsLoreView from './lore/NewsLoreView.vue'
 import QuoteLoreView from './lore/QuoteLoreView.vue'
+import SourceLoreView from './lore/SourceLoreView.vue'
 
 const props = defineProps<{
   artifactId: string
   duration: number
   warning?: string
+  records?: readonly LoreRecord[]
 }>()
-
-const NewsLoreView = ChatlogLoreView
-const SourceLoreView = ChatlogLoreView
-const CharacterSheetRouter = ChatlogLoreView
-const FieldReportLoreView = ChatlogLoreView
-const LocationDossierView = ChatlogLoreView
-const GuardianBondLoreView = ChatlogLoreView
 
 const loreViewByKind: Record<LoreKind, Component> = {
   'chatlog': ChatlogLoreView,
   'quote': QuoteLoreView,
   'news': NewsLoreView,
   'source': SourceLoreView,
-  'character-sheet': CharacterSheetRouter,
+  'character-sheet': GuardianDossierView,
   'field-report': FieldReportLoreView,
   'location-dossier': LocationDossierView,
   'guardian-bond': GuardianBondLoreView,
 }
 
+const records = computed(() => props.records ?? loreRecords)
+
 const currentRecord = computed(() =>
-  loreRecords.find(record => record.id === props.artifactId) ?? null,
+  records.value.find(record => record.id === props.artifactId) ?? null,
 )
 
-const selectedLoreView = computed(() =>
-  currentRecord.value ? loreViewByKind[currentRecord.value.kind] : null,
-)
+const selectedLoreView = computed(() => {
+  const record = currentRecord.value
+  if (!record) {
+    return null
+  }
+  if (record.kind === 'character-sheet' && record.metadata.subject_kind === 'dinosaur') {
+    return DinosaurDossierView
+  }
+  return loreViewByKind[record.kind]
+})
 </script>
 
 <template>
@@ -45,6 +55,7 @@ const selectedLoreView = computed(() =>
       :is="selectedLoreView"
       v-if="currentRecord"
       :record="currentRecord"
+      :records="records"
       :duration="duration"
       :warning="warning"
     />

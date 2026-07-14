@@ -2,6 +2,7 @@ import { mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getChatlogLore, getQuoteLore, loreRecords } from '../components/wolves/lore'
 import WolvesLoreColumn from '../components/wolves/WolvesLoreColumn.vue'
+import { wolvesLoreRecordFixtures } from './fixtures/wolves-lore-records'
 
 describe('wolvesLoreColumn Logic', () => {
   it('renders the artifact selected by the soundtrack timeline', async () => {
@@ -207,6 +208,68 @@ describe('wolvesLoreColumn Logic', () => {
       .text() ?? ''
     expect(sarahText).not.toBe(sarah.text)
     expect(scrollTo).toHaveBeenCalled()
+  })
+
+  it('replaces the full lore column with a vertical dinosaur dossier', () => {
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId: 'dinosaur-subject',
+        duration: 20,
+        records: wolvesLoreRecordFixtures,
+      },
+    })
+
+    expect(wrapper.find('[data-lore-view="dinosaur-dossier"]').exists()).toBe(true)
+    expect(wrapper.get('[data-species-artwork]').attributes('src')).toContain('characters/achillobator.webp')
+    expect(wrapper.text()).toContain('GUARDIANBOND / guardian-dinosaur')
+    expect(wrapper.find('.mascot-console-hud').exists()).toBe(false)
+  })
+
+  it('renders canonical source provenance independently of authored body text', () => {
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId: 'ishtar-gardener-and-winnower',
+        duration: 20,
+      },
+    })
+
+    expect(wrapper.text()).toContain('PROVENANCE / https://www.ishtar-collective.net/entries/gardener-and-winnower')
+  })
+
+  it.each([
+    ['news-record', 'news-bulletin'],
+    ['source-record', 'source-fragment'],
+    ['field-report-record', 'field-report'],
+    ['location-record', 'location-dossier'],
+    ['guardian-subject', 'guardian-dossier'],
+    ['guardian-dinosaur', 'guardian-bond'],
+  ])('routes %s to its dedicated full-column view', (artifactId, view) => {
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId,
+        duration: 20,
+        records: wolvesLoreRecordFixtures,
+      },
+    })
+
+    expect(wrapper.find(`[data-lore-view="${view}"]`).exists()).toBe(true)
+  })
+
+  it('renders authored Guardian dossier fields with derived telemetry', () => {
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId: 'guardian-subject',
+        duration: 20,
+        records: wolvesLoreRecordFixtures,
+      },
+    })
+
+    expect(wrapper.text()).toContain('GUARDIAN // MAINTAINER')
+    expect(wrapper.text()).toContain('CONTROLLER · RECONCILER')
+    expect(wrapper.text()).toContain('class: titan')
+    expect(wrapper.text()).toContain('super: Test super')
+    expect(wrapper.text()).toContain('GuardianBond: guardian-dinosaur')
+    expect(wrapper.text()).toContain('fnv1a:')
   })
 
   afterEach(() => {

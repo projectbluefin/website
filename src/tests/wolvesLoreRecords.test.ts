@@ -96,6 +96,29 @@ describe('wolves lore records', () => {
     })
   })
 
+  it('accepts only authored Guardian classes and dinosaur epic names', () => {
+    const record = parseLoreRecord('dinosaur', 'chapter', './lore/dinosaur.md', [
+      '---',
+      'kind: character-sheet',
+      'title: Subject',
+      'epic_name: Author-provided name',
+      'guardian:',
+      '  class: titan',
+      '  super: Author-provided super',
+      '---',
+      '',
+      'Body',
+    ].join('\n'))
+
+    expect(record.metadata.epic_name).toBe('Author-provided name')
+    expect(record.metadata.guardian?.class).toBe('titan')
+    expect(record.metadata.guardian?.super).toBe('Author-provided super')
+    expect(() => parseLoreRecord('invalid', 'chapter', './lore/invalid.md', '---\nkind: character-sheet\nguardian:\n  class: invalid\n---\n\nBody'))
+      .toThrow('Lore front matter guardian class must be titan, warlock, or hunter')
+    expect(() => parseLoreRecord('invalid-epic-name', 'chapter', './lore/invalid.md', '---\nepic_name: 1\n---\n\nBody'))
+      .toThrow('Lore front matter field "epic_name" must be a string')
+  })
+
   it('rejects a bond whose dinosaur does not list that bond as a rider', () => {
     const guardianRecord = parseLoreRecord('subjectprofile/kat-cosgrove', 'awakening', './lore/kat-cosgrove.md', [
       '---',

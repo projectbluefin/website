@@ -11,6 +11,7 @@ export type LoreKind
     | 'quote'
 
 export type GuardianSpecialization = 'controller' | 'operator' | 'reconciler'
+export type GuardianClass = 'titan' | 'warlock' | 'hunter'
 
 export interface LoreFrontmatter {
   kind?: LoreKind | 'transmission'
@@ -27,10 +28,13 @@ export interface LoreFrontmatter {
   aliases?: readonly string[]
   titles?: readonly string[]
   species?: string
+  epic_name?: string
   guardian?: {
     public_designation?: 'Guardian'
     internal_designation?: 'Maintainer'
     specializations?: readonly GuardianSpecialization[]
+    class?: GuardianClass
+    super?: string
   }
   relations?: {
     dinosaur?: string
@@ -108,6 +112,8 @@ function parseGuardian(value: unknown): LoreFrontmatter['guardian'] {
   const publicDesignation = value.public_designation
   const internalDesignation = value.internal_designation
   const specializations = value.specializations
+  const guardianClass = value.class
+  const guardianSuper = value.super
   if (publicDesignation !== undefined && publicDesignation !== 'Guardian') {
     throw new TypeError('Lore front matter guardian.public_designation must be "Guardian"')
   }
@@ -121,11 +127,19 @@ function parseGuardian(value: unknown): LoreFrontmatter['guardian'] {
   ) {
     throw new TypeError('Lore front matter guardian.specializations must be valid specializations')
   }
+  if (guardianClass !== undefined && guardianClass !== 'titan' && guardianClass !== 'warlock' && guardianClass !== 'hunter') {
+    throw new TypeError('Lore front matter guardian class must be titan, warlock, or hunter')
+  }
+  if (guardianSuper !== undefined && typeof guardianSuper !== 'string') {
+    throw new TypeError('Lore front matter guardian.super must be a string')
+  }
 
   return Object.freeze({
     public_designation: publicDesignation,
     internal_designation: internalDesignation,
     specializations: specializations === undefined ? undefined : Object.freeze([...specializations]),
+    class: guardianClass,
+    super: guardianSuper,
   })
 }
 
@@ -217,6 +231,7 @@ function parseFrontmatter(relativePath: string, raw: string): { metadata: LoreFr
       aliases: stringArrayField(loaded, 'aliases'),
       titles: stringArrayField(loaded, 'titles'),
       species: stringField(loaded, 'species'),
+      epic_name: stringField(loaded, 'epic_name'),
       guardian: parseGuardian(loaded.guardian),
       relations: parseRelations(loaded.relations),
       _editor_prompt: stringField(loaded, '_editor_prompt'),

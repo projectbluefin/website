@@ -34,6 +34,7 @@ export type WolvesLoreEntry
 
 export interface LoreViewProps {
   record: LoreRecord
+  records?: readonly LoreRecord[]
   duration: number
   warning?: string
 }
@@ -85,6 +86,10 @@ export function getChatlogLore(record: LoreRecord): InterceptedConversation {
     date: record.metadata.timestamp || '',
     messages
   }
+}
+
+export function getSourceProvenance(record: LoreRecord): string | undefined {
+  return artifactFor(record)?.sourceUrl ?? record.metadata.sender
 }
 
 export const loreEntries: WolvesLoreEntry[] = loreRecords.map((record) => {
