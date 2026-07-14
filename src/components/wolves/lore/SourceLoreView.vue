@@ -12,7 +12,7 @@ const provenance = computed(() => getSourceProvenance(props.record))
 
 <template>
   <section
-    class="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-2xl border border-[#272727] bg-[#10151f] p-4 font-mono shadow-xl"
+    class="source-fragment"
     data-lore-view="source-fragment"
   >
     <header class="border-b border-blue-300/25 pb-3">
@@ -51,3 +51,71 @@ const provenance = computed(() => getSourceProvenance(props.record))
     </footer>
   </section>
 </template>
+
+<style scoped lang="scss">
+.source-fragment {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid rgba(102, 179, 255, 0.25);
+  border-radius: 16px;
+  padding: 16px;
+  background: rgba(16, 21, 31, 0.45);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  color: rgba(255, 255, 255, 0.9);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}
+
+.source-fragment header {
+  border-bottom: 1px solid rgba(var(--color-blue-rgb), 0.25);
+  padding-bottom: 12px;
+}
+
+.source-fragment header > p {
+  margin: 0;
+  color: var(--color-blue-light);
+  font-size: 1.35rem;
+  letter-spacing: 0.2em;
+}
+
+.source-fragment h2 {
+  margin: 8px 0 0;
+  color: #ffffff;
+  font-size: 1.95rem;
+}
+
+.source-fragment dl {
+  display: grid;
+  gap: 4px;
+  margin: 12px 0 0;
+  color: rgba(226, 232, 240, 0.9);
+  font-size: 1.25rem;
+  overflow-wrap: anywhere;
+}
+
+.source-fragment dt {
+  color: #bae6fd;
+}
+
+.source-fragment blockquote {
+  margin: 16px 0;
+  border-left: 2px solid rgba(var(--color-blue-rgb), 0.5);
+  padding-left: 12px;
+  color: #f1f5f9;
+  font-size: 1.7rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.source-fragment footer {
+  margin-top: auto;
+  border-top: 1px solid rgba(var(--color-blue-rgb), 0.25);
+  padding-top: 12px;
+  color: #bae6fd;
+  font-size: 1.25rem;
+  overflow-wrap: anywhere;
+}
+</style>
