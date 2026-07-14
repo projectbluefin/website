@@ -15,4 +15,6 @@ _editor_prompt: >-
 
 **Kyle** [14:23:12]: Look man, I just wanted to play video games on Linux...
 
-**Thomas** [14:23:40]: And I should have been a Feudal Lord in Japan. We need to get moving, but I need to make repairs. Look at this shitty sound chip for me, would ya? Some Fyra Lab thing that never made it to production... if we're lucky we'll be inside this thing before we boil to death.
+**Thomas** [14:23:40]: And I should have been a Feudal Lord in Japan. Look at this shitty sound chip for me, would ya? ... if we're lucky we'll be inside this thing before we boil to death out here.
+
+**Kyle** [14:33:12]: I think this is some of that golden age Fyra Labs tech. You said your friends found this?
