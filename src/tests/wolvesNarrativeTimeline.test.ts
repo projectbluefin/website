@@ -6,6 +6,41 @@ import {
 } from '../data/wolves-narrative-timeline'
 import { wolvesRelease } from '../data/wolves-story'
 
+const legacyTrimmedBodyTimeline = [
+  ['arthur-c-clarke-4', 0, 5.680359435173299],
+  ['arthur-c-clarke-1', 5.680359435173299, 14.441591784338897],
+  ['arthur-c-clarke-2', 14.441591784338897, 25.41720154043646],
+  ['arthur-c-clarke-3', 25.41720154043646, 29.043645699614892],
+  ['ishtar-gardener-and-winnower', 29.043645699614892, 36.55327342747112],
+  ['ishtar-flower-game', 36.55327342747112, 49.229781771501926],
+  ['ishtar-first-knife', 49.229781771501926, 62.51604621309371],
+  ['ishtar-the-wager', 62.51604621309371, 77.37483953786906],
+  ['reckoning-of-the-three', 77.37483953786906, 85.26957637997432],
+  ['ishtar-patternfall', 85.26957637997432, 101.18741976893453],
+  ['committee-report-personal-transmission', 101.18741976893453, 109.59563543003851],
+  ['ishtar-cambrian-explosion', 109.59563543003851, 124.93581514762516],
+  ['john-bazzite-interview', 124.93581514762516, 136.8100128369705],
+  ['ishtar-final-shape', 136.8100128369705, 150],
+  ['lorem-pursuit-1', 150, 220],
+  ['lorem-awakening-1', 220, 226.59259259259258],
+  ['do-not-reply', 226.59259259259258, 231.2856246076585],
+  ['quote-unmarked-grave', 231.2856246076585, 233.37141661435444],
+  ['quote-third-disciple', 233.37141661435444, 236.50010462439838],
+  ['maintenance-window', 236.50010462439838, 242.1242937853107],
+  ['quote-berkus', 242.1242937853107, 247.48775894538602],
+  ['lorem-prologue-1', 247.48775894538602, 257.09730069052097],
+  ['lorem-prologue-2', 257.09730069052097, 279.85478133500726],
+  ['forbidden-factory', 279.85478133500726, 286.0749110692613],
+  ['jordan-adrian', 286.0749110692613, 307.417032852061],
+  ['quote-childhoods-end-future', 307.417032852061, 308.68340657041216],
+  ['quote-natasha-woods', 308.68340657041216, 310.84369114877586],
+  ['childhoods-end-wager', 310.84369114877586, 321.98033061309894],
+  ['glorious-eggroll', 321.98033061309894, 350.54823184766684],
+  ['project-neptune', 350.54823184766684, 356.8428541535886],
+  ['john-seager', 356.8428541535886, 398],
+  ['blue-universal-acquires-wayland-yutani', 398, 425],
+] as const
+
 describe('wolves narrative timeline', () => {
   it('contains every release artifact exactly once', () => {
     expect(wolvesNarrativeTimeline).toHaveLength(wolvesRelease.artifacts.length)
@@ -77,6 +112,11 @@ describe('wolves narrative timeline', () => {
         expect(slot?.endTime).toBe(lock.endTime)
       }
     }
+  })
+
+  it('keeps every Track 0 slot at its pre-migration trimmed-body boundaries', () => {
+    expect(wolvesNarrativeTimeline.map(slot => [slot.artifactId, slot.startTime, slot.endTime]))
+      .toEqual(legacyTrimmedBodyTimeline)
   })
 
   it('orders the non-anchor lore pool by metadata date', () => {

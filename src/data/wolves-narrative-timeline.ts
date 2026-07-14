@@ -19,15 +19,19 @@ export const lockedNarrativeSlots: readonly WolvesNarrativeLock[] = [
   { artifactId: 'blue-universal-acquires-wayland-yutani', startTime: 398, endTime: 425 },
 ]
 
+function legacySchedulerWeight(artifact: WolvesArtifact): number {
+  return Math.max(artifact.body.trim().length, 1)
+}
+
 function createWeightedSlots(artifacts: readonly WolvesArtifact[], startTime: number, endTime: number) {
-  const totalWeight = artifacts.reduce((sum, artifact) => sum + Math.max(artifact.body.length, 1), 0)
+  const totalWeight = artifacts.reduce((sum, artifact) => sum + legacySchedulerWeight(artifact), 0)
   let currentTime = startTime
 
   return artifacts.map((artifact, index) => {
     const isLast = index === artifacts.length - 1
     const duration = isLast
       ? endTime - currentTime
-      : ((endTime - startTime) * Math.max(artifact.body.length, 1)) / totalWeight
+      : ((endTime - startTime) * legacySchedulerWeight(artifact)) / totalWeight
     const slot = { artifactId: artifact.id, startTime: currentTime, endTime: currentTime + duration }
     currentTime = slot.endTime
     return slot
