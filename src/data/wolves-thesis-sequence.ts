@@ -15,7 +15,7 @@ export interface WolvesThesisState {
 const THESIS_START_SECONDS = 345
 const THESIS_END_SECONDS = 425
 const TRACK_ZERO_BPM = 152
-const PHRASE_BEATS = 8
+const PHRASE_BEATS = 16
 
 const inactive: WolvesThesisState = { active: false, mode: 'inactive', text: '', subtitle: '', warning: '', dayPulse: false, hudLabel: '' }
 
@@ -50,7 +50,7 @@ function incomingSignalText(time: number): string {
   const phraseIndex = Math.floor(
     (time - THESIS_START_SECONDS) / (60 / TRACK_ZERO_BPM * PHRASE_BEATS) + 1e-9,
   )
-  return wolvesIncomingSignalMessages[phraseIndex % wolvesIncomingSignalMessages.length]
+  return wolvesIncomingSignalMessages[Math.min(phraseIndex, wolvesIncomingSignalMessages.length - 1)]
 }
 
 export function getWolvesThesisState(time: number): WolvesThesisState {

@@ -19,8 +19,8 @@ Universal Blue`.
 - At 5:45, the HUD changes to `Incoming Signal: Universal Blue` before the
   cycling sequence begins.
 - Track 0 uses its verified 152 BPM tempo. The active line advances every
-  eight soundtrack beats, starting with the first line at 5:45. The selection
-  is deterministic and wraps to the first line after the final line.
+  sixteen soundtrack beats, starting with the first line at 5:45. The
+  sequence plays once, then holds the final line through 7:05.
 - Existing day-pulse, corruption, and legend modes remain intact. During the
   active thesis window, their displayed text is supplied by the editable
   sequence.
@@ -30,7 +30,7 @@ Universal Blue`.
 - The thesis data module imports and parses the text file into an ordered,
   immutable list of non-empty lines.
 - The thesis-state resolver calculates each phrase from Track 0 playback time,
-  using `floor((time - 345) * 152 / 60 / 8) % messageCount`.
+  using `floor((time - 345) * 152 / 60 / 16)`, capped at the final message.
 
 ## Empty Source
 
@@ -40,7 +40,7 @@ a substitute message.
 
 ## Validation
 
-Tests cover parsing and ordering, every-eight-beat advancement, wrapping, the
-existing time window and HUD change, and preservation of the day pulse,
-corruption, and legend modes. A component-level test covers forwarding the
-playback beat to the thesis resolver.
+Tests cover parsing and ordering, every-sixteen-beat advancement, final-message
+hold behavior, the existing time window and HUD change, and preservation of
+the day pulse, corruption, and legend modes. A component-level test covers
+forwarding the playback beat to the thesis resolver.

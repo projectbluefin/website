@@ -6,17 +6,24 @@ import {
 } from '../data/wolves-thesis-sequence'
 
 const THESIS_START_SECONDS = 345
-const PHRASE_SECONDS = 8 * 60 / 152
+const PHRASE_SECONDS = 16 * 60 / 152
 
 describe('wolves thesis sequence', () => {
   it('reads ordered non-empty messages from the editable source', () => {
     expect(wolvesIncomingSignalMessages).toEqual([
-      'We\'ve got your back.',
-      'You\'ll never walk alone.',
-      'We are Universal Blue.',
-      'Evolve or die.',
-      'You have ascended.',
-      'Become Legend',
+      'INCOMING SIGNAL:',
+      'Universal Blue to Cloud Native, we\'re coming.',
+      'Hikari Protocol: Initialized',
+      'KDE Plasma Couplings: ENGAGED',
+      'Mechaphippy Deployment: [UNAUTHORIZED]',
+      'M2 Status: [ Unknown ]',
+      'Field Medical Exoskeleton: [ Missing ]',
+      'TARGET ACQUIRED: GOSPO, KYLE. Earth',
+      'Kube Status: Earth',
+      'Projected Joining: Salt Lake City, Utah, Circa 2026',
+      'Chance of Seventh Clone Ascension: ABSOLUTE',
+      'Execute Request Order: You have ascended.',
+      'Bazzite Mk6 Units: Prepare for Titanfall.',
     ])
   })
 
@@ -55,11 +62,13 @@ describe('wolves thesis sequence', () => {
     }
   })
 
-  it('cycles a message every eight beats from the Universal Blue HUD change', () => {
+  it('plays the signal sequence once in sixteen-beat phrases through the finale', () => {
     expect(getWolvesThesisState(THESIS_START_SECONDS).text).toBe(wolvesIncomingSignalMessages[0])
     expect(getWolvesThesisState(THESIS_START_SECONDS + PHRASE_SECONDS - 0.001).text).toBe(wolvesIncomingSignalMessages[0])
     expect(getWolvesThesisState(THESIS_START_SECONDS + PHRASE_SECONDS).text).toBe(wolvesIncomingSignalMessages[1])
-    expect(getWolvesThesisState(THESIS_START_SECONDS + PHRASE_SECONDS * wolvesIncomingSignalMessages.length).text).toBe(wolvesIncomingSignalMessages[0])
+    expect(getWolvesThesisState(THESIS_START_SECONDS + PHRASE_SECONDS * 11).text).toBe('Execute Request Order: You have ascended.')
+    expect(getWolvesThesisState(THESIS_START_SECONDS + PHRASE_SECONDS * 12).text).toBe('Bazzite Mk6 Units: Prepare for Titanfall.')
+    expect(getWolvesThesisState(425).text).toBe('Bazzite Mk6 Units: Prepare for Titanfall.')
   })
 
   it('preserves the approved thesis window, HUD, and visual modes', () => {

@@ -49,6 +49,12 @@ const currentNarrativeSlot = computed(() =>
 const thesisState = computed(() =>
   presentationTrackIndex.value === 0 ? getWolvesThesisState(presentationCurrentTime.value) : getWolvesThesisState(-1),
 )
+const THESIS_PULSE_SECONDS = 4 * 60 / 152
+const thesisPulseDelay = computed(() => {
+  const elapsed = presentationCurrentTime.value - 345
+  const offset = ((elapsed % THESIS_PULSE_SECONDS) + THESIS_PULSE_SECONDS) % THESIS_PULSE_SECONDS
+  return offset === 0 ? '0s' : `-${offset}s`
+})
 
 const activeNarrativeArtifact = computed(() =>
   wolvesRelease.artifacts.find(artifact => artifact.id === currentNarrativeSlot.value.artifactId),
@@ -331,7 +337,11 @@ onBeforeUnmount(() => {
             <p v-if="thesisState.subtitle">
               {{ thesisState.subtitle }}
             </p>
-            <h1 v-if="thesisState.text">
+            <h1
+              v-if="thesisState.text"
+              class="thesis-signal-text"
+              :style="{ animationDelay: thesisPulseDelay }"
+            >
               {{ thesisState.text }}
             </h1>
             <span v-if="thesisState.mode === 'corruption' || thesisState.mode === 'growing-corruption'">!&lt;&gt;-_\\/[]{}—=+*^?#________X01</span>
@@ -1471,6 +1481,11 @@ onBeforeUnmount(() => {
     font-size: clamp(2rem, 6vw, 6rem);
     font-weight: 900;
   }
+
+  .thesis-signal-text {
+    animation: thesisSignalPulse 1.578947s ease-in-out infinite;
+    transform-origin: center;
+  }
   p {
     margin: 0 0 16px;
     font-size: clamp(1rem, 2vw, 2rem);
@@ -1483,6 +1498,26 @@ onBeforeUnmount(() => {
 
   &.is-legend {
     background: radial-gradient(circle, rgba(26, 71, 105, 0.45), transparent 65%);
+  }
+}
+
+@keyframes thesisSignalPulse {
+  0%,
+  100% {
+    opacity: 0.94;
+    transform: scale(1);
+    text-shadow: 0 0 24px #7dd3fc, 0 0 52px rgba(255, 255, 255, 0.7);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.008);
+    text-shadow: 0 0 30px #7dd3fc, 0 0 60px rgba(255, 255, 255, 0.8);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thesis-signal-text {
+    animation: none;
   }
 }
 
