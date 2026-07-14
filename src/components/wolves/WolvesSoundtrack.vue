@@ -158,7 +158,7 @@ const statusCopy = computed(() => {
     case 'loading':
       return 'Loading local playlist metadata and the YouTube player.'
     case 'playing':
-      return 'Open Source is about supporting maintainers.'
+      return 'Open Source is about supporting maintainers. Prove it.'
     case 'ready':
     case 'paused':
       return 'Playback is ready. Resume when you want the soundtrack back.'
@@ -399,11 +399,6 @@ function handleNextTrack() {
   player?.nextVideo?.()
 }
 
-function handleMaintainerCta() {
-  window.open('https://donate.gnome.org/', '_blank', 'noopener,noreferrer')
-  window.open('https://www.cncf.io/join/', '_blank', 'noopener,noreferrer')
-}
-
 watch(isStarted, syncRootPlayerClass, { immediate: true })
 
 watch(status, (newStatus) => {
@@ -532,14 +527,6 @@ onBeforeUnmount(() => {
         <p class="soundtrack-status soundtrack-cta">
           {{ statusCopy }}
         </p>
-        <button
-          v-if="status === 'playing'"
-          type="button"
-          class="soundtrack-maintainer-cta"
-          @click="handleMaintainerCta"
-        >
-          Prove It
-        </button>
 
         <div class="soundtrack-links">
           <a
@@ -791,31 +778,6 @@ onBeforeUnmount(() => {
   font-size: 1rem;
   font-weight: 700;
   line-height: 1.45;
-}
-
-.soundtrack-maintainer-cta {
-  align-self: flex-start;
-  padding: 0.7rem 1.1rem;
-  border: 1px solid #fb923c;
-  border-radius: 0.5rem;
-  background: linear-gradient(135deg, #f97316, #ea580c);
-  box-shadow: 0 0.5rem 1.5rem rgba(234, 88, 12, 0.3);
-  color: #fff7ed;
-  cursor: pointer;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  font-size: 0.9rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-
-  &:hover,
-  &:focus-visible {
-    box-shadow: 0 0.7rem 1.8rem rgba(234, 88, 12, 0.45);
-    transform: translateY(-1px);
-  }
 }
 
 .soundtrack-links {

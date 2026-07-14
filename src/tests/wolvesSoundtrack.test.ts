@@ -243,31 +243,10 @@ describe('wolves soundtrack', () => {
     players[0].triggerReady()
     await flushPromises()
 
-    expect(wrapper.get('.soundtrack-cta').text()).toBe('Open Source is about supporting maintainers.')
-    expect(wrapper.get('.soundtrack-maintainer-cta').text()).toBe('Prove It')
+    expect(wrapper.get('.soundtrack-cta').text()).toBe('Open Source is about supporting maintainers. Prove it.')
     expect(wrapper.get('.soundtrack-cta').classes()).not.toContain('truncate')
     expect(wrapper.get('a[aria-label="Open soundtrack playlist on YouTube"]').text()).toBe('Playlist')
     expect(wrapper.get('a[aria-label="Open soundtrack in YouTube Music"]').text()).toBe('Music')
-  })
-
-  it('opens GNOME donations and CNCF membership from the maintainer CTA', async () => {
-    const open = vi.spyOn(window, 'open').mockReturnValue(null)
-    const wrapper = mount(WolvesSoundtrack)
-
-    await wrapper.get('button[aria-label="Start soundtrack"]').trigger('click')
-    await flushPromises()
-    resolveIframeApi()
-    await flushPromises()
-    players[0].triggerReady()
-    await flushPromises()
-
-    const button = wrapper.get('.soundtrack-maintainer-cta')
-    expect(button.text()).toBe('Prove It')
-
-    await button.trigger('click')
-
-    expect(open).toHaveBeenNthCalledWith(1, 'https://donate.gnome.org/', '_blank', 'noopener,noreferrer')
-    expect(open).toHaveBeenNthCalledWith(2, 'https://www.cncf.io/join/', '_blank', 'noopener,noreferrer')
   })
 
   it('keeps the same player while unrelated reader events occur', async () => {
@@ -400,7 +379,6 @@ describe('wolves soundtrack', () => {
     await flushPromises()
 
     expect(players[1].playVideo).toHaveBeenCalledTimes(1)
-    expect(wrapper.text()).toContain('Open Source is about supporting maintainers.')
-    expect(wrapper.get('.soundtrack-maintainer-cta').text()).toBe('Prove It')
+    expect(wrapper.text()).toContain('Open Source is about supporting maintainers. Prove it.')
   })
 })
