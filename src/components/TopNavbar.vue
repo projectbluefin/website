@@ -226,9 +226,7 @@ function closeMenu() {
 }
 
 .text--truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .navbar__item {

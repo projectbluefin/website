@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import * as content from '../content'
@@ -30,6 +30,19 @@ const IMAGE_EXPORTS = [
   'LangDevsTowerImageURL',
   'LangMissionBluefinImageURL',
 ] as const
+
+async function sourceFiles(directory: string): Promise<string[]> {
+  const entries = await readdir(directory, { withFileTypes: true })
+  const nestedFiles = await Promise.all(entries.map(async (entry) => {
+    const path = resolve(directory, entry.name)
+    if (entry.isDirectory()) {
+      return sourceFiles(path)
+    }
+    return /\.(?:vue|scss|css)$/.test(entry.name) ? [path] : []
+  }))
+
+  return nestedFiles.flat()
+}
 
 describe('content exports', () => {
   it('provides the required text content exports', () => {
@@ -83,5 +96,12 @@ describe('content exports', () => {
     expect(html).toContain('<title>Bluefin: Seven Days to the Wolves</title>')
     expect(html).toContain('property="og:url" content="https://projectbluefin.io/wolves/"')
     expect(html).toContain('src="%BASE_URL%src/wolves-main.ts"')
+  })
+
+  it('never truncates site copy with CSS ellipses', async () => {
+    const files = await sourceFiles(resolve(process.cwd(), 'src'))
+    const sources = await Promise.all(files.map(file => readFile(file, 'utf8')))
+
+    expect(sources.join('\n')).not.toMatch(/text-overflow:\s*ellipsis/)
   })
 })

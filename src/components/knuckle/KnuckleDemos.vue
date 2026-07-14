@@ -242,9 +242,7 @@ const urlMap: Record<Phase, string> = {
   width: 300px;
   text-align: center;
   letter-spacing: 0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
   transition: background 0.15s ease;
 
   &:hover {

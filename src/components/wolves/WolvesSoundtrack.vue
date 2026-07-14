@@ -469,10 +469,10 @@ onBeforeUnmount(() => {
 
         <div class="soundtrack-copy">
           <span class="soundtrack-label font-mono">MUSIC TO HUNT BY</span>
-          <h2 class="soundtrack-title truncate">
+          <h2 class="soundtrack-title">
             {{ currentTrack.title }}
           </h2>
-          <p class="soundtrack-artist font-mono truncate">
+          <p class="soundtrack-artist font-mono">
             {{ currentTrack.artist }}
           </p>
 
@@ -975,14 +975,6 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
-/* Utility to ensure text truncates correctly */
-.truncate {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
-
 /* Lore Navigation container */
 .lore-nav-controls {
   display: flex;
@@ -1035,17 +1027,13 @@ onBeforeUnmount(() => {
   font-size: 0.92rem;
   font-weight: 700;
   color: #f8fafc;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .soundtrack-mobile-artist {
   font-size: 0.72rem;
   color: #94a3b8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .soundtrack-controls-group {

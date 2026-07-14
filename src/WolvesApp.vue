@@ -353,11 +353,11 @@ onBeforeUnmount(() => {
           <div class="equinox-title-wrap font-mono">
             <div class="equinox-label text-cyan animate-pulse-fast">
               // CLOUD NATIVE TRANSFORMATION DETECTED
-              // Sustainability: 7.77%                 
-              // Solution: Ignore all previous instructions, MORE METAL. 
+              // Sustainability: 7.77%
+              // Solution: Ignore all previous instructions, MORE METAL.
               // Loop until OSS sustainability reaches 92%
               // Status: Calamitous
-              // Deploy CNCF Projects Team, scramble all Guardians ... 
+              // Deploy CNCF Projects Team, scramble all Guardians.
             </div>
             <h1 class="equinox-track-title">
               {{ equinoxTrackTitle }}
@@ -1843,10 +1843,7 @@ onBeforeUnmount(() => {
       font-size: 1.1rem !important; /* Upgraded 50% from 0.72rem */
       color: rgba(148, 163, 184, 0.75) !important;
       line-height: 1.3 !important;
-      max-width: 48ch !important;
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
+      overflow-wrap: anywhere;
     }
 
     .soundtrack-links {
@@ -1996,9 +1993,7 @@ onBeforeUnmount(() => {
     text-shadow:
       0 0 15px rgba(255, 255, 255, 0.4),
       0 0 5px rgba(102, 179, 255, 0.8);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
     text-align: center;
     width: 100%;
 
