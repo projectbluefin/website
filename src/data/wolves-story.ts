@@ -1,6 +1,7 @@
-import { load as loadYaml } from 'js-yaml'
+import type { LoreKind, LoreRecord } from './wolves-lore-records'
+import { loadAllLoreRecords } from './wolves-lore-records'
 
-export type WolvesArtifactType = 'transmission' | 'quote' | 'news' | 'source'
+export type WolvesArtifactType = LoreKind
 
 export interface WolvesChapter {
   id: string
@@ -30,51 +31,48 @@ export interface WolvesRelease {
   artifacts: WolvesArtifact[]
 }
 
-interface LoreMetadata {
-  channel?: string
-  date?: string
+interface ArtifactSource {
+  sourceLabel?: string
+  sourceUrl?: string
 }
 
-interface LoreDocument {
-  body: string
-  metadata: LoreMetadata
+const artifactSources: Readonly<Record<string, ArtifactSource>> = {
+  'arthur-c-clarke-4': { sourceLabel: 'Arthur C. Clarke — Childhood\'s End' },
+  'arthur-c-clarke-1': { sourceLabel: 'Arthur C. Clarke — Childhood\'s End' },
+  'arthur-c-clarke-3': { sourceLabel: 'Arthur C. Clarke — Inspired by: Childhood\'s End' },
+  'quote-natasha-woods': { sourceLabel: 'Natasha Woods VI — CNCF Marketing Material, Circa 2349' },
+  'quote-berkus': { sourceLabel: 'Berkus the Wise — The Cosmos, Volume 3 (Blue Universal Red Letter Edition)' },
+  'quote-unmarked-grave': { sourceLabel: 'Unmarked Grave — Eulogy: The Horror of Thousands' },
+  'quote-third-disciple': { sourceLabel: 'Third Disciple of Renner — The Chronicles of Blue Universal' },
+  'ishtar-gardener-and-winnower': { sourceUrl: 'https://www.ishtar-collective.net/entries/gardener-and-winnower' },
+  'ishtar-flower-game': { sourceUrl: 'https://www.ishtar-collective.net/entries/the-flower-game' },
+  'ishtar-first-knife': { sourceUrl: 'https://www.ishtar-collective.net/entries/the-first-knife' },
+  'ishtar-the-wager': { sourceUrl: 'https://www.ishtar-collective.net/entries/the-wager' },
+  'ishtar-patternfall': { sourceUrl: 'https://www.ishtar-collective.net/entries/patternfall' },
+  'ishtar-cambrian-explosion': { sourceUrl: 'https://www.ishtar-collective.net/entries/the-cambrian-explosion' },
+  'ishtar-final-shape': { sourceUrl: 'https://www.ishtar-collective.net/entries/the-final-shape' },
 }
 
-function parseLoreDocument(raw: string): LoreDocument {
-  const match = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/)
-  if (!match) {
-    return { body: raw.trim(), metadata: {} }
-  }
-
-  const metadata = loadYaml(match[1])
-  if (metadata === null || typeof metadata !== 'object' || Array.isArray(metadata)) {
-    throw new TypeError('Lore front matter must be a mapping')
-  }
-
-  const { channel, date } = metadata as Record<string, unknown>
-  return {
-    body: match[2].trim(),
-    metadata: {
-      channel: typeof channel === 'string' ? channel : undefined,
-      date: typeof date === 'string' ? date : undefined,
-    },
-  }
-}
-
-function parseBody(raw: string) {
-  return parseLoreDocument(raw).body
-}
-
-function requiredMetadata(metadata: LoreMetadata, field: keyof LoreMetadata) {
-  const value = metadata[field]
-  if (!value) {
-    throw new TypeError(`Lore front matter is missing ${field}`)
+function requiredMetadata(record: LoreRecord, field: 'title' | 'timestamp'): string {
+  const value = record.metadata[field]
+  if (value === undefined) {
+    throw new TypeError(`Lore record "${record.id}" is missing ${field}`)
   }
   return value
 }
 
-const loreFiles = import.meta.glob('./lore/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
-const jordanAdrian = parseLoreDocument(loreFiles['./lore/sidebar-comm-forbidden-factory-14.md'] || '')
+function loadArtifact(record: LoreRecord): WolvesArtifact {
+  return {
+    id: record.id,
+    chapterId: record.chapterId,
+    type: record.kind,
+    publishedAt: requiredMetadata(record, 'timestamp'),
+    title: requiredMetadata(record, 'title'),
+    body: record.body,
+    channel: record.metadata.channel,
+    ...artifactSources[record.id],
+  }
+}
 
 export const wolvesRelease: WolvesRelease = {
   id: '2026-07-11-r1',
@@ -105,298 +103,5 @@ export const wolvesRelease: WolvesRelease = {
       soundtrackLabel: 'Resistance',
     },
   ],
-  artifacts: [
-    {
-      id: 'arthur-c-clarke-4',
-      chapterId: 'prologue',
-      type: 'quote',
-      publishedAt: '1953-07-09',
-      title: 'Childhood\'s End',
-      body: parseBody(loreFiles['./lore/arthur-c-clarke-4.md'] || ''),
-      sourceLabel: 'Arthur C. Clarke — Childhood\'s End',
-    },
-    {
-      id: 'lorem-prologue-1',
-      channel: 'EXPLORATION//TEAM-ALPHA',
-      chapterId: 'prologue',
-      type: 'transmission',
-      publishedAt: '2326-06-16',
-      title: 'The Artifact',
-      body: parseBody(loreFiles['./lore/lorem-prologue-1.md'] || ''),
-    },
-    {
-      id: 'arthur-c-clarke-1',
-      chapterId: 'prologue',
-      type: 'quote',
-      publishedAt: '1953-07-09',
-      title: 'Childhood\'s End',
-      body: parseBody(loreFiles['./lore/arthur-c-clarke-1.md'] || ''),
-      sourceLabel: 'Arthur C. Clarke — Childhood\'s End',
-    },
-    {
-      id: 'lorem-prologue-2',
-      channel: 'EXPLORATION//TEAM-ALPHA',
-      chapterId: 'prologue',
-      type: 'transmission',
-      publishedAt: '2326-06-17',
-      title: 'The Children',
-      body: parseBody(loreFiles['./lore/lorem-prologue-2.md'] || ''),
-    },
-    {
-      id: 'arthur-c-clarke-2',
-      chapterId: 'prologue',
-      type: 'quote',
-      publishedAt: '1953-07-09',
-      title: 'Childhood\'s End',
-      body: parseBody(loreFiles['./lore/arthur-c-clarke-2.md'] || ''),
-      sourceLabel: 'Arthur C. Clarke — Childhood\'s End',
-    },
-    {
-      id: 'forbidden-factory',
-      channel: 'GNME-3//JORDAN//PRIVATE',
-      chapterId: 'prologue',
-      type: 'transmission',
-      publishedAt: '2326-07-09',
-      title: 'Forbidden Factory',
-      body: parseBody(loreFiles['./lore/forbidden-factory.md'] || ''),
-    },
-    {
-      id: 'jordan-adrian',
-      channel: requiredMetadata(jordanAdrian.metadata, 'channel'),
-      chapterId: 'prologue',
-      type: 'transmission',
-      publishedAt: requiredMetadata(jordanAdrian.metadata, 'date'),
-      title: 'Forbidden Factory',
-      body: jordanAdrian.body,
-    },
-    {
-      id: 'arthur-c-clarke-3',
-      chapterId: 'prologue',
-      type: 'quote',
-      publishedAt: '1953-07-09',
-      title: 'Childhood\'s End',
-      body: parseBody(loreFiles['./lore/arthur-c-clarke-3.md'] || ''),
-      sourceLabel: 'Arthur C. Clarke — Inspired by: Childhood\'s End',
-    },
-    {
-      id: 'maintenance-window',
-      channel: 'RENNER//PRIVATE',
-      chapterId: 'prologue',
-      type: 'transmission',
-      publishedAt: '2326-06-15',
-      title: 'Maintenance Window',
-      body: parseBody(loreFiles['./lore/maintenance-window.md'] || ''),
-    },
-    {
-      id: 'quote-childhoods-end-future',
-      chapterId: 'pursuit',
-      type: 'quote',
-      publishedAt: '2326-07-09',
-      title: 'Childhood\'s End',
-      body: parseBody(loreFiles['./lore/quote-childhoods-end-future.md'] || ''),
-    },
-    {
-      id: 'lorem-pursuit-1',
-      channel: 'ANCIENT//RECORDS',
-      chapterId: 'pursuit',
-      type: 'transmission',
-      publishedAt: '2326-05-26',
-      title: 'The Golden Era',
-      body: parseBody(loreFiles['./lore/lorem-pursuit-1.md'] || ''),
-    },
-    {
-      id: 'quote-natasha-woods',
-      chapterId: 'pursuit',
-      type: 'quote',
-      publishedAt: '2326-07-09',
-      title: 'Marketing Material',
-      body: parseBody(loreFiles['./lore/quote-natasha-woods.md'] || ''),
-      sourceLabel: 'Natasha Woods VI — CNCF Marketing Material, Circa 2349',
-    },
-    {
-      id: 'do-not-reply',
-      chapterId: 'pursuit',
-      type: 'transmission',
-      publishedAt: '2326-05-24',
-      title: 'Do Not Reply',
-      body: parseBody(loreFiles['./lore/do-not-reply.md'] || ''),
-    },
-    {
-      id: 'quote-berkus',
-      chapterId: 'pursuit',
-      type: 'quote',
-      publishedAt: '2326-06-15',
-      title: 'The Cosmos',
-      body: parseBody(loreFiles['./lore/quote-berkus.md'] || ''),
-      sourceLabel: 'Berkus the Wise — The Cosmos, Volume 3 (Blue Universal Red Letter Edition)',
-    },
-    {
-      id: 'childhoods-end-wager',
-      channel: 'ZONKER//ARCHIVE-033',
-      chapterId: 'pursuit',
-      type: 'transmission',
-      publishedAt: '2326-07-09',
-      title: 'The Wager',
-      body: parseBody(loreFiles['./lore/childhoods-end-wager.md'] || ''),
-    },
-    {
-      id: 'quote-unmarked-grave',
-      chapterId: 'pursuit',
-      type: 'quote',
-      publishedAt: '2326-05-24',
-      title: 'The Horror of Thousands',
-      body: parseBody(loreFiles['./lore/quote-unmarked-grave.md'] || ''),
-      sourceLabel: 'Unmarked Grave — Eulogy: The Horror of Thousands',
-    },
-    {
-      id: 'quote-third-disciple',
-      chapterId: 'pursuit',
-      type: 'quote',
-      publishedAt: '2326-05-25',
-      title: 'The Chronicles of Blue Universal',
-      body: parseBody(loreFiles['./lore/quote-third-disciple.md'] || ''),
-      sourceLabel: 'Third Disciple of Renner — The Chronicles of Blue Universal',
-    },
-    {
-      id: 'lorem-awakening-1',
-      channel: 'SECURITY//INCIDENT',
-      chapterId: 'awakening',
-      type: 'transmission',
-      publishedAt: '2326-01-02',
-      title: 'Betrayal',
-      body: parseBody(loreFiles['./lore/lorem-awakening-1.md'] || ''),
-    },
-    {
-      id: 'ishtar-gardener-and-winnower',
-      chapterId: 'awakening',
-      type: 'source',
-      publishedAt: '2326-01-01',
-      title: 'The Garden Before Time',
-      body: parseBody(loreFiles['./lore/ishtar-gardener-and-winnower.md'] || ''),
-      sourceUrl: 'https://www.ishtar-collective.net/entries/gardener-and-winnower',
-    },
-    {
-      id: 'glorious-eggroll',
-      channel: 'NBR-3/0//GLORIOUS-EGGROLL//PRIVATE-LOG',
-      chapterId: 'awakening',
-      type: 'transmission',
-      publishedAt: '2326-07-12',
-      title: 'Glorious Eggroll',
-      body: parseBody(loreFiles['./lore/glorious-eggroll.md'] || ''),
-    },
-    {
-      id: 'ishtar-flower-game',
-      channel: 'ISHTAR//UNVEILING-02',
-      chapterId: 'awakening',
-      type: 'source',
-      publishedAt: '2326-01-01',
-      title: 'Rules of the Flower Game',
-      body: parseBody(loreFiles['./lore/ishtar-flower-game.md'] || ''),
-      sourceUrl: 'https://www.ishtar-collective.net/entries/the-flower-game',
-    },
-    {
-      id: 'project-neptune',
-      channel: 'BLUE-UNIVERSAL//PRJ-TM//DIRECTIVE',
-      chapterId: 'awakening',
-      type: 'transmission',
-      publishedAt: '2326-07-15',
-      title: 'Project Neptune',
-      body: parseBody(loreFiles['./lore/project-neptune.md'] || ''),
-    },
-    {
-      id: 'ishtar-first-knife',
-      channel: 'ISHTAR//UNVEILING-03',
-      chapterId: 'awakening',
-      type: 'source',
-      publishedAt: '2326-01-01',
-      title: 'The First Knife',
-      body: parseBody(loreFiles['./lore/ishtar-first-knife.md'] || ''),
-      sourceUrl: 'https://www.ishtar-collective.net/entries/the-first-knife',
-    },
-    {
-      id: 'john-seager',
-      channel: 'UBUNTU//SECURE',
-      chapterId: 'awakening',
-      type: 'transmission',
-      publishedAt: '2326-08-01',
-      title: 'The Warthog and the Raptor',
-      body: parseBody(loreFiles['./lore/john-seager.md'] || ''),
-    },
-    {
-      id: 'ishtar-the-wager',
-      channel: 'ISHTAR//UNVEILING-04',
-      chapterId: 'awakening',
-      type: 'source',
-      publishedAt: '2326-01-01',
-      title: 'The Wager',
-      body: parseBody(loreFiles['./lore/ishtar-the-wager.md'] || ''),
-      sourceUrl: 'https://www.ishtar-collective.net/entries/the-wager',
-    },
-    {
-      id: 'reckoning-of-the-three',
-      channel: 'HARBRINGER//ARCHIVE-01',
-      chapterId: 'awakening',
-      type: 'transmission',
-      publishedAt: '2326-01-01',
-      title: 'Reckoning of the Three',
-      body: parseBody(loreFiles['./lore/reckoning-of-the-three.md'] || ''),
-    },
-    {
-      id: 'ishtar-patternfall',
-      channel: 'ISHTAR//UNVEILING-05',
-      chapterId: 'awakening',
-      type: 'source',
-      publishedAt: '2326-01-01',
-      title: 'Patternfall',
-      body: parseBody(loreFiles['./lore/ishtar-patternfall.md'] || ''),
-      sourceUrl: 'https://www.ishtar-collective.net/entries/patternfall',
-
-    },
-    {
-      id: 'committee-report-personal-transmission',
-      channel: 'TOPH//ARCHIVE-072',
-      chapterId: 'awakening',
-      type: 'transmission',
-      publishedAt: '2326-01-01',
-      title: 'COMMITEE REPORT: Personal Transmission',
-      body: parseBody(loreFiles['./lore/committee-report-personal-transmission.md'] || ''),
-    },
-    {
-      id: 'ishtar-cambrian-explosion',
-      channel: 'ISHTAR//UNVEILING-06',
-      chapterId: 'awakening',
-      type: 'source',
-      publishedAt: '2326-01-01',
-      title: 'The Cambrian Explosion',
-      body: parseBody(loreFiles['./lore/ishtar-cambrian-explosion.md'] || ''),
-      sourceUrl: 'https://www.ishtar-collective.net/entries/the-cambrian-explosion',
-    },
-    {
-      id: 'john-bazzite-interview',
-      channel: 'ZONKER//ARCHIVE-032',
-      chapterId: 'awakening',
-      type: 'news',
-      publishedAt: '2326-01-01',
-      title: 'John Bazzite Exclusive Interview',
-      body: parseBody(loreFiles['./lore/john-bazzite-interview.md'] || ''),
-    },
-    {
-      id: 'ishtar-final-shape',
-      channel: 'ISHTAR//UNVEILING-07',
-      chapterId: 'awakening',
-      type: 'source',
-      publishedAt: '2326-01-01',
-      title: 'The Final Shape',
-      body: parseBody(loreFiles['./lore/ishtar-final-shape.md'] || ''),
-      sourceUrl: 'https://www.ishtar-collective.net/entries/the-final-shape',
-    },
-    {
-      id: 'blue-universal-acquires-wayland-yutani',
-      chapterId: 'awakening',
-      type: 'news',
-      publishedAt: '2326-01-01',
-      title: 'Blue Universal to Acquire Wayland-Yutani',
-      body: parseBody(loreFiles['./lore/blue-universal-acquires-wayland-yutani.md'] || ''),
-    },
-  ],
+  artifacts: loadAllLoreRecords().map(loadArtifact),
 }
