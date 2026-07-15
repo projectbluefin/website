@@ -57,6 +57,7 @@ const curatedTitles = {
 
   // People / KubeCon / Flickr curated titles
   'interview-clyde-seepersad-linux-foundation': 'Clyde Seepersad, Linux Foundation — "AI Is Not Killing Tech Jobs"',
+  'interview-jono-bacon-cult-psychology-kubernetes': 'Jono Bacon, Stateshift — "The Cult Psychology of Kubernetes"',
   'kubecon-55164225841': 'Maintainer Summit Evening Reception - 043 MN',
   'kubecon-55164388368': 'Maintainer Summit Evening Reception - 040 MN',
   'kubecon-55163325182': 'Maintainer Summit Evening Reception - 030 MN',
@@ -187,6 +188,7 @@ const curatedTitles = {
 // no entry here and fall back to the standard short caption pill.
 const curatedDescriptions = {
   'interview-clyde-seepersad-linux-foundation': 'The headlines say AI is eliminating technical jobs at scale. The data tells a different story — and the organizations making critical workforce decisions based on media coverage alone are setting themselves up for a costly miscalculation. The real crisis is not displacement. It is readiness: security gaps, infrastructure incompatibility with agentic workflows, and a widening mismatch between the skills organizations have and the skills agentic deployments actually demand.\n\nIn this exclusive interview with Swapnil Bhartiya, Clyde Seepersad, Senior Vice President and General Manager of Education at the Linux Foundation, breaks down the actual workforce data, explains why smaller and mid-sized organizations are adding technical headcount faster than large tech companies are shedding it, and makes the case for why upskilling existing teams delivers an eightfold advantage over external recruiting in the current environment.',
+  'interview-jono-bacon-cult-psychology-kubernetes': 'Kubernetes isn\'t just one of the most successful open source projects ever created. It\'s one of the strongest technology movements ever built. In this video, we explore why thousands of developers travel across the world to attend KubeCon, earn Kubernetes certifications, organize community events, and proudly identify with the cloud native ecosystem.\n\nThe answer isn\'t marketing. It\'s movement design. From rituals and identity to local communities and shared stories, Kubernetes created a system where people didn\'t just use the technology, they became part of something much bigger. Because communities create users. Movements create believers. And that\'s a lesson every founder, DevRel leader, and technology company can learn from.',
 }
 
 function formatTitle(filename) {

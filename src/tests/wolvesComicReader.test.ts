@@ -595,36 +595,35 @@ describe('wolvesComicReader', () => {
   })
 
   it('renders a large theater caption only for wallpapers with a description, leaving every other slide on the standard small caption pill', async () => {
-    const interview = wallpapers.find(wp => wp.name === 'wolves/people/interview-clyde-seepersad-linux-foundation.webp')
-    expect(interview, 'expected the Clyde Seepersad interview wallpaper to exist').toBeDefined()
-    expect(interview?.description, 'expected the interview wallpaper to carry a description').toBeTruthy()
+    const wallpapersWithDescription = wallpapers.filter(wp => wp.description)
+    expect(wallpapersWithDescription.length, 'expected at least one wallpaper to carry a description').toBeGreaterThan(0)
 
     // Track 0 (the opening/"guardian" video) is the only rotation that shows local People
-    // wallpapers like this one; later tracks only rotate remote Flickr photos.
+    // wallpapers like these; later tracks only rotate remote Flickr photos.
     mockGalleryData([coverTrack])
     const wrapper = mount(WolvesComicReader, {
       props: { trackIndex: 0, playlistCurrentTime: 0 },
     })
     await flushPromises()
 
-    let sawTheaterCaption = false
+    const seenDescriptionSlides = new Set<string>()
     for (let second = 0; second <= 423; second += 1) {
       await wrapper.setProps({ playlistCurrentTime: second })
       const activeSrc = activeTimelineImage(wrapper)
       if (!activeSrc) {
         continue // no slide has swapped in yet (e.g. the very first tick)
       }
-      const isInterviewSlide = activeSrc.includes('interview-clyde-seepersad-linux-foundation')
+      const activeWallpaper = wallpapersWithDescription.find(wp => activeSrc.includes(wp.name!.replace('wolves/people/', '').replace(/\.[^/.]+$/, '')))
       const theaterCaption = wrapper.find('.wallpaper-theater-caption')
       const smallCaption = wrapper.find('.flickr-caption')
 
-      if (isInterviewSlide) {
-        sawTheaterCaption = true
+      if (activeWallpaper) {
+        seenDescriptionSlides.add(activeWallpaper.name!)
         expect(theaterCaption.exists()).toBe(true)
         expect(smallCaption.exists()).toBe(false)
-        expect(theaterCaption.get('.wallpaper-theater-caption-title').text()).toBe(interview!.title)
+        expect(theaterCaption.get('.wallpaper-theater-caption-title').text()).toBe(activeWallpaper.title)
         const paragraphs = theaterCaption.findAll('.wallpaper-theater-caption-body').map(p => p.text())
-        expect(paragraphs.join('\n\n')).toBe(interview!.description)
+        expect(paragraphs.join('\n\n')).toBe(activeWallpaper.description)
       }
       else {
         // Every slide without a description must keep the existing small caption pill unchanged.
@@ -633,6 +632,6 @@ describe('wolvesComicReader', () => {
       }
     }
 
-    expect(sawTheaterCaption, 'expected the interview slide to appear at least once during Track 0').toBe(true)
+    expect(seenDescriptionSlides.size, 'expected every wallpaper with a description to appear at least once during Track 0').toBe(wallpapersWithDescription.length)
   })
 })

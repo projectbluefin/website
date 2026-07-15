@@ -495,6 +495,12 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/people/interview-jono-bacon-cult-psychology-kubernetes.webp',
+    title: 'Jono Bacon, Stateshift — "The Cult Psychology of Kubernetes"',
+    description: 'Kubernetes isn\'t just one of the most successful open source projects ever created. It\'s one of the strongest technology movements ever built. In this video, we explore why thousands of developers travel across the world to attend KubeCon, earn Kubernetes certifications, organize community events, and proudly identify with the cloud native ecosystem.\n\nThe answer isn\'t marketing. It\'s movement design. From rituals and identity to local communities and shared stories, Kubernetes created a system where people didn\'t just use the technology, they became part of something much bigger. Because communities create users. Movements create believers. And that\'s a lesson every founder, DevRel leader, and technology company can learn from.'
+  },
+  {
+    type: 'single',
     name: 'wolves/people/jorge.webp',
     title: 'Jorge'
   },
