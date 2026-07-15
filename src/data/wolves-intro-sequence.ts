@@ -78,6 +78,14 @@ export interface IntroOverlayTextCue {
    * per explicit user request (2026-07-15) — do not apply broadly, it should read as singular.
    */
   readonly leader?: boolean
+  /**
+   * A single exact substring of this cue's title line to render with a distinctive gold
+   * shimmer/"bling" effect (`wolves-guardian-plate-bling` in `WolvesIntroOverlay.vue`), calling
+   * it out from the rest of the title line. Reserved for Christopher Blecker's "Platinum Member"
+   * segment per explicit user request (2026-07-15) — must match a title substring exactly
+   * (case-sensitive) or it silently renders with no special treatment.
+   */
+  readonly blingTitle?: string
 }
 
 interface IntroSegmentBase {
@@ -441,11 +449,14 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
       //   gilding it gold instead of the standard silver/blue treatment to signify leadership,
       //   pairing with his existing "First Among Equals" title line — reserved for him alone,
       //   do not apply broadly. His title line now carries four segments joined the same way
-      //   ("First Among Equals — The North Star — Uncompromising Purity — Platinum Sponsor"),
+      //   ("First Among Equals — The North Star — Uncompromising Purity — Platinum Member"),
       //   all rendered on one `wolves-guardian-plate-title` line with identical styling so every
       //   title reads with equal visual weight (no segment is emphasized over another) — per
       //   explicit user request, confirmed 2026-07-15, to add "Uncompromising Purity" and
-      //   "Platinum Sponsor" with even association to his existing titles.
+      //   "Platinum Member" with even association to his existing titles. "Platinum Member" was
+      //   later renamed from "Platinum Sponsor" and given its own `blingTitle` shimmer treatment
+      //   (`wolves-guardian-plate-bling`), per a follow-up request the same day for a
+      //   "distinctive bling effect" — reserved for that one segment alone.
       // - Natali Vlatko's title line adds a second line after "Boss B*tch" ("He's wearing a
       //   dress, I'm wearing a FIST"), per explicit user request, confirmed 2026-07-15. The
       //   user's original line ended in a trailing ellipsis; substituted with an em dash to
@@ -474,7 +485,7 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
         { text: 'Harbinger Titan — Kat Cosgrove — Defender Queen of the Lost', start: 16.5, end: 24.5 },
         { text: 'Arc Warlock — Kaslin Fields — Rage of the Paradox', start: 38, end: 48 },
         { text: 'Solar Hunter — Laura Santamaria — Paragon to the Order of 7', start: 70.5, end: 77 },
-        { text: 'Strand Warlock — Christopher Blecker — First Among Equals — The North Star — Uncompromising Purity — Platinum Sponsor', start: 83, end: 96, position: 'left', leader: true },
+        { text: 'Strand Warlock — Christopher Blecker — First Among Equals — The North Star — Uncompromising Purity — Platinum Member', start: 83, end: 96, position: 'left', leader: true, blingTitle: 'Platinum Member' },
         { text: 'Behemoth Titan — Natali Vlatko — Boss B*tch — He\'s wearing a dress, I\'m wearing a FIST', start: 87.5, end: 96, position: 'right', raised: true },
       ],
     },

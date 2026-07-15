@@ -72,6 +72,28 @@ function parseGuardianCue(text: string): { guardianClass: string, name: string, 
   return { guardianClass, name, title: titleParts.join(' — ') }
 }
 
+/**
+ * Splits a title line into plain/"bling" segments around one exact substring (`cue.blingTitle`),
+ * so the template can wrap just that piece in a shimmering gold span instead of the whole title.
+ * Falls back to a single plain segment if `blingTitle` is unset or isn't found verbatim.
+ */
+function titleSegments(title: string, blingTitle: string | undefined): { text: string, bling: boolean }[] {
+  if (!blingTitle) {
+    return [{ text: title, bling: false }]
+  }
+  const index = title.indexOf(blingTitle)
+  if (index === -1) {
+    return [{ text: title, bling: false }]
+  }
+  const before = title.slice(0, index)
+  const after = title.slice(index + blingTitle.length)
+  return [
+    ...(before ? [{ text: before, bling: false }] : []),
+    { text: blingTitle, bling: true },
+    ...(after ? [{ text: after, bling: false }] : []),
+  ]
+}
+
 /** Bonded-dinosaur artwork URL for a guardian's plate, or undefined if no bond is documented. */
 function guardianDinosaurArtwork(guardianName: string): string | undefined {
   const bond = wolvesGuardianDinosaurBonds.find(entry => entry.guardianName === guardianName)
@@ -482,7 +504,12 @@ onBeforeUnmount(() => {
             >
           </p>
           <p class="wolves-guardian-plate-title">
-            {{ parseGuardianCue(cue.text)!.title }}
+            <template v-for="(segment, index) in titleSegments(parseGuardianCue(cue.text)!.title, cue.blingTitle)" :key="index">
+              <span v-if="segment.bling" class="wolves-guardian-plate-bling">{{ segment.text }}</span>
+              <template v-else>
+                {{ segment.text }}
+              </template>
+            </template>
           </p>
         </template>
         <p v-else class="wolves-guardian-plate-name">
@@ -1041,6 +1068,26 @@ onBeforeUnmount(() => {
   color: #94a3b8;
 }
 
+/* Distinctive gold "bling" treatment for a single called-out title segment (e.g. Christopher
+   Blecker's "Platinum Member"), separate from the plain title text around it. A shimmer sweeps
+   across the gold gradient text on a loop, with a soft pulsing glow, so it reads as a
+   deliberately flashy inline award rather than a plain title word. */
+.wolves-guardian-plate-bling {
+  position: relative;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: linear-gradient(100deg, #92700f 20%, #fff6d0 40%, #fde68a 50%, #fff6d0 60%, #92700f 80%);
+  background-size: 250% 100%;
+  background-position: 0% 0%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 6px rgb(250 204 21 / 55%));
+  animation:
+    wolves-guardian-plate-bling-shimmer 2.6s linear infinite,
+    wolves-guardian-plate-bling-pulse 1.8s ease-in-out infinite;
+}
+
 .wolves-guardian-plate-dinosaur-icon {
   display: inline-block;
   height: clamp(2.2rem, 1.6rem + 1.4vw, 3rem);
@@ -1102,6 +1149,25 @@ onBeforeUnmount(() => {
     opacity: 1;
     letter-spacing: normal;
     filter: blur(0);
+  }
+}
+
+@keyframes wolves-guardian-plate-bling-shimmer {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: -250% 0%;
+  }
+}
+
+@keyframes wolves-guardian-plate-bling-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 4px rgb(250 204 21 / 45%));
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgb(250 204 21 / 85%));
   }
 }
 
