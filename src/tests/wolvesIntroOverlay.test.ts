@@ -154,13 +154,50 @@ describe('wolvesIntroOverlay video segments', () => {
     expect(wrapper.emitted('complete')).toBeUndefined()
   })
 
-  it('skip jumps straight to complete regardless of load state', async () => {
+  it('next advances one segment at a time instead of jumping straight to complete', async () => {
+    const cutoffSequence = [
+      { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BKm0TPqeOjY', overlays: [{ text: 'Guardians', start: 0, end: 5 }] },
+      { id: 'wolves-epilogue', kind: 'text' as const, duration: 5 },
+    ]
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: cutoffSequence } })
+    await flushPromises()
+
+    await wrapper.get('button[aria-label="Next section"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.emitted('complete')).toBeUndefined()
+    expect(wrapper.text()).not.toContain('Guardians')
+  })
+
+  it('next completes when there is no following segment', async () => {
     const wrapper = mount(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
 
-    await wrapper.get('button[aria-label="Skip intro"]').trigger('click')
+    await wrapper.get('button[aria-label="Next section"]').trigger('click')
     await flushPromises()
 
     expect(wrapper.emitted('complete')).toHaveLength(1)
+  })
+
+  it('previous is disabled on the first segment and re-enabled after advancing', async () => {
+    const cutoffSequence = [
+      { id: 'wolves-prologue', kind: 'text' as const, duration: 5 },
+      { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BKm0TPqeOjY' },
+    ]
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: cutoffSequence } })
+    await flushPromises()
+
+    const previousButton = wrapper.get('button[aria-label="Previous section"]')
+    expect(previousButton.attributes('disabled')).toBeDefined()
+
+    await wrapper.get('button[aria-label="Next section"]').trigger('click')
+    await flushPromises()
+
+    expect(previousButton.attributes('disabled')).toBeUndefined()
+
+    await previousButton.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('.wolves-intro-overlay-player').exists()).toBe(false)
   })
 
   it('completes immediately for an empty video list instead of hanging', async () => {

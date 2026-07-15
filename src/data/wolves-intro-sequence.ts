@@ -131,10 +131,22 @@ export function advanceIntroSequence(state: IntroSequenceState, segmentCount: nu
 
 /**
  * "Skip" always jumps straight past the entire remaining sequence into the live experience,
- * regardless of which segment is currently playing.
+ * regardless of which segment is currently playing. Used only as an internal fallback when a
+ * segment fails to load or the sequence is empty — never call this from user-facing nav
+ * controls, which should move one segment at a time via `advanceIntroSequence`/
+ * `previousIntroSequence` so Prologue -> Guardian trailer -> Epilogue stays navigable.
  */
 export function skipIntroSequence(state: IntroSequenceState): IntroSequenceState {
   return { index: state.index, done: true }
+}
+
+/**
+ * Moves back one segment (e.g. Guardian trailer -> Prologue), for the intro overlay's
+ * Previous control. Clamped at the first segment; never re-opens a `done` sequence on its own
+ * since Previous is only reachable while the overlay is still visible.
+ */
+export function previousIntroSequence(state: IntroSequenceState): IntroSequenceState {
+  return { index: Math.max(0, state.index - 1), done: false }
 }
 
 export function activeOverlayCue(

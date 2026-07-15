@@ -12,6 +12,7 @@ import {
   isTextSegmentComplete,
   isVideoCutoffReached,
   isVideoSegment,
+  previousIntroSequence,
   PROLOGUE_SCENE_CROSSFADE_SECONDS,
   PROLOGUE_TEXT_FADE_SECONDS,
   skipIntroSequence,
@@ -43,6 +44,8 @@ const audioMountHost = ref<HTMLDivElement | null>(null)
 const segmentDurations = ref<number[]>(props.videos.map(video => (isTextSegment(video) ? video.duration : 0)))
 
 const currentSegment = computed<IntroVideoSpec | undefined>(() => props.videos[sequenceState.value.index])
+const canGoToPrevious = computed(() => sequenceState.value.index > 0)
+
 const activeCue = computed<IntroOverlayTextCue | undefined>(() => activeOverlayCue(currentSegment.value?.overlays, currentTime.value))
 const overlayText = computed(() => activeCue.value?.text)
 /**
@@ -370,8 +373,12 @@ watch(currentSegment, (segment) => {
   loadCurrentSegment(segment)
 }, { immediate: true })
 
-function handleSkip() {
-  sequenceState.value = skipIntroSequence(sequenceState.value)
+function handleNext() {
+  sequenceState.value = advanceIntroSequence(sequenceState.value, props.videos.length)
+}
+
+function handlePrevious() {
+  sequenceState.value = previousIntroSequence(sequenceState.value)
 }
 
 onBeforeUnmount(() => {
@@ -474,14 +481,25 @@ onBeforeUnmount(() => {
       >{{ part.char }}</span>
     </p>
 
-    <button
-      type="button"
-      class="wolves-intro-overlay-skip"
-      aria-label="Skip intro"
-      @click="handleSkip"
-    >
-      Skip
-    </button>
+    <div class="wolves-intro-overlay-nav">
+      <button
+        type="button"
+        class="wolves-intro-overlay-nav-btn prev"
+        aria-label="Previous section"
+        :disabled="!canGoToPrevious"
+        @click="handlePrevious"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 6h2v12H6zm3 6 9 6V6z" /></svg>
+      </button>
+      <button
+        type="button"
+        class="wolves-intro-overlay-nav-btn next"
+        aria-label="Next section"
+        @click="handleNext"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16 6h2v12h-2zm-1 6-9 6V6z" /></svg>
+      </button>
+    </div>
 
     <!-- Permanent progress bar across the whole intro sequence (Prologue + Guardian trailer +
          Epilogue), not just the currently-playing segment. -->
@@ -770,21 +788,40 @@ onBeforeUnmount(() => {
   text-shadow: 0 4px 24px rgb(0 0 0 / 90%);
 }
 
-.wolves-intro-overlay-skip {
+.wolves-intro-overlay-nav {
   position: absolute;
   top: 5%;
   right: 5%;
-  padding: 0.5rem 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.wolves-intro-overlay-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
   border: 1px solid rgb(255 255 255 / 40%);
   border-radius: 999px;
   background: rgb(0 0 0 / 40%);
   color: #f5f5f5;
-  font-size: 1.05rem;
   cursor: pointer;
 }
 
-.wolves-intro-overlay-skip:hover {
+.wolves-intro-overlay-nav-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.wolves-intro-overlay-nav-btn:hover:not(:disabled) {
   background: rgb(0 0 0 / 65%);
+}
+
+.wolves-intro-overlay-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 /* Guardian trailer callout, styled after the live Guardian dossier cards (see

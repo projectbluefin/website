@@ -9,6 +9,7 @@ import {
   isTextSegmentComplete,
   isVideoCutoffReached,
   isVideoSegment,
+  previousIntroSequence,
   skipIntroSequence,
 } from '../data/wolves-intro-sequence'
 
@@ -43,6 +44,12 @@ describe('wolves intro overlay sequence', () => {
     const midSequence = advanceIntroSequence(createIntroSequenceState(), 3)
     expect(skipIntroSequence(midSequence)).toEqual({ index: 1, done: true })
     expect(skipIntroSequence(createIntroSequenceState())).toEqual({ index: 0, done: true })
+  })
+
+  it('previous moves back one segment at a time and clamps at the first', () => {
+    const midSequence = advanceIntroSequence(createIntroSequenceState(), 3)
+    expect(previousIntroSequence(midSequence)).toEqual({ index: 0, done: false })
+    expect(previousIntroSequence(createIntroSequenceState())).toEqual({ index: 0, done: false })
   })
 
   it('returns the overlay cue active at the given timestamp', () => {
