@@ -7,6 +7,18 @@ const ROOT_DIR = resolve(__dirname, '..')
 const PUBLIC_DIR = join(ROOT_DIR, 'public')
 const BASE_WALLPAPERS_DIR = join(PUBLIC_DIR, 'img/wallpapers/wolves')
 
+// Wallpapers whose source art is unusually panoramic (wider than the ~16:9
+// aspect ratio most assets use). The slideshow box uses object-fit: contain
+// by default to avoid cropping most images, but that letterboxes these wide
+// ones badly, so they get object-fit: cover instead (crops left/right edges
+// to fill the frame).
+const wideAspectStems = new Set([
+  'bluefin-chicken',
+  'bluefin-duality',
+  'bluefin-huntress',
+  'bluefin-lazy-days',
+])
+
 // Curated dictionary of known filename basenames to their titles
 const curatedTitles = {
   // Story illustrations
@@ -233,7 +245,8 @@ async function generate() {
           type: 'daynight',
           name: stem,
           ...dayNightNames(stem, file, nightFile),
-          title: formatTitle(stem)
+          title: formatTitle(stem),
+          ...(wideAspectStems.has(stem) ? { fit: 'cover' } : {})
         })
         processedStory.add(file)
         processedStory.add(nightFile)
@@ -248,7 +261,8 @@ async function generate() {
           type: 'daynight',
           name: stem,
           ...dayNightNames(stem, dayFile, file),
-          title: formatTitle(stem)
+          title: formatTitle(stem),
+          ...(wideAspectStems.has(stem) ? { fit: 'cover' } : {})
         })
         processedStory.add(dayFile)
         processedStory.add(file)
@@ -260,7 +274,8 @@ async function generate() {
     wallpapers.push({
       type: 'single',
       name: `wolves/wolves/${file}`,
-      title: formatTitle(base)
+      title: formatTitle(base),
+      ...(wideAspectStems.has(base) ? { fit: 'cover' } : {})
     })
     processedStory.add(file)
   }
@@ -293,6 +308,7 @@ export interface Wallpaper {
   dayName?: string
   nightName?: string
   title: string
+  fit?: 'cover' | 'contain'
 }
 
 export const wallpapers: Wallpaper[] = ${JSON.stringify(wallpapers, null, 2)}

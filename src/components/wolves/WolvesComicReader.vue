@@ -88,7 +88,8 @@ const mixedPhotos = computed(() => {
     title: wp.title,
     type: wp.type,
     dayName: wp.dayName,
-    nightName: wp.nightName
+    nightName: wp.nightName,
+    fit: wp.fit
   }))
 
   // 2. Local People wallpapers (isPeople = true)
@@ -102,7 +103,8 @@ const mixedPhotos = computed(() => {
     title: wp.title,
     type: wp.type,
     dayName: wp.dayName,
-    nightName: wp.nightName
+    nightName: wp.nightName,
+    fit: wp.fit
   }))
 
   // 3. Flickr Remote People photos
@@ -199,6 +201,7 @@ interface TimelineSlide {
   startTime: number
   duration: number
   endTime: number
+  fit?: 'cover' | 'contain'
 }
 
 const timelineSlides = computed<TimelineSlide[]>(() => {
@@ -212,7 +215,8 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     title: wp.title,
     type: wp.type,
     dayName: wp.dayName,
-    nightName: wp.nightName
+    nightName: wp.nightName,
+    fit: wp.fit
   }))
 
   const localPeople = wallpapers.filter((wp) => {
@@ -225,7 +229,8 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     title: wp.title,
     type: wp.type,
     dayName: wp.dayName,
-    nightName: wp.nightName
+    nightName: wp.nightName,
+    fit: wp.fit
   }))
 
   const daynightShowcase = localShowcase.filter(wp => wp.type === 'daynight')
@@ -591,6 +596,13 @@ function getFlickrPhotoUrl(photo: any) {
   return photo.path
 }
 
+// Most wallpapers use object-fit: contain to avoid cropping, but a few
+// unusually panoramic assets (see wideAspectStems in generate-wallpapers.js)
+// letterbox badly under contain, so they opt into cover instead.
+function photoObjectFit(photo: any) {
+  return photo?.fit === 'cover' ? 'cover' : 'contain'
+}
+
 function shuffleArray<T>(array: T[]): T[] {
   const copy = [...array]
   for (let i = copy.length - 1; i > 0; i--) {
@@ -754,12 +766,13 @@ onBeforeUnmount(() => {
                   <img
                     :src="`${baseUrl}img/wallpapers/${photoA.dayName}`"
                     class="flickr-img"
+                    :style="{ objectFit: photoObjectFit(photoA) }"
                     alt="Bluefin Dusk - Day"
                   >
                   <img
                     :src="`${baseUrl}img/wallpapers/${photoA.nightName}`"
                     class="flickr-img night-overlay"
-                    :style="{ opacity: daynightNightOpacityA }"
+                    :style="{ opacity: daynightNightOpacityA, objectFit: photoObjectFit(photoA) }"
                     alt="Bluefin Dusk - Night"
                   >
                 </div>
@@ -768,6 +781,7 @@ onBeforeUnmount(() => {
                 <img
                   :src="getFlickrPhotoUrl(photoA)"
                   class="flickr-img"
+                  :style="{ objectFit: photoObjectFit(photoA) }"
                   :alt="photoA.title"
                   @error="(e) => handleImageError(e, photoA)"
                 >
@@ -788,12 +802,13 @@ onBeforeUnmount(() => {
                   <img
                     :src="`${baseUrl}img/wallpapers/${photoB.dayName}`"
                     class="flickr-img"
+                    :style="{ objectFit: photoObjectFit(photoB) }"
                     alt="Bluefin Dusk - Day"
                   >
                   <img
                     :src="`${baseUrl}img/wallpapers/${photoB.nightName}`"
                     class="flickr-img night-overlay"
-                    :style="{ opacity: daynightNightOpacityB }"
+                    :style="{ opacity: daynightNightOpacityB, objectFit: photoObjectFit(photoB) }"
                     alt="Bluefin Dusk - Night"
                   >
                 </div>
@@ -802,6 +817,7 @@ onBeforeUnmount(() => {
                 <img
                   :src="getFlickrPhotoUrl(photoB)"
                   class="flickr-img"
+                  :style="{ objectFit: photoObjectFit(photoB) }"
                   :alt="photoB.title"
                   @error="(e) => handleImageError(e, photoB)"
                 >
@@ -853,6 +869,7 @@ onBeforeUnmount(() => {
                     <img
                       :src="`${baseUrl}img/wallpapers/${wp.name}`"
                       class="wallpaper-img"
+                      :style="{ objectFit: photoObjectFit(wp) }"
                       :alt="wp.title"
                     >
                   </div>
@@ -860,12 +877,14 @@ onBeforeUnmount(() => {
                     <img
                       :src="`${baseUrl}img/wallpapers/${wp.dayName}`"
                       class="wallpaper-img"
+                      :style="{ objectFit: photoObjectFit(wp) }"
                       alt="Bluefin Dusk - Day"
                     >
                     <img
                       :src="`${baseUrl}img/wallpapers/${wp.nightName}`"
                       class="wallpaper-img night-overlay"
                       :class="{ 'is-night': duskIsNight }"
+                      :style="{ objectFit: photoObjectFit(wp) }"
                       alt="Bluefin Dusk - Night"
                     >
                   </div>
@@ -1189,6 +1208,7 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  object-position: center;
   transition: opacity 3s linear;
   will-change: opacity;
   transform: translateZ(0);
@@ -1280,6 +1300,7 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  object-position: center;
 }
 
 .flickr-caption {

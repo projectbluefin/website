@@ -138,10 +138,17 @@ function mockIframeApiFailure() {
 }
 
 async function skipIntroOverlay(_wrapper: ReturnType<typeof mount>) {
-  const skipButton = document.body.querySelector<HTMLButtonElement>('button[aria-label="Skip intro"]')
-  expect(skipButton).not.toBeNull()
-  skipButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
-  await flushPromises()
+  // The old single "Skip intro" button was replaced with Previous/Next
+  // section navigation; advance through every remaining segment to reach
+  // the live experience the same way these tests previously relied on.
+  for (let i = 0; i < 5; i++) {
+    const nextButton = document.body.querySelector<HTMLButtonElement>('button[aria-label="Next section"]')
+    if (!nextButton) {
+      break
+    }
+    nextButton.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    await flushPromises()
+  }
 }
 
 function introOverlayVisible() {
@@ -433,20 +440,23 @@ describe('wolves soundtrack', () => {
     await flushPromises()
     await skipIntroOverlay(wrapper)
     // The retry's intro overlay mounts a second time. Because the YouTube IFrame API is
-    // already loaded (from the first attempt above), it constructs a transient player of its
-    // own before Skip destroys it, landing at players[1]; the real retried playlist player is
-    // players[2].
-    expect(players).toHaveLength(3)
+    // already loaded (from the first attempt above), each of its 3 segments (Prologue,
+    // Guardian trailer, Epilogue) constructs its own transient background player as Next
+    // advances through them: players[0] is the first attempt's real player, players[1-3]
+    // are the retry intro overlay's 3 transient segment players. The real retried playlist
+    // player reuses players[3] (the last transient mount), landing in persistentHost.
+    expect(players).toHaveLength(4)
     expect(wrapper.get('[data-testid="wolves-player-host"]').element).toBe(persistentHost)
     expect(wrapper.element.contains(persistentHost)).toBe(true)
     expect(persistentHost.contains(players[0].mountedNode)).toBe(false)
     expect(persistentHost.contains(players[1].mountedNode)).toBe(false)
-    expect(persistentHost.contains(players[2].mountedNode)).toBe(true)
+    expect(persistentHost.contains(players[2].mountedNode)).toBe(false)
+    expect(persistentHost.contains(players[3].mountedNode)).toBe(true)
 
-    players[2].triggerReady()
+    players[3].triggerReady()
     await flushPromises()
 
-    expect(players[2].playVideo).toHaveBeenCalledTimes(1)
+    expect(players[3].playVideo).toHaveBeenCalledTimes(1)
     expect(wrapper.text()).toContain('Open Source is about supporting maintainers. Prove it.')
   })
 })

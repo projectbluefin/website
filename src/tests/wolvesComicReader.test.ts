@@ -574,4 +574,22 @@ describe('wolvesComicReader', () => {
       expect(galleryCaption(firstRun)).not.toBe(captionBeforeBoundary)
     }
   })
+
+  it('flags unusually panoramic wallpapers to render with object-fit: cover instead of letterboxing', () => {
+    // These specific assets are far wider than the ~16:9 ratio most wallpapers
+    // use, so object-fit: contain (the default) letterboxes them badly. See
+    // wideAspectStems in scripts/generate-wallpapers.js.
+    const wideAspectTitles = ['Chicken', 'Duality (Day & Night)', 'Huntress', 'Lazy Days']
+    for (const title of wideAspectTitles) {
+      const wallpaper = wallpapers.find(wp => wp.title === title)
+      expect(wallpaper, `expected a wallpaper titled "${title}"`).toBeDefined()
+      expect(wallpaper?.fit).toBe('cover')
+    }
+
+    // A representative normal-aspect wallpaper should keep the default (no
+    // override), preserving the existing letterbox-avoidance behavior.
+    const dusk = wallpapers.find(wp => wp.title === 'Dusk (Day & Night)')
+    expect(dusk).toBeDefined()
+    expect(dusk?.fit).toBeUndefined()
+  })
 })

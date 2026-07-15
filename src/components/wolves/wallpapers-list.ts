@@ -5,20 +5,23 @@ export interface Wallpaper {
   dayName?: string
   nightName?: string
   title: string
+  fit?: 'cover' | 'contain'
 }
 
 export const wallpapers: Wallpaper[] = [
   {
     "type": "single",
     "name": "wolves/wolves/bluefin-chicken.webp",
-    "title": "Chicken"
+    "title": "Chicken",
+    "fit": "cover"
   },
   {
     "type": "daynight",
     "name": "bluefin-duality",
     "dayName": "wolves/wolves/bluefin-duality-day.webp",
     "nightName": "wolves/wolves/bluefin-duality-night.webp",
-    "title": "Duality (Day & Night)"
+    "title": "Duality (Day & Night)",
+    "fit": "cover"
   },
   {
     "type": "daynight",
@@ -35,12 +38,14 @@ export const wallpapers: Wallpaper[] = [
   {
     "type": "single",
     "name": "wolves/wolves/bluefin-huntress.webp",
-    "title": "Huntress"
+    "title": "Huntress",
+    "fit": "cover"
   },
   {
     "type": "single",
     "name": "wolves/wolves/bluefin-lazy-days.webp",
-    "title": "Lazy Days"
+    "title": "Lazy Days",
+    "fit": "cover"
   },
   {
     "type": "daynight",
