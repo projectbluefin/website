@@ -793,6 +793,10 @@ onBeforeUnmount(() => {
   font-size: clamp(2.75rem, 6.2vw, 4.8rem);
   line-height: 1.4;
   text-shadow: 0 2px 12px rgb(0 0 0 / 80%);
+  /* Some prologue cues author an explicit line break in their `text` (a JS/TS template
+     literal newline) to control where a long line wraps -- preserve it instead of collapsing
+     to a single line, per explicit user request (2026-07-15). */
+  white-space: pre-line;
 }
 
 /* The Bluefin wallpaper scenes (backgroundCrossfade cues) are sky-led landscapes with the

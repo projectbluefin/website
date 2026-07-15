@@ -291,49 +291,34 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
     {
       id: 'wolves-prologue',
       kind: 'text',
-      // The Gayane Ballet Suite (Adagio) track runs its full 5:26 (326s); the authored script
-      // is paced across the whole song rather than a fixed 45s excerpt.
-      duration: 326,
+      // Cut down from the song's full 5:26 (326s) to a 45s excerpt per explicit user request
+      // (2026-07-15). The user hand-edited which lines survive and rewrote several; the
+      // remaining cues below were retimed proportionally (each cue's share of the total
+      // shortened to keep the same relative pacing) to close the gaps left by removed lines
+      // and land on exactly 45s, with no dead/black gaps between cues.
+      duration: 45,
       audioYoutubeVideoId: 'EB3IokHelRk',
       overlays: [
         // Cold open on total darkness -- nothing exists yet, before Earth or its wallpaper
         // scenes even enter the story. The bluefin-01..12 wallpaper cycle below only begins
         // once life/Earth is introduced starting with the next line.
-        { text: 'A Gardener and Winnower walked amongst the stars', start: 0, end: 24 },
+        { text: 'A Gardener and Winnower walked amongst the stars', start: 0, end: 4.42 },
         {
           text: 'One to spread life, and one to cull the dross,',
-          start: 24,
-          end: 49.23,
+          start: 4.42,
+          end: 9.06,
           backgroundCrossfade: bluefinMonthCrossfade(2),
         },
         {
           text: 'to shape the garden.',
-          start: 49.23,
-          end: 60.2,
+          start: 9.06,
+          end: 11.08,
           backgroundCrossfade: bluefinMonthCrossfade(1),
         },
         {
-          text: 'And they had earned the solemn duty, chosen by their peers,',
-          start: 60.2,
-          end: 83.17,
-          backgroundCrossfade: bluefinMonthCrossfade(5),
-        },
-        {
-          text: 'to ensure that Open Source Thrived',
-          start: 83.17,
-          end: 96.4,
-          backgroundCrossfade: bluefinMonthCrossfade(8),
-        },
-        {
-          text: 'The Heart versus the Mind, polar opposites.',
-          start: 96.4,
-          end: 112.61,
-          backgroundCrossfade: bluefinMonthCrossfade(6),
-        },
-        {
           text: 'Forever entrapped in their roles for the greater good',
-          start: 112.61,
-          end: 132.6,
+          start: 11.08,
+          end: 14.75,
           backgroundCrossfade: bluefinMonthCrossfade(9),
           textPosition: 'bottom',
         },
@@ -341,8 +326,8 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
           // A single unbroken line, cycling through two wallpaper scenes underneath it: scene
           // 07 reversed (night->day) followed by scene 10 normal (day->night).
           text: 'All for the love of their Children',
-          start: 132.6,
-          end: 154.4,
+          start: 14.75,
+          end: 18.76,
           backgroundCrossfade: [bluefinMonthCrossfadePairReversed(7), bluefinMonthCrossfadePair(10)],
         },
         {
@@ -354,66 +339,58 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
           // (confirmed by eye in-browser) — the file literally named "...-day.webp" is the
           // darker/dusk frame and "...-night.webp" is the brighter frame, so the `day`/`night`
           // keys below intentionally point at the opposite filenames to render correctly.
-          text: 'Then one day the planet Earth changed forever ...',
-          start: 154.4,
-          end: 205.1,
+          text: 'One day the changed everything ...',
+          start: 18.76,
+          end: 28.09,
           backgroundCrossfade: [{ day: 'wolves-intro/bluefin-collapse-night.webp', night: 'wolves-intro/bluefin-collapse-day.webp' }],
           calamity: true,
         },
         {
-          text: 'New Children arose.',
-          start: 205.1,
-          end: 215.1,
+          text: 'New Children arose, and filled the pattern.',
+          start: 28.09,
+          end: 29.93,
           backgroundCrossfade: bluefinMonthCrossfade(3),
         },
         {
-          text: 'They lived as immortals,',
-          start: 215.1,
-          end: 223.8,
-          backgroundCrossfade: bluefinMonthCrossfade(3),
-        },
-        {
-          text: 'building the empires which brought people joy, and love.',
-          start: 223.8,
-          end: 244.1,
+          text: 'And the pinnacel, Maintainer-Guardians. For eons they thrived.',
+          start: 29.93,
+          end: 33.92,
           backgroundCrossfade: bluefinMonthCrossfade(12),
         },
+        { text: '', start: 33.92, end: 36.59, backgroundImage: 'wolves-intro/kubecon-hero-shot.webp', backgroundMotion: 'kenburns' },
         {
-          text: 'They were Maintainer-Guardians. For eons they thrived.',
-          start: 244.1,
-          end: 265.8,
-          backgroundCrossfade: bluefinMonthCrossfade(12),
-        },
-        { text: '', start: 265.8, end: 280.3, backgroundImage: 'wolves-intro/kubecon-hero-shot.webp', backgroundMotion: 'kenburns' },
-        {
-          text: 'Until they did not.',
-          start: 280.3,
-          end: 288.3,
+          text: `Until the Birth of AI,
+and Society Decided, that
+Guardians were not only unnecessary, but a threat.`,
+          start: 36.59,
+          end: 38.06,
           backgroundCrossfade: bluefinMonthCrossfade(12),
         },
         // Survival and the Clarke quote below deliberately drop back to a plain black screen
         // (no wallpaper) so the dominant quote's high-contrast, much-larger treatment reads as
         // a hard tonal break from the wallpaper-lit stanzas that came before it.
-        { text: 'Now their Children fight for Survival.', start: 288.3, end: 299.2 },
+        { text: 'Now their Children fight for Survival.', start: 38.06, end: 40.07 },
         {
           text: 'In the space of a few days, humanity had lost its future,',
-          start: 299.2,
-          end: 306.17,
+          start: 40.07,
+          end: 41.35,
           emphasis: 'dominant',
         },
         {
-          text: 'for the heart of any race is destroyed, and its will to survive is utterly broken,',
-          start: 306.17,
-          end: 316.2,
+          text: `for the heart of any race is destroyed,
+
+and its will to survive is utterly broken,`,
+          start: 41.35,
+          end: 43.20,
           emphasis: 'dominant',
         },
         {
           text: 'when its children are taken from it.',
-          start: 316.2,
-          end: 320.6,
+          start: 43.20,
+          end: 44.01,
           emphasis: 'dominant',
         },
-        { text: 'B L U E F I N — seven days to the wolves', start: 320.6, end: 326 },
+        { text: 'B L U E F I N — seven days to the wolves', start: 44.01, end: 45 },
       ],
     },
     {
