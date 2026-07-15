@@ -430,7 +430,7 @@ describe('wolves soundtrack', () => {
     expect(players[0].pauseVideo).toHaveBeenCalledOnce()
 
     // Finishing the shorts feed resumes the soundtrack and removes the interstitial. The
-    // interstitial creates exactly two persistent players (Lindsay, Cassidy) rather than one per
+    // interstitial creates exactly two persistent players (Cassidy, Lindsay) rather than one per
     // short, ping-ponging which side is active until both creators' lists are exhausted.
     const [, leftShortsPlayer, rightShortsPlayer] = players
     const totalTurns = wolvesCreatorShortsLindsayNikole.length + wolvesCreatorShortsCassidyWilliams.length

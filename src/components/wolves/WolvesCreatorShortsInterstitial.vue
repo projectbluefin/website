@@ -1,15 +1,15 @@
 <!--
   Creator Shorts interstitial: a fullscreen, one-time bridge inside the immersive theater between
-  Track 0 ("7 Days to the Wolves") and Track 1 ("Ghosts In The Mist"). Plays Lindsay Nikole's and
-  Cassidy Williams's real Shorts side by side, ping-ponging which side is active, and emits
+  Track 0 ("7 Days to the Wolves") and Track 1 ("Ghosts In The Mist"). Plays Cassidy Williams's and
+  Lindsay Nikole's real Shorts side by side, ping-ponging which side is active, and emits
   `complete` when both creators' lists are exhausted so the parent can resume the soundtrack.
   Teleported to <body> per docs/skills/wolves-fullscreen-overlays.md — several immersive-layout
   ancestors use `transform`, which would otherwise confine a `position: fixed` overlay to its own
   widget instead of the real viewport.
 
-  Ping-pong mechanics: each side (left = Lindsay, right = Cassidy) gets its own persistent
-  YT.Player, created once and never destroyed/recreated mid-sequence. Lindsay's player starts
-  active (autoplay); Cassidy's starts cued (loaded, silent, paused) on her first video so the very
+  Ping-pong mechanics: each side (left = Cassidy, right = Lindsay) gets its own persistent
+  YT.Player, created once and never destroyed/recreated mid-sequence. Cassidy's player starts
+  active (autoplay); Lindsay's starts cued (loaded, silent, paused) on her first video so the very
   first swap is instant. When the active side's video ends (or errors), the *other* side -- already
   cued -- takes over immediately (`playVideo`), while the side that just finished quietly preloads
   its own next video in the background (`cueVideoById`) for its next turn. If one creator's list
@@ -28,8 +28,8 @@ const emit = defineEmits<{
 }>()
 
 const lists = {
-  left: wolvesCreatorShortsLindsayNikole,
-  right: wolvesCreatorShortsCassidyWilliams,
+  left: wolvesCreatorShortsCassidyWilliams,
+  right: wolvesCreatorShortsLindsayNikole,
 } as const
 
 /** Index of the video currently loaded (playing or silently cued) into each side's player. */
@@ -47,7 +47,13 @@ const leftShort = computed(() => lists.left[Math.min(displayedIndex.left, lists.
 const rightShort = computed(() => lists.right[Math.min(displayedIndex.right, lists.right.length - 1)])
 
 const now = new Date()
-const controlsWallpaperUrl = computed(() => {
+/**
+ * The current month's night wallpaper, same source used by the rest of the immersive
+ * presentation (`WolvesApp.vue`'s wallpaper crossfade, the soundtrack widget's control panel),
+ * applied here as the interstitial's full-screen backdrop and reused on the small controls bar
+ * for visual continuity, per explicit user request to match "the rest of the presentation."
+ */
+const wallpaperUrl = computed(() => {
   const monthStr = String(now.getMonth() + 1).padStart(2, '0')
   return `url('${import.meta.env.BASE_URL}img/wallpapers/bluefin-${monthStr}-night.webp')`
 })
@@ -194,7 +200,8 @@ onBeforeUnmount(() => {
 
 <template>
   <Teleport to="body">
-    <div class="wolves-creator-shorts-interstitial">
+    <div class="wolves-creator-shorts-interstitial" :style="{ backgroundImage: wallpaperUrl }">
+      <div class="wolves-creator-shorts-backdrop-scrim" aria-hidden="true" />
       <div class="wolves-creator-shorts-stage">
         <div class="wolves-creator-shorts-slot" :class="{ 'is-active': activeSide === 'left' }">
           <div ref="leftMountHost" class="wolves-creator-shorts-player" />
@@ -212,7 +219,7 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <div class="wolves-creator-shorts-controls" :style="{ backgroundImage: controlsWallpaperUrl }">
+      <div class="wolves-creator-shorts-controls" :style="{ backgroundImage: wallpaperUrl }">
         <div class="wolves-creator-shorts-controls-overlay">
           <button
             type="button"
@@ -247,12 +254,25 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  background: #000;
+  background-color: #000;
+  background-size: cover;
+  background-position: center;
   overflow: hidden;
   padding: 16px;
 }
 
+/* Darkens the full-screen Bluefin wallpaper backdrop so the two video slots and captions stay
+   legible on top of it, matching the scrim already used behind the controls bar. */
+.wolves-creator-shorts-backdrop-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 10, 18, 0.72);
+  z-index: 0;
+}
+
 .wolves-creator-shorts-stage {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: row;
   gap: 16px;
@@ -303,6 +323,8 @@ onBeforeUnmount(() => {
 }
 
 .wolves-creator-shorts-controls {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 640px;
   border-radius: 16px;

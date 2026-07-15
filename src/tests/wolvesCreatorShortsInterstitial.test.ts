@@ -95,7 +95,7 @@ afterEach(() => {
 })
 
 describe('wolvesCreatorShortsInterstitial', () => {
-  it('teleports to body, creates exactly two persistent players, and starts with Lindsay Nikole active', async () => {
+  it('teleports to body, creates exactly two persistent players, and starts with Cassidy Williams active', async () => {
     mount(WolvesCreatorShortsInterstitial)
     await flushPromises()
     resolveIframeApi()
@@ -105,13 +105,13 @@ describe('wolvesCreatorShortsInterstitial', () => {
     expect(players).toHaveLength(2)
 
     const [left, right] = players
-    expect(left.videoId).toBe(wolvesCreatorShortsLindsayNikole[0].videoId)
+    expect(left.videoId).toBe(wolvesCreatorShortsCassidyWilliams[0].videoId)
     expect(left.autoplay).toBe(true)
-    expect(right.videoId).toBe(wolvesCreatorShortsCassidyWilliams[0].videoId)
+    expect(right.videoId).toBe(wolvesCreatorShortsLindsayNikole[0].videoId)
     expect(right.autoplay).toBe(false)
 
-    expect(captionText('left')).toContain(wolvesCreatorShortsLindsayNikole[0].title)
-    expect(captionText('right')).toContain(wolvesCreatorShortsCassidyWilliams[0].title)
+    expect(captionText('left')).toContain(wolvesCreatorShortsCassidyWilliams[0].title)
+    expect(captionText('right')).toContain(wolvesCreatorShortsLindsayNikole[0].title)
   })
 
   it('ping-pongs to the already-cued other side when the active side ends, and preloads the finished side', async () => {
@@ -129,17 +129,17 @@ describe('wolvesCreatorShortsInterstitial', () => {
     // Still only two players -- no new player instances are created for a swap.
     expect(players).toHaveLength(2)
     expect(right.playVideo).toHaveBeenCalledTimes(1)
-    expect(left.cueVideoById).toHaveBeenCalledWith(wolvesCreatorShortsLindsayNikole[1].videoId)
-    expect(captionText('left')).toContain(wolvesCreatorShortsLindsayNikole[1].title)
-    expect(captionText('right')).toContain(wolvesCreatorShortsCassidyWilliams[0].title)
+    expect(left.cueVideoById).toHaveBeenCalledWith(wolvesCreatorShortsCassidyWilliams[1].videoId)
+    expect(captionText('left')).toContain(wolvesCreatorShortsCassidyWilliams[1].title)
+    expect(captionText('right')).toContain(wolvesCreatorShortsLindsayNikole[0].title)
 
     right.triggerEnded()
     await flushPromises()
     await nextTick()
 
     expect(left.playVideo).toHaveBeenCalledTimes(1)
-    expect(right.cueVideoById).toHaveBeenCalledWith(wolvesCreatorShortsCassidyWilliams[1].videoId)
-    expect(captionText('right')).toContain(wolvesCreatorShortsCassidyWilliams[1].title)
+    expect(right.cueVideoById).toHaveBeenCalledWith(wolvesCreatorShortsLindsayNikole[1].videoId)
+    expect(captionText('right')).toContain(wolvesCreatorShortsLindsayNikole[1].title)
   })
 
   it('lets the longer list continue solo once the shorter one runs out, then emits complete once both are done', async () => {
@@ -168,7 +168,7 @@ describe('wolvesCreatorShortsInterstitial', () => {
 
     // No third player was ever created -- the solo phase reuses the same two persistent players.
     expect(players).toHaveLength(2)
-    expect(left.loadVideoById).toHaveBeenCalledWith(wolvesCreatorShortsLindsayNikole[7].videoId)
+    expect(right.loadVideoById).toHaveBeenCalledWith(wolvesCreatorShortsLindsayNikole[7].videoId)
     expect(wrapper.emitted('complete')).toHaveLength(1)
   })
 
@@ -195,16 +195,16 @@ describe('wolvesCreatorShortsInterstitial', () => {
 
     const [left, right] = players
 
-    // Cassidy (right) is inactive/preloaded at this point -- an error on her cued video must
-    // only skip that one broken entry, never hand control to her or restart Lindsay's turn.
+    // Lindsay (right) is inactive/preloaded at this point -- an error on her cued video must
+    // only skip that one broken entry, never hand control to her or restart Cassidy's turn.
     right.triggerError()
     await flushPromises()
     await nextTick()
 
-    expect(right.cueVideoById).toHaveBeenCalledWith(wolvesCreatorShortsCassidyWilliams[1].videoId)
+    expect(right.cueVideoById).toHaveBeenCalledWith(wolvesCreatorShortsLindsayNikole[1].videoId)
     expect(right.playVideo).not.toHaveBeenCalled()
     expect(left.loadVideoById).not.toHaveBeenCalled()
-    expect(captionText('left')).toContain(wolvesCreatorShortsLindsayNikole[0].title)
+    expect(captionText('left')).toContain(wolvesCreatorShortsCassidyWilliams[0].title)
   })
 
   it('emits complete without ever mounting a player when the IFrame API fails to load entirely', async () => {

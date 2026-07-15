@@ -5,8 +5,8 @@
  * verified against YouTube's oEmbed API before being added here.
  *
  * Each creator has her own ordered list (`wolvesCreatorShortsByCreator`), played independently
- * side by side: Lindsay Nikole's list on the left, Cassidy Williams's on the right, each side
- * preloading its own next video while the other side is active. Lindsay always takes the first
+ * side by side: Cassidy Williams's list on the left, Lindsay Nikole's on the right, each side
+ * preloading its own next video while the other side is active. Cassidy always takes the first
  * turn. If one creator's list runs out before the other's, the remaining side keeps playing solo
  * until it also finishes.
  */
@@ -43,8 +43,8 @@ export const wolvesCreatorShortsCassidyWilliams: readonly WolvesCreatorShort[] =
   { videoId: 'cIaNRGkZQdM', title: 'React is like paella', creatorName: 'Cassidy Williams', channelUrl: 'https://www.youtube.com/@cassidoo', orientation: 'vertical' },
 ] as const
 
-/** Ping-pong turn order: Lindsay's list on the left, Cassidy's on the right, Lindsay first. */
+/** Ping-pong turn order: Cassidy's list on the left, Lindsay's on the right, Cassidy first. */
 export const wolvesCreatorShortsByCreator = [
-  wolvesCreatorShortsLindsayNikole,
   wolvesCreatorShortsCassidyWilliams,
+  wolvesCreatorShortsLindsayNikole,
 ] as const
