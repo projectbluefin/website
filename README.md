@@ -66,6 +66,31 @@ This workflow requires [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) to read the 
 
 The `/wolves` player starts only after a visitor clicks the control. Its YouTube iframe is retained as a hidden 200x200 audio player because the IFrame API requires that minimum viewport; do not replace it with a visible video widget or shrink it to 1px. The visible panel includes a YouTube Music deep link and sign-in/Premium guidance.
 
+## Wolves local video capture
+
+For deterministic, repeatable local Track 0 rendering (manual upload flow):
+
+```bash
+npm run dev
+npm run record:wolves
+```
+
+Defaults:
+- local-only URL: `http://127.0.0.1:5173/wolves/`
+- output: `recordings/wolves-first-song-1440p.mp4`
+- 1440p at 25fps (matching Playwright capture), CPU-capped FFmpeg encode for lower OOM risk
+
+Optional overrides:
+
+```bash
+node record-wolves.cjs \
+  --url http://127.0.0.1:5174/wolves/ \
+  --output /tmp/wolves.mp4 \
+  --threads 4 \
+  --fps 30 \
+  --duration 424
+```
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contributor guide — including the PR workflow, i18n instructions, and linting requirements.

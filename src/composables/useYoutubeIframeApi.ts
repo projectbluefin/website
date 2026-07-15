@@ -13,6 +13,7 @@ export interface YoutubePlayer {
   pauseVideo?: () => void
   getCurrentTime?: () => number
   getDuration?: () => number
+  seekTo?: (seconds: number, allowSeekAhead: boolean) => void
   destroy?: () => void
 }
 

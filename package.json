@@ -12,7 +12,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "typecheck": "vue-tsc --noEmit",
-    "update:wolves-playlist": "node scripts/update-wolves-playlist.js"
+    "update:wolves-playlist": "node scripts/update-wolves-playlist.js",
+    "record:wolves": "node record-wolves.cjs"
   },
   "dependencies": {
     "@iconify-prerendered/vue-mdi": "^0.28.1737398331",
