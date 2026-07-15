@@ -1,6 +1,6 @@
 # Wolves Change Guardrails
 
-Follow `AGENTS.md` for the repository-wide workflow. These rules prevent regressions in the Wolves fullscreen experience.
+Follow `AGENTS.md` for the repository-wide workflow. Read `docs/wolves-maintenance.md`, the canonical production reference for the Wolves page, before any Wolves change: agents edit content, agents never edit design. These rules prevent regressions in the Wolves fullscreen experience.
 
 ## Content boundaries
 

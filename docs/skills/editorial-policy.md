@@ -5,7 +5,7 @@ description: Use when editing or maintaining story chapters, lore quotes, releas
 
 ## When to Use
 - Adding or modifying story slides, transcripts, or dialogue elements.
-- Reviewing quotes, attributions, and timestamps in data files (e.g., bazzite-quotes.json, intercepted-communications.json).
+- Reviewing quotes, attributions, and timestamps in data files (e.g., src/data/lore/*.md, src/data/wolves-incoming-signal.txt).
 - Summarizing or editing release notes for components.
 
 ## When NOT to Use
@@ -32,5 +32,5 @@ description: Use when editing or maintaining story chapters, lore quotes, releas
 
 ## Verification
 - [ ] No creative prose or fictional background has been added by the model.
-- [ ] All display strings are exact matches to src/data/bazzite-quotes.json or src/data/intercepted-communications.json.
+- [ ] All display strings are exact matches to authored records in src/data/lore/ or other user-supplied source text.
 - [ ] If placeholders are needed, only standard lorem ipsum is utilized.
