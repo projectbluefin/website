@@ -340,7 +340,6 @@ interface LoreManifestEntry {
 }
 
 const loreManifest = [
-  { id: 'arthur-c-clarke-4', chapterId: 'prologue', relativePath: './lore/arthur-c-clarke-4.md' },
   { id: 'lorem-prologue-1', chapterId: 'prologue', relativePath: './lore/lorem-prologue-1.md' },
   { id: 'arthur-c-clarke-1', chapterId: 'prologue', relativePath: './lore/arthur-c-clarke-1.md' },
   { id: 'lorem-prologue-2', chapterId: 'prologue', relativePath: './lore/lorem-prologue-2.md' },

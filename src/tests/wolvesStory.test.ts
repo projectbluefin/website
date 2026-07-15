@@ -13,7 +13,6 @@ describe('wolves story manifest', () => {
   it('keeps archive artifacts in their chapter order', () => {
     expect(getArtifactsForChapter('prologue').map(artifact => artifact.id))
       .toEqual([
-        'arthur-c-clarke-4',
         'lorem-prologue-1',
         'arthur-c-clarke-1',
         'lorem-prologue-2',

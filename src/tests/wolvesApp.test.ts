@@ -62,7 +62,7 @@ describe('wolvesApp.vue', () => {
 
     // Now elements are rendered
     expect(wrapper.find('.comic-reader').exists()).toBe(true)
-    expect(wrapper.find('.lore-artifact').text()).toBe('arthur-c-clarke-4')
+    expect(wrapper.find('.lore-artifact').text()).toBe('arthur-c-clarke-1')
 
     const soundtrack = wrapper.findComponent({ name: 'WolvesSoundtrack' })
     await soundtrack.vm.$emit('progress', { currentTime: 180, duration: 423, playlistIndex: 0 })
@@ -254,14 +254,14 @@ describe('wolvesApp.vue', () => {
       await wrapper.get('.experience-cta-btn').trigger('click')
 
       expect(wrapper.get('.immersive-content-grid').attributes('data-presentation')).toBe('narrative-split')
-      expect(wrapper.find('.lore-artifact').text()).toBe('arthur-c-clarke-4')
+      expect(wrapper.find('.lore-artifact').text()).toBe('arthur-c-clarke-1')
       expect(wrapper.get('.comic-reader').attributes('data-track-index')).toBe('0')
       expect(wrapper.get('.comic-reader').attributes('data-current-time')).toBe('0')
 
       await vi.advanceTimersByTimeAsync(1500)
 
       expect(wrapper.get('.immersive-content-grid').attributes('data-presentation')).toBe('narrative-split')
-      expect(wrapper.find('.lore-artifact').text()).toBe('arthur-c-clarke-4')
+      expect(wrapper.find('.lore-artifact').text()).toBe('arthur-c-clarke-1')
       expect(wrapper.get('.comic-reader').attributes('data-track-index')).toBe('0')
       expect(wrapper.get('.comic-reader').attributes('data-current-time')).toBe('0')
     }

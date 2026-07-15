@@ -7,8 +7,7 @@ import {
 import { wolvesRelease } from '../data/wolves-story'
 
 const legacyTrimmedBodyTimeline = [
-  ['arthur-c-clarke-4', 0, 5.680359435173299],
-  ['arthur-c-clarke-1', 5.680359435173299, 14.441591784338897],
+  ['arthur-c-clarke-1', 0, 14.441591784338897],
   ['arthur-c-clarke-2', 14.441591784338897, 25.41720154043646],
   ['arthur-c-clarke-3', 25.41720154043646, 29.043645699614892],
   ['ishtar-gardener-and-winnower', 29.043645699614892, 36.55327342747112],
@@ -51,7 +50,6 @@ describe('wolves narrative timeline', () => {
 
   it('keeps the authored release chapter and artifact order fixed', () => {
     expect(wolvesRelease.artifacts.map(({ id, chapterId }) => ({ id, chapterId }))).toEqual([
-      { id: 'arthur-c-clarke-4', chapterId: 'prologue' },
       { id: 'lorem-prologue-1', chapterId: 'prologue' },
       { id: 'arthur-c-clarke-1', chapterId: 'prologue' },
       { id: 'lorem-prologue-2', chapterId: 'prologue' },
@@ -88,7 +86,7 @@ describe('wolves narrative timeline', () => {
 
   it('preserves the approved first, middle, and final anchors', () => {
     expect(getNarrativeSlotForTime(0)).toMatchObject({
-      artifactId: 'arthur-c-clarke-4',
+      artifactId: 'arthur-c-clarke-1',
       startTime: 0,
     })
     expect(getNarrativeSlotForTime(180)).toMatchObject({

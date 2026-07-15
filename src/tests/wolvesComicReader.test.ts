@@ -129,17 +129,15 @@ describe('wolvesComicReader', () => {
     expect(activeTimelineImage(wrapper)).toContain('kubecon-55164466314.webp')
   })
 
-  it('maps Collapse from its brighter visual day to its darker visual night', () => {
+  it('no longer schedules Collapse in the Track 0 wallpaper rotation', () => {
+    // bluefin-collapse-day/night.webp moved out of the live rotation and into
+    // public/wolves-intro/ for exclusive use by the new Prologue segment.
     const collapse = wallpapers.find(wallpaper => wallpaper.name === 'bluefin-collapse')
 
-    expect(collapse).toMatchObject({
-      type: 'daynight',
-      dayName: 'wolves/wolves/bluefin-collapse-night.webp',
-      nightName: 'wolves/wolves/bluefin-collapse-day.webp',
-    })
+    expect(collapse).toBeUndefined()
   })
 
-  it('keeps the first 20 seconds of Track 0 unchanged', async () => {
+  it('keeps the first 20 seconds of Track 0 unchanged since the Collapse removal', async () => {
     const wrapper = mount(WolvesComicReader, {
       props: {
         trackIndex: 0,
@@ -147,19 +145,19 @@ describe('wolvesComicReader', () => {
       },
     })
 
-    expect(activeTimelineImage(wrapper)).toContain('bluefin-collapse-night.webp')
+    expect(activeTimelineImage(wrapper)).toContain('bluefin-prey-day.webp')
 
     await wrapper.setProps({ playlistCurrentTime: 8.4 })
     expect(activeTimelineImage(wrapper)).toContain('bluefin-prey-day.webp')
 
     await wrapper.setProps({ playlistCurrentTime: 14.99 })
-    expect(activeTimelineImage(wrapper)).toContain('bluefin-prey-day.webp')
+    expect(activeTimelineImage(wrapper)).toContain('bluefin-tenacious-day.webp')
 
     await wrapper.setProps({ playlistCurrentTime: 16.8 })
-    expect(activeTimelineImage(wrapper)).toContain('bluefin-dusk-day.webp')
+    expect(activeTimelineImage(wrapper)).toContain('bluefin-tenacious-day.webp')
 
     await wrapper.setProps({ playlistCurrentTime: 19.99 })
-    expect(activeTimelineImage(wrapper)).toContain('bluefin-dusk-day.webp')
+    expect(activeTimelineImage(wrapper)).toContain('bluefin-tenacious-day.webp')
   })
 
   it('uses each Track 0 wallpaper once', async () => {

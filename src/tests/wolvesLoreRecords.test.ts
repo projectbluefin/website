@@ -73,7 +73,7 @@ describe('wolves lore records', () => {
     const records = loadAllLoreRecords()
     const artifact = records.find(record => record.id === 'lorem-prologue-1')
 
-    expect(records).toHaveLength(45)
+    expect(records).toHaveLength(44)
     expect(records.flatMap(record => record.diagnostics)).toEqual([])
     expect(artifact).toMatchObject({
       chapterId: 'prologue',
@@ -105,7 +105,7 @@ describe('wolves lore records', () => {
   it('loads every quote with authored identity and no diagnostics', () => {
     const quotes = loadAllLoreRecords().filter(record => record.kind === 'quote')
 
-    expect(quotes).toHaveLength(9)
+    expect(quotes).toHaveLength(8)
     for (const quote of quotes) {
       expect(quote.metadata.attribution, quote.relativePath).toEqual(expect.any(String))
       expect(quote.metadata.attribution?.trim(), quote.relativePath).not.toBe('')

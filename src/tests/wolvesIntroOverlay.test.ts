@@ -61,6 +61,7 @@ function resolveIframeApi() {
 
 beforeEach(() => {
   players = []
+  vi.useFakeTimers()
   ;(window as any).happyDOM.settings.handleDisabledFileLoadingAsSuccess = true
   document.head.querySelectorAll(`script[src="${iframeApiSrc}"]`).forEach(script => script.remove())
   delete (window as any).YT
@@ -69,6 +70,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   document.head.querySelectorAll(`script[src="${iframeApiSrc}"]`).forEach(script => script.remove())
   delete (window as any).YT
   delete (window as any).onYouTubeIframeAPIReady
@@ -76,17 +78,18 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-const videos = [
+const videoOnlySequence = [
   {
     id: 'wolves-intro',
+    kind: 'video' as const,
     youtubeVideoId: 'BKm0TPqeOjY',
     overlays: [{ text: 'Guardians', start: 0, end: 5 }],
   },
-] as const
+]
 
-describe('wolvesIntroOverlay', () => {
+describe('wolvesIntroOverlay video segments', () => {
   it('embeds the real YouTube video id, not a local file', async () => {
-    const wrapper = mount(WolvesIntroOverlay, { props: { videos } })
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -97,7 +100,7 @@ describe('wolvesIntroOverlay', () => {
   })
 
   it('advances to done and emits complete when the video ends', async () => {
-    const wrapper = mount(WolvesIntroOverlay, { props: { videos } })
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -110,7 +113,7 @@ describe('wolvesIntroOverlay', () => {
   })
 
   it('never blocks the live experience when the embed errors', async () => {
-    const wrapper = mount(WolvesIntroOverlay, { props: { videos } })
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -122,7 +125,7 @@ describe('wolvesIntroOverlay', () => {
   })
 
   it('shows the active overlay text cue synced to playback time', async () => {
-    const wrapper = mount(WolvesIntroOverlay, { props: { videos } })
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -132,8 +135,27 @@ describe('wolvesIntroOverlay', () => {
     expect(wrapper.text()).toContain('Guardians')
   })
 
+  it('force-advances at maxDuration instead of waiting for the natural end', async () => {
+    const cutoffSequence = [
+      { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BKm0TPqeOjY', maxDuration: 1 },
+      { id: 'wolves-epilogue', kind: 'text' as const, duration: 5 },
+    ]
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: cutoffSequence } })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+    players[0].getCurrentTime = vi.fn(() => 2)
+    players[0].triggerReady()
+
+    await vi.advanceTimersByTimeAsync(200)
+    await flushPromises()
+
+    expect(players[0].destroy).toHaveBeenCalled()
+    expect(wrapper.emitted('complete')).toBeUndefined()
+  })
+
   it('skip jumps straight to complete regardless of load state', async () => {
-    const wrapper = mount(WolvesIntroOverlay, { props: { videos } })
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
 
     await wrapper.get('button[aria-label="Skip intro"]').trigger('click')
     await flushPromises()
@@ -146,5 +168,48 @@ describe('wolvesIntroOverlay', () => {
     await flushPromises()
 
     expect(wrapper.emitted('complete')).toHaveLength(1)
+  })
+})
+
+describe('wolvesIntroOverlay text segments', () => {
+  it('renders a black screen with no YouTube player for a video-less text segment', async () => {
+    const textSequence = [
+      { id: 'wolves-prologue', kind: 'text' as const, duration: 5, overlays: [{ text: 'Prologue', start: 0, end: 5 }] },
+    ]
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: textSequence } })
+    await flushPromises()
+
+    expect(wrapper.find('.wolves-intro-overlay-blackscreen').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Prologue')
+  })
+
+  it('auto-advances once the authored duration elapses', async () => {
+    const textSequence = [
+      { id: 'wolves-prologue', kind: 'text' as const, duration: 1 },
+      { id: 'wolves-epilogue', kind: 'text' as const, duration: 1 },
+    ]
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: textSequence } })
+    await flushPromises()
+
+    await vi.advanceTimersByTimeAsync(1000)
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(1000)
+    await flushPromises()
+
+    expect(wrapper.emitted('complete')).toHaveLength(1)
+  })
+
+  it('mounts a background-only audio embed when audioYoutubeVideoId is set', async () => {
+    const textSequence = [
+      { id: 'wolves-prologue', kind: 'text' as const, duration: 45, audioYoutubeVideoId: 'EB3IokHelRk' },
+    ]
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: textSequence } })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+
+    expect(players).toHaveLength(1)
+    expect(players[0].videoId).toBe('EB3IokHelRk')
+    expect(wrapper.find('video').exists()).toBe(false)
   })
 })

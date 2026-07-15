@@ -133,7 +133,7 @@ describe('wolvesLoreColumn Logic', () => {
       .map(record => record.id))
     const quoteArtifacts = wolvesRelease.artifacts.filter(artifact => quoteIds.has(artifact.id))
 
-    expect(quoteArtifacts).toHaveLength(9)
+    expect(quoteArtifacts).toHaveLength(8)
     expect(quoteArtifacts.every(artifact => !Object.prototype.hasOwnProperty.call(artifact, 'sourceLabel'))).toBe(true)
   })
 

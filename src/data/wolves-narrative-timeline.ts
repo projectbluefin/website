@@ -11,14 +11,13 @@ interface WolvesNarrativeLock {
 }
 
 export const lockedNarrativeSlots: readonly WolvesNarrativeLock[] = [
-  { artifactId: 'arthur-c-clarke-4', startTime: 0 },
+  { artifactId: 'arthur-c-clarke-1', startTime: 0 },
   { artifactId: 'lorem-pursuit-1', startTime: 150, endTime: 220 },
   { artifactId: 'blue-universal-acquires-wayland-yutani', startTime: 398, endTime: 425 },
 ]
 
 export const wolvesNarrativeTimeline: readonly WolvesNarrativeSlot[] = [
-  { artifactId: 'arthur-c-clarke-4', startTime: 0, endTime: 5.680359435173299 },
-  { artifactId: 'arthur-c-clarke-1', startTime: 5.680359435173299, endTime: 14.441591784338897 },
+  { artifactId: 'arthur-c-clarke-1', startTime: 0, endTime: 14.441591784338897 },
   { artifactId: 'arthur-c-clarke-2', startTime: 14.441591784338897, endTime: 25.41720154043646 },
   { artifactId: 'arthur-c-clarke-3', startTime: 25.41720154043646, endTime: 29.043645699614892 },
   { artifactId: 'ishtar-gardener-and-winnower', startTime: 29.043645699614892, endTime: 36.55327342747112 },
