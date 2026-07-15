@@ -131,15 +131,20 @@ This is the feature users depend on most. Its whole value is that adding a slide
 
 **User flow**: drop a `.webp` image into one of `public/img/wallpapers/wolves/{wolves,showcase,people}/`, using a `-day` / `-night` filename suffix pair when a day/night pair exists. The build and dev pipelines run `scripts/generate-wallpapers.js`, which scans those folders and regenerates `src/components/wolves/wallpapers-list.ts`. The new image joins the Track 0 rotation automatically with a title from the curated dictionary in the script, or a title generated from the filename.
 
+**Interview / hero-video thumbnail slides**: a recurring pattern is adding a slide for a YouTube video (an interview, panel, or episode relevant to the project). These always use YouTube's official public thumbnail (`https://i.ytimg.com/vi/<id>/maxresdefault.jpg`, falling back to `sddefault.jpg`/`hqdefault.jpg`), saved into `public/img/wallpapers/wolves/people/` as WebP. **Never download, screen-capture, or re-encode the actual video footage** — only the sanctioned public thumbnail image, per the copyright rule in the Editorial Rules section below.
+
+**Theater captions (optional, per-slide)**: a slide may optionally carry a longer `description` in the `curatedDescriptions` dictionary in `scripts/generate-wallpapers.js` (parallel to `curatedTitles`), when the video's real description has substantive narrative prose worth surfacing (not just timestamps, SEO keyword lists, or affiliate links — skip the description field entirely for those). When present, `WolvesComicReader.vue` renders that slide with a large `.wallpaper-theater-caption` (title + paragraphs, `clamp()`-sized for 10-foot/TV-distance legibility) instead of the standard small `.wallpaper-caption`/`.flickr-caption` pill. Every slide without a `description` keeps the small pill unchanged. Use the real video description text (via `yt-dlp --skip-download --print description "<url>"`), verbatim, not summarized or invented — paragraph breaks (`\n\n`) may be chosen for readability, but wording must not be altered.
+
 **What agents may touch**:
 
 - Image files in the three wallpaper folders (add or remove, compressed WebP only).
 - Title strings in the `curatedTitles` dictionary in `scripts/generate-wallpapers.js`.
+- Description strings in the `curatedDescriptions` dictionary in `scripts/generate-wallpapers.js` (verbatim video description text only, per above).
 
 **What agents must not touch**:
 
 - `src/components/wolves/wallpapers-list.ts` (generated; header says so).
-- Any scheduling, shuffling, transition, or pacing code in `WolvesComicReader.vue`, including the `fadeInBuffer` / `fadeOutBuffer` keyframes in its scoped styles.
+- Any scheduling, shuffling, transition, or pacing code in `WolvesComicReader.vue`, including the `fadeInBuffer` / `fadeOutBuffer` keyframes in its scoped styles, and the `.wallpaper-theater-caption` / `.wallpaper-caption` / `.flickr-caption` CSS and conditional rendering logic itself (only the per-slide `description` content is editable, not the caption mechanism).
 - The scan logic in `generate-wallpapers.js`.
 
 Users rely on this flow working predictably. An unauthorized design change here breaks the promise that "add a picture" is always safe.
@@ -158,7 +163,7 @@ Do not modify these under any circumstance. If a task seems to require it, stop 
 - `src/data/wolves-story.ts` chapter definitions.
 - Existing authored lore bodies in `src/data/lore/*.md` (edit only with exact user-supplied replacement text).
 - All shared styles, style tokens, class names, transition durations, and keyframes anywhere on the page.
-- Script logic in `scripts/generate-wallpapers.js`, `scripts/update-wolves-playlist.js`, and `scripts/update-flickr-photos.js` (data values inside them, like `curatedTitles` and `TEMPO_CONFIGS`, are content).
+- Script logic in `scripts/generate-wallpapers.js`, `scripts/update-wolves-playlist.js`, and `scripts/update-flickr-photos.js` (data values inside them, like `curatedTitles`, `curatedDescriptions`, and `TEMPO_CONFIGS`, are content).
 
 ## Open Surfaces
 
@@ -173,6 +178,7 @@ The complete list of places agents may edit, and nothing else:
 | `src/data/wolves-dinosaur-species.ts` | New registry entries; `scientificName` and `documentationUrl` fixes |
 | `public/img/wallpapers/wolves/{wolves,showcase,people}/` | Add or remove WebP images |
 | `curatedTitles` in `scripts/generate-wallpapers.js` | Title strings |
+| `curatedDescriptions` in `scripts/generate-wallpapers.js` | Optional per-slide theater-caption description text, verbatim from the real source (e.g. a YouTube video description); omit entirely for slides that don't need one |
 | `TEMPO_CONFIGS` in `scripts/update-wolves-playlist.js` | Per-track tempo values, when the user supplies them |
 | Hero prose text nodes in `src/WolvesApp.vue` | Exact user-supplied copy only |
 | Link URLs and label text in `WolvesQrCodes.vue` | Exact user-supplied values only |
