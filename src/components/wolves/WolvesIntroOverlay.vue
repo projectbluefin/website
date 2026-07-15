@@ -94,6 +94,30 @@ function titleSegments(title: string, blingTitle: string | undefined): { text: s
   ]
 }
 
+type TitleToken = { kind: 'text', text: string, bling: boolean } | { kind: 'sep' }
+
+/**
+ * Flattens a multi-segment title (authored with ` — ` joins, see `parseGuardianCue`) into a
+ * render-ready token stream: text segments plus explicit `sep` tokens where the author's em-dash
+ * joins used to sit. The template renders `sep` tokens as a blue vertical bar
+ * (`wolves-guardian-plate-title-sep`) instead of the literal em-dash characters, per explicit
+ * user request, so multi-title guardians read as distinct badges divided by a UI rule rather
+ * than punctuation. `blingTitle` matching still runs per segment via `titleSegments`.
+ */
+function titleTokens(title: string, blingTitle: string | undefined): TitleToken[] {
+  const parts = title.split(' — ')
+  const tokens: TitleToken[] = []
+  parts.forEach((part, index) => {
+    if (index > 0) {
+      tokens.push({ kind: 'sep' })
+    }
+    for (const segment of titleSegments(part, blingTitle)) {
+      tokens.push({ kind: 'text', text: segment.text, bling: segment.bling })
+    }
+  })
+  return tokens
+}
+
 /** Bonded-dinosaur artwork URL for a guardian's plate, or undefined if no bond is documented. */
 function guardianDinosaurArtwork(guardianName: string): string | undefined {
   const bond = wolvesGuardianDinosaurBonds.find(entry => entry.guardianName === guardianName)
@@ -504,10 +528,11 @@ onBeforeUnmount(() => {
             >
           </p>
           <p class="wolves-guardian-plate-title">
-            <template v-for="(segment, index) in titleSegments(parseGuardianCue(cue.text)!.title, cue.blingTitle)" :key="index">
-              <span v-if="segment.bling" class="wolves-guardian-plate-bling">{{ segment.text }}</span>
+            <template v-for="(token, index) in titleTokens(parseGuardianCue(cue.text)!.title, cue.blingTitle)" :key="index">
+              <span v-if="token.kind === 'sep'" class="wolves-guardian-plate-title-sep" aria-hidden="true">|</span>
+              <span v-else-if="token.bling" class="wolves-guardian-plate-bling">{{ token.text }}</span>
               <template v-else>
-                {{ segment.text }}
+                {{ token.text }}
               </template>
             </template>
           </p>
@@ -1066,6 +1091,18 @@ onBeforeUnmount(() => {
   margin: 0.35rem 0 0;
   font-size: clamp(1.5rem, 1.2rem + 0.7vw, 1.9rem);
   color: #94a3b8;
+}
+
+/* Blue vertical rule dividing a multi-segment title (e.g. Christopher Blecker's four titles, or
+   Natali Vlatko's two), replacing the authored ` — ` em-dash join with a UI separator instead of
+   punctuation, per explicit user request. Uses the same blue accent as the rest of the plate
+   chrome (crest, horizon lines, class label) so it reads as structure, not text. */
+.wolves-guardian-plate-title-sep {
+  display: inline-block;
+  margin: 0 0.4em;
+  color: #93c5fd;
+  font-weight: 400;
+  opacity: 0.85;
 }
 
 /* Distinctive gold "bling" treatment for a single called-out title segment (e.g. Christopher
