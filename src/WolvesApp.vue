@@ -62,8 +62,10 @@ const activeChapter = computed(() =>
 )
 
 const isImmersive = ref(false)
+const skipIntroForSimulation = ref(false)
 if (typeof window !== 'undefined') {
   (window as any).simulateWolvesProgress = (currentTime: number, duration: number, playlistIndex: number) => {
+    skipIntroForSimulation.value = true
     isImmersive.value = true
     isPlaying.value = true
     isSoundtrackActive.value = true
@@ -389,6 +391,7 @@ onBeforeUnmount(() => {
           <WolvesSoundtrack
             v-model:playing="isPlaying"
             :chapter="activeChapter"
+            :skip-intro="skipIntroForSimulation"
             @progress="handleProgress"
           />
         </div>

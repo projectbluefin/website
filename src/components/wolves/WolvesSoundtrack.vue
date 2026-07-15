@@ -7,6 +7,14 @@ import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
 
 const props = defineProps<{
   playing?: boolean
+  /**
+   * Bypasses the intro overlay for the `props.playing` v-model path only.
+   * Used by dev/test tooling (e.g. `window.simulateWolvesProgress`) that needs to
+   * jump straight into playback for browser-based Track 0 timestamp verification,
+   * without re-showing the intro video every time. Never affects the normal
+   * "JOIN THE EVOLUTION" / handlePrimaryAction click flow.
+   */
+  skipIntro?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -73,7 +81,7 @@ const officialLyricsUrls: Readonly<Record<string, string>> = {
 const status = ref<PlayerStatus>('idle')
 const manifest = ref<WolvesSoundtrackManifest | null>(null)
 const introOverlayActive = ref(false)
-const introVideos = buildIntroVideoSequence(import.meta.env.BASE_URL)
+const introVideos = buildIntroVideoSequence()
 const currentTrackIndex = ref(0)
 const playerHost = ref<HTMLElement | null>(null)
 const currentTime = ref(0)
@@ -446,7 +454,12 @@ function handleSeek(event: MouseEvent) {
 watch(() => props.playing, (newPlaying) => {
   if (newPlaying && status.value !== 'playing') {
     if (status.value === 'idle' || status.value === 'error') {
-      introOverlayActive.value = true
+      if (props.skipIntro) {
+        startSoundtrack()
+      }
+      else {
+        introOverlayActive.value = true
+      }
     }
     else {
       resumePlayback()

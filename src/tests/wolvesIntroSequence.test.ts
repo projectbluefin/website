@@ -51,10 +51,10 @@ describe('wolves intro overlay sequence', () => {
     expect(activeOverlayText(undefined, 2)).toBeUndefined()
   })
 
-  it('builds the intro sequence with BASE_URL-relative paths for fork/subpath safety', () => {
-    const sequence = buildIntroVideoSequence('/preview-base/')
+  it('builds the intro sequence referencing a real YouTube video id', () => {
+    const sequence = buildIntroVideoSequence()
     expect(sequence).toHaveLength(1)
-    expect(sequence[0].src).toBe('/preview-base/videos/wolves-intro-1440p.mp4')
+    expect(sequence[0].youtubeVideoId).toBe('BKm0TPqeOjY')
     expect(sequence.every(video => video.overlays?.length)).toBe(true)
   })
 })

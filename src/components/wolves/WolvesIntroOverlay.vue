@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import type { YoutubePlayer } from '@/composables/useYoutubeIframeApi'
 import type { IntroVideoSpec } from '@/data/wolves-intro-sequence'
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { getYoutubePlayerConstructor, getYoutubePlayerState, loadYoutubeIframeApi } from '@/composables/useYoutubeIframeApi'
 import { activeOverlayText, advanceIntroSequence, createIntroSequenceState, skipIntroSequence } from '@/data/wolves-intro-sequence'
 
 const props = defineProps<{
@@ -13,61 +15,130 @@ const emit = defineEmits<{
 
 const sequenceState = ref(createIntroSequenceState())
 const currentTime = ref(0)
-const videoEl = ref<HTMLVideoElement | null>(null)
+const mountHost = ref<HTMLDivElement | null>(null)
 
 const currentVideo = computed<IntroVideoSpec | undefined>(() => props.videos[sequenceState.value.index])
 const overlayText = computed(() => activeOverlayText(currentVideo.value?.overlays, currentTime.value))
 
+let player: YoutubePlayer | null = null
+let pollTimer: ReturnType<typeof setInterval> | null = null
+let loadToken = 0
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+}
+
+function destroyPlayer() {
+  stopPolling()
+  player?.destroy?.()
+  player = null
+}
+
+function advance() {
+  sequenceState.value = advanceIntroSequence(sequenceState.value, props.videos.length)
+}
+
+async function loadCurrentVideo(video: IntroVideoSpec | undefined) {
+  const token = ++loadToken
+  currentTime.value = 0
+  destroyPlayer()
+
+  if (!video) {
+    // Nothing left to play (e.g. an empty sequence) — never block the live experience.
+    sequenceState.value = skipIntroSequence(sequenceState.value)
+    return
+  }
+
+  try {
+    await loadYoutubeIframeApi()
+  }
+  catch {
+    if (token === loadToken) {
+      advance()
+    }
+    return
+  }
+
+  // Component may have advanced/unmounted while the API script was loading.
+  if (token !== loadToken || sequenceState.value.done) {
+    return
+  }
+
+  await nextTick()
+
+  // Re-check after the second await — Skip (or a fresh advance) may have landed while
+  // waiting for the DOM flush above.
+  if (token !== loadToken || sequenceState.value.done) {
+    return
+  }
+
+  const PlayerCtor = getYoutubePlayerConstructor()
+  if (!PlayerCtor || !mountHost.value) {
+    advance()
+    return
+  }
+
+  mountHost.value.replaceChildren()
+  const mountNode = document.createElement('div')
+  mountHost.value.appendChild(mountNode)
+
+  player = new PlayerCtor(mountNode, {
+    width: '100%',
+    height: '100%',
+    videoId: video.youtubeVideoId,
+    playerVars: {
+      autoplay: 1,
+      controls: 0,
+      playsinline: 1,
+      rel: 0,
+      modestbranding: 1,
+    },
+    events: {
+      onReady: () => {
+        stopPolling()
+        pollTimer = setInterval(() => {
+          currentTime.value = player?.getCurrentTime?.() ?? 0
+        }, 200)
+      },
+      onStateChange: (event: { data: number }) => {
+        if (event.data === getYoutubePlayerState().ENDED) {
+          advance()
+        }
+      },
+      onError: () => {
+        // A missing/restricted video must never block the live experience.
+        advance()
+      },
+    },
+  })
+}
+
 watch(() => sequenceState.value.done, (done) => {
   if (done) {
+    destroyPlayer()
     emit('complete')
   }
 })
 
-watch(currentVideo, () => {
-  currentTime.value = 0
-  // Unmuted autoplay relies on this component only ever mounting as a direct result of the
-  // "Start Experience" click (a real user gesture); browsers permit unmuted playback shortly
-  // after such a gesture. If a browser still blocks it, playback fails silently here and the
-  // visible Skip control (plus `ended`/`error` handlers) still let the sequence proceed.
-  void nextTick(() => {
-    videoEl.value?.play?.().catch(() => {
-      // Autoplay can be blocked by the browser; the visible Skip control still lets the
-      // viewer proceed, and `ended`/`error` handlers advance the sequence normally otherwise.
-    })
-  })
-})
-
-function handleEnded() {
-  sequenceState.value = advanceIntroSequence(sequenceState.value, props.videos.length)
-}
-
-function handleError() {
-  // A missing or broken render must never block the live experience.
-  sequenceState.value = advanceIntroSequence(sequenceState.value, props.videos.length)
-}
-
-function handleTimeUpdate() {
-  currentTime.value = videoEl.value?.currentTime ?? 0
-}
+watch(currentVideo, (video) => {
+  void loadCurrentVideo(video)
+}, { immediate: true })
 
 function handleSkip() {
   sequenceState.value = skipIntroSequence(sequenceState.value)
 }
+
+onBeforeUnmount(() => {
+  destroyPlayer()
+})
 </script>
 
 <template>
   <div v-if="currentVideo && !sequenceState.done" class="wolves-intro-overlay">
-    <video
-      ref="videoEl"
-      class="wolves-intro-overlay-video"
-      :src="currentVideo.src"
-      autoplay
-      playsinline
-      @ended="handleEnded"
-      @error="handleError"
-      @timeupdate="handleTimeUpdate"
-    />
+    <div ref="mountHost" class="wolves-intro-overlay-player" />
 
     <p v-if="overlayText" class="wolves-intro-overlay-text font-mono">
       {{ overlayText }}
@@ -93,12 +164,13 @@ function handleSkip() {
   align-items: center;
   justify-content: center;
   background: #000;
+  overflow: hidden;
 }
 
-.wolves-intro-overlay-video {
+.wolves-intro-overlay-player {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  pointer-events: none;
 }
 
 .wolves-intro-overlay-text {

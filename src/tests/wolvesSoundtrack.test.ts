@@ -1,6 +1,7 @@
 import type { WolvesSoundtrackManifest } from '../data/wolves-soundtrack'
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { resetYoutubeIframeApiCacheForTests } from '../composables/useYoutubeIframeApi'
 
 const { loadWolvesSoundtrack } = vi.hoisted(() => ({
   loadWolvesSoundtrack: vi.fn<() => Promise<WolvesSoundtrackManifest>>(),
@@ -149,6 +150,7 @@ beforeEach(() => {
   document.head.querySelectorAll(`script[src="${iframeApiSrc}"]`).forEach(script => script.remove())
   delete (window as any).YT
   delete (window as any).onYouTubeIframeAPIReady
+  resetYoutubeIframeApiCacheForTests()
 })
 
 afterEach(() => {
@@ -156,6 +158,7 @@ afterEach(() => {
   document.head.querySelectorAll(`script[src="${iframeApiSrc}"]`).forEach(script => script.remove())
   delete (window as any).YT
   delete (window as any).onYouTubeIframeAPIReady
+  resetYoutubeIframeApiCacheForTests()
   vi.clearAllMocks()
 })
 
@@ -238,6 +241,23 @@ describe('wolves soundtrack', () => {
 
     await skipIntroOverlay(wrapper)
 
+    expect(loadWolvesSoundtrack).toHaveBeenCalledTimes(1)
+  })
+
+  it('bypasses the intro overlay via the v-model path when skipIntro is set (dev/test simulation helper)', async () => {
+    // Regression test: window.simulateWolvesProgress (a dev/test helper for browser-based
+    // Track 0 timestamp verification) also drives playback via the same v-model:playing prop
+    // as "JOIN THE EVOLUTION". It must NOT show the intro overlay every time it jumps to a
+    // timestamp, so WolvesApp.vue passes skipIntro=true while simulating.
+    const wrapper = mount(WolvesSoundtrack, { props: { playing: false, skipIntro: true } })
+
+    expect(wrapper.find('.wolves-intro-overlay').exists()).toBe(false)
+    expect(loadWolvesSoundtrack).not.toHaveBeenCalled()
+
+    await wrapper.setProps({ playing: true })
+    await flushPromises()
+
+    expect(wrapper.find('.wolves-intro-overlay').exists()).toBe(false)
     expect(loadWolvesSoundtrack).toHaveBeenCalledTimes(1)
   })
 
@@ -404,16 +424,21 @@ describe('wolves soundtrack', () => {
     await wrapper.get('.soundtrack-action').trigger('click')
     await flushPromises()
     await skipIntroOverlay(wrapper)
-    expect(players).toHaveLength(2)
+    // The retry's intro overlay mounts a second time. Because the YouTube IFrame API is
+    // already loaded (from the first attempt above), it constructs a transient player of its
+    // own before Skip destroys it, landing at players[1]; the real retried playlist player is
+    // players[2].
+    expect(players).toHaveLength(3)
     expect(wrapper.get('[data-testid="wolves-player-host"]').element).toBe(persistentHost)
     expect(wrapper.element.contains(persistentHost)).toBe(true)
     expect(persistentHost.contains(players[0].mountedNode)).toBe(false)
-    expect(persistentHost.contains(players[1].mountedNode)).toBe(true)
+    expect(persistentHost.contains(players[1].mountedNode)).toBe(false)
+    expect(persistentHost.contains(players[2].mountedNode)).toBe(true)
 
-    players[1].triggerReady()
+    players[2].triggerReady()
     await flushPromises()
 
-    expect(players[1].playVideo).toHaveBeenCalledTimes(1)
+    expect(players[2].playVideo).toHaveBeenCalledTimes(1)
     expect(wrapper.text()).toContain('Open Source is about supporting maintainers. Prove it.')
   })
 })

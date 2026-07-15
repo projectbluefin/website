@@ -2,7 +2,7 @@
  * Pure sequencing logic for the Wolves "Start Experience" intro video overlay.
  *
  * Kept separate from the Vue component so the state machine (advance / skip / overlay text
- * lookup) can be unit tested without needing real <video> playback, which jsdom does not
+ * lookup) can be unit tested without needing a real YouTube player, which jsdom does not
  * support.
  */
 
@@ -14,7 +14,7 @@ export interface IntroOverlayTextCue {
 
 export interface IntroVideoSpec {
   readonly id: string
-  readonly src: string
+  readonly youtubeVideoId: string
   readonly overlays?: readonly IntroOverlayTextCue[]
 }
 
@@ -61,19 +61,20 @@ export function activeOverlayText(
 }
 
 /**
- * The intro video played before the live playlist experience begins. The live experience's
- * own hero moment is the YouTube-hosted Track 0 playback that `startSoundtrack()` already
- * starts once this sequence completes — there is no separate local hero video file to chain
- * here, so this sequence contains only the new, self-produced intro video.
+ * The intro video played before the live playlist experience begins: an official YouTube
+ * IFrame embed referencing a real `youtubeVideoId`, the same legitimate pattern already used
+ * for every track in `src/data/wolves-soundtrack.ts` / `public/wolves-playlist.json` — never a
+ * downloaded/re-encoded local copy of someone else's footage.
  *
- * Paths are resolved against BASE_URL so fork previews and production both work
- * (see AGENTS.md "Public asset fetches" convention).
+ * The live experience's own hero moment is the YouTube-hosted Track 0 playback that
+ * `startSoundtrack()` already starts once this sequence completes, so there is no separate
+ * local hero video to chain here.
  */
-export function buildIntroVideoSequence(baseUrl: string): readonly IntroVideoSpec[] {
+export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
   return [
     {
       id: 'wolves-intro',
-      src: `${baseUrl}videos/wolves-intro-1440p.mp4`,
+      youtubeVideoId: 'BKm0TPqeOjY',
       overlays: [
         { text: 'In this world ... our contributors are not just stewards, they are Guardians!', start: 0, end: 6 },
         { text: 'Who would _dare_ to Fight for the User', start: 6, end: 12 },
