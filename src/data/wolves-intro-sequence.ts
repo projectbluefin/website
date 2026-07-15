@@ -340,7 +340,7 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
           // (confirmed by eye in-browser) — the file literally named "...-day.webp" is the
           // darker/dusk frame and "...-night.webp" is the brighter frame, so the `day`/`night`
           // keys below intentionally point at the opposite filenames to render correctly.
-          text: 'One day the changed everything ...',
+          text: 'One day changed everything',
           start: 25.02,
           end: 37.46,
           backgroundCrossfade: [{ day: 'wolves-intro/bluefin-collapse-night.webp', night: 'wolves-intro/bluefin-collapse-day.webp' }],
