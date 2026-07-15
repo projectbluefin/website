@@ -186,4 +186,41 @@ describe('wolvesCreatorShortsInterstitial', () => {
     expect(players).toHaveLength(2)
     expect(right.playVideo).toHaveBeenCalledTimes(1)
   })
+
+  it('does not swap the active side when the still-inactive, preloaded side errors', async () => {
+    mount(WolvesCreatorShortsInterstitial)
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+
+    const [left, right] = players
+
+    // Cassidy (right) is inactive/preloaded at this point -- an error on her cued video must
+    // only skip that one broken entry, never hand control to her or restart Lindsay's turn.
+    right.triggerError()
+    await flushPromises()
+    await nextTick()
+
+    expect(right.cueVideoById).toHaveBeenCalledWith(wolvesCreatorShortsCassidyWilliams[1].videoId)
+    expect(right.playVideo).not.toHaveBeenCalled()
+    expect(left.loadVideoById).not.toHaveBeenCalled()
+    expect(captionText('left')).toContain(wolvesCreatorShortsLindsayNikole[0].title)
+  })
+
+  it('emits complete without ever mounting a player when the IFrame API fails to load entirely', async () => {
+    document.head.querySelectorAll('script[src="https://www.youtube.com/iframe_api"]').forEach(script => script.remove())
+    delete (window as any).YT
+    delete (window as any).onYouTubeIframeAPIReady
+
+    const wrapper = mount(WolvesCreatorShortsInterstitial)
+    await flushPromises()
+
+    const script = document.querySelector('script[src="https://www.youtube.com/iframe_api"]')
+    expect(script).not.toBeNull()
+    script?.dispatchEvent(new Event('error'))
+    await flushPromises()
+
+    expect(players).toHaveLength(0)
+    expect(wrapper.emitted('complete')).toHaveLength(1)
+  })
 })

@@ -56,6 +56,19 @@ function otherSideOf(side: Side): Side {
   return side === 'left' ? 'right' : 'left'
 }
 
+/**
+ * A preloaded (inactive, silently cued) video failed before it ever got a turn to play -- skip
+ * just that one broken entry for its own side, without touching which side is active.
+ */
+function skipBrokenPreload(side: Side) {
+  displayedIndex[side] += 1
+  if (displayedIndex[side] >= lists[side].length) {
+    exhausted[side] = true
+    return
+  }
+  players[side]?.cueVideoById?.(lists[side][displayedIndex[side]].videoId)
+}
+
 function advanceTurn(finishedSide: Side) {
   displayedIndex[finishedSide] += 1
   if (displayedIndex[finishedSide] >= lists[finishedSide].length) {
@@ -118,14 +131,22 @@ function createPlayer(host: HTMLDivElement, side: Side, autoplay: boolean): Yout
     },
     events: {
       onStateChange: (event: { data: number }) => {
-        if (event.data === getYoutubePlayerState().ENDED) {
+        // The inactive (silently cued) side is never actually playing, so a real ENDED event
+        // can only legitimately come from the currently active side.
+        if (event.data === getYoutubePlayerState().ENDED && side === activeSide.value) {
           advanceTurn(side)
         }
       },
       onError: () => {
-        // A missing/restricted short must never block the ping-pong or the return to the
-        // live soundtrack.
-        advanceTurn(side)
+        // A missing/restricted short must never block the ping-pong or the return to the live
+        // soundtrack. An error on the active side ends its turn like normal; an error on the
+        // still-inactive, preloaded side just skips that one broken entry without swapping.
+        if (side === activeSide.value) {
+          advanceTurn(side)
+        }
+        else {
+          skipBrokenPreload(side)
+        }
       },
     },
   })
