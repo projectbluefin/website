@@ -74,6 +74,18 @@ bugs before being understood.
    Skip) can land in the gap between two awaits — this becomes more likely,
    not less, once the API is already cached from an earlier action in the
    same test run, since the first await then resolves near-instantly.
+7. **The debug scrub bar's real player poll loop can silently overwrite the
+   value you just set.** `WolvesIntroOverlay.vue` polls the live `YT.Player`'s
+   `getCurrentTime()` every ~200ms to drive `currentTime`. When frame-verifying
+   a cue boundary by programmatically setting the debug scrub `<input>`'s
+   value and dispatching an `input` event, reading any derived state (which
+   guardian plate is showing, the displayed time readout) more than ~300ms
+   later lets that poll loop drift `currentTime` forward past your intended
+   target, producing a false read that looks like the boundary is off by a
+   noticeable amount when it isn't. Read the state immediately after
+   dispatching the scrub event, and cross-check against the on-screen time
+   readout (e.g. `.wolves-intro-overlay-debug-time`) rather than assuming your
+   requested value took effect.
 
 ## Common Rationalizations
 
@@ -83,6 +95,7 @@ bugs before being understood.
 | "`wrapper.find()` didn't find it, so the overlay isn't rendering." | If the component uses `<Teleport to="body">`, the render tree the wrapper walks doesn't include it. Check `document.body` before concluding it's broken. |
 | "I already loaded the YouTube API once this test file, no need to reset." | The module-level cache is a true singleton across the whole file. Skipping the reset leaks state into later tests and produces flaky, order-dependent failures. |
 | "One `await` guard at the top of the function is enough." | Only protects against cancellation before the first await. A second await reopens the race window. |
+| "The plate name changed right after I scrubbed, so the boundary must be off." | Check how long you waited before reading. If it's more than ~300ms, the poll loop may have already advanced `currentTime` past your target — re-test with an immediate read and cross-check the time readout. |
 
 ## Red Flags
 
@@ -100,6 +113,9 @@ bugs before being understood.
 - Any local video file under `public/videos/` sourced from third-party
   footage — this repository only permits YouTube IFrame embeds for
   third-party video, never downloaded/re-encoded copies.
+- A cue-boundary verification that reads state hundreds of milliseconds after
+  setting the debug scrub value, rather than immediately — the reading may
+  reflect a poll-drifted time, not the value you actually set.
 
 ## Verification
 
@@ -118,3 +134,6 @@ bugs before being understood.
       nodes).
 - [ ] No third-party video is downloaded or re-encoded locally; only
       `youtubeVideoId` + IFrame Player embeds are used.
+- [ ] Any cue-boundary frame verification reads state immediately after
+      dispatching the scrub event and cross-checks the on-screen time
+      readout, not just the requested scrub value.
