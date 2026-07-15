@@ -446,7 +446,7 @@ function handleSeek(event: MouseEvent) {
 watch(() => props.playing, (newPlaying) => {
   if (newPlaying && status.value !== 'playing') {
     if (status.value === 'idle' || status.value === 'error') {
-      void startSoundtrack()
+      introOverlayActive.value = true
     }
     else {
       resumePlayback()

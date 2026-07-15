@@ -220,6 +220,27 @@ describe('wolves soundtrack', () => {
     expect(document.querySelector(`script[src="${iframeApiSrc}"]`)).not.toBeNull()
   })
 
+  it('shows the intro overlay before starting when the parent drives playback via v-model (Join the Evolution)', async () => {
+    // Regression test: WolvesApp.vue's "JOIN THE EVOLUTION" button sets isPlaying = true
+    // directly (v-model:playing) instead of clicking the in-component Start Soundtrack
+    // button. That parent-driven path must also gate on the intro overlay, not call
+    // startSoundtrack() directly.
+    const wrapper = mount(WolvesSoundtrack, { props: { playing: false } })
+
+    expect(wrapper.find('.wolves-intro-overlay').exists()).toBe(false)
+    expect(loadWolvesSoundtrack).not.toHaveBeenCalled()
+
+    await wrapper.setProps({ playing: true })
+    await flushPromises()
+
+    expect(wrapper.find('.wolves-intro-overlay').exists()).toBe(true)
+    expect(loadWolvesSoundtrack).not.toHaveBeenCalled()
+
+    await skipIntroOverlay(wrapper)
+
+    expect(loadWolvesSoundtrack).toHaveBeenCalledTimes(1)
+  })
+
   it('keeps the existing primary play button operable after playback starts', async () => {
     const wrapper = mount(WolvesSoundtrack)
     const primaryButton = wrapper.get('button.soundtrack-action')
