@@ -291,10 +291,10 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
         // Cold open on total darkness -- nothing exists yet, before Earth or its wallpaper
         // scenes even enter the story. The bluefin-01..12 wallpaper cycle below only begins
         // once life/Earth is introduced starting with the next line.
-        { text: 'A Gardener and Winnower walked amongst the stars', start: 0, end: 5 },
+        { text: 'A Gardener and a Winnower walked among the stars.', start: 0, end: 5 },
         {
           text: `One to spread life, and one to cull the dross
-to shape the Garden of Earth`,
+to shape the Garden of Earth.`,
           start: 5,
           end: 13.75,
           backgroundCrossfade: [bluefinMonthCrossfadePair(2), bluefinMonthCrossfadePair(1)],
@@ -305,34 +305,32 @@ to shape the Garden of Earth`,
           // (confirmed by eye in-browser) — the file literally named "...-day.webp" is the
           // darker/dusk frame and "...-night.webp" is the brighter frame, so the `day`/`night`
           // keys below intentionally point at the opposite filenames to render correctly.
-          text: 'One day changed the Garden forever',
+          text: 'One day changed the Garden forever.',
           start: 13.75,
           end: 25,
           backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
         },
         {
-          text: 'New Children arose, and filled the pattern.',
+          text: 'New Children arose and filled the pattern.',
           start: 25,
           end: 28.75,
           backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
         },
         {
-          text: 'For eons Maintainer-Guardians cultivated the Garden ...',
+          text: 'For eons, Maintainer-Guardians cultivated the Garden...',
           start: 28.75,
           end: 36.25,
           backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
         },
         {
-          text: `Until the Birth of Artificial Intelligence
-Society decided that Guardians were not only unnecessary,
-
-But a threat.`,
+          text: `Until the AI Society deemed Guardians unnecessary.
+And then, a threat.`,
           start: 36.25,
           end: 45,
           backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
         },
         {
-          text: 'The armies of the galaxy came claim a bountiful, unprotected Garden',
+          text: 'Others came to claim a bountiful and unprotected Garden.',
           start: 45,
           end: 50,
           backgroundCrossfade: [{ day: 'wolves-intro/bluefin-collapse-night.webp', night: 'wolves-intro/bluefin-collapse-day.webp' }],
@@ -349,7 +347,6 @@ humanity had lost its future`,
         },
         {
           text: `For the heart of any race is destroyed
-
 And its will to survive is utterly Broken
 When its children are taken from it`,
           start: 59.375,
@@ -359,7 +356,8 @@ When its children are taken from it`,
           backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
         },
         {
-          text: 'Now what\'s left of a proud order fights for survial, surrounded by predators',
+          text: `Now, what's left of a proud order fights for survival,
+surrounded by predators.`,
           start: 65,
           end: 70,
           emphasis: 'dominant',

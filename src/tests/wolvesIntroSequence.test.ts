@@ -102,18 +102,37 @@ describe('wolves intro overlay sequence', () => {
     }
 
     expect(prologue.duration).toBe(75)
+    expect(prologue.overlays?.map(cue => cue.text)).toEqual([
+      'A Gardener and a Winnower walked among the stars.',
+      `One to spread life, and one to cull the dross
+to shape the Garden of Earth.`,
+      'One day changed the Garden forever.',
+      'New Children arose and filled the pattern.',
+      'For eons, Maintainer-Guardians cultivated the Garden...',
+      `Until the AI Society deemed Guardians unnecessary.
+And then, a threat.`,
+      'Others came to claim a bountiful and unprotected Garden.',
+      `In the space of a few days,
+humanity had lost its future`,
+      `For the heart of any race is destroyed
+And its will to survive is utterly Broken
+When its children are taken from it`,
+      `Now, what's left of a proud order fights for survival,
+surrounded by predators.`,
+      'B L U E F I N — seven days to the wolves',
+    ])
     expect(prologue.overlays).toEqual(expect.arrayContaining([
-      expect.objectContaining({ text: 'A Gardener and Winnower walked amongst the stars', start: 0, end: 5 }),
+      expect.objectContaining({ text: 'A Gardener and a Winnower walked among the stars.', start: 0, end: 5 }),
       expect.objectContaining({
         text: `One to spread life, and one to cull the dross
-to shape the Garden of Earth`,
+to shape the Garden of Earth.`,
         start: 5,
         end: 13.75,
         textPosition: 'bottom-right',
       }),
-      expect.objectContaining({ text: 'One day changed the Garden forever', start: 13.75, end: 25 }),
+      expect.objectContaining({ text: 'One day changed the Garden forever.', start: 13.75, end: 25 }),
       expect.objectContaining({
-        text: 'Until the Birth of Artificial Intelligence\nSociety decided that Guardians were not only unnecessary,\n\nBut a threat.',
+        text: 'Until the AI Society deemed Guardians unnecessary.\nAnd then, a threat.',
         start: 36.25,
         end: 45,
       }),
@@ -126,7 +145,6 @@ humanity had lost its future`,
       }),
       expect.objectContaining({
         text: `For the heart of any race is destroyed
-
 And its will to survive is utterly Broken
 When its children are taken from it`,
         start: 59.375,
@@ -134,7 +152,7 @@ When its children are taken from it`,
         textPosition: 'bottom',
       }),
       expect.objectContaining({
-        text: 'Now what\'s left of a proud order fights for survial, surrounded by predators',
+        text: 'Now, what\'s left of a proud order fights for survival,\nsurrounded by predators.',
         start: 65,
         end: 70,
         textPosition: 'bottom',
@@ -158,11 +176,11 @@ When its children are taken from it`,
     expect(serializedCues).not.toContain('bluefin-12')
     expect(prologue.overlays).toEqual(expect.arrayContaining([
       expect.objectContaining({
-        text: 'One day changed the Garden forever',
+        text: 'One day changed the Garden forever.',
         backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
       }),
       expect.objectContaining({
-        text: 'The armies of the galaxy came claim a bountiful, unprotected Garden',
+        text: 'Others came to claim a bountiful and unprotected Garden.',
         start: 45,
         end: 50,
         backgroundCrossfade: [{
@@ -180,7 +198,6 @@ humanity had lost its future`,
       }),
       expect.objectContaining({
         text: `For the heart of any race is destroyed
-
 And its will to survive is utterly Broken
 When its children are taken from it`,
         start: 59.375,
@@ -189,7 +206,7 @@ When its children are taken from it`,
         textPosition: 'bottom',
       }),
       expect.objectContaining({
-        text: 'Now what\'s left of a proud order fights for survial, surrounded by predators',
+        text: 'Now, what\'s left of a proud order fights for survival,\nsurrounded by predators.',
         start: 65,
         end: 70,
         backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
