@@ -69,6 +69,34 @@ describe('wolves playlist metadata generator', () => {
     expect(fetchMock).toHaveBeenCalledWith(`${import.meta.env.BASE_URL}wolves-playlist.json`)
   })
 
+  it('keeps generated playlist metadata compatible until reviewed Spotify mappings exist', async () => {
+    const manifest = {
+      source: {
+        provider: 'youtube' as const,
+        playlistId: 'PLA78oiE-RGAE',
+        playlistUrl: 'https://www.youtube.com/playlist?list=PLA78oiE-RGAE',
+        musicUrl: 'https://music.youtube.com/playlist?list=PLA78oiE-RGAE',
+        spotifyUri: null,
+      },
+      tracks: [{
+        id: 'abc123',
+        title: '7 Days to the Wolves',
+        artist: 'Nightwish',
+        artwork: 'wolves-artwork/abc123.jpg',
+        youtubeVideoId: 'abc123',
+      }],
+    }
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(manifest), { status: 200 })))
+
+    const loaded = await loadWolvesSoundtrack()
+
+    expect(loaded).toEqual(manifest)
+    expect(loaded.source).not.toHaveProperty('spotifyPlaylistUri')
+    expect(loaded.source).not.toHaveProperty('spotifyPlaylistUrl')
+    expect(loaded.tracks[0]).not.toHaveProperty('spotifyUri')
+  })
+
   it('throws when the soundtrack manifest request fails', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 503 })))
 

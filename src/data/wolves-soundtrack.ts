@@ -1,3 +1,9 @@
+export type {
+  PlaybackProvider,
+  SpotifyTrackMapping,
+  WolvesPlaybackProgress,
+} from './wolves-playback'
+
 export interface SoundtrackTrack {
   id: string
   title: string
