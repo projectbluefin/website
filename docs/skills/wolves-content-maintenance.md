@@ -44,8 +44,17 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
     Keep approved per-track and playlist Spotify URIs when regenerating the
     YouTube manifest; do not accept a newly introduced YouTube video without
     its owner-reviewed URI.
-9. Run the "Before You Commit" checklist in the reference: diff confined to open surfaces, lint/typecheck/test/build green, `public/dakota-versions.json` unstaged, real-player timestamp verification for timeline-adjacent edits.
-10. After pushing, confirm the pushed SHA's "Deploy to GitHub Pages" workflow succeeds before reporting completion.
+9. Keep Spotify unavailable unless the reviewed catalog validates against the loaded
+   YouTube manifest and produces a non-empty ordered URI list. Do not infer, search,
+   reorder, or silently fall back to a different Spotify track.
+10. After the Web Playback SDK reports its device ID, transfer to that exact device
+   with `play: false`, then start the reviewed ordered `uris` against that same
+   device. Never combine `context_uri` and `uris`.
+11. Preserve the Wolves 100ms progress contract by storing incoming SDK state and
+   extrapolating a clamped position only while playing. Do not poll SDK state on the
+   100ms timer. Treat an unknown SDK URI as a controlled error that stops the clock.
+12. Run the "Before You Commit" checklist in the reference: diff confined to open surfaces, lint/typecheck/test/build green, `public/dakota-versions.json` unstaged, real-player timestamp verification for timeline-adjacent edits.
+13. After pushing, confirm the pushed SHA's "Deploy to GitHub Pages" workflow succeeds before reporting completion.
 
 ## Common Rationalizations
 
@@ -68,6 +77,10 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 - A timing-sensitive slide that remains positioned only by generated-array order.
 - A post-hero gallery implementation that groups or rotates photos.
 - A Spotify URI, artist, title, or alternate recording inferred without owner review.
+- Spotify startup that omits catalog validation, starts a context instead of the
+  reviewed URI list, or targets a device other than the SDK-ready device.
+- A 100ms Spotify timer that calls `getCurrentState()` instead of extrapolating from
+  registered state callbacks.
 - Emojis or ellipses introduced anywhere.
 
 ## Verification
@@ -90,3 +103,6 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 - Spotify Web API PKCE flow: `/websites/developer_spotify_web-api`. PKCE exchanges
   the authorization code using `client_id`, `code_verifier`, and the callback URI;
   it does not require a client secret.
+- Spotify playback transfer and ordered URI startup:
+  `/websites/developer_spotify_web-api`. Transfer playback with one SDK device ID
+  and `play: false`, then call `/me/player/play?device_id=<id>` with `{ uris }`.
