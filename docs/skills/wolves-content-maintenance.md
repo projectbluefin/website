@@ -29,8 +29,9 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 2. Confirm the requested change lands entirely on an open surface (see the Open Surfaces table in the reference). If it requires a locked surface, stop and tell the user.
 3. Apply user-supplied text verbatim. Never generate fiction, chapter names, or creative prose (see `docs/skills/editorial-policy.md`).
 4. Keep the three Track 0 content layers separate: top-bar comms (`wolves-incoming-signal.txt`), thesis overlay (`wolves-thesis-sequence.ts`, locked), lore column (`src/data/lore/*.md`).
-5. Run the "Before You Commit" checklist in the reference: diff confined to open surfaces, lint/typecheck/test/build green, `public/dakota-versions.json` unstaged, real-player timestamp verification for timeline-adjacent edits.
-6. After pushing, confirm the pushed SHA's "Deploy to GitHub Pages" workflow succeeds before reporting completion.
+5. For an explicit owner-authorized fixed slide window, put the identifier and interval in `src/data/wolves-track-zero-slides.ts`; add independent reorder, rendered-boundary, and player-progress assertions. Do not turn a generated-order coincidence into an undocumented lock.
+6. Run the "Before You Commit" checklist in the reference: diff confined to open surfaces, lint/typecheck/test/build green, `public/dakota-versions.json` unstaged, real-player timestamp verification for timeline-adjacent edits.
+7. After pushing, confirm the pushed SHA's "Deploy to GitHub Pages" workflow succeeds before reporting completion.
 
 ## Common Rationalizations
 
@@ -40,6 +41,7 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 | "The component needs one extra class for my new record kind." | New record kinds are design work and require explicit owner approval. Existing kinds cover all routine additions. |
 | "I can write placeholder lore that fits the tone." | The user authors all fiction. Placeholders are standard lorem ipsum only. |
 | "The build passed, so the change is verified." | A green build is not verification. Seek the real Track 0 player at affected timestamps and check the live deploy. |
+| "The deterministic shuffle already places this slide correctly." | Generated order is not a timing lock. An owner-authorized fixed window needs explicit data plus independent browser assertions. |
 
 ## Red Flags
 
@@ -48,6 +50,7 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 - Reordered lore, music, or timeline entries without explicit user instruction.
 - Hand-edits to `src/components/wolves/wallpapers-list.ts` (generated) or thesis constants.
 - Adding or changing the theater-caption rendering mechanism itself in `WolvesComicReader.vue` (it already exists; only the `curatedDescriptions` text content is an open surface).
+- A timing-sensitive slide that remains positioned only by generated-array order.
 - Emojis or ellipses introduced anywhere.
 
 ## Verification
@@ -56,4 +59,5 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 - [ ] `npm run lint:fix`, `npm run typecheck`, `npm run test:run`, `npm run build` all pass.
 - [ ] All added prose came verbatim from the user or recovered authored sources.
 - [ ] Timeline anchors (0:00, 150-220, 398-425) and thesis text are byte-identical.
+- [ ] Each owner-authorized fixed slide window has ordering, rendered-boundary, and player-progress assertions.
 - [ ] Affected Track 0 timestamps verified on the real player; deploy workflow for the pushed SHA succeeded.

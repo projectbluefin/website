@@ -169,11 +169,14 @@ This is the feature users depend on most. Its whole value is that adding a slide
 
 **Theater captions (optional, per-slide)**: a slide may optionally carry a longer `description` in the `curatedDescriptions` dictionary in `scripts/generate-wallpapers.js` (parallel to `curatedTitles`), when the video's real description has substantive narrative prose worth surfacing (not just timestamps, SEO keyword lists, or affiliate links — skip the description field entirely for those). When present, `WolvesComicReader.vue` renders that slide with a large `.wallpaper-theater-caption` (title + paragraphs, `clamp()`-sized for 10-foot/TV-distance legibility) instead of the standard small `.wallpaper-caption`/`.flickr-caption` pill. Every slide without a `description` keeps the small pill unchanged. Use the real video description text (via `yt-dlp --skip-download --print description "<url>"`), verbatim, not summarized or invented — paragraph breaks (`\n\n`) may be chosen for readability, but wording must not be altered.
 
+**Jono Bacon timing lock**: `interview-jono-bacon-cult-psychology-kubernetes.webp` is an owner-authorized exception to the general generated rotation. It occupies the fixed Track 0 data window from **167.8s to 171.88s** (2:47.8 to 2:51.88), after which the standard `TIMELINE_BOUNDARY_EPSILON_SECONDS` handoff selects the next slide at 171.879s. `src/data/wolves-track-zero-slides.ts` owns the identifier, interval, and reorder-safe pin; do not move or remove this lock without an explicit owner request. `src/tests/wolvesTrackZeroSlides.test.ts`, `src/tests/wolvesComicReader.test.ts`, and `tests/wolves-movie-flow.mjs` are the independent ordering, rendered-boundary, and player-progress assertions.
+
 **What agents may touch**:
 
 - Image files in the three wallpaper folders (add or remove, compressed WebP only).
 - Title strings in the `curatedTitles` dictionary in `scripts/generate-wallpapers.js`.
 - Description strings in the `curatedDescriptions` dictionary in `scripts/generate-wallpapers.js` (verbatim video description text only, per above).
+- `src/data/wolves-track-zero-slides.ts` only for an owner-authorized fixed Track 0 slide window.
 
 **What agents must not touch**:
 

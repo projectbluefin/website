@@ -162,6 +162,24 @@ describe('wolvesComicReader', () => {
     expect(activeTimelineImage(wrapper)).toContain('bluefin-tenacious-day.webp')
   })
 
+  it('keeps the Jono Bacon slide in its authored Track 0 window', async () => {
+    const jonoPath = 'wolves/people/interview-jono-bacon-cult-psychology-kubernetes.webp'
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        trackIndex: 0,
+        playlistCurrentTime: 167.8,
+      },
+    })
+
+    expect(activeTimelineImage(wrapper)).toContain(jonoPath)
+
+    await wrapper.setProps({ playlistCurrentTime: 171.878 })
+    expect(activeTimelineImage(wrapper)).toContain(jonoPath)
+
+    await wrapper.setProps({ playlistCurrentTime: 171.879 })
+    expect(activeTimelineImage(wrapper)).not.toContain(jonoPath)
+  })
+
   it('uses each Track 0 wallpaper once', async () => {
     const wrapper = mount(WolvesComicReader, {
       props: {

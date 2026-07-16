@@ -8,6 +8,7 @@ import type { SoundtrackTrack, WolvesSoundtrackManifest } from '@/data/wolves-so
 
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
+import { jonoBaconSlideId, jonoBaconTrackZeroWindow, pinJonoBaconAtTrackZeroWindow } from '@/data/wolves-track-zero-slides'
 import { wallpapers } from './wallpapers-list'
 
 const props = defineProps<{
@@ -271,7 +272,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
 
   const shuffledDaynight = deterministicShuffle(daynightShowcase, 101)
   const shuffledNormalShowcase = deterministicShuffle(normalShowcase, 202)
-  const shuffledPeople = deterministicShuffle(localPeople, 303)
+  const shuffledPeople = pinJonoBaconAtTrackZeroWindow(deterministicShuffle(localPeople, 303))
 
   const result: TimelineSlide[] = []
   let currentTime = 0
@@ -309,18 +310,59 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   // 3. Heavy Chorus 1 / Verse 2 / Chorus 2 [127, 229] seconds (102s total) -> 17 leftover showcase + 15 people wallpapers
   const normalPool2 = shuffledNormalShowcase.slice(22, 39)
   const peoplePool1 = shuffledPeople.slice(0, 15)
-  const sec3Items = [...normalPool2, ...peoplePool1]
-  const sec3BaseDuration = 102 / sec3Items.length
-  for (const item of sec3Items) {
-    const duration = sec3BaseDuration
+  const jonoPhoto = peoplePool1.find(item => item.id === jonoBaconSlideId)
+  const remainingPeoplePool1 = peoplePool1.filter(item => item.id !== jonoBaconSlideId)
+
+  if (!jonoPhoto) {
+    const sec3Items = [...normalPool2, ...peoplePool1]
+    const sec3BaseDuration = 102 / sec3Items.length
+    for (const item of sec3Items) {
+      const duration = sec3BaseDuration
+      result.push({
+        ...item,
+        path: item.path || '',
+        startTime: currentTime,
+        duration,
+        endTime: currentTime + duration
+      })
+      currentTime += duration
+    }
+  }
+  else {
+    const beforeJonoDuration = (jonoBaconTrackZeroWindow.startTime - currentTime) / normalPool2.length
+    for (const item of normalPool2) {
+      const duration = beforeJonoDuration
+      result.push({
+        ...item,
+        path: item.path || '',
+        startTime: currentTime,
+        duration,
+        endTime: currentTime + duration
+      })
+      currentTime += duration
+    }
+
     result.push({
-      ...item,
-      path: item.path || '',
+      ...jonoPhoto,
+      path: jonoPhoto.path || '',
       startTime: currentTime,
-      duration,
-      endTime: currentTime + duration
+      duration: jonoBaconTrackZeroWindow.endTime - jonoBaconTrackZeroWindow.startTime,
+      endTime: jonoBaconTrackZeroWindow.endTime
     })
-    currentTime += duration
+    currentTime = jonoBaconTrackZeroWindow.endTime
+
+    const afterJonoDuration = (229 - currentTime) / remainingPeoplePool1.length
+    for (const item of remainingPeoplePool1) {
+      const duration = afterJonoDuration
+      result.push({
+        ...item,
+        path: item.path || '',
+        startTime: currentTime,
+        duration,
+        endTime: currentTime + duration
+      })
+      currentTime += duration
+    }
   }
 
   // 4. Chanting Bridge [229, 277] seconds (48s total) -> 24 people wallpapers shown faster

@@ -102,6 +102,7 @@ try {
           this.config = config
           this.videoId = config.videoId ?? null
           this.playlistIndex = 0
+          this.currentTime = 0
           this.state = window.YT.PlayerState.CUED
           window.__mockWolvesPlayers.push(this)
 
@@ -144,14 +145,16 @@ try {
         }
 
         getCurrentTime() {
-          return 0
+          return this.currentTime
         }
 
         getDuration() {
           return 100
         }
 
-        seekTo() {}
+        seekTo(seconds) {
+          this.currentTime = seconds
+        }
 
         setVolume() {}
 
@@ -234,6 +237,26 @@ try {
     () => window.__mockWolvesSoundtrackPlayer !== null,
     { timeout: 10_000 },
   )
+
+  await page.evaluate(() => {
+    window.__mockWolvesSoundtrackPlayer.seekTo(167.8, true)
+  })
+  await page.waitForTimeout(150)
+  const jonoAtStart = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assertTruthy('Jono Bacon slide is active at 2:47.8', jonoAtStart?.includes('interview-jono-bacon-cult-psychology-kubernetes.webp'))
+
+  await page.evaluate(() => {
+    window.__mockWolvesSoundtrackPlayer.seekTo(171.879, true)
+  })
+  await page.waitForTimeout(150)
+  const jonoAtEnd = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assert('Jono Bacon slide hands off at 2:51.879', jonoAtEnd?.includes('interview-jono-bacon-cult-psychology-kubernetes.webp'), false)
 
   // Advance the soundtrack from Track 0 to Track 1. This should trigger the
   // Creator Shorts interstitial via the movie flow state machine.
