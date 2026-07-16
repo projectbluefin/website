@@ -1,6 +1,6 @@
 import { Buffer } from 'node:buffer'
 import { execFileSync } from 'node:child_process'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -92,39 +92,22 @@ export function normalizePlaylistEntries(entries) {
   })
 }
 
-export function createManifest(tracks, existingManifest = null) {
-  const existingSpotifyPlaylistUri = typeof existingManifest?.source?.spotifyUri === 'string'
-    ? existingManifest.source.spotifyUri
-    : null
-  const existingSpotifyByVideoId = new Map(
-    (existingManifest?.tracks ?? [])
-      .filter(track => typeof track.spotifyUri === 'string')
-      .map(track => [track.youtubeVideoId, track.spotifyUri]),
-  )
-  const hasApprovedSpotifyMappings = existingSpotifyByVideoId.size > 0
-
+function createManifest(tracks) {
   return {
     source: {
       provider: 'youtube',
       playlistId: PLAYLIST_ID,
       playlistUrl: PLAYLIST_URL,
       musicUrl: MUSIC_URL,
-      spotifyUri: existingSpotifyPlaylistUri,
+      spotifyUri: null,
     },
     tracks: tracks.map((track) => {
-      if (hasApprovedSpotifyMappings && !existingSpotifyByVideoId.has(track.youtubeVideoId)) {
-        throw new Error(`No approved Spotify URI for ${track.youtubeVideoId}`)
-      }
-
       const { thumbnailUrl: _thumbnailUrl, ...manifestTrack } = track
       const tempo = TEMPO_CONFIGS[track.id]
-      const spotifyUri = existingSpotifyByVideoId.get(track.youtubeVideoId)
-
-      return {
-        ...manifestTrack,
-        ...tempo,
-        ...(spotifyUri ? { spotifyUri } : {}),
+      if (tempo) {
+        return { ...manifestTrack, ...tempo }
       }
+      return manifestTrack
     }),
   }
 }
@@ -178,27 +161,13 @@ async function downloadArtwork(track) {
 export async function main() {
   const tracks = readPlaylistEntries()
   const downloads = await Promise.all(tracks.map(downloadArtwork))
-  const existingManifest = await readExistingManifest()
 
   await mkdir(join(PUBLIC_DIR, 'wolves-artwork'), { recursive: true })
   await Promise.all(downloads.map(download => writeFile(download.path, download.body)))
   await writeFile(
     join(PUBLIC_DIR, 'wolves-playlist.json'),
-    `${JSON.stringify(createManifest(tracks, existingManifest), null, 2)}\n`,
+    `${JSON.stringify(createManifest(tracks), null, 2)}\n`,
   )
-}
-
-async function readExistingManifest() {
-  try {
-    return JSON.parse(await readFile(join(PUBLIC_DIR, 'wolves-playlist.json'), 'utf8'))
-  }
-  catch (error) {
-    if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
-      return null
-    }
-
-    throw new Error(`Could not read existing Wolves playlist manifest: ${error instanceof Error ? error.message : String(error)}`)
-  }
 }
 
 if (MODULE_PATH && process.argv[1] && MODULE_PATH === resolve(process.argv[1])) {

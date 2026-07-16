@@ -13,7 +13,6 @@
     "test:run": "vitest run",
     "typecheck": "vue-tsc --noEmit",
     "update:wolves-playlist": "node scripts/update-wolves-playlist.js",
-    "sync:wolves-spotify": "node scripts/sync-wolves-spotify-playlist.js",
     "record:wolves": "node record-wolves.cjs"
   },
   "dependencies": {

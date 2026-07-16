@@ -271,18 +271,6 @@ describe('wolves soundtrack', () => {
     expect(document.querySelector(`script[src="${iframeApiSrc}"]`)).not.toBeNull()
   })
 
-  it('keeps Spotify unavailable when the reviewed catalog does not validate against the manifest', async () => {
-    const wrapper = mount(WolvesSoundtrack, {
-      props: { playing: true, provider: 'spotify', skipIntro: true },
-    })
-
-    await flushPromises()
-
-    expect(wrapper.text()).toContain('Spotify playback is unavailable until reviewed catalog mappings are loaded.')
-    expect(document.querySelector(`script[src="${iframeApiSrc}"]`)).toBeNull()
-    expect(document.querySelector('script[src="https://sdk.scdn.co/spotify-player.js"]')).toBeNull()
-  })
-
   it('shows the intro overlay before starting when the parent drives playback via v-model (Join the Evolution)', async () => {
     // Regression test: WolvesApp.vue's "JOIN THE EVOLUTION" button sets isPlaying = true
     // directly (v-model:playing) instead of clicking the in-component Start Soundtrack

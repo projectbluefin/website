@@ -32,34 +32,8 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 5. Treat intro copy as a 10-foot theater experience: retain theater-readable type, use user-authorized line breaks and cue splits for long copy, and keep `dominant` cues more forceful than standard cues. Do not make text smaller to fit.
 6. For an explicit owner-authorized fixed slide window, put the identifier and interval in `src/data/wolves-track-zero-slides.ts`; add independent reorder, rendered-boundary, and player-progress assertions. Do not turn a generated-order coincidence into an undocumented lock.
 7. For post-hero Flickr galleries, use one complete Fisher-Yates shuffle across songs 2 onward. Do not group, rotate, or reuse photos. Preserve Track 0's authored schedule and locks.
-8. For a provider-gated soundtrack, record only owner-reviewed exact catalog
-   mappings in YouTube playlist order. Never use runtime search, fuzzy matching,
-   or a substitute track; leave the Spotify catalog and manifest fields absent
-   until every mapping and the owner-created playlist are approved.
-   - Once the owner has supplied every exact mapping, run
-    `SPOTIFY_CLIENT_ID=<public-client-id> npm run sync:wolves-spotify` locally.
-    The command uses local PKCE; never provide, store, or print a client secret.
-    Set `SPOTIFY_WOLVES_PLAYLIST_ID` after the initial public playlist is created.
-   - The command must fail before authorization when any catalog mapping is absent.
-    Keep approved per-track and playlist Spotify URIs when regenerating the
-    YouTube manifest; do not accept a newly introduced YouTube video without
-    its owner-reviewed URI.
-9. Keep Spotify unavailable unless the reviewed catalog validates against the loaded
-   YouTube manifest and produces a non-empty ordered URI list. Do not infer, search,
-   reorder, or silently fall back to a different Spotify track.
-10. After the Web Playback SDK reports its device ID, transfer to that exact device
-   with `play: false`, then start the reviewed ordered `uris` against that same
-   device. Never combine `context_uri` and `uris`.
-11. Preserve the Wolves 100ms progress contract by storing incoming SDK state and
-   extrapolating a clamped position only while playing. Do not poll SDK state on the
-   100ms timer. Treat an unknown SDK URI as a controlled error that stops the clock.
-12. Treat every Spotify `start()` as a new playback generation. When replacing a
-   terminal or prior player, disconnect it, clear its device ID and progress
-   baseline, and register callbacks on the replacement player with its creating
-   generation captured. `ready`, state, and error callbacks from an older
-   generation must not resolve, fail, or revive the current lifecycle.
-13. Run the "Before You Commit" checklist in the reference: diff confined to open surfaces, lint/typecheck/test/build green, `public/dakota-versions.json` unstaged, real-player timestamp verification for timeline-adjacent edits.
-14. After pushing, confirm the pushed SHA's "Deploy to GitHub Pages" workflow succeeds before reporting completion.
+8. Run the "Before You Commit" checklist in the reference: diff confined to open surfaces, lint/typecheck/test/build green, `public/dakota-versions.json` unstaged, real-player timestamp verification for timeline-adjacent edits.
+9. After pushing, confirm the pushed SHA's "Deploy to GitHub Pages" workflow succeeds before reporting completion.
 
 ## Common Rationalizations
 
@@ -81,13 +55,6 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 - Adding or changing the theater-caption rendering mechanism itself in `WolvesComicReader.vue` (it already exists; only the `curatedDescriptions` text content is an open surface).
 - A timing-sensitive slide that remains positioned only by generated-array order.
 - A post-hero gallery implementation that groups or rotates photos.
-- A Spotify URI, artist, title, or alternate recording inferred without owner review.
-- Spotify startup that omits catalog validation, starts a context instead of the
-  reviewed URI list, or targets a device other than the SDK-ready device.
-- A 100ms Spotify timer that calls `getCurrentState()` instead of extrapolating from
-  registered state callbacks.
-- Reusing an SDK player across starts while its callbacks are closed over a prior
-  generation, or allowing an old `ready` callback to resolve a newer start.
 - Emojis or ellipses introduced anywhere.
 
 ## Verification
@@ -98,24 +65,5 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 - [ ] Timeline anchors (0:00, 150-220, 398-425) and thesis text are byte-identical.
 - [ ] Each owner-authorized fixed slide window has ordering, rendered-boundary, and player-progress assertions.
 - [ ] Later-track gallery assertions show a non-repeating shuffled sequence.
-- [ ] Provider catalog mappings are exact, unique, reviewed, and ordered to match
-  the YouTube manifest; no unapproved mapping reaches runtime data.
-- [ ] The local Spotify sync tests cover ordered replacement, no-op reconciliation,
-  absent-catalog failure before authorization, and Spotify URI preservation.
-- [ ] A focused adapter regression fails one lifecycle, starts another, and verifies
-  that the new player's state event emits normalized progress while old callbacks
-  cannot affect it.
 - [ ] After renaming or converting any Track 0 people asset, regenerate `wallpapers-list.ts` and recalculate finale-photo browser checkpoints. The generator sorts filenames, so an extension change can alter the deterministic finale shuffle even when the image content is unchanged.
 - [ ] Affected Track 0 timestamps verified on the real player; deploy workflow for the pushed SHA succeeded.
-
-## Sources
-
-- Spotify Web API PKCE flow: `/websites/developer_spotify_web-api`. PKCE exchanges
-  the authorization code using `client_id`, `code_verifier`, and the callback URI;
-  it does not require a client secret.
-- Spotify playback transfer and ordered URI startup:
-  `/websites/developer_spotify_web-api`. Transfer playback with one SDK device ID
-  and `play: false`, then call `/me/player/play?device_id=<id>` with `{ uris }`.
-- Spotify streaming eligibility: `/websites/developer_spotify_web-api`. The
-  `streaming` scope is available to eligible Premium listeners using the Web
-  Playback SDK.
