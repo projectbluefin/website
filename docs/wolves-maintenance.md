@@ -99,7 +99,7 @@ If authored lore appears to be missing from the worktree, never ask the user to 
 `src/components/wolves/WolvesSoundtrack.vue` embeds the YouTube playlist `PLA78oiE-RGAE` and reports playback progress to the app at 100ms resolution. Player controls, layout, and progress wiring are locked.
 
 - **Track registry**: `public/wolves-playlist.json`, loaded at runtime through `src/data/wolves-soundtrack.ts`. Track fields: `id`, `title`, `artist`, `youtubeVideoId`, `artwork`, plus optional tempo metadata (`bpm`, `phraseBeats`, `fadeDuration`, `slideInterval`).
-- **Regeneration**: `npm run update:wolves-playlist` rebuilds the manifest from the YouTube playlist and downloads artwork to `public/wolves-artwork/`. Tempo overrides live in `TEMPO_CONFIGS` inside `scripts/update-wolves-playlist.js`.
+- **Regeneration**: `npm run update:wolves-playlist` rebuilds the manifest from the YouTube playlist and downloads artwork to `public/wolves-artwork/`. Tempo overrides live in `TEMPO_CONFIGS`; canonical artist overrides for uploader aliases live in `ARTIST_OVERRIDES`, both in `scripts/update-wolves-playlist.js`.
 - **Adding, swapping, or reordering tracks**: change the YouTube playlist itself, then regenerate. Hand-editing metadata fields in the JSON is acceptable for title or artist fixes. Track 0 is special: the entire authored narrative (timeline, thesis, incoming signal, beat math at 152 BPM) is built against "7 Days to the Wolves" at position 0. Never move or replace Track 0.
 - The music is part of the narrative sequence. Track order beyond position 0 follows the user's authored playlist order; never reorder it on your own.
 

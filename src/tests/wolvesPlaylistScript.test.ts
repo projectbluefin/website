@@ -25,6 +25,23 @@ describe('wolves playlist metadata generator', () => {
     ])
   })
 
+  it('uses canonical artist overrides instead of YouTube uploader labels', () => {
+    expect(normalizePlaylistEntries([
+      {
+        id: '9skBT5TUqzo',
+        title: 'Tonight We Must Be Warriors',
+        uploader: 'Avatar Metal',
+        thumbnail: 'https://i.ytimg.com/vi/9skBT5TUqzo/hqdefault.jpg',
+      },
+    ])).toMatchObject([
+      {
+        id: '9skBT5TUqzo',
+        title: 'Tonight We Must Be Warriors',
+        artist: 'Avatar',
+      },
+    ])
+  })
+
   it('loads the soundtrack manifest from the base URL', async () => {
     const manifest = {
       source: {

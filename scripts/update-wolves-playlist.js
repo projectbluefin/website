@@ -22,6 +22,10 @@ const TEMPO_CONFIGS = {
   'rYkYLIYvI18': { bpm: 174, phraseBeats: 64, fadeDuration: 2500 },
 }
 
+const ARTIST_OVERRIDES = {
+  '9skBT5TUqzo': 'Avatar',
+}
+
 function requireString(value, fieldName, index) {
   if (typeof value !== 'string' || value.length === 0) {
     throw new TypeError(`Malformed yt-dlp entry at index ${index}: expected non-empty ${fieldName}`)
@@ -80,7 +84,7 @@ export function normalizePlaylistEntries(entries) {
     return {
       id,
       title: hasArtistPrefix ? titleParts.join(' - ').trim() : title,
-      artist: hasArtistPrefix ? artistPrefix.trim() : uploader,
+      artist: ARTIST_OVERRIDES[id] ?? (hasArtistPrefix ? artistPrefix.trim() : uploader),
       youtubeVideoId: id,
       artwork: `wolves-artwork/${id}.jpg`,
       thumbnailUrl: thumbnail,

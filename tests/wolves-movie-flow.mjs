@@ -35,6 +35,7 @@ const CASSIDY_FIRST_VIDEO_ID = 'e6GCa-E75uk'
 const LINDSAY_FIRST_VIDEO_ID = 'T8aREn47900'
 const TRACK_ONE_TITLE = 'Ghosts In The Mist'
 const TRACK_TWO_TITLE = 'Tonight We Must Be Warriors'
+const TRACK_TWO_ARTIST = 'Avatar'
 
 let passed = 0
 let failed = 0
@@ -349,6 +350,7 @@ try {
     title => document.querySelector('.soundtrack-title')?.textContent?.trim() === title,
     TRACK_TWO_TITLE,
   )
+  assert('Track 2 uses its canonical artist name', (await page.textContent('.soundtrack-artist'))?.trim(), TRACK_TWO_ARTIST)
   await page.waitForTimeout(1800)
   const nextTrackGalleryCaption = await page.textContent('.flickr-caption')
   const nextTrackGalleryPhoto = await activeFlickrPhotoSource(page)
