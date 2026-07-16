@@ -831,7 +831,8 @@ onBeforeUnmount(() => {
 
             <!-- Sleek photo caption: slides with a `description` (e.g. a real interview still)
                  get a larger fullscreen "theater" caption designed for a 10-foot viewing
-                 distance instead of the standard small pill caption. -->
+                 distance instead of the standard small pill caption. When a slide has no
+                 description, fall back to the compact pill while keeping the title visible. -->
             <div v-if="activePhoto && activePhoto.description" class="wallpaper-theater-caption">
               <p class="wallpaper-theater-caption-title">
                 {{ activePhoto.title }}
@@ -848,7 +849,7 @@ onBeforeUnmount(() => {
               <span class="caption-label text-cyan">
                 {{ activePhoto.isLocal ? 'BLUEFIN SHOWCASE //' : 'CNCF STREAM //' }}
               </span>
-              {{ activePhoto.title }}
+              {{ activePhoto.title || 'Untitled slide' }}
             </div>
           </div>
 
@@ -923,7 +924,7 @@ onBeforeUnmount(() => {
                     </p>
                   </div>
                   <div v-else class="wallpaper-caption font-mono">
-                    <span class="caption-label text-cyan">BLUEFIN ARCHIVE //</span> {{ wp.title }}
+                    <span class="caption-label text-cyan">BLUEFIN ARCHIVE //</span> {{ wp.title || 'Untitled slide' }}
                   </div>
                 </div>
               </template>
@@ -1281,7 +1282,11 @@ onBeforeUnmount(() => {
   z-index: 5;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
-  white-space: nowrap;
+  max-width: min(90%, 42rem);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+  line-height: 1.4;
 
   .caption-label {
     font-weight: bold;

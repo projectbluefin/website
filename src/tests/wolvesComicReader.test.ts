@@ -1,6 +1,7 @@
 import type { SoundtrackTrack } from '../data/wolves-soundtrack'
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { nextTick } from 'vue'
 import { wallpapers } from '../components/wolves/wallpapers-list'
 import WolvesComicReader from '../components/wolves/WolvesComicReader.vue'
 
@@ -614,5 +615,19 @@ describe('wolvesComicReader', () => {
       expect(theaterCaption.exists()).toBe(false)
       expect(smallCaption.exists()).toBe(true)
     }
+  })
+
+  it('keeps long wallpaper page titles visible in the compact archive caption', async () => {
+    const wrapper = mount(WolvesComicReader)
+    const shuffledWallpapers = (wrapper.vm as any).shuffledWallpapers as Array<{ title?: string }>
+    const clydeWallpaper = shuffledWallpapers.find(wp => wp.title?.includes('Clyde Seepersad'))
+    expect(clydeWallpaper).toBeDefined()
+
+    ;(wrapper.vm as any).page = shuffledWallpapers.indexOf(clydeWallpaper!) + 2
+    await nextTick()
+
+    const caption = wrapper.find('.wallpaper-caption')
+    expect(caption.exists()).toBe(true)
+    expect(caption.text()).toContain('Clyde Seepersad')
   })
 })
