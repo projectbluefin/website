@@ -439,14 +439,5 @@ When its children are taken from it`,
         { text: 'Behemoth Titan — Natali Vlatko — Boss B*tch — He\'s wearing a dress, I\'m wearing a FIST', start: 87.5, end: 96, position: 'right', raised: true },
       ],
     },
-    {
-      id: 'wolves-epilogue',
-      kind: 'text',
-      duration: 8,
-      overlays: [
-        { text: 'But who will answer the call? Who will be the new Guardians?', start: 0, end: 5 },
-        { text: 'Welcome to indie cloud native ...', start: 5, end: 8 },
-      ],
-    },
   ] as const
 }

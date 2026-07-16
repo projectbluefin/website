@@ -87,17 +87,12 @@ describe('wolves intro overlay sequence', () => {
     expect(isTextSegmentComplete(segment, 45)).toBe(true)
   })
 
-  it('builds the intro sequence with the prologue, trailer, and epilogue in order', () => {
+  it('builds the intro sequence without the epilogue transition', () => {
     const sequence = buildIntroVideoSequence()
-    expect(sequence).toHaveLength(3)
-    expect(sequence.map(segment => segment.id)).toEqual(['wolves-prologue', 'wolves-intro', 'wolves-epilogue'])
-
-    const [prologue, trailer, epilogue] = sequence
-    expect(prologue.kind).toBe('text')
-    expect(trailer.kind).toBe('video')
-    expect(isVideoSegment(trailer) && trailer.youtubeVideoId).toBe('BKm0TPqeOjY')
-    expect(epilogue.kind).toBe('text')
-    expect(sequence.every(segment => segment.overlays?.length)).toBe(true)
+    expect(sequence).toHaveLength(2)
+    expect(sequence.map(segment => segment.id)).toEqual(['wolves-prologue', 'wolves-intro'])
+    expect(JSON.stringify(sequence)).not.toContain('But who will answer the call')
+    expect(JSON.stringify(sequence)).not.toContain('Welcome to indie cloud native')
   })
 
   it('gives the revised prologue copy readable holds within its 60-second runtime', () => {
