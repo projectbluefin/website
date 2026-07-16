@@ -281,22 +281,22 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
     {
       id: 'wolves-prologue',
       kind: 'text',
-      // Cut down from the song's full 5:26 (326s) to a 60s excerpt per explicit user request
-      // (2026-07-15, later widened from an initial 45s the same day). The user hand-edited
-      // which lines survive and rewrote several. The remaining cues below are manually paced
-      // for readable holds across the same 60-second runtime, with no dead/black gaps.
-      duration: 60,
+      // Cut down from the song's full 5:26 (326s) to a 75s excerpt per explicit user request
+      // (2026-07-15, later widened from an initial 45s and then 60s the same day). The user
+      // hand-edited which lines survive and rewrote several. The remaining cues below are
+      // manually paced for readable holds across the same 75-second runtime, with no dead/black gaps.
+      duration: 75,
       audioYoutubeVideoId: 'EB3IokHelRk',
       overlays: [
         // Cold open on total darkness -- nothing exists yet, before Earth or its wallpaper
         // scenes even enter the story. The bluefin-01..12 wallpaper cycle below only begins
         // once life/Earth is introduced starting with the next line.
-        { text: 'A Gardener and Winnower walked amongst the stars', start: 0, end: 4 },
+        { text: 'A Gardener and Winnower walked amongst the stars', start: 0, end: 5 },
         {
           text: `One to spread life, and one to cull the dross
 to shape the Garden of Earth`,
-          start: 4,
-          end: 11,
+          start: 5,
+          end: 13.75,
           backgroundCrossfade: [bluefinMonthCrossfadePair(2), bluefinMonthCrossfadePair(1)],
           textPosition: 'bottom-right',
         },
@@ -306,20 +306,20 @@ to shape the Garden of Earth`,
           // darker/dusk frame and "...-night.webp" is the brighter frame, so the `day`/`night`
           // keys below intentionally point at the opposite filenames to render correctly.
           text: 'One day changed the Garden forever',
-          start: 11,
-          end: 20,
+          start: 13.75,
+          end: 25,
           backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
         },
         {
           text: 'New Children arose, and filled the pattern.',
-          start: 20,
-          end: 23,
+          start: 25,
+          end: 28.75,
           backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
         },
         {
           text: 'For eons Maintainer-Guardians cultivated the Garden ...',
-          start: 23,
-          end: 29,
+          start: 28.75,
+          end: 36.25,
           backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
         },
         {
@@ -327,22 +327,22 @@ to shape the Garden of Earth`,
 Society decided that Guardians were not only unnecessary,
 
 But a threat.`,
-          start: 29,
-          end: 36,
+          start: 36.25,
+          end: 45,
           backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
         },
         {
           text: 'The armies of the galaxy came claim a bountiful, unprotected Garden',
-          start: 36,
-          end: 40,
+          start: 45,
+          end: 50,
           backgroundCrossfade: [{ day: 'wolves-intro/bluefin-collapse-night.webp', night: 'wolves-intro/bluefin-collapse-day.webp' }],
           calamity: true,
         },
         {
           text: `In the space of a few days,
 humanity had lost its future`,
-          start: 40,
-          end: 47.5,
+          start: 50,
+          end: 59.375,
           emphasis: 'dominant',
           textPosition: 'bottom',
           backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
@@ -352,21 +352,21 @@ humanity had lost its future`,
 
 And its will to survive is utterly Broken
 When its children are taken from it`,
-          start: 47.5,
-          end: 52,
+          start: 59.375,
+          end: 65,
           emphasis: 'dominant',
           textPosition: 'bottom',
           backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
         },
         {
           text: 'Now what\'s left of a proud order fights for survial, surrounded by predators',
-          start: 52,
-          end: 56,
+          start: 65,
+          end: 70,
           emphasis: 'dominant',
           textPosition: 'bottom',
           backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
         },
-        { text: 'B L U E F I N — seven days to the wolves', start: 56, end: 60 },
+        { text: 'B L U E F I N — seven days to the wolves', start: 70, end: 75 },
       ],
     },
     {

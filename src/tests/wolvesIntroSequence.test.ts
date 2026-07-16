@@ -95,33 +95,33 @@ describe('wolves intro overlay sequence', () => {
     expect(JSON.stringify(sequence)).not.toContain('Welcome to indie cloud native')
   })
 
-  it('gives the revised prologue copy readable holds within its 60-second runtime', () => {
+  it('gives the revised prologue copy readable holds within its 75-second runtime', () => {
     const [prologue] = buildIntroVideoSequence()
     if (!isTextSegment(prologue)) {
       throw new Error('Expected the first intro segment to be text-only')
     }
 
-    expect(prologue.duration).toBe(60)
+    expect(prologue.duration).toBe(75)
     expect(prologue.overlays).toEqual(expect.arrayContaining([
-      expect.objectContaining({ text: 'A Gardener and Winnower walked amongst the stars', start: 0, end: 4 }),
+      expect.objectContaining({ text: 'A Gardener and Winnower walked amongst the stars', start: 0, end: 5 }),
       expect.objectContaining({
         text: `One to spread life, and one to cull the dross
 to shape the Garden of Earth`,
-        start: 4,
-        end: 11,
+        start: 5,
+        end: 13.75,
         textPosition: 'bottom-right',
       }),
-      expect.objectContaining({ text: 'One day changed the Garden forever', start: 11, end: 20 }),
+      expect.objectContaining({ text: 'One day changed the Garden forever', start: 13.75, end: 25 }),
       expect.objectContaining({
         text: 'Until the Birth of Artificial Intelligence\nSociety decided that Guardians were not only unnecessary,\n\nBut a threat.',
-        start: 29,
-        end: 36,
+        start: 36.25,
+        end: 45,
       }),
       expect.objectContaining({
         text: `In the space of a few days,
 humanity had lost its future`,
-        start: 40,
-        end: 47.5,
+        start: 50,
+        end: 59.375,
         textPosition: 'bottom',
       }),
       expect.objectContaining({
@@ -129,17 +129,17 @@ humanity had lost its future`,
 
 And its will to survive is utterly Broken
 When its children are taken from it`,
-        start: 47.5,
-        end: 52,
+        start: 59.375,
+        end: 65,
         textPosition: 'bottom',
       }),
       expect.objectContaining({
         text: 'Now what\'s left of a proud order fights for survial, surrounded by predators',
-        start: 52,
-        end: 56,
+        start: 65,
+        end: 70,
         textPosition: 'bottom',
       }),
-      expect.objectContaining({ text: 'B L U E F I N — seven days to the wolves', start: 56, end: 60 }),
+      expect.objectContaining({ text: 'B L U E F I N — seven days to the wolves', start: 70, end: 75 }),
     ]))
     expect(prologue.overlays?.every(cue => !cue.text.includes('<br>'))).toBe(true)
     expect(prologue.overlays?.every(cue => !cue.text.includes('(hold this'))).toBe(true)
@@ -163,8 +163,8 @@ When its children are taken from it`,
       }),
       expect.objectContaining({
         text: 'The armies of the galaxy came claim a bountiful, unprotected Garden',
-        start: 36,
-        end: 40,
+        start: 45,
+        end: 50,
         backgroundCrossfade: [{
           day: 'wolves-intro/bluefin-collapse-night.webp',
           night: 'wolves-intro/bluefin-collapse-day.webp',
@@ -173,8 +173,8 @@ When its children are taken from it`,
       expect.objectContaining({
         text: `In the space of a few days,
 humanity had lost its future`,
-        start: 40,
-        end: 47.5,
+        start: 50,
+        end: 59.375,
         backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
         textPosition: 'bottom',
       }),
@@ -183,15 +183,15 @@ humanity had lost its future`,
 
 And its will to survive is utterly Broken
 When its children are taken from it`,
-        start: 47.5,
-        end: 52,
+        start: 59.375,
+        end: 65,
         backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
         textPosition: 'bottom',
       }),
       expect.objectContaining({
         text: 'Now what\'s left of a proud order fights for survial, surrounded by predators',
-        start: 52,
-        end: 56,
+        start: 65,
+        end: 70,
         backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
         textPosition: 'bottom',
       }),
