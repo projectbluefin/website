@@ -129,11 +129,6 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     "type": "single",
-    "name": "wolves/showcase/Pasted image (6).webp",
-    "title": "Pasted image (6)"
-  },
-  {
-    "type": "single",
     "name": "wolves/showcase/Pasted image.webp",
     "title": "Pasted image"
   },
@@ -149,18 +144,8 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     "type": "single",
-    "name": "wolves/showcase/bluespeed-cluster.webp",
-    "title": "Bluespeed Cluster"
-  },
-  {
-    "type": "single",
     "name": "wolves/showcase/bluespeed-cpu.webp",
     "title": "Bluespeed Cpu"
-  },
-  {
-    "type": "single",
-    "name": "wolves/showcase/bluespeed-storage.webp",
-    "title": "Bluespeed Storage"
   },
   {
     "type": "single",
@@ -171,6 +156,11 @@ export const wallpapers: Wallpaper[] = [
     "type": "single",
     "name": "wolves/showcase/kubestellar-dashboard.webp",
     "title": "Kubestellar Dashboard"
+  },
+  {
+    "type": "single",
+    "name": "wolves/showcase/sherman.webp",
+    "title": "Sherman"
   },
   {
     "type": "single",
@@ -201,6 +191,11 @@ export const wallpapers: Wallpaper[] = [
     "type": "single",
     "name": "wolves/showcase/showcase-20.webp",
     "title": "Community Showcase by AlgoCompSynth by znmeb"
+  },
+  {
+    "type": "single",
+    "name": "wolves/showcase/stellar.webp",
+    "title": "Stellar"
   },
   {
     "type": "single",
@@ -889,8 +884,18 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     "type": "single",
+    "name": "wolves/people/nuno.webp",
+    "title": "Nuno"
+  },
+  {
+    "type": "single",
     "name": "wolves/people/reza.jpg",
     "title": "Reza"
+  },
+  {
+    "type": "single",
+    "name": "wolves/people/sherman.webp",
+    "title": "Sherman"
   },
   {
     "type": "single",
