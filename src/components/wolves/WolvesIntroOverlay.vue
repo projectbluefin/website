@@ -235,6 +235,10 @@ function seekToRatio(ratio: number) {
   if (currentSegment.value?.kind === 'video') {
     player?.seekTo?.(target, true)
   }
+  else {
+    // Text segments follow the background audio's clock, so the audio must move too.
+    audioPlayer?.seekTo?.(target, true)
+  }
 }
 
 function stopPolling() {
@@ -820,8 +824,9 @@ defineExpose({
   max-width: 72rem;
   padding: 1rem 2.2rem;
   background: rgb(8 9 12 / 78%);
-  border: 1px solid rgb(200 180 137 / 28%);
-  border-left: 2px solid #c8b489;
+  /* Standard dialogue rides the plate blue; gold stays reserved for power moments. */
+  border: 1px solid rgb(147 197 253 / 30%);
+  border-left: 2px solid #93c5fd;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 0.9rem), calc(100% - 0.9rem) 100%, 0 100%);
   font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
   font-size: clamp(1.9rem, 2.2vw, 2.6rem);
@@ -964,6 +969,13 @@ defineExpose({
   font-weight: 900;
 }
 
+/* POWERFUL statements: dominant cues trade the standard blue accent for the
+   leader-plate gold (same hierarchy as Christopher's gold plate vs the blue
+   standard plates), with a warm glow to embolden them. */
+.wolves-intro-overlay-text-dominant .wolves-intro-letter-highlight {
+  color: #facc15;
+}
+
 /* The Arthur C. Clarke quote is the emotional hinge of the Prologue (the line that explains
    why the Wolves' extinction stakes matter) and should visually dominate rather than read as
    just another caption: centered, much larger, bolder, and spanning most of the screen. */
@@ -978,7 +990,10 @@ defineExpose({
   font-size: clamp(4rem, 8vw, 8rem);
   line-height: 1.2;
   letter-spacing: 0.015em;
-  text-shadow: 0 4px 24px rgb(0 0 0 / 90%);
+  color: #fde68a;
+  text-shadow:
+    0 4px 24px rgb(0 0 0 / 90%),
+    0 0 32px rgb(250 204 21 / 30%);
 }
 
 .wolves-intro-overlay-text-slim {
