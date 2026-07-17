@@ -4,6 +4,7 @@ import CinematicLobby from '@/components/wolves/cinematic/CinematicLobby.vue'
 import CinematicStage from '@/components/wolves/cinematic/CinematicStage.vue'
 import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import Nameplate from '@/components/wolves/cinematic/Nameplate.vue'
+import WolvesCreatorShortsInterstitial from '@/components/wolves/WolvesCreatorShortsInterstitial.vue'
 import WolvesIntroOverlay from '@/components/wolves/WolvesIntroOverlay.vue'
 import { buildIntroVideoSequence } from '@/data/wolves-intro-sequence'
 import { useCinematicStore } from '@/stores/cinematic'
@@ -62,6 +63,13 @@ async function handleIntroComplete() {
   await enterCinematic()
 }
 
+/** Creator Shorts finishes -> resume Part II from the store's current segment. */
+async function handleCreatorShortsComplete() {
+  store.completeCreatorShorts()
+  await nextTick()
+  await stage.value?.start()
+}
+
 function restart() {
   window.location.reload()
 }
@@ -92,6 +100,10 @@ function restart() {
         @skip="(delta: number) => (delta > 0 ? intro?.next() : intro?.previous())"
         @seek="(ratio: number) => intro?.seekToRatio(ratio)"
       />
+    </div>
+
+    <div v-else-if="store.phase === 'creator-shorts'" class="wc-runtime">
+      <WolvesCreatorShortsInterstitial @complete="handleCreatorShortsComplete" />
     </div>
 
     <div v-else-if="store.phase === 'cinematic'" class="wc-runtime">

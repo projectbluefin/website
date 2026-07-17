@@ -63,4 +63,35 @@ describe('cinematic store', () => {
     expect(store.playing).toBe(false)
     expect(store.crossfading).toBe(false)
   })
+
+  it('enters Creator Shorts once when Part I advances to Part II', () => {
+    const store = useCinematicStore()
+    store.enterCinematic()
+    store.updateTime(425, 425)
+
+    expect(store.creatorShortsDueFor(1)).toBe(true)
+
+    store.enterCreatorShorts()
+
+    expect(store.phase).toBe('creator-shorts')
+    expect(store.segmentIndex).toBe(1)
+    expect(store.shortsConsumed).toBe(true)
+    expect(store.completedElapsed).toBe(425)
+    expect(store.playing).toBe(false)
+  })
+
+  it('resumes Part II without reopening Creator Shorts', () => {
+    const store = useCinematicStore()
+    store.enterCinematic()
+    store.updateTime(425, 425)
+    store.enterCreatorShorts()
+    store.completeCreatorShorts()
+
+    expect(store.phase).toBe('cinematic')
+    expect(store.segmentIndex).toBe(1)
+    expect(store.creatorShortsDueFor(1)).toBe(false)
+
+    store.jumpToSegment(0)
+    expect(store.creatorShortsDueFor(1)).toBe(false)
+  })
 })

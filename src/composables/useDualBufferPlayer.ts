@@ -94,8 +94,29 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     rampFrame = requestAnimationFrame(tick)
   }
 
+  /**
+   * Intercepts the Part I -> Part II boundary (natural or manual) so the one-time
+   * Creator Shorts interstitial plays instead of swapping straight into Part II
+   * beneath it. Both players are paused and polling stops; `WolvesApp.vue` mounts
+   * the interstitial for the `creator-shorts` phase and resumes playback afterward.
+   */
+  function enterCreatorShortsIfDue(targetIndex: number): boolean {
+    if (!store.creatorShortsDueFor(targetIndex)) {
+      return false
+    }
+
+    stopPolling()
+    sides.a.player?.pauseVideo?.()
+    sides.b.player?.pauseVideo?.()
+    store.enterCreatorShorts()
+    return true
+  }
+
   function beginSwap() {
     if (swapping) {
+      return
+    }
+    if (enterCreatorShortsIfDue(store.segmentIndex + 1)) {
       return
     }
     const fromSide = activeSide.value
@@ -134,6 +155,9 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
   function skip(delta: number) {
     const target = Math.min(Math.max(store.segmentIndex + delta, 0), CINEMATIC_SEGMENTS.length - 1)
     if (swapping || target === store.segmentIndex) {
+      return
+    }
+    if (enterCreatorShortsIfDue(target)) {
       return
     }
     const fromSide = activeSide.value
@@ -264,11 +288,12 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     sides.a.player = playerA
     sides.b.player = playerB
 
-    sides.a.segmentIndex = 0
-    const first = CINEMATIC_SEGMENTS[0]
+    const startIndex = store.segmentIndex
+    sides.a.segmentIndex = startIndex
+    const first = CINEMATIC_SEGMENTS[startIndex]
     playerA.loadVideoById?.({ videoId: first.youtubeId, startSeconds: first.startSeconds })
     applyVolume(playerA, 100)
-    cueNext('b', 1)
+    cueNext('b', startIndex + 1)
     startPolling()
   }
 

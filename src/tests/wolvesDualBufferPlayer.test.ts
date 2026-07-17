@@ -131,28 +131,43 @@ describe('useDualBufferPlayer', () => {
     expect(store.segmentDuration).toBe(300)
   })
 
-  it('swaps to the buffered side at the pre-end threshold and cues the next segment', async () => {
-    const player = await startPlayer()
+  it('stops at Creator Shorts instead of playing Part II beneath it', async () => {
+    await startPlayer()
     const store = useCinematicStore()
+    store.enterCinematic()
     const [playerA, playerB] = FakePlayer.instances
 
     playerA.duration = 200
     playerA.currentTime = 200 - PRE_END_THRESHOLD_S
     vi.advanceTimersByTime(TIME_POLL_MS)
 
-    expect(player.activeSide.value).toBe('b')
-    expect(playerB.playing).toBe(true)
-    expect(store.crossfading).toBe(true)
-
-    // Run out the crossfade volume ramp (segment 0 uses the 800ms default).
-    vi.advanceTimersByTime(1000)
-
+    expect(store.phase).toBe('creator-shorts')
     expect(store.segmentIndex).toBe(1)
-    expect(store.crossfading).toBe(false)
     expect(playerA.playing).toBe(false)
-    expect(playerA.cuedId).toBe(CINEMATIC_SEGMENTS[2].youtubeId)
-    expect(playerB.volume).toBe(100)
-    expect(playerA.volume).toBe(0)
+    expect(playerB.playing).toBe(false)
+  })
+
+  it('starts directly from the store segment after Creator Shorts', async () => {
+    const store = useCinematicStore()
+    store.segmentIndex = 1
+
+    await startPlayer()
+    const [playerA, playerB] = FakePlayer.instances
+
+    expect(playerA.loadedId).toBe(CINEMATIC_SEGMENTS[1].youtubeId)
+    expect(playerB.cuedId).toBe(CINEMATIC_SEGMENTS[2].youtubeId)
+  })
+
+  it('manual Next from Part I opens Creator Shorts once', async () => {
+    const player = await startPlayer()
+    const store = useCinematicStore()
+    store.enterCinematic()
+
+    player.skip(1)
+
+    expect(store.phase).toBe('creator-shorts')
+    expect(store.segmentIndex).toBe(1)
+    expect(FakePlayer.instances.every(instance => !instance.playing)).toBe(true)
   })
 
   it('skips forward and backward on manual command', async () => {
