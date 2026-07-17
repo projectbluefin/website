@@ -123,6 +123,11 @@ export interface IntroTextSegment extends IntroSegmentBase {
   readonly duration: number
   /** Optional background-only YouTube embed (e.g. a music track) with no visible player. */
   readonly audioYoutubeVideoId?: string
+  /**
+   * Ramp the background audio's volume to zero over this many seconds leading into the
+   * segment's cutoff, so the excerpt ends on a musical decay instead of a hard cut.
+   */
+  readonly audioFadeOutSeconds?: number
 }
 
 export type IntroVideoSpec = IntroVideoSegment | IntroTextSegment
@@ -344,12 +349,18 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
     {
       id: 'wolves-prologue',
       kind: 'text',
-      // Cut down from the song's full 5:26 (326s) to an 85s excerpt per explicit user request
-      // (2026-07-15, later widened from an initial 45s and 60s, then extended again to 85s for
-      // the split line pacing). The user hand-edited which lines survive and rewrote several.
-      // The remaining cues below are manually paced for readable holds across the same 85-second
-      // runtime, with no dead/black gaps.
-      duration: 85,
+      // Cut down from the song's full 5:26 (326s) to a 94s excerpt per explicit user request
+      // (2026-07-15 at 85s, extended 2026-07-16 to land the fade on the music). Loudness
+      // analysis of the track (per-second RMS) shows the final swell building from 89s,
+      // cresting at 92-94s, then resolving through a natural decrescendo into near-silence
+      // by 98s. Ending at 94 with a fade riding the decay lets the crest hit at full force
+      // instead of slicing mid-crescendo at a flat 90.
+      // The user hand-edited which lines survive and rewrote several. The remaining cues
+      // below are manually paced for readable holds across the runtime, with no dead/black
+      // gaps.
+      duration: 94,
+      // Fade the audio over the swell's own decay (94s cutoff, ~2.5s ramp).
+      audioFadeOutSeconds: 2.5,
       audioYoutubeVideoId: 'EB3IokHelRk',
       overlays: [
         { text: 'A Gardener and a Winnower walked among the stars.', start: 0, end: 5 },
@@ -430,7 +441,7 @@ surrounded by predators.`,
           backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
           highlightSubstring: 'fights',
         },
-        { text: 'B L U E F I N — seven days to the wolves', start: 78.5, end: 85, slim: true },
+        { text: 'B L U E F I N — seven days to the wolves', start: 78.5, end: 94, slim: true },
       ],
     },
     {

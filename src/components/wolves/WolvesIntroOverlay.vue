@@ -329,6 +329,15 @@ function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
     else {
       currentTime.value += 0.2
     }
+    // Authored musical fade: ramp the audio down across the excerpt's final
+    // seconds so it ends on the phrase's own decay instead of a hard cut.
+    if (segment.audioFadeOutSeconds && audioPlayer?.setVolume) {
+      const remaining = segment.duration - currentTime.value
+      if (remaining <= segment.audioFadeOutSeconds) {
+        const ratio = Math.max(0, remaining / segment.audioFadeOutSeconds)
+        audioPlayer.setVolume(Math.round(ratio * 100))
+      }
+    }
     if (isTextSegmentComplete(segment, currentTime.value)) {
       advance()
     }

@@ -165,13 +165,16 @@ describe('wolves intro overlay sequence', () => {
     expect(JSON.stringify(sequence)).not.toContain('Welcome to indie cloud native')
   })
 
-  it('gives the revised prologue copy readable holds within its 85-second runtime', () => {
+  it('gives the revised prologue copy readable holds within its 94-second runtime', () => {
     const [prologue] = buildIntroVideoSequence()
     if (!isTextSegment(prologue)) {
       throw new Error('Expected the first intro segment to be text-only')
     }
 
-    expect(prologue.duration).toBe(85)
+    expect(prologue.duration).toBe(94)
+    // Loudness analysis: the final swell crests at 92-94s and decays after; the
+    // cutoff rides that decay with an authored audio fade.
+    expect(prologue.audioFadeOutSeconds).toBe(2.5)
     expect(prologue.overlays?.map(cue => cue.text)).toEqual([
       'A Gardener and a Winnower walked among the stars.',
       `One to spread life, and one to cull the dross
@@ -240,7 +243,7 @@ And its will to survive is utterly Broken`,
         end: 78.5,
         textPosition: 'bottom',
       }),
-      expect.objectContaining({ text: 'B L U E F I N — seven days to the wolves', start: 78.5, end: 85 }),
+      expect.objectContaining({ text: 'B L U E F I N — seven days to the wolves', start: 78.5, end: 94 }),
     ]))
     expect(prologue.overlays?.every(cue => !cue.text.includes('<br>'))).toBe(true)
     expect(prologue.overlays?.every(cue => !cue.text.includes('(hold this'))).toBe(true)
