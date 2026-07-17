@@ -24,6 +24,8 @@ export interface IntroOverlayTextCue {
   readonly text: string
   readonly start: number
   readonly end: number
+  /** Optional top nameplate title to publish while this cue is active. */
+  readonly nameplateTitle?: string
   /** Static background image shown behind the text for this cue only (e.g. a single hero photo). */
   readonly backgroundImage?: string
   /** Renders a full-screen comic title card instead of the standard overlay treatment. */
@@ -78,8 +80,14 @@ export interface IntroOverlayTextCue {
   readonly textPosition?: 'top' | 'bottom' | 'bottom-right'
   /** Renders the cue with a lighter, narrower treatment for lines like the final title card. */
   readonly slim?: boolean
+  /** Preserves authored punctuation instead of applying the default theater-scale comma/period strip. */
+  readonly preservePunctuation?: boolean
+  /** Renders the cue as a compact Unix-style status console rather than cinematic display text. */
+  readonly presentation?: 'terminal'
   /** Highlights a specific substring inside this cue's text instead of the default B/F auto-highlighting. */
   readonly highlightSubstring?: string
+  /** Highlights multiple exact substrings inside this cue's text, disabling default B/F highlighting. */
+  readonly highlightSubstrings?: readonly string[]
   /**
    * Gilds a Guardian trailer callout with a gold treatment instead of the default silver/blue
    * plate, signifying leadership. Reserved for Christoph Blecker's "First Among Equals" cue
@@ -104,8 +112,14 @@ interface IntroSegmentBase {
 export interface IntroVideoSegment extends IntroSegmentBase {
   readonly kind: 'video'
   readonly youtubeVideoId: string
+  /** Optional alternate source for the same authored segment (e.g. voiced/unvoiced trailer). */
+  readonly alternateYoutubeVideoId?: string
+  /** Exact label for the alternate-source toggle shown in the shared transport. */
+  readonly alternateYoutubeVideoLabel?: string
   /** Forces an early advance at this many seconds, before the video's natural end. */
   readonly maxDuration?: number
+  /** Alternate-source authored cutoff, used when preserving time across source switches. */
+  readonly alternateMaxDuration?: number
   /**
    * Seconds into the source video where playback should begin, skipping content baked into the
    * footage itself before that point (e.g. a publisher rating card). Passed straight through to
@@ -135,6 +149,17 @@ export type IntroVideoSpec = IntroVideoSegment | IntroTextSegment
 export interface IntroSequenceState {
   readonly index: number
   readonly done: boolean
+}
+
+export interface IntroStatusPayload {
+  readonly currentTime: number
+  readonly duration: number
+  readonly paused: boolean
+  readonly segmentId: string
+  readonly canGoPrevious: boolean
+  readonly nameplateTitle?: string
+  readonly showVoiceOverToggle?: boolean
+  readonly voiceOverEnabled?: boolean
 }
 
 export function createIntroSequenceState(): IntroSequenceState {
@@ -217,22 +242,42 @@ export function activeOverlayCues(
   return overlays.filter(cue => currentTime >= cue.start && currentTime < cue.end)
 }
 
-export function buildOverlayTextParts(text: string, highlightSubstring?: string): readonly { char: string, highlight: boolean }[] {
-  if (!highlightSubstring) {
+export function buildOverlayTextParts(
+  text: string,
+  highlightSubstring?: string | readonly string[],
+): readonly { char: string, highlight: boolean }[] {
+  const highlightSubstrings = highlightSubstring == null
+    ? []
+    : Array.isArray(highlightSubstring)
+      ? highlightSubstring.filter(Boolean)
+      : [highlightSubstring]
+
+  if (highlightSubstrings.length === 0) {
     return Array.from(text).map(char => ({ char, highlight: char.toUpperCase() === 'B' || char.toUpperCase() === 'F' }))
   }
 
   const normalizedText = text.toLowerCase()
-  const normalizedHighlight = highlightSubstring.toLowerCase()
-  const startIndex = normalizedText.indexOf(normalizedHighlight)
-  if (startIndex === -1) {
-    return Array.from(text).map(char => ({ char, highlight: char.toUpperCase() === 'B' || char.toUpperCase() === 'F' }))
+  const highlightedIndexes = new Set<number>()
+
+  for (const rawHighlight of highlightSubstrings) {
+    const normalizedHighlight = rawHighlight.toLowerCase()
+    if (!normalizedHighlight) {
+      continue
+    }
+
+    let startIndex = normalizedText.indexOf(normalizedHighlight)
+    while (startIndex !== -1) {
+      const endIndex = startIndex + normalizedHighlight.length
+      for (let index = startIndex; index < endIndex; index++) {
+        highlightedIndexes.add(index)
+      }
+      startIndex = normalizedText.indexOf(normalizedHighlight, startIndex + normalizedHighlight.length)
+    }
   }
 
-  const endIndex = startIndex + normalizedHighlight.length
   return Array.from(text).map((char, index) => ({
     char,
-    highlight: index >= startIndex && index < endIndex,
+    highlight: highlightedIndexes.has(index),
   }))
 }
 
@@ -245,19 +290,24 @@ export function parseDestinyCaptionFile(source: string): readonly IntroOverlayTe
   const cues: IntroOverlayTextCue[] = []
   for (let index = 0; index < lines.length; index++) {
     const line = lines[index]
-    const separatorIndex = line.indexOf('|')
-    if (separatorIndex === -1) {
+    const parts = line.split('|')
+    if (parts.length < 2) {
       continue
     }
-    const timestamp = Number.parseFloat(line.slice(0, separatorIndex))
-    const text = line.slice(separatorIndex + 1).trim()
+    const timestamp = Number.parseFloat(parts[0])
+    const explicitEnd = parts.length >= 3 ? Number.parseFloat(parts[parts.length - 1]) : Number.NaN
+    const text = parts.length >= 3
+      ? parts.slice(1, -1).join('|').trim()
+      : parts.slice(1).join('|').trim()
     if (Number.isNaN(timestamp) || !text) {
       continue
     }
     const start = timestamp
     const nextLine = lines[index + 1]
     const nextTimestamp = nextLine ? Number.parseFloat(nextLine.slice(0, nextLine.indexOf('|'))) : Number.NaN
-    const end = Number.isNaN(nextTimestamp) ? start + 2.5 : nextTimestamp
+    const end = Number.isNaN(explicitEnd)
+      ? (Number.isNaN(nextTimestamp) ? start + 2.5 : nextTimestamp)
+      : explicitEnd
     cues.push({ text, start, end })
   }
   return cues
@@ -327,16 +377,19 @@ function bluefinMonthCrossfadePair(month: number): IntroBackgroundCrossfade {
 
 /** Reversed stage: starts on the month's night frame and crossfades into its day frame. */
 /**
- * The sequence played before the live playlist experience begins, in three parts:
+ * The sequence played before the live playlist experience begins:
  *
- * 1. `wolves-prologue` — a black-screen, text-only cold open set to the full Gayane Ballet
- *    Suite (Adagio) track (5:26 / 326s — the "2001: A Space Odyssey" cue), establishing the
+ * 1. `species-prelude` — a silent factual prelude about Dimetrodon limbatus and Deinonychus
+ *    antirrhopus, presented in the existing Bluefin technical typography before the music starts.
+ * 2. `wolves-prologue` — a 94s Gayane Ballet Suite (Adagio) cold open, establishing the
  *    Gardener/Winnower framing, the Collapse, and the "BLUEFIN — seven days to the wolves"
- *    title card, paced across the entire song rather than a short excerpt.
- * 2. `wolves-intro` — the official YouTube IFrame Player embed of Bungie's "Destiny 2: Into
+ *    title card. Its cue boundaries stay locked to the approved 94s excerpt.
+ * 3. `bluefin-cinematic-universe` — the authored slate before the trailer handoff.
+ * 4. `wolves-intro` — the official YouTube IFrame Player embed of Bungie's "Destiny 2: Into
  *    the Light Cinematic" trailer, with HTML/CSS text overlays introducing the six Guardians.
- *    The real trailer runs 2:00, shorter than the requested 2:46 cutoff, so it already ends
- *    naturally within budget and needs no `maxDuration`. A legitimate embed via YouTube's own
+ *    The default unvoiced source runs ~2:03 and now uses an authored black-frame outro hold
+ *    (`maxDuration`) while the optional Ikora-voiced source clamps to its own shorter end. A
+ *    legitimate embed via YouTube's own
  *    IFrame API — the exact same mechanism already used for every track in the soundtrack
  *    playlist — never a downloaded or re-encoded local copy of someone else's footage.
  *
@@ -346,6 +399,42 @@ function bluefinMonthCrossfadePair(month: number): IntroBackgroundCrossfade {
  */
 export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
   return [
+    {
+      id: 'species-prelude',
+      kind: 'text',
+      duration: 32,
+      overlays: [
+        {
+          text: `Dimetrodon limbatus
+Permian Period
+About 286 million to 270 million years ago`,
+          start: 0,
+          end: 8,
+        },
+        {
+          text: `Extinct synapsid relative on the lineage toward mammals, not a dinosaur
+Carnivore with differentiated teeth and elongated vertebral spines supporting a sail
+Fossils found in North America`,
+          start: 8,
+          end: 16,
+        },
+        {
+          text: `Deinonychus antirrhopus
+Early Cretaceous Period
+Western North America`,
+          start: 16,
+          end: 24,
+        },
+        {
+          text: `Dromaeosaur theropod, bipedal
+Large sicklelike talon on the second toe
+Stiffened tail supported balance while running or attacking
+Long arms, hands, and a wrist able to flex sideways`,
+          start: 24,
+          end: 32,
+        },
+      ],
+    },
     {
       id: 'wolves-prologue',
       kind: 'text',
@@ -374,6 +463,7 @@ to shape the Garden of Earth.`,
           end: 13.75,
           backgroundCrossfade: [bluefinMonthCrossfadePair(6)],
           textPosition: 'bottom-right',
+          highlightSubstrings: ['life', 'dross', 'Garden'],
         },
         {
           text: 'One day changed the Garden forever.',
@@ -417,6 +507,7 @@ humanity had lost its future`,
           emphasis: 'dominant',
           textPosition: 'bottom',
           backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
+          nameplateTitle: 'From the Age of Dinosaurs to the Pinnacle of Humanity',
         },
         {
           text: `For the heart of any race is destroyed
@@ -448,20 +539,58 @@ surrounded by predators.`,
       ],
     },
     {
-      // The real trailer runs 2:00 (120s), shorter than the requested 2:46 cutoff, so it
-      // already fits within budget. It is deliberately cut a few seconds short of its own
-      // natural end via `maxDuration` (see below) to skip dead time after the narrator
-      // finishes speaking. Guardian window timings below were re-verified frame-by-frame
+      id: 'bluefin-cinematic-universe',
+      kind: 'text',
+      duration: 28,
+      overlays: [
+        {
+          text: 'Project Bluefin presents — Three projects, inspired by the first:',
+          start: 0,
+          end: 6,
+          preservePunctuation: true,
+        },
+        {
+          text: `Holotype [ exploding clusters ]
+[ Mecha[REDACTED] ]
+[ REDACTED ]`,
+          start: 6,
+          end: 12,
+          preservePunctuation: true,
+        },
+        {
+          text: 'and this one. The Bluefin Cinematic Universe. Buckle up, nerds —',
+          start: 12,
+          end: 19,
+          preservePunctuation: true,
+        },
+        {
+          text: 'Welcome to Indie Cloud Native —',
+          start: 19,
+          end: 24,
+          preservePunctuation: true,
+        },
+        {
+          text: 'For Nova`',
+          start: 24,
+          end: 28,
+          preservePunctuation: true,
+          highlightSubstrings: ['`'],
+        },
+      ],
+    },
+    {
+      // The Destiny segment now defaults to the unvoiced source and carries an optional voiced
+      // toggle. Guardian window timings below were re-verified frame-by-frame
       // against the real embed (Playwright + the YouTube IFrame API, screenshotting every
       // ~1-2s) per docs/wolves-maintenance.md's verification checklist, replacing the
       // original automated hue/brightness pass that had mismatched two of the six windows:
-      // - Robert Killen's Void Warlock (the first purple, a crystalline void-arm close-up) runs
+      // - Bob Killen's Void Warlock (the first purple, a crystalline void-arm close-up) runs
       //   5-17.5s footage-wise; the whip-pan cut to a Titan Ward of Dawn bubble forming happens
       //   at ~17.5s (confirmed via 0.5s-resolution frame capture — 17.0s is still clearly the
       //   Warlock's caped back, 18.5s is already the Titan crouched inside the bubble).
       // - Kat Cosgrove's plate is deliberately cued 1s ahead of the frame-verified footage cut,
       //   at 16.5s (explicit user request, confirmed 2026-07-15: her nameplate should "come
-      //   forward"). Robert Killen's window is shortened to match (5-16.5s) so the two plates
+      //   forward"). Bob Killen's window is shortened to match (5-16.5s) so the two plates
       //   stay adjacent rather than overlapping — neither has a `position`, so two simultaneous
       //   cues here would stack on top of each other instead of rendering side-by-side. Her
       //   plate now runs 16.5-24.5s. This is an intentional exception to frame-accurate cueing —
@@ -490,26 +619,34 @@ surrounded by predators.`,
       //   user's original line ended in a trailing ellipsis; substituted with an em dash to
       //   match this file's join convention and the sitewide ellipsis ban
       //   (docs/wolves-maintenance.md), while preserving the same dramatic trail-off.
-      // - The narrator's final line ("...for all time.") finishes around 113s, confirmed via
-      //   0.2s-resolution frame capture (the caption is still on screen at 113.2-113.5s, with
-      //   the same squad shot still holding, no cut yet). From ~113.7s the trailer cuts to a
-      //   black frame, then a "Destiny 2: Season of the Wish" promotional card, before its
-      //   natural end at 120s — none of that is Guardian content. `maxDuration: 114` ends the
-      //   segment right after the last line lands, skipping ~7s of dead promotional time, per
-      //   explicit user request (2026-07-15).
+      // - The default unvoiced source (`BV3BZKbpBns`) runs ~124.0s naturally. Real-player frame
+      //   verification (Playwright + `.wolves-intro-overlay-player` screenshots, 0.1s steps)
+      //   showed its own authored black-frame outro beginning at ~119.0s: 118.8s still carries
+      //   the previous bright frame, 119.0s is fully black and stays there through the end card.
+      //   This black-frame cutoff is a separate visual cutoff for the unvoiced source only,
+      //   retained unchanged as `maxDuration: 121.5` (2.5s past the black cut). The local caption
+      //   file is timed instead to the voiced Ikora source (`BKm0TPqeOjY`); its restored full
+      //   dialogue ends explicitly at 112.60s (see `src/data/wolves-destiny-captions.txt`), well
+      //   before either source's own cutoff, and it remains displayed in both modes regardless of
+      //   which video source is active. The optional Ikora voiced source is shorter overall
+      //   (~120.2s), so its alternate cutoff clamps to the video's own end via
+      //   `alternateMaxDuration: 120.2`.
       id: 'wolves-intro',
       kind: 'video',
-      youtubeVideoId: 'BKm0TPqeOjY',
+      youtubeVideoId: 'BV3BZKbpBns',
+      alternateYoutubeVideoId: 'BKm0TPqeOjY',
+      alternateYoutubeVideoLabel: 'Ikora voice over',
       // The source video opens on Bungie's own ESRB "TEEN" rating card (visible ~0-1.5s,
       // confirmed frame-by-frame), which isn't part of the Guardian content we want to show.
       // Starting 2s in skips past it entirely without touching any of the cue windows below,
       // since those are keyed to the video's absolute/native timeline, not this offset.
       startOffset: 2,
-      // Ends the segment right after the narrator's last line, before the black cut and
-      // "Season of the Wish" promo card — see the comment block above.
-      maxDuration: 114,
+      // Applies the retained unvoiced-source visual cutoff described above; this is
+      // independent of the caption track's explicit 112.60s end.
+      maxDuration: 121.5,
+      alternateMaxDuration: 120.2,
       overlays: [
-        { text: 'Void Warlock — Robert Killen — Reconciler of the Plane', start: 5, end: 16.5 },
+        { text: 'Void Warlock — Bob Killen — Reconciler of the Plane', start: 5, end: 16.5 },
         { text: 'Harbinger Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 },
         { text: 'Arc Warlock — Kaslin Fields — Rage of the Paradox', start: 38, end: 48 },
         { text: 'Solar Hunter — Laura Santamaria — Paragon to the Order of 7', start: 70.5, end: 77 },

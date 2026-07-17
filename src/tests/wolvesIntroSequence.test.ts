@@ -3,6 +3,7 @@ import {
   activeOverlayCue,
   activeOverlayText,
   advanceIntroSequence,
+  buildDestinyCaptionCues,
   buildIntroVideoSequence,
   buildOverlayTextParts,
   createIntroSequenceState,
@@ -97,6 +98,14 @@ describe('wolves intro overlay sequence', () => {
     expect(cues[1]).toEqual(expect.objectContaining({ text: 'Second line', start: 2.5, end: 5 }))
   })
 
+  it('supports explicit cue end times so the outro can pause before the black-frame line', () => {
+    const cues = parseDestinyCaptionFile('0.00|First line|1.25\n2.50|Second line')
+
+    expect(cues).toHaveLength(2)
+    expect(cues[0]).toEqual(expect.objectContaining({ text: 'First line', start: 0, end: 1.25 }))
+    expect(cues[1]).toEqual(expect.objectContaining({ text: 'Second line', start: 2.5, end: 5 }))
+  })
+
   it('highlights a specific substring when the cue requests one', () => {
     const parts = buildOverlayTextParts('Now, what\'s left of a proud order fights for survival', 'fights')
 
@@ -159,16 +168,121 @@ describe('wolves intro overlay sequence', () => {
 
   it('builds the intro sequence without the epilogue transition', () => {
     const sequence = buildIntroVideoSequence()
-    expect(sequence).toHaveLength(2)
-    expect(sequence.map(segment => segment.id)).toEqual(['wolves-prologue', 'wolves-intro'])
+    expect(sequence).toHaveLength(4)
+    expect(sequence.map(segment => segment.id)).toEqual([
+      'species-prelude',
+      'wolves-prologue',
+      'bluefin-cinematic-universe',
+      'wolves-intro',
+    ])
     expect(JSON.stringify(sequence)).not.toContain('But who will answer the call')
     expect(JSON.stringify(sequence)).not.toContain('Welcome to indie cloud native')
   })
 
+  it('defaults the Destiny segment to the unvoiced source and keeps the Ikora track optional', () => {
+    const destiny = buildIntroVideoSequence().find(segment => segment.id === 'wolves-intro')
+
+    expect(destiny).toEqual(expect.objectContaining({
+      kind: 'video',
+      youtubeVideoId: 'BV3BZKbpBns',
+      alternateYoutubeVideoId: 'BKm0TPqeOjY',
+      alternateYoutubeVideoLabel: 'Ikora voice over',
+    }))
+  })
+
+  it('renames Robert Killen to Bob Killen without moving the authored guardian windows', () => {
+    const destiny = buildIntroVideoSequence().find(segment => segment.id === 'wolves-intro')
+    if (!destiny || !isVideoSegment(destiny)) {
+      throw new Error('Expected the Destiny segment to exist')
+    }
+
+    expect(destiny.overlays).toEqual(expect.arrayContaining([
+      expect.objectContaining({ text: 'Void Warlock — Bob Killen — Reconciler of the Plane', start: 5, end: 16.5 }),
+      expect.objectContaining({ text: 'Arc Warlock — Kaslin Fields — Rage of the Paradox', start: 38, end: 48 }),
+    ]))
+    expect(JSON.stringify(destiny.overlays)).not.toContain('Robert Killen')
+  })
+
+  it('carries all 22 dialogue cues retimed to the voiced BKm0TPqeOjY transcript', () => {
+    const cues = buildDestinyCaptionCues().filter(cue => !cue.comicHeroTitleCard)
+
+    expect(cues.map(cue => ({ start: cue.start, text: cue.text }))).toEqual([
+      { start: 4.36, text: 'What is a guardian?' },
+      { start: 7.35, text: 'Are we gods?' },
+      { start: 9.40, text: 'We are connected to the weft and weave of the universe.' },
+      { start: 13.68, text: 'No one knows how long we live.' },
+      { start: 17.04, text: 'We stand alongside those without our gifts.' },
+      { start: 20.72, text: 'We know, intimately, their life spans, their mortality, despite their resilience.' },
+      { start: 29.48, text: 'Mortals live more intensely than any guardian I\'ve known. Love harder, perhaps.' },
+      { start: 35.88, text: 'They know tomorrow is never guaranteed. That everything they could become dies with them.' },
+      { start: 43.40, text: 'So, are we protectors?' },
+      { start: 46.96, text: 'Our gifts were meant to defend against impossible threats.' },
+      { start: 51.60, text: 'Those who need us have never needed us more.' },
+      { start: 55.24, text: 'But we could do nothing, and they would still die.' },
+      { start: 59.84, text: 'What is a guardian in that moment?' },
+      { start: 66.24, text: 'Now, across Last City territory, the forces of the Witness search.' },
+      { start: 72.68, text: 'Our borders are under siege.' },
+      { start: 75.52, text: 'Does that make us soldiers?' },
+      { start: 79.76, text: 'Pushing back buys us only time, but the alternative is unthinkable.' },
+      { start: 86.88, text: 'We built the city none of us dared to dream of, with allies from unlikely places.' },
+      { start: 93.52, text: 'We\'ve never had more to lose.' },
+      { start: 96.88, text: 'I turn the question to you, on the eve of our darkest hour.' },
+      { start: 103.56, text: 'What is a guardian?' },
+      { start: 107.40, text: 'Define us in this moment for all time.' },
+    ])
+  })
+
+  it('restores the missing "soldiers" question and the full closing dialogue after the drifted tail', () => {
+    const cues = buildDestinyCaptionCues().filter(cue => !cue.comicHeroTitleCard)
+    const texts = cues.map(cue => cue.text)
+    const soldiers = cues.find(cue => cue.text === 'Does that make us soldiers?')
+    const dreamOf = cues.find(cue => cue.text === 'We built the city none of us dared to dream of, with allies from unlikely places.')
+    const neverHadMore = cues.find(cue => cue.text === 'We\'ve never had more to lose.')
+    const eveOfDarkestHour = cues.find(cue => cue.text === 'I turn the question to you, on the eve of our darkest hour.')
+    const finalLine = cues.find(cue => cue.text === 'Define us in this moment for all time.')
+
+    expect(soldiers?.start).toBe(75.52)
+    expect(dreamOf?.start).toBe(86.88)
+    expect(neverHadMore?.start).toBe(93.52)
+    expect(eveOfDarkestHour?.start).toBe(96.88)
+    expect(finalLine).toBeDefined()
+    expect(finalLine?.start).toBe(107.40)
+    expect(finalLine?.end).toBe(112.60)
+
+    // The fabricated black-frame line and its truncated/drifted 119.0s timing must be gone.
+    expect(texts).not.toContain('We built a city none of us dared')
+    expect(cues.some(cue => cue.start === 119.0)).toBe(false)
+  })
+
+  it('opens with a silent factual species prelude before the locked Gayane prologue', () => {
+    const [prelude, prologue] = buildIntroVideoSequence()
+    if (!isTextSegment(prelude) || !isTextSegment(prologue)) {
+      throw new Error('Expected the first two intro segments to be text-only')
+    }
+
+    expect(prelude.audioYoutubeVideoId).toBeUndefined()
+    expect(prelude.overlays?.map(cue => cue.text)).toEqual([
+      `Dimetrodon limbatus
+Permian Period
+About 286 million to 270 million years ago`,
+      `Extinct synapsid relative on the lineage toward mammals, not a dinosaur
+Carnivore with differentiated teeth and elongated vertebral spines supporting a sail
+Fossils found in North America`,
+      `Deinonychus antirrhopus
+Early Cretaceous Period
+Western North America`,
+      `Dromaeosaur theropod, bipedal
+Large sicklelike talon on the second toe
+Stiffened tail supported balance while running or attacking
+Long arms, hands, and a wrist able to flex sideways`,
+    ])
+    expect(prologue.duration).toBe(94)
+  })
+
   it('gives the revised prologue copy readable holds within its 94-second runtime', () => {
-    const [prologue] = buildIntroVideoSequence()
+    const [, prologue] = buildIntroVideoSequence()
     if (!isTextSegment(prologue)) {
-      throw new Error('Expected the first intro segment to be text-only')
+      throw new Error('Expected the second intro segment to be text-only')
     }
 
     expect(prologue.duration).toBe(94)
@@ -204,6 +318,7 @@ to shape the Garden of Earth.`,
         start: 5,
         end: 13.75,
         textPosition: 'bottom-right',
+        highlightSubstrings: ['life', 'dross', 'Garden'],
       }),
       expect.objectContaining({ text: 'One day changed the Garden forever.', start: 13.75, end: 25 }),
       expect.objectContaining({
@@ -225,6 +340,7 @@ humanity had lost its future`,
         start: 50,
         end: 59.375,
         textPosition: 'bottom',
+        nameplateTitle: 'From the Age of Dinosaurs to the Pinnacle of Humanity',
       }),
       expect.objectContaining({
         text: `For the heart of any race is destroyed
@@ -255,9 +371,9 @@ And its will to survive is utterly Broken`,
   })
 
   it('fades the Collapse to night with the armies line before the combined closing words', () => {
-    const [prologue] = buildIntroVideoSequence()
+    const [, prologue] = buildIntroVideoSequence()
     if (!isTextSegment(prologue)) {
-      throw new Error('Expected the first intro segment to be text-only')
+      throw new Error('Expected the second intro segment to be text-only')
     }
 
     const serializedCues = JSON.stringify(prologue.overlays)
@@ -307,5 +423,32 @@ And its will to survive is utterly Broken`,
         textPosition: 'bottom',
       }),
     ]))
+  })
+
+  it('adds the authored cinematic-universe slate before the Destiny trailer', () => {
+    const sequence = buildIntroVideoSequence()
+    const slate = sequence.find(segment => segment.id === 'bluefin-cinematic-universe')
+    const trailer = sequence[sequence.length - 1]
+
+    if (!slate || !trailer || !isTextSegment(slate) || !isVideoSegment(trailer)) {
+      throw new Error('Expected slate text segment followed by the Destiny trailer')
+    }
+
+    expect(slate.overlays?.map(cue => cue.text)).toEqual([
+      'Project Bluefin presents — Three projects, inspired by the first:',
+      `Holotype [ exploding clusters ]
+[ Mecha[REDACTED] ]
+[ REDACTED ]`,
+      'and this one. The Bluefin Cinematic Universe. Buckle up, nerds —',
+      'Welcome to Indie Cloud Native —',
+      'For Nova`',
+    ])
+    expect(slate.overlays?.[slate.overlays.length - 1]).toEqual(expect.objectContaining({
+      text: 'For Nova`',
+      preservePunctuation: true,
+      highlightSubstrings: ['`'],
+    }))
+    expect(slate.overlays?.every(cue => cue.preservePunctuation)).toBe(true)
+    expect(trailer.id).toBe('wolves-intro')
   })
 })
