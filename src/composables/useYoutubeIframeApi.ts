@@ -19,6 +19,10 @@ export interface YoutubePlayer {
   getVolume?: () => number
   /** Sets the player's volume level (0–100). */
   setVolume?: (volume: number) => void
+  /** Mutes the player's audio output entirely. */
+  mute?: () => void
+  /** Restores the player's audio output after `mute`. */
+  unMute?: () => void
   /** Loads and immediately plays a new video in this same player instance. */
   loadVideoById?: (videoId: string) => void
   /**

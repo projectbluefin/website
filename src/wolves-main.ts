@@ -1,11 +1,9 @@
-// @ts-expect-error Known issues, that's why we use it as a plugin, See here: https://github.com/davidjbradshaw/iframe-resizer/issues/1363
-import IframeResizerPlugin from '@iframe-resizer/vue'
+import { createPinia } from 'pinia'
 import { createApp } from 'vue'
-import { i18n } from './locales/schema'
 import WolvesApp from './WolvesApp.vue'
 import './style/index.scss'
+import './style/wolves-cinematic.scss'
 
 const app = createApp(WolvesApp)
-app.use(i18n)
-app.use(IframeResizerPlugin)
+app.use(createPinia())
 app.mount('#app')
