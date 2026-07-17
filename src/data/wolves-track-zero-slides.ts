@@ -31,12 +31,18 @@ export const kyleTrackZeroWindow = {
 export const hikariSlideId = 'wolves/people/hikari.JPG'
 export const hikariTrackZeroWindow = {
   startTime: kyleTrackZeroWindow.endTime,
+  endTime: 190.24,
+} as const
+
+export const hikari2SlideId = 'wolves/people/hikari2.JPG'
+export const hikari2TrackZeroWindow = {
+  startTime: hikariTrackZeroWindow.endTime,
   endTime: 192.28,
 } as const
 
 export const jorgeBluefinSlideId = 'wolves/people/jorge-bluefin.webp'
 export const jorgeBluefinTrackZeroWindow = {
-  startTime: hikariTrackZeroWindow.endTime,
+  startTime: hikari2TrackZeroWindow.endTime,
   endTime: 196.36,
 } as const
 
@@ -49,6 +55,7 @@ export const bluefinGroupSlides = [
   { id: m2SlideId, window: m2TrackZeroWindow },
   { id: kyleSlideId, window: kyleTrackZeroWindow },
   { id: hikariSlideId, window: hikariTrackZeroWindow },
+  { id: hikari2SlideId, window: hikari2TrackZeroWindow },
   { id: jorgeBluefinSlideId, window: jorgeBluefinTrackZeroWindow },
 ] as const
 

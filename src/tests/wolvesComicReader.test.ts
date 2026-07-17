@@ -170,6 +170,7 @@ describe('wolvesComicReader', () => {
     const m2Path = 'wolves/people/m2.jpg'
     const kylePath = 'wolves/people/kyle.jpg'
     const hikariPath = 'wolves/people/hikari.JPG'
+    const hikari2Path = 'wolves/people/hikari2.JPG'
     const jorgePath = 'wolves/people/jorge-bluefin.webp'
     const wrapper = mount(WolvesComicReader, {
       props: {
@@ -211,8 +212,14 @@ describe('wolvesComicReader', () => {
     await wrapper.setProps({ playlistCurrentTime: 188.199 })
     expect(activeTimelineImage(wrapper)).toContain(hikariPath)
 
-    await wrapper.setProps({ playlistCurrentTime: 192.278 })
+    await wrapper.setProps({ playlistCurrentTime: 190.238 })
     expect(activeTimelineImage(wrapper)).toContain(hikariPath)
+
+    await wrapper.setProps({ playlistCurrentTime: 190.241 })
+    expect(activeTimelineImage(wrapper)).toContain(hikari2Path)
+
+    await wrapper.setProps({ playlistCurrentTime: 192.278 })
+    expect(activeTimelineImage(wrapper)).toContain(hikari2Path)
 
     await wrapper.setProps({ playlistCurrentTime: 192.279 })
     expect(activeTimelineImage(wrapper)).toContain(jorgePath)
