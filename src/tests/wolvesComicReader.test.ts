@@ -1,4 +1,6 @@
 import type { SoundtrackTrack } from '../data/wolves-soundtrack'
+import { existsSync, readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
@@ -799,6 +801,21 @@ describe('wolvesComicReader', () => {
     await wrapper.setProps({ playlistCurrentTime: 171.879 })
     expect(wrapper.find('.wallpaper-theater-caption').exists()).toBe(false)
     expect(wrapper.find('.flickr-caption').exists()).toBe(true)
+  })
+
+  it('keeps the authored hero-slide metadata in generator input', () => {
+    const generatorPath = resolve(process.cwd(), 'scripts/generate-wallpapers.js')
+    const generator = readFileSync(generatorPath, 'utf8')
+
+    expect(existsSync(resolve(process.cwd(), 'public/img/wallpapers/wolves/people/nova4ever.webp'))).toBe(true)
+    expect(generator).toContain('\'interview-clyde-seepersad-linux-foundation\': \'AI Is Not Killing Tech Jobs — The Data Says Otherwise | Clyde Seepersad, Linux Foundation\'')
+    expect(generator).toContain('\'nova4ever\': \'Jay Balamurugan\'')
+    expect(generator).toContain('\'interview-clyde-seepersad-linux-foundation\',')
+    expect(generator).toContain('\'nova4ever\',')
+    expect(generator).toContain('const bluefinGroupSlideNames = [')
+    expect(generator).toContain('\'bluefin-chicken\': \'Bluefin created by Andy Frazer and Jacob Schnurr\'')
+    expect(generator).toContain('\'bluefin-dusk\': \'Bluefin created by Andy Frazer and Jacob Schnurr\'')
+    expect(generator).toContain('\'bluefin-huntress\': \'Bluefin created by Andy Frazer and Jacob Schnurr\'')
   })
 
   it('keeps long wallpaper page titles visible in the compact archive caption', async () => {

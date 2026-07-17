@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import qrMakeMeAComic from '@/assets/svg/qr-makemeacomic.svg'
@@ -190,8 +192,13 @@ describe('wolvesIntroOverlay video segments', () => {
     expect(wrapper.text()).toContain('makemeacomic.com')
     expect(wrapper.get('[data-comic-hero-qr-link]').attributes('href')).toBe('https://makemeacomic.com')
     expect(wrapper.get('[data-comic-hero-qr-link]').attributes('aria-label')).toBe('Open makemeacomic.com')
+    expect(wrapper.get('[data-comic-hero-qr-link]').attributes('target')).toBe('_blank')
+    expect(wrapper.get('[data-comic-hero-qr-link]').attributes('rel')).toBe('noopener noreferrer')
+    expect(wrapper.get('[data-comic-hero-qr-link]').classes()).toContain('wolves-intro-overlay-title-card-qr')
+    expect(wrapper.find('[data-comic-hero-qr-card]').exists()).toBe(true)
     expect(wrapper.get('[data-comic-hero-qr-image]').attributes('src')).toBe(qrMakeMeAComic)
     expect(wrapper.get('[data-comic-hero-qr-image]').attributes('alt')).toBe('QR code linking to makemeacomic.com')
+    expect(wrapper.get('[data-comic-hero-qr-domain]').text()).toBe('makemeacomic.com')
   })
 
   it('cycles comic hero shots deterministically without repeating during the title-card cue', async () => {
@@ -740,6 +747,16 @@ describe('wolvesIntroOverlay guardian plate', () => {
     expect(wrapper.find('.wolves-guardian-plate-dinosaur').exists()).toBe(true)
     expect(wrapper.find('.wolves-guardian-plate-dinosaur img').attributes('src')).toContain('bob-torosaurus.webp')
     expect(wrapper.find('.wolves-guardian-plate-dinosaur-icon').exists()).toBe(false)
+  })
+
+  it('keeps the recovered Weyland lower third and detailed mount treatment', () => {
+    const overlay = readFileSync(resolve(process.cwd(), 'src/components/wolves/WolvesIntroOverlay.vue'), 'utf8')
+
+    expect(overlay).toContain('font-family: var(--wc-font-weyland, \'Michroma\', sans-serif)')
+    expect(overlay).toContain('font-family: var(--wc-font-weyland-mono, \'Share Tech Mono\', monospace)')
+    expect(overlay).toContain('grid-template-columns: minmax(0, 1fr) minmax(13rem, 16rem)')
+    expect(overlay).toContain('width: clamp(6.8rem, 5rem + 4vw, 10rem)')
+    expect(overlay).toContain('height: clamp(6.8rem, 5rem + 4vw, 10rem)')
   })
 
   it('switches to Kaslin\'s flipped Torosaurus artwork during her authored window', async () => {

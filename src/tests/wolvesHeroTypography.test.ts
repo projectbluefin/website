@@ -39,6 +39,14 @@ describe('wolves hero typography timeline', () => {
     expect(wrapper.get(`.wc-thesis--${mode}`).text()).toContain(text)
   })
 
+  it('applies the scoped back-treatment only to the welcome cues', async () => {
+    const welcome = await renderAt(345)
+    expect(welcome.get('.wc-thesis').classes()).toContain('wc-thesis--welcome-back')
+
+    const legend = await renderAt(408)
+    expect(legend.get('.wc-thesis').classes()).not.toContain('wc-thesis--welcome-back')
+  })
+
   it.each([344.999, 365, 404.999, 425.001])(
     'does not render readable hero text outside authored cue windows at %s',
     async (time) => {

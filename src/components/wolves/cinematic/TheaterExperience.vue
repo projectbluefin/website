@@ -134,7 +134,14 @@ onBeforeUnmount(() => {
         <WolvesComicReader :track-index="store.segmentIndex" :playlist-current-time="time" />
 
         <Transition name="wc-thesis">
-          <div v-if="thesis.active && (thesis.text || corruptionText)" class="wc-thesis" :class="`wc-thesis--${thesis.mode}`">
+          <div
+            v-if="thesis.active && (thesis.text || corruptionText)"
+            class="wc-thesis"
+            :class="[
+              `wc-thesis--${thesis.mode}`,
+              { 'wc-thesis--welcome-back': thesis.mode === 'welcome' },
+            ]"
+          >
             <span v-if="corruptionText" class="wc-thesis-corruption">{{ corruptionText }}</span>
             <template v-else>
               <span class="wc-thesis-text">{{ thesis.text }}</span>
@@ -337,6 +344,23 @@ onBeforeUnmount(() => {
     0 0 38px rgb(59 130 246 / 92%),
     0 0 82px rgb(37 99 235 / 68%),
     0 0 24px rgb(8 9 12 / 90%);
+}
+
+.wc-thesis--welcome-back {
+  gap: 1.2rem;
+
+  &::before,
+  &::after {
+    width: clamp(5rem, 12vw, 14rem);
+    height: 2px;
+    content: '';
+    background: linear-gradient(to right, transparent, #93c5fd 60%, #fff 100%);
+    box-shadow: 0 0 8px rgb(147 197 253 / 55%);
+  }
+
+  &::after {
+    background: linear-gradient(to left, transparent, #93c5fd 60%, #fff 100%);
+  }
 }
 
 .wc-thesis-subtitle {

@@ -56,9 +56,10 @@ const curatedTitles = {
   'showcase-20': 'Community Showcase by AlgoCompSynth by znmeb',
 
   // People / KubeCon / Flickr curated titles
-  'interview-clyde-seepersad-linux-foundation': 'Clyde Seepersad, Linux Foundation — "AI Is Not Killing Tech Jobs"',
+  'interview-clyde-seepersad-linux-foundation': 'AI Is Not Killing Tech Jobs — The Data Says Otherwise | Clyde Seepersad, Linux Foundation',
   'interview-jono-bacon-cult-psychology-kubernetes': 'Jono Bacon, Stateshift — "The Cult Psychology of Kubernetes"',
   'interview-l4e-games-for-everyone-2-linux-gaming': 'Linux For Everyone — "Games For Everyone #2: Linux Gaming Is WINNING"',
+  'nova4ever': 'Jay Balamurugan',
   'kubecon-55164225841': 'Maintainer Summit Evening Reception - 043 MN',
   'kubecon-55164388368': 'Maintainer Summit Evening Reception - 040 MN',
   'kubecon-55163325182': 'Maintainer Summit Evening Reception - 030 MN',
@@ -193,7 +194,9 @@ const curatedDescriptions = {
 
 // Owner-authorized title-only 10-foot theater banner for the Track 0 Jono cue.
 const titleOnlyTheaterCaptions = new Set([
+  'interview-clyde-seepersad-linux-foundation',
   'interview-jono-bacon-cult-psychology-kubernetes',
+  'nova4ever',
 ])
 
 function formatTitle(filename) {
@@ -326,26 +329,25 @@ async function generate() {
     })
   }
 
-  // Keep the Bluefin artist trio adjacent.
-  const chickenIndex = wallpapers.findIndex(w => w.name === 'wolves/wolves/bluefin-chicken.webp')
-  const bluefinGroupItems = wallpapers.filter(wallpaper => wallpaper.name === 'bluefin-dusk' || wallpaper.name === 'wolves/wolves/bluefin-huntress.webp')
-
-  const bluefinGroup = []
-  if (chickenIndex !== -1) {
-    bluefinGroup.push(wallpapers[chickenIndex])
-  }
-
-  for (const item of bluefinGroupItems) {
-    const index = wallpapers.findIndex(candidate => candidate === item)
-    if (index !== -1) {
-      wallpapers.splice(index, 1)
-      bluefinGroup.push(item)
-    }
-  }
-
-  if (chickenIndex !== -1) {
-    wallpapers.splice(chickenIndex, 1)
-    wallpapers.splice(chickenIndex, 0, ...bluefinGroup)
+  const bluefinGroupSlideNames = [
+    'wolves/wolves/bluefin-chicken.webp',
+    'bluefin-dusk',
+    'wolves/wolves/bluefin-huntress.webp',
+  ]
+  const bluefinGroup = bluefinGroupSlideNames
+    .map(name => wallpapers.find(wallpaper => wallpaper.name === name))
+    .filter(Boolean)
+  const firstBluefinSlide = bluefinGroup[0]
+  if (firstBluefinSlide) {
+    const firstBluefinIndex = wallpapers.indexOf(firstBluefinSlide)
+    const bluefinGroupSet = new Set(bluefinGroup)
+    const insertionIndex = wallpapers
+      .slice(0, firstBluefinIndex)
+      .filter(wallpaper => !bluefinGroupSet.has(wallpaper))
+      .length
+    const remainingWallpapers = wallpapers.filter(wallpaper => !bluefinGroupSet.has(wallpaper))
+    wallpapers.splice(0, wallpapers.length, ...remainingWallpapers)
+    wallpapers.splice(insertionIndex, 0, ...bluefinGroup)
   }
 
   const outputPath = join(ROOT_DIR, 'src/components/wolves/wallpapers-list.ts')

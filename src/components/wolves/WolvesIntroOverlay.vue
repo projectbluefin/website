@@ -1642,7 +1642,6 @@ defineExpose({
 
 .wolves-guardian-plate-name {
   margin: 0.2rem 0 0;
-  /* Weyland display face; single weight, so no synthetic bolding. */
   font-family: var(--wc-font-weyland, 'Michroma', sans-serif);
   font-size: clamp(2.2rem, 1.7rem + 1.3vw, 3.1rem);
   font-weight: 400;
