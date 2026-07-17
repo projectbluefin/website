@@ -1134,7 +1134,6 @@ defineExpose({
 
 .wolves-guardian-plate-label {
   margin: 0;
-  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
   font-size: clamp(1.4rem, 1.1rem + 0.6vw, 1.8rem);
   letter-spacing: 0.35em;
   color: #93c5fd;
@@ -1142,7 +1141,6 @@ defineExpose({
 
 .wolves-guardian-plate-class {
   margin: 0.35rem 0 0;
-  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
   font-size: clamp(1.6rem, 1.2rem + 0.9vw, 2.1rem);
   letter-spacing: 0.05em;
   color: #bfdbfe;
@@ -1151,10 +1149,8 @@ defineExpose({
 
 .wolves-guardian-plate-name {
   margin: 0.2rem 0 0;
-  /* Weyland display face; single weight, so no synthetic bolding. */
-  font-family: var(--wc-font-weyland, 'Michroma', sans-serif);
-  font-size: clamp(2.2rem, 1.7rem + 1.3vw, 3.1rem);
-  font-weight: 400;
+  font-size: clamp(2.6rem, 1.9rem + 1.6vw, 3.6rem);
+  font-weight: 700;
   color: #f5f5f5;
   background: linear-gradient(to bottom, #fff 0%, #e2e8f0 60%, #a0aec0 100%);
   -webkit-background-clip: text;
@@ -1166,7 +1162,6 @@ defineExpose({
 
 .wolves-guardian-plate-title {
   margin: 0.35rem 0 0;
-  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
   font-size: clamp(1.5rem, 1.2rem + 0.7vw, 1.9rem);
   color: #94a3b8;
 }
