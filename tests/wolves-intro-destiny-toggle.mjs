@@ -219,12 +219,6 @@ try {
   expectEqual('Voice toggle hidden before Destiny', await page.locator('.wc-widget-toggle').count(), 0)
 
   await nextSegment(page)
-  await nextSegment(page)
-  await nextSegment(page)
-
-  expectEqual('Voice toggle hidden on slate', await page.locator('.wc-widget-toggle').count(), 0)
-
-  await nextSegment(page)
   await page.waitForFunction(() => window.__wolvesIntro?.getVideoId?.() === 'BV3BZKbpBns', null, { timeout: 30_000 })
   await page.waitForFunction(() => window.__wolvesIntro?.getPlayerDuration?.() > 0, null, { timeout: 30_000 })
 

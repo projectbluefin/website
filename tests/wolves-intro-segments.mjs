@@ -170,15 +170,6 @@ try {
     }
   }
 
-  await assertNameplate('UNIVERSAL BLUE BRIEFING', 'Dimetrodon limbatus // Deinonychus antirrhopus')
-  await assertOverlayContains('Dimetrodon limbatus')
-  await capture(page, '01-species-dimetrodon')
-
-  await seekIntro(16.1, 32)
-  await assertOverlayContains('Deinonychus antirrhopus')
-  await capture(page, '02-species-deinonychus')
-
-  await page.getByLabel('Next').click()
   await assertNoNameplate()
   await page.waitForFunction(() => window.__mockWolvesPlayers.some(player => player.videoId === 'EB3IokHelRk'), null, { timeout: 5_000 })
   await assertOverlayContains('A Gardener and a Winnower walked among the stars')
@@ -193,31 +184,6 @@ try {
   await assertOverlayContains('In the space of a few days')
   await assertNameplate('PROLOGUE', 'From the Age of Dinosaurs to the Pinnacle of Humanity')
   await capture(page, '04-prologue-nameplate-override')
-
-  await page.getByLabel('Next').click()
-  await assertNameplate('UNIVERSAL BLUE BRIEFING', 'Universal Blue Briefing')
-  await assertOverlayContains('Teammate Introduction')
-  expectTruthy(
-    'Universal Blue Briefing uses terminal presentation',
-    await page.locator('.wolves-intro-overlay-text-terminal').isVisible(),
-  )
-  expectEqual(
-    'Universal Blue Briefing terminal opacity',
-    await page.locator('.wolves-intro-overlay-text-terminal').evaluate(element => getComputedStyle(element).opacity),
-    '1',
-  )
-  await capture(page, '05-universal-blue-briefing')
-
-  await page.getByLabel('Next').click()
-  await assertNameplate('UNIVERSAL BLUE BRIEFING', 'Bluefin Cinematic Universe Slate')
-  await assertOverlayContains('Project Bluefin presents')
-  await capture(page, '06-cinematic-universe-slate')
-
-  await seekIntro(24.2, 28)
-  await assertOverlayContains('For Nova`')
-  const slateHighlights = await page.locator('.wolves-intro-letter-highlight').allTextContents()
-  expectEqual('Slate highlighted backtick', slateHighlights.join(''), '`')
-  await capture(page, '07-cinematic-universe-for-nova')
 
   await page.getByLabel('Next').click()
   await page.waitForSelector('.wolves-intro-overlay-player', { state: 'visible', timeout: 10_000 })

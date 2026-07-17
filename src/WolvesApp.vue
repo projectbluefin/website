@@ -41,12 +41,6 @@ const INTRO_DISPLAY: Record<string, { chapter: string, title: string, artist: st
     artist: 'Aram Khachaturian',
     artwork: 'https://i.ytimg.com/vi/EB3IokHelRk/hqdefault.jpg',
   },
-  'universal-blue-briefing': {
-    chapter: 'UNIVERSAL BLUE BRIEFING',
-    title: 'Universal Blue Briefing',
-    artist: 'AN4-ChK-12',
-    artwork: 'https://i.ytimg.com/vi/EB3IokHelRk/hqdefault.jpg',
-  },
   'wolves-intro': {
     chapter: 'UNIVERSAL BLUE BRIEFING',
     title: 'Destiny 2: Into the Light Cinematic',
@@ -244,8 +238,7 @@ function restart() {
     <CinematicLobby v-if="store.phase === 'lobby'" @enter="store.enterIntro()" />
 
     <!--
-      The authored intro: species prelude, locked 94s Gayane prologue, Universal
-      Blue Briefing, cinematic-universe slate, then the guardian trailer. Transport
+      The authored intro: locked 94s Gayane prologue, then the guardian trailer. Transport
       lives in the same hero widget as the cinematic; the top plate is the universal
       title placard.
     -->

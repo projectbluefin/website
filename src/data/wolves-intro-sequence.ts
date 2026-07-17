@@ -379,13 +379,10 @@ function bluefinMonthCrossfadePair(month: number): IntroBackgroundCrossfade {
 /**
  * The sequence played before the live playlist experience begins:
  *
- * 1. `species-prelude` — a silent factual prelude about Dimetrodon limbatus and Deinonychus
- *    antirrhopus, presented in the existing Bluefin technical typography before the music starts.
- * 2. `wolves-prologue` — a 94s Gayane Ballet Suite (Adagio) cold open, establishing the
+ * 1. `wolves-prologue` — a 94s Gayane Ballet Suite (Adagio) cold open, establishing the
  *    Gardener/Winnower framing, the Collapse, and the "BLUEFIN — seven days to the wolves"
  *    title card. Its cue boundaries stay locked to the approved 94s excerpt.
- * 3. `bluefin-cinematic-universe` — the authored slate before the trailer handoff.
- * 4. `wolves-intro` — the official YouTube IFrame Player embed of Bungie's "Destiny 2: Into
+ * 2. `wolves-intro` — the official YouTube IFrame Player embed of Bungie's "Destiny 2: Into
  *    the Light Cinematic" trailer, with HTML/CSS text overlays introducing the six Guardians.
  *    The default unvoiced source runs ~2:03 and now uses an authored black-frame outro hold
  *    (`maxDuration`) while the optional Ikora-voiced source clamps to its own shorter end. A
