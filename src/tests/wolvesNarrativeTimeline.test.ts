@@ -21,22 +21,33 @@ const legacyTrimmedBodyTimeline = [
   ['john-bazzite-interview', 124.93581514762516, 136.8100128369705],
   ['ishtar-final-shape', 136.8100128369705, 150],
   ['lorem-pursuit-1', 150, 220],
-  ['lorem-awakening-1', 220, 226.50144449030128],
-  ['do-not-reply', 226.50144449030128, 231.1295914156005],
-  ['quote-unmarked-grave', 231.1295914156005, 233.18654560462235],
-  ['quote-third-disciple', 233.18654560462235, 236.27197688815517],
-  ['maintenance-window', 236.27197688815517, 241.81840693355343],
-  ['quote-berkus', 241.81840693355343, 247.10771770532398],
-  ['lorem-prologue-1', 247.10771770532398, 256.58439950474616],
-  ['lorem-prologue-2', 256.58439950474616, 281.1209244737928],
-  ['forbidden-factory', 281.1209244737928, 287.25505571605447],
-  ['jordan-adrian', 287.25505571605447, 308.30210482872474],
-  ['quote-childhoods-end-future', 308.30210482872474, 309.55096987205945],
-  ['quote-natasha-woods', 309.55096987205945, 311.68138671068925],
-  ['childhoods-end-wager', 311.68138671068925, 322.6640528270739],
-  ['glorious-eggroll', 322.6640528270739, 351.49814279818406],
-  ['project-neptune', 351.49814279818406, 357.70573669005364],
-  ['john-seager', 357.70573669005364, 398],
+  ['lorem-awakening-1', 220, 224.399809],
+  ['do-not-reply', 224.399809, 228.112018],
+  ['quote-unmarked-grave', 228.112018, 231.112018],
+  ['quote-third-disciple', 231.112018, 234.143025],
+  ['maintenance-window', 234.143025, 238.206856],
+  ['quote-berkus', 238.206856, 242.175375],
+  ['lorem-prologue-1', 242.175375, 247.487362],
+  ['lorem-prologue-2', 247.487362, 256.03479],
+  ['forbidden-factory', 256.03479, 260.308503],
+  ['jordan-adrian', 260.308503, 268.224845],
+  ['quote-childhoods-end-future', 268.224845, 271.224845],
+  ['quote-natasha-woods', 271.224845, 274.224845],
+  ['childhoods-end-wager', 274.224845, 279.943353],
+  ['glorious-eggroll', 279.943353, 289.203231],
+  ['project-neptune', 289.203231, 293.502459],
+  ['john-seager', 293.502459, 304.455899],
+  ['insertion-approved', 304.455899, 310.306754],
+  ['laura-sherman-robert', 310.306754, 320.150583],
+  ['natali-kat-mario', 320.150583, 327.327826],
+  ['fyra-fyre-redactions', 327.327826, 331.098499],
+  ['jordan-andy-model', 331.098499, 343.923904],
+  ['preethi-lakshmi', 343.923904, 354.947016],
+  ['andy-krook-kubesteller', 354.947016, 363.339493],
+  ['openssf-reinforcements', 363.339493, 373.315756],
+  ['ambers-garage-cloud-native-series', 373.315756, 380.400979],
+  ['katie-neomuna', 380.400979, 389.243991],
+  ['rafael-bluefin', 389.243991, 398],
   ['blue-universal-acquires-wayland-yutani', 398, 425],
 ] as const
 
@@ -81,6 +92,17 @@ describe('wolves narrative timeline', () => {
       { id: 'john-bazzite-interview', chapterId: 'awakening' },
       { id: 'ishtar-final-shape', chapterId: 'awakening' },
       { id: 'blue-universal-acquires-wayland-yutani', chapterId: 'awakening' },
+      { id: 'insertion-approved', chapterId: 'awakening' },
+      { id: 'laura-sherman-robert', chapterId: 'awakening' },
+      { id: 'natali-kat-mario', chapterId: 'awakening' },
+      { id: 'fyra-fyre-redactions', chapterId: 'awakening' },
+      { id: 'jordan-andy-model', chapterId: 'awakening' },
+      { id: 'preethi-lakshmi', chapterId: 'awakening' },
+      { id: 'andy-krook-kubesteller', chapterId: 'awakening' },
+      { id: 'openssf-reinforcements', chapterId: 'awakening' },
+      { id: 'ambers-garage-cloud-native-series', chapterId: 'awakening' },
+      { id: 'katie-neomuna', chapterId: 'awakening' },
+      { id: 'rafael-bluefin', chapterId: 'awakening' },
     ])
   })
 
@@ -112,9 +134,18 @@ describe('wolves narrative timeline', () => {
     }
   })
 
-  it('keeps every Track 0 slot at its pre-migration trimmed-body boundaries', () => {
+  it('keeps every Track 0 slot at its approved trimmed-body boundaries', () => {
     expect(wolvesNarrativeTimeline.map(slot => [slot.artifactId, slot.startTime, slot.endTime]))
       .toEqual(legacyTrimmedBodyTimeline)
+  })
+
+  it('keeps each retimed post-Golden-Era slot between three and eighteen seconds', () => {
+    const retimedSlots = wolvesNarrativeTimeline.filter(slot => slot.startTime >= 220 && slot.endTime <= 398)
+
+    for (const slot of retimedSlots) {
+      expect(slot.endTime - slot.startTime).toBeGreaterThanOrEqual(3)
+      expect(slot.endTime - slot.startTime).toBeLessThanOrEqual(18)
+    }
   })
 
   it('orders the non-anchor lore pool by metadata date', () => {

@@ -166,8 +166,7 @@ describe('wolvesComicReader', () => {
   it('keeps the authored Jono Bacon, Marina Moore, and Bluefin group Track 0 sequence', async () => {
     const jonoPath = 'wolves/people/interview-jono-bacon-cult-psychology-kubernetes.webp'
     const marinaPath = 'wolves/people/kubecon-55168684055.webp'
-    const shermanPath = 'wolves/people/sherman.webp'
-    const m2Path = 'wolves/people/m2.jpg'
+    const shermanM2Path = 'wolves/people/sherman-m2.webp'
     const kylePath = 'wolves/people/kyle.jpg'
     const hikariPath = 'wolves/people/hikari.JPG'
     const hikari2Path = 'wolves/people/hikari2.JPG'
@@ -192,16 +191,16 @@ describe('wolvesComicReader', () => {
     expect(activeTimelineImage(wrapper)).toContain(marinaPath)
 
     await wrapper.setProps({ playlistCurrentTime: 175.959 })
-    expect(activeTimelineImage(wrapper)).toContain(shermanPath)
+    expect(activeTimelineImage(wrapper)).toContain(shermanM2Path)
 
     await wrapper.setProps({ playlistCurrentTime: 180.038 })
-    expect(activeTimelineImage(wrapper)).toContain(shermanPath)
+    expect(activeTimelineImage(wrapper)).toContain(shermanM2Path)
 
     await wrapper.setProps({ playlistCurrentTime: 180.039 })
-    expect(activeTimelineImage(wrapper)).toContain(m2Path)
+    expect(activeTimelineImage(wrapper)).toContain(shermanM2Path)
 
     await wrapper.setProps({ playlistCurrentTime: 184.118 })
-    expect(activeTimelineImage(wrapper)).toContain(m2Path)
+    expect(activeTimelineImage(wrapper)).toContain(shermanM2Path)
 
     await wrapper.setProps({ playlistCurrentTime: 184.119 })
     expect(activeTimelineImage(wrapper)).toContain(kylePath)
@@ -329,6 +328,49 @@ describe('wolvesComicReader', () => {
     expect(galleryCaption(wrapper)).toContain('CNCF STREAM //')
     expect(galleryCaption(wrapper)).not.toBe(firstTrackStart)
     expect(galleryCaption(wrapper)).not.toBe(secondTrackOnePhoto)
+  })
+
+  it('opens Ghosts In The Mist with the held MN047 Jorge tribute', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0)
+    const jorgeQuote = [
+      'These people inspire me to no end, and a bunch of unknowns created Aurora, Bazzite, Bluefin, Bluebuild, Secureblue, and others. Not a Universal Blue ecosystem, not a bootc ecosystem. A cloud native ecosystem. Sorry about my Titan manners sometimes. In one short weekend you\'ve proven to the world that enthusiasts matter.',
+      'Thank you to Chainguard, Microsoft, Red Hat, Edera, for investing in the unknowns from Universal Blue! Need talent? Go cloud native, we\'re a proven Guardian Academy.',
+    ]
+    mockGalleryData([
+      coverTrack,
+      {
+        id: 'ghosts-in-the-mist',
+        title: 'Ghosts In The Mist',
+        artist: 'Unleash The Archers',
+        artwork: 'wolves-artwork/ghosts.jpg',
+        youtubeVideoId: '1',
+        bpm: 100,
+        phraseBeats: 32,
+      },
+    ], new Response(JSON.stringify([
+      ...galleryPhotos,
+      {
+        id: '55164222671',
+        server: '65535',
+        secret: '32d7ace307',
+        title: 'KC+CNC_EU_260322_MaintainerSummitBreakouts_MN_047',
+      },
+    ])))
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 1, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+
+    expect(activeTimelineImage(wrapper)).toContain('55164222671_32d7ace307_c.jpg')
+    expect(wrapper.find('.flickr-photo-layer[style*="z-index: 2"] .flickr-img').attributes('style')).toContain('object-position: center top')
+    expect(wrapper.get('.wallpaper-theater-caption-title').text()).toBe('Jorge Castro')
+    expect(wrapper.findAll('.wallpaper-theater-caption-body').map(paragraph => paragraph.text())).toEqual(jorgeQuote)
+
+    await wrapper.setProps({ playlistCurrentTime: 38.399 })
+    expect(activeTimelineImage(wrapper)).toContain('55164222671_32d7ace307_c.jpg')
+
+    await wrapper.setProps({ playlistCurrentTime: 38.4 })
+    expect(activeTimelineImage(wrapper)).not.toContain('55164222671_32d7ace307_c.jpg')
   })
 
   it('does not restart a later-track shuffle after its final photo', async () => {

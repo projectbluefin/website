@@ -49,6 +49,18 @@ export const dinosaurSpecies = [
     artwork: './characters/torosaurus.webp',
   },
   {
+    id: 'bob-torosaurus',
+    scientificName: 'Torosaurus latus',
+    documentationUrl: 'https://docs.projectbluefin.io/dinosaurs/#-redacted--2',
+    artwork: './characters/bob-torosaurus.webp',
+  },
+  {
+    id: 'kaslin-torosaurus',
+    scientificName: 'Torosaurus latus',
+    documentationUrl: 'https://docs.projectbluefin.io/dinosaurs/#-redacted--2',
+    artwork: './characters/kaslin-torosaurus.webp',
+  },
+  {
     id: 'alamosaurus',
     scientificName: 'Alamosaurus sanjuanensis',
     documentationUrl: 'https://docs.projectbluefin.io/dinosaurs/#-redacted--3',

@@ -1,5 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import qrMakeMeAComic from '@/assets/svg/qr-makemeacomic.svg'
 import { resetYoutubeIframeApiCacheForTests } from '../composables/useYoutubeIframeApi'
 
 const { default: WolvesIntroOverlay } = await import('../components/wolves/WolvesIntroOverlay.vue')
@@ -9,9 +10,12 @@ const iframeApiSrc = 'https://www.youtube.com/iframe_api'
 interface MockPlayerRecord {
   config: any
   videoId: string
+  getDuration: ReturnType<typeof vi.fn>
   getCurrentTime: ReturnType<typeof vi.fn>
+  loadVideoById: ReturnType<typeof vi.fn>
   pauseVideo: ReturnType<typeof vi.fn>
   playVideo: ReturnType<typeof vi.fn>
+  seekTo: ReturnType<typeof vi.fn>
   destroy: ReturnType<typeof vi.fn>
   triggerReady: () => void
   triggerEnded: () => void
@@ -24,9 +28,28 @@ function installMockIframeApi() {
   class MockPlayer {
     config: any
     videoId: string
+    getDuration = vi.fn(() => 120)
     getCurrentTime = vi.fn(() => 0)
-    pauseVideo = vi.fn()
-    playVideo = vi.fn()
+    loadVideoById = vi.fn((video: string | { videoId: string, startSeconds?: number }) => {
+      const nextVideoId = typeof video === 'string' ? video : video.videoId
+      const startSeconds = typeof video === 'string' ? 0 : (video.startSeconds ?? 0)
+      this.videoId = nextVideoId
+      this.getCurrentTime = vi.fn(() => startSeconds)
+      this.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.PLAYING, target: this })
+    })
+
+    pauseVideo = vi.fn(() => {
+      this.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.PAUSED, target: this })
+    })
+
+    playVideo = vi.fn(() => {
+      this.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.PLAYING, target: this })
+    })
+
+    seekTo = vi.fn((seconds: number) => {
+      this.getCurrentTime = vi.fn(() => seconds)
+    })
+
     destroy = vi.fn()
 
     constructor(element: Element, config: any) {
@@ -86,7 +109,7 @@ const videoOnlySequence = [
   {
     id: 'wolves-intro',
     kind: 'video' as const,
-    youtubeVideoId: 'BKm0TPqeOjY',
+    youtubeVideoId: 'BV3BZKbpBns',
     overlays: [{ text: 'Guardians', start: 0, end: 5 }],
   },
 ]
@@ -99,7 +122,7 @@ describe('wolvesIntroOverlay video segments', () => {
     await flushPromises()
 
     expect(players).toHaveLength(1)
-    expect(players[0].videoId).toBe('BKm0TPqeOjY')
+    expect(players[0].videoId).toBe('BV3BZKbpBns')
     expect(wrapper.find('video').exists()).toBe(false)
   })
 
@@ -154,7 +177,7 @@ describe('wolvesIntroOverlay video segments', () => {
         videos: [{
           id: 'wolves-intro',
           kind: 'video' as const,
-          youtubeVideoId: 'BKm0TPqeOjY',
+          youtubeVideoId: 'BV3BZKbpBns',
           overlays: [{ text: 'Comic Hero Shots of YOU', start: 0, end: 5, comicHeroTitleCard: true }],
         }],
       },
@@ -162,11 +185,65 @@ describe('wolvesIntroOverlay video segments', () => {
 
     expect(wrapper.text()).toContain('Comic Hero Shots of YOU')
     expect(wrapper.text()).toContain('Made by Paid Artists')
+    expect(wrapper.get('[data-comic-hero-qr-dialogue]').text()).toBe('Scan for comic hero shots')
+    expect(wrapper.text()).toContain('makemeacomic.com')
+    expect(wrapper.get('[data-comic-hero-qr-link]').attributes('href')).toBe('https://makemeacomic.com')
+    expect(wrapper.get('[data-comic-hero-qr-link]').attributes('aria-label')).toBe('Open makemeacomic.com')
+    expect(wrapper.get('[data-comic-hero-qr-image]').attributes('src')).toBe(qrMakeMeAComic)
+    expect(wrapper.get('[data-comic-hero-qr-image]').attributes('alt')).toBe('QR code linking to makemeacomic.com')
+  })
+
+  it('cycles comic hero shots deterministically without repeating during the title-card cue', async () => {
+    const wrapper = mount(WolvesIntroOverlay, {
+      props: {
+        videos: [{
+          id: 'wolves-intro',
+          kind: 'video' as const,
+          youtubeVideoId: 'BV3BZKbpBns',
+          overlays: [{ text: 'Comic Hero Shots of YOU', start: 24, end: 38, comicHeroTitleCard: true }],
+        }],
+      },
+    })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+    players[0].triggerReady()
+    await flushPromises()
+
+    const cueStart = 24
+    const cueDuration = 14
+    const shotIds: string[] = []
+    const shotSrcs: string[] = []
+    const sampleCount = 9
+    const slotDuration = cueDuration / sampleCount
+
+    for (let index = 0; index < sampleCount; index++) {
+      players[0].getCurrentTime = vi.fn(() => cueStart + (index * slotDuration) + 0.01)
+      await vi.advanceTimersByTimeAsync(200)
+      await flushPromises()
+      const shot = wrapper.get('[data-comic-hero-shot]')
+      shotIds.push(shot.attributes('data-comic-hero-shot')!)
+      shotSrcs.push(shot.attributes('src')!)
+    }
+
+    expect(shotIds).toEqual([
+      'chonky-achillibator-pose1-post',
+      'chonky-achillibator-pose2-post',
+      'chonky-alamo-blue',
+      'chonky-alamo-vector',
+      'chonky-dakosaurus-bluefinskin',
+      'chonky-dromaeosaurus-bluefin',
+      'bob-torosaurus',
+      'kaslin-torosaurus',
+      'chonky-utahraptor-bluefinskin',
+    ])
+    expect(new Set(shotIds)).toHaveLength(sampleCount)
+    expect(shotSrcs.every(src => src.includes('/characters/') && src.endsWith('.webp'))).toBe(true)
   })
 
   it('force-advances at maxDuration instead of waiting for the natural end', async () => {
     const cutoffSequence = [
-      { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BKm0TPqeOjY', maxDuration: 1 },
+      { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BV3BZKbpBns', maxDuration: 1 },
       { id: 'wolves-epilogue', kind: 'text' as const, duration: 5 },
     ]
     const wrapper = mount(WolvesIntroOverlay, { props: { videos: cutoffSequence } })
@@ -185,7 +262,7 @@ describe('wolvesIntroOverlay video segments', () => {
 
   it('next advances one segment at a time instead of jumping straight to complete', async () => {
     const cutoffSequence = [
-      { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BKm0TPqeOjY', overlays: [{ text: 'Guardians', start: 0, end: 5 }] },
+      { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BV3BZKbpBns', overlays: [{ text: 'Guardians', start: 0, end: 5 }] },
       { id: 'wolves-epilogue', kind: 'text' as const, duration: 5 },
     ]
     const wrapper = mount(WolvesIntroOverlay, { props: { videos: cutoffSequence } })
@@ -211,7 +288,7 @@ describe('wolvesIntroOverlay video segments', () => {
   it('previous gating is published through status and previous steps back a segment', async () => {
     const cutoffSequence = [
       { id: 'wolves-prologue', kind: 'text' as const, duration: 5 },
-      { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BKm0TPqeOjY' },
+      { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BV3BZKbpBns' },
     ]
     const wrapper = mount(WolvesIntroOverlay, { props: { videos: cutoffSequence } })
     await flushPromises()
@@ -249,6 +326,127 @@ describe('wolvesIntroOverlay video segments', () => {
     expect(players[0].playVideo).toHaveBeenCalledOnce()
   })
 
+  it('switches to the Ikora source with object-form loadVideoById while preserving native time', async () => {
+    const wrapper = mount(WolvesIntroOverlay, {
+      props: {
+        videos: [{
+          id: 'wolves-intro',
+          kind: 'video' as const,
+          youtubeVideoId: 'BV3BZKbpBns',
+          alternateYoutubeVideoId: 'BKm0TPqeOjY',
+          alternateYoutubeVideoLabel: 'Ikora voice over',
+          maxDuration: 95,
+          alternateMaxDuration: 114,
+        }],
+      },
+    })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+    players[0].triggerReady()
+    players[0].getCurrentTime = vi.fn(() => 37.25)
+    await flushPromises()
+
+    wrapper.vm.setVoiceOverEnabled(true)
+    await flushPromises()
+
+    expect(players[0].loadVideoById).toHaveBeenCalledWith({ videoId: 'BKm0TPqeOjY', startSeconds: 37.25 })
+  })
+
+  it('restores the paused state after switching sources and clamps to the target cutoff', async () => {
+    const wrapper = mount(WolvesIntroOverlay, {
+      props: {
+        videos: [{
+          id: 'wolves-intro',
+          kind: 'video' as const,
+          youtubeVideoId: 'BV3BZKbpBns',
+          alternateYoutubeVideoId: 'BKm0TPqeOjY',
+          alternateYoutubeVideoLabel: 'Ikora voice over',
+          maxDuration: 95,
+          alternateMaxDuration: 70,
+        }],
+      },
+    })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+    players[0].triggerReady()
+    await flushPromises()
+
+    wrapper.vm.toggle()
+    await flushPromises()
+    players[0].pauseVideo.mockClear()
+    players[0].playVideo.mockClear()
+    players[0].getCurrentTime = vi.fn(() => 88)
+
+    wrapper.vm.setVoiceOverEnabled(true)
+    await flushPromises()
+
+    expect(players[0].loadVideoById).toHaveBeenCalledWith({ videoId: 'BKm0TPqeOjY', startSeconds: 70 })
+    expect(players[0].pauseVideo).toHaveBeenCalledOnce()
+    expect(players[0].playVideo).not.toHaveBeenCalled()
+  })
+
+  it('keeps canonical captions visible during the comic title-card cue', async () => {
+    const wrapper = mount(WolvesIntroOverlay, {
+      props: {
+        videos: [{
+          id: 'wolves-intro',
+          kind: 'video' as const,
+          youtubeVideoId: 'BV3BZKbpBns',
+          burnedInCaptions: [
+            { text: 'Comic Hero Shots of YOU', start: 0, end: 5, comicHeroTitleCard: true },
+            { text: 'We built a city none of us dared', start: 0, end: 5 },
+          ],
+        }],
+      },
+    })
+
+    expect(wrapper.find('.wolves-intro-overlay-title-card').exists()).toBe(true)
+    expect(wrapper.findAll('.wolves-intro-overlay-burned-caption')).toHaveLength(1)
+    expect(wrapper.text()).toContain('Comic Hero Shots of YOU')
+    expect(wrapper.text()).toContain('We built a city none of us dared')
+  })
+
+  it('renders the makemeacomic QR only during the comic title-card cue', async () => {
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+    players[0].triggerReady()
+    await flushPromises()
+
+    expect(wrapper.find('[data-comic-hero-qr-link]').exists()).toBe(false)
+
+    const titleCardWrapper = mount(WolvesIntroOverlay, {
+      props: {
+        videos: [{
+          id: 'wolves-intro',
+          kind: 'video' as const,
+          youtubeVideoId: 'BV3BZKbpBns',
+          overlays: [{ text: 'Comic Hero Shots of YOU', start: 0, end: 5, comicHeroTitleCard: true }],
+        }],
+      },
+    })
+
+    expect(titleCardWrapper.find('[data-comic-hero-qr-link]').exists()).toBe(true)
+  })
+
+  it('renders the top-left mask and activates the pause veil only while paused', async () => {
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+
+    expect(wrapper.find('.wolves-intro-overlay-top-left-mask').exists()).toBe(true)
+    expect(wrapper.get('.wolves-intro-overlay-pause-veil').classes()).not.toContain('wolves-intro-overlay-pause-veil-active')
+
+    wrapper.vm.toggle()
+    await flushPromises()
+
+    expect(wrapper.get('.wolves-intro-overlay-pause-veil').classes()).toContain('wolves-intro-overlay-pause-veil-active')
+  })
+
   it('completes immediately for an empty video list instead of hanging', async () => {
     const wrapper = mount(WolvesIntroOverlay, { props: { videos: [] } })
     await flushPromises()
@@ -258,6 +456,38 @@ describe('wolvesIntroOverlay video segments', () => {
 })
 
 describe('wolvesIntroOverlay text segments', () => {
+  it('emits a cue-level nameplate title through status and restores the segment title outside that cue', async () => {
+    const textSequence = [
+      {
+        id: 'wolves-prologue',
+        kind: 'text' as const,
+        duration: 2,
+        overlays: [{
+          text: 'In the space of a few days',
+          start: 0,
+          end: 1,
+          nameplateTitle: 'From the Age of Dinosaurs to the Pinnacle of Humanity',
+        }],
+      },
+    ]
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: textSequence } })
+    await flushPromises()
+
+    const lastStatus = () => {
+      const events = wrapper.emitted('status') as Array<[{
+        nameplateTitle?: string
+      }]>
+      return events[events.length - 1][0]
+    }
+
+    expect(lastStatus().nameplateTitle).toBe('From the Age of Dinosaurs to the Pinnacle of Humanity')
+
+    await vi.advanceTimersByTimeAsync(1200)
+    await flushPromises()
+
+    expect(lastStatus().nameplateTitle).toBeUndefined()
+  })
+
   it('pauses and resumes the prologue through the exposed transport', async () => {
     const textSequence = [
       { id: 'wolves-prologue', kind: 'text' as const, duration: 1 },
@@ -313,6 +543,138 @@ describe('wolvesIntroOverlay text segments', () => {
     expect(text.classes()).not.toContain('wolves-intro-overlay-text-top')
   })
 
+  it('highlights only LIFE, DROSS, and GARDEN when a cue requests multiple exact words', async () => {
+    const textSequence = [
+      {
+        id: 'wolves-prologue',
+        kind: 'text' as const,
+        duration: 5,
+        overlays: [{
+          text: `One to spread life,
+and one to cull the dross
+to shape the Garden of Earth.`,
+          start: 0,
+          end: 5,
+          highlightSubstrings: ['life', 'dross', 'Garden'],
+        }],
+      },
+    ]
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: textSequence } })
+    await flushPromises()
+
+    const highlightedText = wrapper.findAll('.wolves-intro-letter-highlight').map(node => node.text()).join('')
+    expect(highlightedText).toBe('lifedrossGarden')
+  })
+
+  it('preserves authored briefing punctuation when a cue opts in', async () => {
+    const textSequence = [
+      {
+        id: 'universal-blue-briefing',
+        kind: 'text' as const,
+        duration: 5,
+        overlays: [{
+          text: `$ Investigate all possible avenues of open source success. Respond with most capable agent.
+AN4-ChK-12: Potential. Unlimited. Solution. Imagination. Probability? Most certainly 100%. All other options exhausted.`,
+          start: 0,
+          end: 5,
+          preservePunctuation: true,
+        }],
+      },
+    ]
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: textSequence } })
+    await flushPromises()
+
+    const text = wrapper.get('.wolves-intro-overlay-text').text()
+    expect(text).toContain('Potential. Unlimited. Solution. Imagination.')
+    expect(text).toContain('Probability?')
+    expect(text).toContain('success. Respond')
+  })
+
+  it('renders Universal Blue Briefing cues as a Unix status display', () => {
+    const wrapper = mount(WolvesIntroOverlay, {
+      props: {
+        videos: [{
+          id: 'universal-blue-briefing',
+          kind: 'text' as const,
+          duration: 5,
+          overlays: [{
+            text: 'Sustainability Probabilities: Declining',
+            start: 0,
+            end: 5,
+            presentation: 'terminal' as const,
+          }],
+        }],
+      },
+    })
+
+    expect(wrapper.get('.wolves-intro-overlay-text').classes()).toContain('wolves-intro-overlay-text-terminal')
+    expect(wrapper.get('.wolves-intro-overlay-text').classes()).not.toContain('wolves-intro-overlay-text-dominant')
+  })
+
+  it('preserves authored slate commas and periods when a cue opts in', async () => {
+    const textSequence = [
+      {
+        id: 'bluefin-cinematic-universe',
+        kind: 'text' as const,
+        duration: 5,
+        overlays: [{
+          text: 'and this one. The Bluefin Cinematic Universe. Buckle up, nerds —',
+          start: 0,
+          end: 5,
+          preservePunctuation: true,
+        }],
+      },
+    ]
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: textSequence } })
+    await flushPromises()
+
+    expect(wrapper.get('.wolves-intro-overlay-text').text()).toBe('and this one. The Bluefin Cinematic Universe. Buckle up, nerds —')
+  })
+
+  it('still strips periods and commas for normal Gayane cues', async () => {
+    const textSequence = [
+      {
+        id: 'wolves-prologue',
+        kind: 'text' as const,
+        duration: 5,
+        overlays: [{
+          text: `Now, what's left of a proud order fights for survival,
+surrounded by predators.`,
+          start: 0,
+          end: 5,
+        }],
+      },
+    ]
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: textSequence } })
+    await flushPromises()
+
+    expect(wrapper.get('.wolves-intro-overlay-text').text()).toBe(`Now what's left of a proud order fights for survival
+surrounded by predators`)
+  })
+
+  it('highlights only the final backtick in For Nova`', async () => {
+    const textSequence = [
+      {
+        id: 'bluefin-cinematic-universe',
+        kind: 'text' as const,
+        duration: 5,
+        overlays: [{
+          text: 'For Nova`',
+          start: 0,
+          end: 5,
+          preservePunctuation: true,
+          highlightSubstrings: ['`'],
+        }],
+      },
+    ]
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: textSequence } })
+    await flushPromises()
+
+    const highlightedText = wrapper.findAll('.wolves-intro-letter-highlight').map(node => node.text()).join('')
+    expect(wrapper.get('.wolves-intro-overlay-text').text()).toBe('For Nova`')
+    expect(highlightedText).toBe('`')
+  })
+
   it('auto-advances once the authored duration elapses', async () => {
     const textSequence = [
       { id: 'wolves-prologue', kind: 'text' as const, duration: 1 },
@@ -349,10 +711,12 @@ describe('wolvesIntroOverlay guardian plate', () => {
     {
       id: 'wolves-intro',
       kind: 'video' as const,
-      youtubeVideoId: 'BKm0TPqeOjY',
+      youtubeVideoId: 'BV3BZKbpBns',
       overlays: [
         { text: 'Harbinger Titan — Kat Cosgrove — Defender Queen of the Lost', start: 0, end: 5 },
-        { text: 'Void Warlock — Robert Killen — Reconciler of the Arcane', start: 5, end: 10 },
+        { text: 'Void Warlock — Bob Killen — Reconciler of the Arcane', start: 5, end: 10 },
+        { text: 'Arc Warlock — Kaslin Fields — Rage of the Paradox', start: 10, end: 15 },
+        { text: 'Solar Hunter — Laura Santamaria — Paragon to the Order of 7', start: 15, end: 20 },
       ],
     },
   ]
@@ -367,5 +731,53 @@ describe('wolvesIntroOverlay guardian plate', () => {
 
     expect(wrapper.text()).toContain('MAINTAINER // GUARDIAN')
     expect(wrapper.text()).not.toContain('GUARDIAN // MAINTAINER')
+  })
+
+  it('renders Bob Killen with a paired Torosaurus panel instead of the old inline icon', async () => {
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: guardianPlateSequence } })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+    players[0].triggerReady()
+    players[0].getCurrentTime = vi.fn(() => 6)
+    await vi.advanceTimersByTimeAsync(200)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Bob Killen')
+    expect(wrapper.text()).toContain('TOROSAURUS')
+    expect(wrapper.text()).toContain('Torosaurus latus')
+    expect(wrapper.find('.wolves-guardian-plate-dinosaur').exists()).toBe(true)
+    expect(wrapper.find('.wolves-guardian-plate-dinosaur img').attributes('src')).toContain('bob-torosaurus.webp')
+    expect(wrapper.find('.wolves-guardian-plate-dinosaur-icon').exists()).toBe(false)
+  })
+
+  it('switches to Kaslin\'s flipped Torosaurus artwork during her authored window', async () => {
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: guardianPlateSequence } })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+    players[0].triggerReady()
+    players[0].getCurrentTime = vi.fn(() => 11)
+    await vi.advanceTimersByTimeAsync(200)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Kaslin Fields')
+    expect(wrapper.text()).toContain('TOROSAURUS')
+    expect(wrapper.text()).toContain('Torosaurus latus')
+    expect(wrapper.find('.wolves-guardian-plate-dinosaur img').attributes('src')).toContain('kaslin-torosaurus.webp')
+  })
+
+  it('renders no dinosaur panel for a guardian with no documented dinosaur bond', async () => {
+    const wrapper = mount(WolvesIntroOverlay, { props: { videos: guardianPlateSequence } })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+    players[0].triggerReady()
+    players[0].getCurrentTime = vi.fn(() => 16)
+    await vi.advanceTimersByTimeAsync(200)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Laura Santamaria')
+    expect(wrapper.find('.wolves-guardian-plate-dinosaur').exists()).toBe(false)
   })
 })

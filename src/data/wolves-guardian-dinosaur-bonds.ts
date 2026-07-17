@@ -21,4 +21,6 @@ export interface WolvesGuardianDinosaurBond {
 export const wolvesGuardianDinosaurBonds: readonly WolvesGuardianDinosaurBond[] = [
   { guardianName: 'Kat Cosgrove', dinosaurSpeciesId: 'karl' },
   { guardianName: 'Natali Vlatko', dinosaurSpeciesId: 'alamosaurus' },
+  { guardianName: 'Bob Killen', dinosaurSpeciesId: 'bob-torosaurus' },
+  { guardianName: 'Kaslin Fields', dinosaurSpeciesId: 'kaslin-torosaurus' },
 ]

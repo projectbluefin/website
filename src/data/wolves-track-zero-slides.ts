@@ -10,21 +10,15 @@ export const marinaMooreTrackZeroWindow = {
   endTime: 175.96,
 } as const
 
-export const shermanSlideId = 'wolves/people/sherman.webp'
-export const shermanTrackZeroWindow = {
+export const shermanM2CompositeSlideId = 'wolves/people/sherman-m2.webp'
+export const shermanM2CompositeTrackZeroWindow = {
   startTime: marinaMooreTrackZeroWindow.endTime,
-  endTime: 180.04,
-} as const
-
-export const m2SlideId = 'wolves/people/m2.jpg'
-export const m2TrackZeroWindow = {
-  startTime: shermanTrackZeroWindow.endTime,
   endTime: 184.12,
 } as const
 
 export const kyleSlideId = 'wolves/people/kyle.jpg'
 export const kyleTrackZeroWindow = {
-  startTime: m2TrackZeroWindow.endTime,
+  startTime: shermanM2CompositeTrackZeroWindow.endTime,
   endTime: 188.2,
 } as const
 
@@ -48,11 +42,10 @@ export const jorgeBluefinTrackZeroWindow = {
 
 /**
  * The Bluefin group: the locked run of Bluefin community photos that plays
- * back-to-back after Marina's window (sherman -> m2 -> kyle -> hikari -> jorge).
+ * back-to-back after Marina's window (Sherman + m2 composite -> kyle -> hikari -> jorge).
  */
 export const bluefinGroupSlides = [
-  { id: shermanSlideId, window: shermanTrackZeroWindow },
-  { id: m2SlideId, window: m2TrackZeroWindow },
+  { id: shermanM2CompositeSlideId, window: shermanM2CompositeTrackZeroWindow },
   { id: kyleSlideId, window: kyleTrackZeroWindow },
   { id: hikariSlideId, window: hikariTrackZeroWindow },
   { id: hikari2SlideId, window: hikari2TrackZeroWindow },

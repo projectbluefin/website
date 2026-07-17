@@ -1,4 +1,5 @@
 import { load as loadYaml } from 'js-yaml'
+import { loadLoreProjectIndex, validateLoreProjectReferences } from './wolves-projects'
 
 export type LoreKind
   = | 'chatlog'
@@ -29,6 +30,7 @@ export interface LoreFrontmatter {
   affiliation?: string
   aliases?: readonly string[]
   titles?: readonly string[]
+  projects?: readonly string[]
   species?: string
   epic_name?: string
   guardian?: {
@@ -85,7 +87,10 @@ function stringField(metadata: Record<string, unknown>, field: string): string |
   return value
 }
 
-function stringArrayField(metadata: Record<string, unknown>, field: 'aliases' | 'titles'): readonly string[] | undefined {
+function stringArrayField(
+  metadata: Record<string, unknown>,
+  field: 'aliases' | 'titles' | 'projects',
+): readonly string[] | undefined {
   const value = metadata[field]
   if (value === undefined) {
     return undefined
@@ -227,6 +232,7 @@ function parseFrontmatter(relativePath: string, raw: string): { metadata: LoreFr
       affiliation: stringField(loaded, 'affiliation'),
       aliases: stringArrayField(loaded, 'aliases'),
       titles: stringArrayField(loaded, 'titles'),
+      projects: stringArrayField(loaded, 'projects'),
       species: stringField(loaded, 'species'),
       epic_name: stringField(loaded, 'epic_name'),
       guardian: parseGuardian(loaded.guardian),
@@ -384,16 +390,31 @@ const loreManifest = [
   { id: 'subjectprofile/kaslin-fields', chapterId: 'awakening', relativePath: './lore/kaslin-fields.md' },
   { id: 'subjectprofile/laura-santamaria', chapterId: 'awakening', relativePath: './lore/laura-santamaria.md' },
   { id: 'subjectprofile/christopher-blecker', chapterId: 'awakening', relativePath: './lore/christopher-blecker.md' },
+  { id: 'insertion-approved', chapterId: 'awakening', relativePath: './lore/insertion-approved.md' },
+  { id: 'laura-sherman-robert', chapterId: 'awakening', relativePath: './lore/laura-sherman-robert.md' },
+  { id: 'natali-kat-mario', chapterId: 'awakening', relativePath: './lore/natali-kat-mario.md' },
+  { id: 'fyra-fyre-redactions', chapterId: 'awakening', relativePath: './lore/fyra-fyre-redactions.md' },
+  { id: 'jordan-andy-model', chapterId: 'awakening', relativePath: './lore/jordan-andy-model.md' },
+  { id: 'preethi-lakshmi', chapterId: 'awakening', relativePath: './lore/preethi-lakshmi.md' },
+  { id: 'andy-krook-kubesteller', chapterId: 'awakening', relativePath: './lore/andy-krook-kubesteller.md' },
+  { id: 'openssf-reinforcements', chapterId: 'awakening', relativePath: './lore/openssf-reinforcements.md' },
+  { id: 'ambers-garage-cloud-native-series', chapterId: 'awakening', relativePath: './lore/ambers-garage-cloud-native-series.md' },
+  { id: 'katie-neomuna', chapterId: 'awakening', relativePath: './lore/katie-neomuna.md' },
+  { id: 'rafael-bluefin', chapterId: 'awakening', relativePath: './lore/rafael-bluefin.md' },
+  { id: 'toddmore-vanguards-anchor', chapterId: 'awakening', relativePath: './lore/toddmore-vanguards-anchor.md' },
+  { id: 'subjectprofile/chris-aniszczyk', chapterId: 'awakening', relativePath: './lore/chris-aniszczyk.md' },
 ] as const satisfies readonly LoreManifestEntry[]
 
 const loreFiles = import.meta.glob('./lore/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
 
 export function loadAllLoreRecords(): readonly LoreRecord[] {
-  return Object.freeze(loreManifest.map(({ id, chapterId, relativePath }) => {
+  const records = loreManifest.map(({ id, chapterId, relativePath }) => {
     const raw = loreFiles[relativePath]
     if (raw === undefined) {
       throw new Error(`Missing staged lore file "${relativePath}"`)
     }
     return parseLoreRecord(id, chapterId, relativePath, raw)
-  }))
+  })
+  validateLoreProjectReferences(records, loadLoreProjectIndex())
+  return Object.freeze(records)
 }

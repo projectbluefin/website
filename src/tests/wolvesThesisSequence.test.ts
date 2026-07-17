@@ -11,16 +11,11 @@ const THESIS_START_SECONDS = 345
 describe('wolves thesis sequence', () => {
   it('reads ordered non-empty messages from the editable source', () => {
     expect(wolvesIncomingSignalMessages).toEqual([
-      'INCOMING SIGNAL:',
-      'Welcome to indie cloud native',
-      'Hikari Protocol: Initialized',
-      'KDE Plasma Couplings: ENGAGED',
-      'Mechaphippy Deployment: [UNAUTHORIZED]',
-      'M2 Status: [ Unknown ]',
-      'Field Medical Exoskeleton: [ Missing ]',
-      'TARGET ACQUIRED: GOSPO, KYLE. Earth',
-      'Kube of Destiny location: Earth',
-      'Projected Joining: Salt Lake City, Utah, Circa 2026',
+      'Incoming Signal',
+      'The Blue Delivers',
+      'pod/thriving-community created',
+      'Warning: ImagePullBackOff - "humans/collaboration:latest" is currently experimental.',
+      'Falling back to "humans/trying-their-best:v1"',
     ])
   })
 
@@ -48,9 +43,9 @@ describe('wolves thesis sequence', () => {
       expect(reloadedSequence.getWolvesThesisState(THESIS_START_SECONDS)).toMatchObject({
         active: true,
         text: 'We\'ve got your back.',
-        hudLabel: 'Incoming Signal: Universal Blue',
+        hudLabel: 'Incoming Signal',
       })
-      expect(reloadedSequence.getWolvesThesisState(350.5).hudLabel).toBe('Incoming Signal: Universal Blue')
+      expect(reloadedSequence.getWolvesThesisState(350.5).text).toBe('We are Universal Blue.')
     }
     finally {
       vi.doUnmock(sourceModule)
@@ -71,11 +66,18 @@ describe('wolves thesis sequence', () => {
   })
 
   it('keeps authored HUD notifications active through thesis-overlay gaps', () => {
-    expect(getWolvesHudLabel(344.999)).toBe('Falling back to "humans/trying-their-best:v1" slowly')
-    expect(getWolvesHudLabel(370)).toBe('KDE Plasma Couplings: ENGAGED')
-    expect(getWolvesHudLabel(408)).toBe('Bazzite Mk6 Units: Prepare for Titanfall')
-    expect(getWolvesHudLabel(425)).toBe('Bazzite Mk6 Units: Prepare for Titanfall')
-    expect(getWolvesHudLabel(425.001)).toBe('Bazzite Mk6 Units: Prepare for Titanfall')
+    expect(getWolvesHudLabel(175.959)).toBe('Incoming Signal')
+    expect(getWolvesHudLabel(175.96)).toBe('The Blue Delivers')
+    expect(getWolvesHudLabel(196.359)).toBe('The Blue Delivers')
+    expect(getWolvesHudLabel(196.36)).toBe('pod/thriving-community created')
+    expect(getWolvesHudLabel(228.999)).toBe('pod/thriving-community created')
+    expect(getWolvesHudLabel(229)).toBe('Warning: ImagePullBackOff - "humans/collaboration:latest" is currently experimental.')
+    expect(getWolvesHudLabel(276.999)).toBe('Warning: ImagePullBackOff - "humans/collaboration:latest" is currently experimental.')
+    expect(getWolvesHudLabel(277)).toBe('Falling back to "humans/trying-their-best:v1"')
+    expect(getWolvesHudLabel(407.999)).toBe('Falling back to "humans/trying-their-best:v1"')
+    expect(getWolvesHudLabel(408)).toBe('Bazzite Mk6 Units: Prepare for Titanfall.')
+    expect(getWolvesHudLabel(425)).toBe('Bazzite Mk6 Units: Prepare for Titanfall.')
+    expect(getWolvesHudLabel(425.001)).toBe('Bazzite Mk6 Units: Prepare for Titanfall.')
   })
 
   it('preserves the approved thesis window, HUD, and visual modes', () => {
@@ -84,17 +86,17 @@ describe('wolves thesis sequence', () => {
       active: true,
       mode: 'welcome',
       dayPulse: true,
-      hudLabel: 'INCOMING SIGNAL:',
+      hudLabel: 'Falling back to "humans/trying-their-best:v1"',
     })
     expect(getWolvesThesisState(351.316)).toMatchObject({
       active: true,
       mode: 'universal-blue',
-      hudLabel: 'Welcome to indie cloud native',
+      hudLabel: 'Falling back to "humans/trying-their-best:v1"',
     })
     expect(getWolvesThesisState(349)).toMatchObject({
       active: true,
       mode: 'welcome',
-      hudLabel: 'INCOMING SIGNAL:',
+      hudLabel: 'Falling back to "humans/trying-their-best:v1"',
     })
     expect(getWolvesThesisState(395)).toMatchObject({ active: true, mode: 'growing-corruption' })
     expect(getWolvesThesisState(405)).toMatchObject({
@@ -102,14 +104,14 @@ describe('wolves thesis sequence', () => {
       mode: 'legend',
       warning: 'truly a great loss for humanity.',
     })
-    expect(getWolvesThesisState(407.999).hudLabel).toBe('Projected Joining: Salt Lake City, Utah, Circa 2026')
+    expect(getWolvesThesisState(407.999).hudLabel).toBe('Falling back to "humans/trying-their-best:v1"')
     expect(getWolvesThesisState(408)).toMatchObject({
       text: 'Become Legend',
-      hudLabel: 'Bazzite Mk6 Units: Prepare for Titanfall',
+      hudLabel: 'Bazzite Mk6 Units: Prepare for Titanfall.',
     })
     expect(getWolvesThesisState(425)).toMatchObject({
       text: 'Become Legend',
-      hudLabel: 'Bazzite Mk6 Units: Prepare for Titanfall',
+      hudLabel: 'Bazzite Mk6 Units: Prepare for Titanfall.',
     })
     expect(getWolvesThesisState(425).active).toBe(true)
     expect(getWolvesThesisState(425.001).active).toBe(false)

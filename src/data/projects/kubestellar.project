@@ -1,0 +1,11 @@
+name: KubeStellar
+maturity: CNCF Sandbox
+homepage: https://kubestellar.io/
+documentation: https://kubestellar.io/docs/introduction
+summary: KubeStellar is a Kubernetes-native multi-cluster orchestration platform that enables organizations to deploy and manage applications consistently across multiple Kubernetes clusters, cloud providers, and edge environments through a unified control plane.
+facts:
+  - Deploy applications across multiple Kubernetes clusters from a single control plane.
+  - Continue using familiar Kubernetes APIs, tooling, and workflows.
+sources:
+  - https://kubestellar.io/docs/introduction
+  - https://www.cncf.io/projects/kubestellar/

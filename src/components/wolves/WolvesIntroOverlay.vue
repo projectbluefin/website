@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import type { YoutubePlayer } from '@/composables/useYoutubeIframeApi'
-import type { IntroOverlayTextCue, IntroVideoSpec } from '@/data/wolves-intro-sequence'
+import type { IntroOverlayTextCue, IntroStatusPayload, IntroVideoSpec } from '@/data/wolves-intro-sequence'
 import { computed, nextTick, onBeforeUnmount, ref, watch, watchEffect } from 'vue'
+import qrMakeMeAComic from '@/assets/svg/qr-makemeacomic.svg'
 import { getYoutubePlayerConstructor, getYoutubePlayerState, loadYoutubeIframeApi } from '@/composables/useYoutubeIframeApi'
+import { getActiveComicHeroShot } from '@/data/wolves-comic-hero-shots'
+import { dinosaurSpecies } from '@/data/wolves-dinosaur-species'
+import { wolvesGuardianDinosaurBonds } from '@/data/wolves-guardian-dinosaur-bonds'
 import {
   activeOverlayCue,
   activeOverlayCues,
@@ -11,7 +15,6 @@ import {
   createIntroSequenceState,
   isTextSegment,
   isTextSegmentComplete,
-  isVideoCutoffReached,
   isVideoSegment,
   previousIntroSequence,
   PROLOGUE_SCENE_CROSSFADE_SECONDS,
@@ -25,21 +28,18 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'complete'): void
-  (e: 'status', payload: {
-    currentTime: number
-    duration: number
-    paused: boolean
-    segmentId: string
-    canGoPrevious: boolean
-    hasActiveCue: boolean
-  }): void
+  (e: 'status', payload: IntroStatusPayload): void
 }>()
 
 const baseUrl = import.meta.env.BASE_URL
+const comicHeroQrUrl = 'https://makemeacomic.com'
+const comicHeroQrDomain = 'makemeacomic.com'
+const comicHeroQrDialogue = 'Scan for comic hero shots'
 
 const sequenceState = ref(createIntroSequenceState())
 const currentTime = ref(0)
 const isPaused = ref(false)
+const destinyVoiceOverEnabled = ref(false)
 /** The active segment's known duration, driving the hero widget's progress readout. */
 const activeSegmentDuration = ref(0)
 const mountHost = ref<HTMLDivElement | null>(null)
@@ -63,6 +63,11 @@ const burnedInCaptionCues = computed<readonly IntroOverlayTextCue[] | undefined>
   }
   return currentSegment.value.burnedInCaptions
 })
+const canToggleDestinyVoiceOver = computed(() =>
+  currentSegment.value?.id === 'wolves-intro'
+  && isVideoSegment(currentSegment.value)
+  && Boolean(currentSegment.value.alternateYoutubeVideoId),
+)
 const activeComicTitleCardCue = computed<IntroOverlayTextCue | undefined>(() => {
   const cues = burnedInCaptionCues.value ?? currentSegment.value?.overlays
   if (!cues) {
@@ -70,14 +75,22 @@ const activeComicTitleCardCue = computed<IntroOverlayTextCue | undefined>(() => 
   }
   return cues.find((cue: IntroOverlayTextCue) => cue.comicHeroTitleCard && currentTime.value >= cue.start && currentTime.value < cue.end)
 })
+const activeComicHeroShot = computed(() => activeComicTitleCardCue.value
+  ? getActiveComicHeroShot(currentTime.value, activeComicTitleCardCue.value)
+  : undefined)
 const overlayCueForDisplay = computed<IntroOverlayTextCue | undefined>(() => activeComicTitleCardCue.value?.comicHeroTitleCard ? activeComicTitleCardCue.value : activeCue.value)
 const overlayText = computed(() => overlayCueForDisplay.value?.text)
+const activeBurnedInCaptions = computed<readonly IntroOverlayTextCue[]>(() =>
+  activeOverlayCues(burnedInCaptionCues.value, currentTime.value)
+    .filter(cue => !cue.comicHeroTitleCard),
+)
 /**
  * All cues active right now, not just the first match — the Guardian trailer intentionally
  * overlaps Christoph Blecker's and Natali Vlatko's windows since they share the same shot, so
  * both callouts need to render side-by-side via their `position` anchor.
  */
 const activeCues = computed<readonly IntroOverlayTextCue[]>(() => activeOverlayCues(currentSegment.value?.overlays, currentTime.value))
+const activeGuardianCues = computed<readonly IntroOverlayTextCue[]>(() => activeComicTitleCardCue.value ? [] : activeCues.value)
 
 /**
  * Splits a Guardian cue's authored "Class — Name — Title" string into its own dossier-style
@@ -140,7 +153,18 @@ function titleTokens(title: string, blingTitle: string | undefined): TitleToken[
   return tokens
 }
 
-// Dinosaur artwork removed
+function guardianDinosaurProfile(guardianName: string): { artworkSource: string, label: string, scientificName: string } | undefined {
+  const bond = wolvesGuardianDinosaurBonds.find(entry => entry.guardianName === guardianName)
+  const species = bond && dinosaurSpecies.find(entry => entry.id === bond.dinosaurSpeciesId)
+  if (!species) {
+    return undefined
+  }
+  return {
+    artworkSource: `${baseUrl}${species.artwork.slice(2)}`,
+    label: species.scientificName.split(' ')[0]?.toUpperCase() ?? species.scientificName.toUpperCase(),
+    scientificName: species.scientificName,
+  }
+}
 
 /**
  * The Prologue/Epilogue's somber, BPM-paced fade only applies to text-card segments; the
@@ -206,10 +230,36 @@ function stripIntroPunctuation(text: string): string {
   return text.replace(/[.,]/g, '')
 }
 
+function formatIntroCueText(text: string, preservePunctuation?: boolean): string {
+  return preservePunctuation ? text : stripIntroPunctuation(text)
+}
+
+function activeVideoId(segment: Extract<IntroVideoSpec, { kind: 'video' }>): string {
+  return destinyVoiceOverEnabled.value && segment.alternateYoutubeVideoId
+    ? segment.alternateYoutubeVideoId
+    : segment.youtubeVideoId
+}
+
+function activeVideoCutoffDuration(segment: Extract<IntroVideoSpec, { kind: 'video' }>): number | undefined {
+  return destinyVoiceOverEnabled.value
+    ? (segment.alternateMaxDuration ?? segment.maxDuration)
+    : segment.maxDuration
+}
+
+function clampVideoSourceTime(segment: Extract<IntroVideoSpec, { kind: 'video' }>, time: number): number {
+  const cutoff = activeVideoCutoffDuration(segment)
+  return cutoff == null ? time : Math.min(time, cutoff)
+}
+
 const overlayTextParts = computed(() => {
-  const text = stripIntroPunctuation(overlayText.value ?? '')
-  const highlight = overlayCueForDisplay.value?.highlightSubstring
-  return buildOverlayTextParts(text, highlight ? stripIntroPunctuation(highlight) : highlight)
+  const cue = overlayCueForDisplay.value
+  const text = formatIntroCueText(overlayText.value ?? '', cue?.preservePunctuation)
+  const explicitHighlights = cue?.highlightSubstrings
+    ?? (cue?.highlightSubstring ? [cue.highlightSubstring] : undefined)
+  return buildOverlayTextParts(
+    text,
+    explicitHighlights?.map(highlight => formatIntroCueText(highlight, cue?.preservePunctuation)),
+  )
 })
 
 let player: YoutubePlayer | null = null
@@ -217,21 +267,37 @@ let audioPlayer: YoutubePlayer | null = null
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let textTimer: ReturnType<typeof setInterval> | null = null
 let loadToken = 0
+let pendingPausedSourceSwitchTime: number | null = null
 
 /** Seek within the active segment by 0..1 ratio, driven by the hero widget's progress bar. */
+function seekToSeconds(targetSeconds: number) {
+  const clamped = Math.min(Math.max(targetSeconds, 0), activeSegmentDuration.value)
+  currentTime.value = clamped
+  if (currentSegment.value?.kind === 'video') {
+    player?.seekTo?.(clamped, true)
+  }
+  else {
+    // Text segments follow the background audio's clock, so the audio must move too.
+    audioPlayer?.seekTo?.(clamped, true)
+  }
+}
+
+function seekToNativeSeconds(targetSeconds: number) {
+  const clamped = Math.max(targetSeconds, 0)
+  currentTime.value = clamped
+  if (currentSegment.value?.kind === 'video') {
+    player?.seekTo?.(clamped, true)
+  }
+  else {
+    audioPlayer?.seekTo?.(clamped, true)
+  }
+}
+
 function seekToRatio(ratio: number) {
   if (activeSegmentDuration.value <= 0) {
     return
   }
-  const target = Math.min(Math.max(ratio, 0), 1) * activeSegmentDuration.value
-  currentTime.value = target
-  if (currentSegment.value?.kind === 'video') {
-    player?.seekTo?.(target, true)
-  }
-  else {
-    // Text segments follow the background audio's clock, so the audio must move too.
-    audioPlayer?.seekTo?.(target, true)
-  }
+  seekToSeconds(Math.min(Math.max(ratio, 0), 1) * activeSegmentDuration.value)
 }
 
 function stopPolling() {
@@ -250,6 +316,7 @@ function stopTextTimer() {
 
 function destroyPlayer() {
   stopPolling()
+  pendingPausedSourceSwitchTime = null
   player?.destroy?.()
   player = null
 }
@@ -400,30 +467,34 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
   player = new PlayerCtor(mountNode, {
     width: '100%',
     height: '100%',
-    videoId: segment.youtubeVideoId,
+    videoId: activeVideoId(segment),
     playerVars,
     events: {
       onReady: () => {
-        // Force YouTube's own captions off even for viewers whose account
-        // preference enables them; the burned-in styled captions are the only
-        // caption layer on this trailer.
-        player?.unloadModule?.('captions')
-        player?.unloadModule?.('cc')
-        activeSegmentDuration.value = segment.maxDuration ?? player?.getDuration?.() ?? 0
+        activeSegmentDuration.value = activeVideoCutoffDuration(segment) ?? player?.getDuration?.() ?? 0
         segmentDurations.value[sequenceState.value.index] = activeSegmentDuration.value
         stopPolling()
         pollTimer = setInterval(() => {
           currentTime.value = player?.getCurrentTime?.() ?? 0
-          if (isVideoCutoffReached(segment, currentTime.value)) {
+          if (activeVideoCutoffDuration(segment) != null && currentTime.value >= activeSegmentDuration.value && !isPaused.value) {
             advance()
           }
         }, 200)
       },
       onStateChange: (event: { data: number }) => {
         if (event.data === getYoutubePlayerState().PLAYING) {
-          // YouTube can re-attach the caption module on play/seek; keep it off.
-          player?.unloadModule?.('captions')
-          player?.unloadModule?.('cc')
+          isPaused.value = false
+          if (pendingPausedSourceSwitchTime != null) {
+            const pausedTime = pendingPausedSourceSwitchTime
+            pendingPausedSourceSwitchTime = null
+            currentTime.value = pausedTime
+            player?.seekTo?.(pausedTime, true)
+            player?.pauseVideo?.()
+            return
+          }
+        }
+        if (event.data === getYoutubePlayerState().PAUSED || event.data === getYoutubePlayerState().CUED) {
+          isPaused.value = true
         }
         if (event.data === getYoutubePlayerState().ENDED) {
           advance()
@@ -440,6 +511,9 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
 function loadCurrentSegment(segment: IntroVideoSpec | undefined) {
   loadToken += 1
   isPaused.value = false
+  if (segment?.id !== 'wolves-intro') {
+    destinyVoiceOverEnabled.value = false
+  }
   destroyPlayer()
   stopTextTimer()
   destroyAudioPlayer()
@@ -480,21 +554,56 @@ function handlePrevious() {
   sequenceState.value = previousIntroSequence(sequenceState.value)
 }
 
+function setVoiceOverEnabled(enabled: boolean) {
+  const segment = currentSegment.value
+  if (!segment || !isVideoSegment(segment) || !canToggleDestinyVoiceOver.value) {
+    return
+  }
+  if (destinyVoiceOverEnabled.value === enabled) {
+    return
+  }
+
+  destinyVoiceOverEnabled.value = enabled
+
+  if (!player?.loadVideoById) {
+    return
+  }
+
+  const shouldPause = isPaused.value
+  const preservedTime = clampVideoSourceTime(segment, player.getCurrentTime?.() ?? currentTime.value)
+  currentTime.value = preservedTime
+  activeSegmentDuration.value = activeVideoCutoffDuration(segment) ?? player.getDuration?.() ?? activeSegmentDuration.value
+  segmentDurations.value[sequenceState.value.index] = activeSegmentDuration.value
+  pendingPausedSourceSwitchTime = shouldPause ? preservedTime : null
+
+  player.loadVideoById({
+    videoId: activeVideoId(segment),
+    startSeconds: preservedTime,
+  })
+}
+
 function handleTogglePlayback() {
-  const activePlayer = currentSegment.value && isVideoSegment(currentSegment.value) ? player : audioPlayer
+  const isVideoPlayback = Boolean(currentSegment.value && isVideoSegment(currentSegment.value))
+  const activePlayer = isVideoPlayback ? player : audioPlayer
+  const nextPaused = !isPaused.value
   if (isPaused.value) {
     activePlayer?.playVideo?.()
   }
   else {
     activePlayer?.pauseVideo?.()
   }
-  isPaused.value = !isPaused.value
+  if (!isVideoPlayback) {
+    isPaused.value = nextPaused
+  }
 }
 
 onBeforeUnmount(() => {
   destroyPlayer()
   stopTextTimer()
   destroyAudioPlayer()
+  if (import.meta.env.DEV) {
+    delete (window as any).__wolvesIntro
+  }
 })
 
 // Publishes playback state so the app-level Destiny hero widget (the single
@@ -506,13 +615,32 @@ watchEffect(() => {
     paused: isPaused.value,
     segmentId: currentSegment.value?.id ?? '',
     canGoPrevious: canGoToPrevious.value,
-    hasActiveCue: activeCue.value !== undefined,
+    nameplateTitle: activeCue.value?.nameplateTitle,
+    showVoiceOverToggle: canToggleDestinyVoiceOver.value,
+    voiceOverEnabled: canToggleDestinyVoiceOver.value ? destinyVoiceOverEnabled.value : false,
   })
+})
+
+watchEffect(() => {
+  if (!import.meta.env.DEV) {
+    return
+  }
+  ;(window as any).__wolvesIntro = {
+    seekTo: (seconds: number) => seekToSeconds(seconds),
+    seekToNativeTime: (seconds: number) => seekToNativeSeconds(seconds),
+    getCurrentTime: () => currentTime.value,
+    getDuration: () => activeSegmentDuration.value,
+    getPlayerDuration: () => player?.getDuration?.() ?? 0,
+    getVideoId: () => (currentSegment.value && isVideoSegment(currentSegment.value) ? activeVideoId(currentSegment.value) : ''),
+    isPaused: () => isPaused.value,
+    setVoiceOverEnabled,
+  }
 })
 
 defineExpose({
   next: handleNext,
   previous: handlePrevious,
+  setVoiceOverEnabled,
   toggle: handleTogglePlayback,
   seekToRatio,
 })
@@ -521,6 +649,17 @@ defineExpose({
 <template>
   <div v-if="currentSegment && !sequenceState.done" class="wolves-intro-overlay">
     <div v-if="currentSegment.kind === 'video'" ref="mountHost" class="wolves-intro-overlay-player" />
+    <div
+      v-if="currentSegment.kind === 'video'"
+      class="wolves-intro-overlay-top-left-mask"
+      aria-hidden="true"
+    />
+    <div
+      v-if="currentSegment.kind === 'video'"
+      class="wolves-intro-overlay-pause-veil"
+      :class="{ 'wolves-intro-overlay-pause-veil-active': isPaused }"
+      aria-hidden="true"
+    />
 
     <template v-else>
       <div class="wolves-intro-overlay-blackscreen">
@@ -565,16 +704,62 @@ defineExpose({
 
     <template v-if="!isSomberTextSegment">
       <div v-if="activeComicTitleCardCue" class="wolves-intro-overlay-title-card">
-        <p class="wolves-intro-overlay-title-card-line">
-          {{ activeComicTitleCardCue.text }}
-        </p>
-        <p class="wolves-intro-overlay-title-card-line wolves-intro-overlay-title-card-line-small">
-          Made by Paid Artists
-        </p>
+        <div class="wolves-intro-overlay-title-card-layout">
+          <div class="wolves-intro-overlay-title-card-main">
+            <p class="wolves-intro-overlay-title-card-line">
+              {{ activeComicTitleCardCue.text }}
+            </p>
+            <img
+              v-if="activeComicHeroShot"
+              :src="`${baseUrl}${activeComicHeroShot.src}`"
+              :alt="activeComicHeroShot.label"
+              :data-comic-hero-shot="activeComicHeroShot.id"
+              class="wolves-intro-overlay-title-card-art"
+            >
+            <p
+              class="wolves-intro-overlay-title-card-line wolves-intro-overlay-title-card-line-small"
+              data-comic-hero-paid-artists
+            >
+              Made by Paid Artists
+            </p>
+          </div>
+
+          <a
+            :href="comicHeroQrUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open makemeacomic.com"
+            class="wolves-intro-overlay-title-card-qr"
+            data-comic-hero-qr-link
+          >
+            <div class="wolves-intro-overlay-title-card-qr-frame" data-comic-hero-qr-card>
+              <img
+                :src="qrMakeMeAComic"
+                alt="QR code linking to makemeacomic.com"
+                class="wolves-intro-overlay-title-card-qr-image"
+                data-comic-hero-qr-image
+              >
+            </div>
+            <span
+              class="wolves-intro-overlay-title-card-qr-dialogue"
+              data-comic-hero-qr-dialogue
+            >
+              {{ comicHeroQrDialogue }}
+            </span>
+            <span class="wolves-intro-overlay-title-card-qr-domain" data-comic-hero-qr-domain>
+              {{ comicHeroQrDomain }}
+            </span>
+          </a>
+        </div>
+      </div>
+      <div v-if="activeBurnedInCaptions.length" class="wolves-intro-overlay-burned-captions">
+        <div v-for="cue in activeBurnedInCaptions" :key="`${cue.start}-${cue.end}-${cue.text}`" class="wolves-intro-overlay-burned-caption">
+          {{ formatIntroCueText(cue.text, cue.preservePunctuation) }}
+        </div>
       </div>
 
       <div
-        v-for="cue in activeCues"
+        v-for="cue in activeGuardianCues"
         :key="cue.text"
         class="wolves-guardian-plate font-mono"
         :class="{
@@ -601,18 +786,43 @@ defineExpose({
           <p class="wolves-guardian-plate-class">
             {{ parseGuardianCue(cue.text)!.guardianClass }}
           </p>
-          <p class="wolves-guardian-plate-name">
-            {{ parseGuardianCue(cue.text)!.name }}
-          </p>
-          <p class="wolves-guardian-plate-title">
-            <template v-for="(token, index) in titleTokens(parseGuardianCue(cue.text)!.title, cue.blingTitle)" :key="index">
-              <span v-if="token.kind === 'sep'" class="wolves-guardian-plate-title-sep" aria-hidden="true">|</span>
-              <span v-else-if="token.bling" class="wolves-guardian-plate-bling">{{ token.text }}</span>
-              <template v-else>
-                {{ token.text }}
-              </template>
-            </template>
-          </p>
+          <div
+            class="wolves-guardian-plate-body"
+            :class="{ 'wolves-guardian-plate-body-paired': guardianDinosaurProfile(parseGuardianCue(cue.text)!.name) }"
+          >
+            <div class="wolves-guardian-plate-identity">
+              <p class="wolves-guardian-plate-name">
+                {{ parseGuardianCue(cue.text)!.name }}
+              </p>
+              <p class="wolves-guardian-plate-title">
+                <template v-for="(token, index) in titleTokens(parseGuardianCue(cue.text)!.title, cue.blingTitle)" :key="index">
+                  <span v-if="token.kind === 'sep'" class="wolves-guardian-plate-title-sep" aria-hidden="true">|</span>
+                  <span v-else-if="token.bling" class="wolves-guardian-plate-bling">{{ token.text }}</span>
+                  <template v-else>
+                    {{ token.text }}
+                  </template>
+                </template>
+              </p>
+            </div>
+            <div
+              v-if="guardianDinosaurProfile(parseGuardianCue(cue.text)!.name)"
+              class="wolves-guardian-plate-dinosaur"
+            >
+              <img
+                :src="guardianDinosaurProfile(parseGuardianCue(cue.text)!.name)!.artworkSource"
+                :alt="guardianDinosaurProfile(parseGuardianCue(cue.text)!.name)!.scientificName"
+                class="wolves-guardian-plate-dinosaur-art"
+              >
+              <div class="wolves-guardian-plate-dinosaur-copy">
+                <p class="wolves-guardian-plate-dinosaur-label">
+                  {{ guardianDinosaurProfile(parseGuardianCue(cue.text)!.name)!.label }}
+                </p>
+                <p class="wolves-guardian-plate-dinosaur-species">
+                  {{ guardianDinosaurProfile(parseGuardianCue(cue.text)!.name)!.scientificName }}
+                </p>
+              </div>
+            </div>
+          </div>
         </template>
         <p v-else class="wolves-guardian-plate-name">
           {{ cue.text }}
@@ -627,6 +837,7 @@ defineExpose({
       :class="{
         'wolves-intro-overlay-text-somber': isSomberTextSegment,
         'wolves-intro-overlay-text-dominant': overlayCueForDisplay?.emphasis === 'dominant',
+        'wolves-intro-overlay-text-terminal': overlayCueForDisplay?.presentation === 'terminal',
         'wolves-intro-overlay-text-slim': overlayCueForDisplay?.slim,
         'wolves-intro-overlay-text-top': overlayCueForDisplay?.backgroundCrossfade && overlayCueForDisplay.emphasis !== 'dominant' && !overlayCueForDisplay.calamity && overlayCueForDisplay.textPosition !== 'bottom' && overlayCueForDisplay.textPosition !== 'bottom-right',
         'wolves-intro-overlay-text-bottom-right': overlayCueForDisplay?.textPosition === 'bottom-right',
@@ -646,20 +857,6 @@ defineExpose({
 </template>
 
 <style scoped>
-.wolves-intro-cc-toggle {
-  position: absolute;
-  top: 2rem;
-  right: 2rem;
-  width: auto;
-  height: 3.6rem;
-  padding: 0 1.6rem;
-  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
-  font-size: 1.4rem;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  z-index: 10;
-}
-
 .wolves-intro-overlay {
   position: fixed;
   inset: 0;
@@ -675,6 +872,32 @@ defineExpose({
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+.wolves-intro-overlay-top-left-mask {
+  position: absolute;
+  top: max(1rem, env(safe-area-inset-top));
+  left: max(1rem, env(safe-area-inset-left));
+  width: min(32rem, 48vw);
+  height: clamp(5.6rem, 11vh, 8.4rem);
+  border-radius: 0 0 1.6rem;
+  background: linear-gradient(135deg, rgb(0 0 0 / 96%) 0%, rgb(0 0 0 / 82%) 72%, transparent 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.wolves-intro-overlay-pause-veil {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(circle at center, rgb(0 0 0 / 10%) 0%, rgb(0 0 0 / 22%) 35%, rgb(0 0 0 / 78%) 100%);
+  pointer-events: none;
+  transition: opacity 0.18s ease-out;
+  z-index: 3;
+}
+
+.wolves-intro-overlay-pause-veil-active {
+  opacity: 1;
 }
 
 .wolves-intro-overlay-blackscreen {
@@ -838,7 +1061,7 @@ defineExpose({
   gap: 8px;
   padding: 0 6vw;
   pointer-events: none;
-  z-index: 4;
+  z-index: 7;
 }
 .wolves-intro-overlay-burned-caption {
   max-width: 72rem;
@@ -861,22 +1084,43 @@ defineExpose({
   position: absolute;
   inset: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18px;
-  padding: 32px;
+  padding: clamp(11rem, 17vh, 14rem) clamp(1.6rem, 4vw, 4rem) clamp(2rem, 7vh, 5rem);
   background: #000;
   color: #fff;
   text-align: center;
   z-index: 6;
 }
 
+.wolves-intro-overlay-title-card-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: clamp(1.2rem, 2.5vw, 2.4rem);
+  width: min(100%, 100rem);
+}
+
+.wolves-intro-overlay-title-card-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.wolves-intro-overlay-title-card-art {
+  width: min(68vw, 30rem);
+  max-height: 34vh;
+  object-fit: contain;
+  filter: drop-shadow(0 0 24px rgb(0 0 0 / 70%));
+}
+
 .wolves-intro-overlay-title-card-line {
   margin: 0;
   max-width: min(90vw, 960px);
   font-family: 'Eurostile', 'Uni Sans', 'Arial Narrow', 'Segoe UI', sans-serif;
-  font-size: clamp(2.6rem, 8vw, 6.2rem);
+  font-size: clamp(2.6rem, 4vw, 4.2rem);
   line-height: 0.95;
   font-weight: 900;
   letter-spacing: 0.16em;
@@ -891,16 +1135,148 @@ defineExpose({
   -webkit-text-stroke: 2.8px #000;
 }
 
+.wolves-intro-overlay-title-card-line:not(.wolves-intro-overlay-title-card-line-small) {
+  width: 100%;
+}
+
 .wolves-intro-overlay-title-card-line-small {
   display: inline-block;
   padding: 0.25em 0.6em;
   border: 1px solid rgb(255 244 200 / 45%);
   border-radius: 999px;
   background: rgb(0 0 0 / 45%);
-  font-size: clamp(1.6rem, 3.8vw, 3rem);
-  letter-spacing: 0.24em;
+  font-size: clamp(1.2rem, 1.8vw, 1.8rem);
+  letter-spacing: 0.15em;
   font-weight: 900;
   line-height: 1.1;
+  text-shadow: none;
+  white-space: nowrap;
+  -webkit-text-stroke: 0;
+}
+
+.wolves-intro-overlay-title-card-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  justify-self: end;
+  width: min(100%, 24rem);
+  padding: 1.2rem;
+  border: 1px solid rgb(147 197 253 / 32%);
+  border-radius: 2rem;
+  background: linear-gradient(180deg, rgb(9 11 16 / 92%) 0%, rgb(5 7 10 / 96%) 100%);
+  box-shadow:
+    0 0 32px rgb(0 0 0 / 55%),
+    inset 0 0 0 1px rgb(255 255 255 / 5%);
+  color: #fff;
+  text-decoration: none;
+  transform: translateY(-3rem);
+}
+
+.wolves-intro-overlay-title-card-qr-dialogue {
+  width: 100%;
+  min-height: 3.8rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid rgb(147 197 253 / 40%);
+  border-radius: 0.85rem;
+  background: rgb(5 18 31 / 88%);
+  box-shadow: inset 0 0 18px rgb(59 130 246 / 14%);
+  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
+  font-size: clamp(1.05rem, 1.15vw, 1.3rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1.35;
+  text-transform: uppercase;
+  color: #93c5fd;
+}
+
+.wolves-intro-overlay-title-card-qr-frame {
+  width: min(100%, 21rem);
+  aspect-ratio: 1;
+  padding: 0.65rem;
+  overflow: hidden;
+  border-radius: 1.35rem;
+  background: #fff;
+}
+
+.wolves-intro-overlay-title-card-qr-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.75rem;
+  image-rendering: pixelated;
+}
+
+.wolves-intro-overlay-title-card-qr-domain {
+  font-family: var(--wc-font-weyland, 'Michroma', 'Arial Narrow', sans-serif);
+  font-size: clamp(1rem, 1.2vw, 1.25rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+  .wolves-intro-overlay-title-card {
+    justify-content: flex-start;
+    padding-top: clamp(11rem, 19vh, 13rem);
+  }
+
+  .wolves-intro-overlay-title-card-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    align-items: center;
+    justify-items: center;
+    gap: 0.8rem;
+    width: 100%;
+  }
+
+  .wolves-intro-overlay-title-card-main {
+    display: contents;
+  }
+
+  .wolves-intro-overlay-title-card-line:not(.wolves-intro-overlay-title-card-line-small) {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .wolves-intro-overlay-title-card-art {
+    grid-column: 1;
+    grid-row: 2;
+    width: min(42vw, 16rem);
+    max-height: 24vh;
+  }
+
+  .wolves-intro-overlay-title-card-line-small {
+    grid-column: 1;
+    grid-row: 3;
+    z-index: 1;
+    color: #fff4c8;
+    width: 100%;
+    padding: 0.4em 0.5em;
+    font-size: 1rem;
+    letter-spacing: 0.08em;
+    text-shadow: none;
+    white-space: normal;
+    -webkit-text-stroke: 0;
+  }
+
+  .wolves-intro-overlay-title-card-qr {
+    grid-column: 2;
+    grid-row: 2 / 4;
+    width: min(48vw, 18.5rem);
+    padding: 1rem;
+    transform: none;
+  }
+
+  .wolves-intro-overlay-title-card-qr-frame {
+    width: min(100%, 16.5rem);
+    padding: 0.5rem;
+  }
+
+  .wolves-intro-overlay-title-card-qr-dialogue {
+    font-size: clamp(0.9rem, 2.8vw, 1.15rem);
+  }
 }
 
 .wolves-intro-overlay-text {
@@ -924,6 +1300,30 @@ defineExpose({
      literal newline) to control where a long line wraps -- preserve it instead of collapsing
      to a single line, per explicit user request (2026-07-15). */
   white-space: pre-line;
+}
+
+.wolves-intro-overlay-text-terminal {
+  top: 12%;
+  bottom: auto;
+  left: 7%;
+  right: 7%;
+  width: min(86%, 96rem);
+  padding: clamp(1.6rem, 3vw, 2.8rem);
+  border: 1px solid rgb(127 212 212 / 30%);
+  border-left: 2px solid #7fd4d4;
+  background: rgb(3 10 14 / 88%);
+  box-shadow: inset 0 0 28px rgb(59 130 246 / 8%);
+  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
+  font-size: clamp(1.5rem, 2vw, 2.2rem);
+  line-height: 1.55;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: none;
+  color: #7fd4d4;
+  text-shadow: none;
+  animation: none;
+  opacity: 1;
 }
 
 /* The Bluefin wallpaper scenes (backgroundCrossfade cues) are sky-led landscapes with the
@@ -955,6 +1355,11 @@ defineExpose({
   animation-fill-mode: both;
 }
 
+.wolves-intro-overlay-text-terminal.wolves-intro-overlay-text-somber {
+  animation: none;
+  opacity: 1;
+}
+
 @keyframes wolves-intro-text-somber-fade {
   0% {
     opacity: 0;
@@ -968,6 +1373,10 @@ defineExpose({
   .wolves-intro-overlay-text-somber {
     animation: none;
     opacity: 1;
+  }
+
+  .wolves-intro-overlay-pause-veil {
+    transition: none;
   }
 
   .wolves-intro-overlay-background-day {
@@ -1021,44 +1430,40 @@ defineExpose({
    earlier plain "nerd plate" card. */
 .wolves-guardian-plate {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 25vh;
-  max-width: none;
-  padding: 2.5rem 4rem;
+  bottom: 10%;
+  left: 5%;
+  max-width: 44rem;
+  padding: 1.75rem 2rem 1.5rem;
   overflow: visible;
-  border: none;
-  border-top: 1px solid rgb(147 197 253 / 45%);
-  border-radius: 0;
-  clip-path: none;
-  background: linear-gradient(to top, rgb(4 6 12 / 96%) 0%, rgb(8 12 20 / 88%) 100%);
+  border: 1px solid rgb(147 197 253 / 45%);
+  border-radius: 0.75rem;
+  clip-path: polygon(16px 0%, 100% 0%, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0% 100%, 0% 16px);
+  background: rgb(8 12 20 / 82%);
   color: #e2e8f0;
   text-align: center;
   text-shadow: 0 2px 10px rgb(0 0 0 / 80%);
   animation: wolves-guardian-plate-impact 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 5;
 }
 
 /* Anchors this callout to the left/right side of the frame instead of the default lower-left
    placement, reserved for cues whose window overlaps another Guardian's (they share the shot,
    so both plates need to sit side-by-side rather than stacking on top of each other). */
 .wolves-guardian-plate-left {
-  left: 0;
-  right: 50%;
-  border-right: 1px solid rgb(147 197 253 / 35%);
+  left: 5%;
+  right: auto;
 }
 
 .wolves-guardian-plate-right {
-  left: 50%;
-  right: 0;
+  left: auto;
+  right: 5%;
 }
 
 /* Raises the callout from the default lower-third anchor to sit closer to a Guardian's
    actual on-screen position when it towers above the frame's lower third (see the `raised`
    field doc comment in wolves-intro-sequence.ts). */
 .wolves-guardian-plate-raised {
-  /* No offset, kept clean to occupy the bottom 1/4 widescreen bar */
+  bottom: auto;
+  top: 28%;
 }
 
 /* Gilds the plate gold instead of the default silver/blue treatment to signify leadership.
@@ -1066,8 +1471,8 @@ defineExpose({
    comment in wolves-intro-sequence.ts. Overrides border, horizon lines, crest, burst flash,
    and the title line so the gold reads consistently across the whole plate. */
 .wolves-guardian-plate-leader {
-  border-top-color: rgb(250 204 21 / 55%) !important;
-  box-shadow: 0 -4px 24px rgb(250 204 21 / 20%);
+  border-color: rgb(250 204 21 / 55%);
+  box-shadow: 0 0 24px rgb(250 204 21 / 20%);
 }
 
 .wolves-guardian-plate-leader .wolves-guardian-plate-burst {
@@ -1201,6 +1606,21 @@ defineExpose({
   animation: wolves-guardian-plate-text-drift 1.4s cubic-bezier(0.1, 0.9, 0.2, 1) 0.15s backwards;
 }
 
+.wolves-guardian-plate-body {
+  margin-top: 0.45rem;
+}
+
+.wolves-guardian-plate-body-paired {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(13rem, 16rem);
+  gap: 1rem;
+  align-items: center;
+}
+
+.wolves-guardian-plate-identity {
+  min-width: 0;
+}
+
 .wolves-guardian-plate-title {
   margin: 0.35rem 0 0;
   font-size: clamp(1.5rem, 1.2rem + 0.7vw, 1.9rem);
@@ -1239,14 +1659,64 @@ defineExpose({
     wolves-guardian-plate-bling-pulse 1.8s ease-in-out infinite;
 }
 
-.wolves-guardian-plate-dinosaur-icon {
-  display: none !important;
-  height: clamp(2.2rem, 1.6rem + 1.4vw, 3rem);
-  width: auto;
-  margin-left: 0.6rem;
-  vertical-align: middle;
-  filter: drop-shadow(0 0 6px rgb(255 255 255 / 35%));
+.wolves-guardian-plate-dinosaur {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.8rem;
+  padding: 0.8rem 0.95rem;
+  border: 1px solid rgb(147 197 253 / 28%);
+  border-radius: 0.85rem;
+  background:
+    radial-gradient(circle at top left, rgb(147 197 253 / 16%), transparent 55%),
+    linear-gradient(135deg, rgb(15 23 42 / 92%), rgb(2 6 23 / 82%));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 4%);
   animation: wolves-guardian-plate-text-drift 1.4s cubic-bezier(0.1, 0.9, 0.2, 1) 0.25s backwards;
+}
+
+.wolves-guardian-plate-dinosaur-art {
+  flex: 0 0 auto;
+  width: clamp(6.8rem, 5rem + 4vw, 10rem);
+  height: clamp(6.8rem, 5rem + 4vw, 10rem);
+  object-fit: contain;
+  filter: drop-shadow(0 0 12px rgb(255 255 255 / 18%));
+}
+
+.wolves-guardian-plate-dinosaur-copy {
+  min-width: 0;
+  text-align: left;
+}
+
+.wolves-guardian-plate-dinosaur-label,
+.wolves-guardian-plate-dinosaur-species {
+  margin: 0;
+}
+
+.wolves-guardian-plate-dinosaur-label {
+  font-size: clamp(1.6rem, 1.2rem + 0.9vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #bfdbfe;
+}
+
+.wolves-guardian-plate-dinosaur-species {
+  margin-top: 0.3rem;
+  font-size: clamp(1.25rem, 1rem + 0.45vw, 1.55rem);
+  color: #cbd5e1;
+}
+
+@media (max-width: 640px) {
+  .wolves-guardian-plate-body-paired {
+    grid-template-columns: 1fr;
+  }
+
+  .wolves-guardian-plate-dinosaur {
+    justify-content: center;
+  }
+
+  .wolves-guardian-plate-dinosaur-copy {
+    text-align: center;
+  }
 }
 
 @keyframes wolves-guardian-plate-ignite {

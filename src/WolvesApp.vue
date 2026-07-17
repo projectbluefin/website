@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue'
+import type { IntroStatusPayload } from '@/data/wolves-intro-sequence'
+import { nextTick, ref, watch } from 'vue'
 import CinematicLobby from '@/components/wolves/cinematic/CinematicLobby.vue'
 import CinematicStage from '@/components/wolves/cinematic/CinematicStage.vue'
 import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import Nameplate from '@/components/wolves/cinematic/Nameplate.vue'
-import WolvesCreatorShortsInterstitial from '@/components/wolves/WolvesCreatorShortsInterstitial.vue'
 import WolvesIntroOverlay from '@/components/wolves/WolvesIntroOverlay.vue'
-import { buildIntroVideoSequence } from '@/data/wolves-intro-sequence'
-import { useCinematicStore } from '@/stores/cinematic'
+import { buildIntroVideoSequence, isTextSegment } from '@/data/wolves-intro-sequence'
+import { resolveOverallRatioTarget, useCinematicStore } from '@/stores/cinematic'
 
 const store = useCinematicStore()
 
@@ -16,66 +16,234 @@ const stage = ref<InstanceType<typeof CinematicStage> | null>(null)
 async function enterCinematic() {
   store.enterCinematic()
   await nextTick() // stage mounts with the new phase before players are created
-  await stage.value?.start()
+  await stage.value?.start?.()
   if (import.meta.env.DEV) {
-    // Dev-only hook so browser-based boundary verification can drive the real player
-    // by player time (seek) and by segment handoff (skip). Never exposed in
-    // production builds — import.meta.env.DEV is false there, so this is tree-shaken.
-    ;(window as any).__wolvesCinematic = {
-      seekTo: (seconds: number) => stage.value?.seekTo(seconds),
-      skip: (delta: number) => stage.value?.skip(delta),
-    }
+    // Dev-only hook so browser-based boundary verification can drive the real player.
+    ;(window as any).__wolvesCinematic = { seekTo: (s: number) => stage.value?.seekTo(s) }
   }
 }
 
 const introVideos = buildIntroVideoSequence()
 const intro = ref<InstanceType<typeof WolvesIntroOverlay> | null>(null)
-const introHasActiveCue = ref(true)
+const introShowVoiceOverToggle = ref(false)
+const introVoiceOverEnabled = ref(false)
+// Ordinary wolves-prologue status has no cue-level nameplateTitle: hide the top-left
+// nameplate entirely rather than showing a default plate. The authored 50s cue still
+// publishes its title via nameplateTitle, which shows the existing PROLOGUE plate.
+const introNameplateVisible = ref(true)
+const introSegmentIndexById = new Map(introVideos.map((segment, index) => [segment.id, index]))
 
-// Factual display metadata for the two intro segments (see wolves-intro-sequence.ts).
+// Factual display metadata for the authored intro segments (see wolves-intro-sequence.ts).
 const INTRO_DISPLAY: Record<string, { chapter: string, title: string, artist: string, artwork: string }> = {
+  'species-prelude': {
+    chapter: 'UNIVERSAL BLUE BRIEFING',
+    title: 'Dimetrodon limbatus // Deinonychus antirrhopus',
+    artist: 'Factual Species Prelude',
+    artwork: 'https://i.ytimg.com/vi/EB3IokHelRk/hqdefault.jpg',
+  },
   'wolves-prologue': {
     chapter: 'PROLOGUE',
     title: 'Gayane Ballet Suite (Adagio)',
     artist: 'Aram Khachaturian',
     artwork: 'https://i.ytimg.com/vi/EB3IokHelRk/hqdefault.jpg',
   },
+  'universal-blue-briefing': {
+    chapter: 'UNIVERSAL BLUE BRIEFING',
+    title: 'Universal Blue Briefing',
+    artist: 'AN4-ChK-12',
+    artwork: 'https://i.ytimg.com/vi/EB3IokHelRk/hqdefault.jpg',
+  },
+  'bluefin-cinematic-universe': {
+    chapter: 'UNIVERSAL BLUE BRIEFING',
+    title: 'Bluefin Cinematic Universe Slate',
+    artist: 'Project Bluefin',
+    artwork: 'https://i.ytimg.com/vi/BKm0TPqeOjY/hqdefault.jpg',
+  },
   'wolves-intro': {
-    chapter: 'INTRO',
+    chapter: 'UNIVERSAL BLUE BRIEFING',
     title: 'Destiny 2: Into the Light Cinematic',
     artist: 'Bungie',
-    artwork: 'https://i.ytimg.com/vi/BKm0TPqeOjY/hqdefault.jpg',
+    artwork: 'https://i.ytimg.com/vi/BV3BZKbpBns/hqdefault.jpg',
   },
 }
 
-function handleIntroStatus(payload: {
-  currentTime: number
-  duration: number
-  paused: boolean
-  segmentId: string
-  canGoPrevious: boolean
-  hasActiveCue: boolean
-}) {
+function normalizeIntroStatus(payload: IntroStatusPayload) {
+  const segmentIndex = introSegmentIndexById.get(payload.segmentId) ?? 0
+  const segment = introVideos[segmentIndex]
+  if (!segment) {
+    return {
+      segmentIndex: 0,
+      segmentElapsed: payload.currentTime,
+      segmentDuration: payload.duration,
+      nativeTime: payload.currentTime,
+    }
+  }
+
+  if (isTextSegment(segment)) {
+    return {
+      segmentIndex,
+      segmentElapsed: Math.min(Math.max(payload.currentTime, 0), segment.duration),
+      segmentDuration: segment.duration,
+      nativeTime: Math.max(payload.currentTime, 0),
+    }
+  }
+
+  const nativeStart = segment.startOffset ?? 0
+  const segmentDuration = Math.max(0, payload.duration - nativeStart)
+  return {
+    segmentIndex,
+    segmentElapsed: Math.min(Math.max(payload.currentTime - nativeStart, 0), segmentDuration),
+    segmentDuration,
+    nativeTime: Math.max(payload.currentTime, nativeStart),
+  }
+}
+
+function handleIntroStatus(payload: IntroStatusPayload) {
   const meta = INTRO_DISPLAY[payload.segmentId]
   if (meta) {
-    store.setDisplayOverride({ ...meta, canPrevious: payload.canGoPrevious })
+    store.setDisplayOverride({
+      ...meta,
+      title: payload.nameplateTitle ?? meta.title,
+      canPrevious: payload.canGoPrevious,
+    })
   }
-  store.updateTime(payload.currentTime, payload.duration)
+  introNameplateVisible.value = payload.segmentId !== 'wolves-prologue' || Boolean(payload.nameplateTitle)
+  introShowVoiceOverToggle.value = payload.showVoiceOverToggle ?? false
+  introVoiceOverEnabled.value = payload.voiceOverEnabled ?? false
+  store.syncIntroStatus(normalizeIntroStatus(payload))
   store.setPlaying(!payload.paused)
-  introHasActiveCue.value = payload.hasActiveCue
+}
+
+function clearIntroUi() {
+  store.setDisplayOverride(null)
+  introShowVoiceOverToggle.value = false
+  introVoiceOverEnabled.value = false
+  introNameplateVisible.value = true
 }
 
 async function handleIntroComplete() {
-  store.setDisplayOverride(null)
-  store.resetClock()
+  clearIntroUi()
   await enterCinematic()
 }
 
-/** Creator Shorts finishes -> resume Part II from the store's current segment. */
-async function handleCreatorShortsComplete() {
-  store.completeCreatorShorts()
-  await nextTick()
-  await stage.value?.start()
+async function seekIntroTarget(ratio: number) {
+  if (store.phase !== 'intro') {
+    const meta = INTRO_DISPLAY['species-prelude']
+    store.setDisplayOverride({
+      ...meta,
+      canPrevious: false,
+    })
+    store.enterIntro()
+    await nextTick()
+  }
+
+  const target = resolveOverallRatioTarget(ratio)
+  if (target.phase !== 'intro' || !intro.value) {
+    return
+  }
+
+  for (let index = store.segmentIndex; index < target.segmentIndex; index++) {
+    intro.value.next()
+    await nextTick()
+  }
+
+  for (let index = store.segmentIndex; index > target.segmentIndex; index--) {
+    intro.value.previous()
+    await nextTick()
+  }
+
+  await waitForIntroTarget(target.segmentIndex, target.segmentDuration)
+  intro.value.seekToRatio(target.seekRatio)
+}
+
+function waitForCinematicTarget(segmentIndex: number) {
+  return new Promise<void>((resolve, reject) => {
+    if (store.phase === 'cinematic' && store.segmentIndex === segmentIndex && !store.crossfading) {
+      resolve()
+      return
+    }
+
+    let stop: () => void = () => {}
+    const timeout = window.setTimeout(() => {
+      stop()
+      reject(new Error(`Timed out waiting for cinematic segment ${segmentIndex}`))
+    }, 8000)
+
+    stop = watch(
+      () => [store.phase, store.segmentIndex, store.crossfading] as const,
+      ([phase, currentIndex, crossfading]) => {
+        if (phase === 'cinematic' && currentIndex === segmentIndex && !crossfading) {
+          window.clearTimeout(timeout)
+          stop()
+          resolve()
+        }
+      },
+    )
+  })
+}
+
+function waitForIntroTarget(segmentIndex: number, segmentDuration: number) {
+  return new Promise<void>((resolve, reject) => {
+    if (store.phase === 'intro'
+      && store.segmentIndex === segmentIndex
+      && store.segmentDuration >= Math.max(0, segmentDuration - 0.01)) {
+      resolve()
+      return
+    }
+
+    let stop: () => void = () => {}
+    const timeout = window.setTimeout(() => {
+      stop()
+      reject(new Error(`Timed out waiting for intro segment ${segmentIndex}`))
+    }, 8000)
+
+    stop = watch(
+      () => [store.phase, store.segmentIndex, store.segmentDuration] as const,
+      ([phase, currentIndex, duration]) => {
+        if (phase === 'intro'
+          && currentIndex === segmentIndex
+          && duration >= Math.max(0, segmentDuration - 0.01)) {
+          window.clearTimeout(timeout)
+          stop()
+          resolve()
+        }
+      },
+    )
+  })
+}
+
+async function seekCinematicTarget(ratio: number) {
+  const target = resolveOverallRatioTarget(ratio)
+  if (target.phase !== 'cinematic') {
+    return
+  }
+
+  clearIntroUi()
+
+  if (store.phase !== 'cinematic') {
+    await enterCinematic()
+  }
+
+  if (!stage.value) {
+    return
+  }
+
+  const delta = target.segmentIndex - store.segmentIndex
+  if (delta !== 0) {
+    stage.value.skip(delta)
+    await waitForCinematicTarget(target.segmentIndex)
+  }
+
+  stage.value.seekToRatio(target.seekRatio)
+}
+
+async function handleOverallSeek(ratio: number) {
+  const target = resolveOverallRatioTarget(ratio)
+  if (target.phase === 'intro') {
+    await seekIntroTarget(ratio)
+    return
+  }
+  await seekCinematicTarget(ratio)
 }
 
 function restart() {
@@ -88,10 +256,10 @@ function restart() {
     <CinematicLobby v-if="store.phase === 'lobby'" @enter="store.enterIntro()" />
 
     <!--
-      The authored intro: the 94s prologue cold open and the guardian trailer,
-      rendered by WolvesIntroOverlay exactly as authored in
-      src/data/wolves-intro-sequence.ts. Transport lives in the same hero widget
-      as the cinematic; the top plate is the universal title placard.
+      The authored intro: species prelude, locked 94s Gayane prologue, Universal
+      Blue Briefing, cinematic-universe slate, then the guardian trailer. Transport
+      lives in the same hero widget as the cinematic; the top plate is the universal
+      title placard.
     -->
     <div v-else-if="store.phase === 'intro'" class="wc-runtime">
       <WolvesIntroOverlay
@@ -100,18 +268,18 @@ function restart() {
         @status="handleIntroStatus"
         @complete="handleIntroComplete"
       />
-      <div v-if="store.display.chapter !== 'PROLOGUE' || introHasActiveCue" class="wc-intro-nameplate">
+      <div v-if="introNameplateVisible" class="wc-intro-nameplate">
         <Nameplate :detail="store.display.chapter" :label="store.display.title" />
       </div>
       <MediaWidget
+        :show-voice-over-toggle="introShowVoiceOverToggle"
+        :voice-over-enabled="introVoiceOverEnabled"
+        voice-over-label="Ikora voice over"
         @toggle-play="intro?.toggle()"
+        @toggle-voice-over="(enabled: boolean) => intro?.setVoiceOverEnabled(enabled)"
         @skip="(delta: number) => (delta > 0 ? intro?.next() : intro?.previous())"
-        @seek="(ratio: number) => intro?.seekToRatio(ratio)"
+        @seek="handleOverallSeek"
       />
-    </div>
-
-    <div v-else-if="store.phase === 'creator-shorts'" class="wc-runtime">
-      <WolvesCreatorShortsInterstitial @complete="handleCreatorShortsComplete" />
     </div>
 
     <div v-else-if="store.phase === 'cinematic'" class="wc-runtime">
@@ -119,7 +287,7 @@ function restart() {
       <MediaWidget
         @toggle-play="stage?.togglePlay()"
         @skip="(delta: number) => stage?.skip(delta)"
-        @seek="(ratio: number) => stage?.seekToRatio(ratio)"
+        @seek="handleOverallSeek"
       />
     </div>
 

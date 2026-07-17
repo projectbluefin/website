@@ -11,7 +11,7 @@ const activeMessageIndex = ref(0)
 const typedMessagesText = ref<string[]>([])
 const climaxMessageIndex = ref<number | null>(null)
 const revealedClimaxSentence = ref('')
-const isTyping = ref(false)
+const activePanel = ref<'chatlog' | string>('chatlog')
 let typewriterTimer: ReturnType<typeof setInterval> | null = null
 let scrollPending = false
 
@@ -54,7 +54,6 @@ function runTypewriter() {
     ? conversation.value.messages.findIndex(message => message.speaker === CLIMAX_SPEAKER)
     : null
   revealedClimaxSentence.value = ''
-  isTyping.value = conversation.value.messages.length > 0
 
   let stepTime = 35
   {
@@ -96,7 +95,6 @@ function runTypewriter() {
 
     if (activeMessageIndex.value >= conversation.value.messages.length) {
       clearTypewriter()
-      isTyping.value = false
       return
     }
 
@@ -171,7 +169,6 @@ function runTypewriter() {
 
 function skipTypewriter() {
   clearTypewriter()
-  isTyping.value = false
 
   activeMessageIndex.value = conversation.value.messages.length - 1
   typedMessagesText.value = conversation.value.messages.map(message => message.text)
@@ -183,7 +180,14 @@ function skipTypewriter() {
   }, 50)
 }
 
-watch(() => props.record, runTypewriter, { immediate: true })
+const activeProject = computed(() =>
+  conversation.value.projects?.find(project => project.id === activePanel.value) ?? null,
+)
+
+watch(() => props.record, () => {
+  activePanel.value = 'chatlog'
+  runTypewriter()
+}, { immediate: true })
 
 onBeforeUnmount(clearTypewriter)
 </script>
@@ -195,12 +199,40 @@ onBeforeUnmount(clearTypewriter)
     data-lore-view-kind="chatlog"
   >
     <div class="dispatch-quote-card">
-      <div ref="quoteViewportRef" class="quote-viewport" @click="skipTypewriter">
+      <div
+        ref="quoteViewportRef"
+        class="quote-viewport"
+        @click="activePanel === 'chatlog' ? skipTypewriter() : undefined"
+      >
         <p v-if="warning" class="thesis-warning">
           {{ warning }}
         </p>
+        <div
+          v-if="conversation.projects?.length"
+          class="conversation-project-tabs"
+          data-chatlog-project-tabs
+        >
+          <button
+            class="conversation-project-tab"
+            :class="{ active: activePanel === 'chatlog' }"
+            data-chatlog-project-tab="chatlog"
+            @click.stop="activePanel = 'chatlog'"
+          >
+            [ CHATLOG ]
+          </button>
+          <button
+            v-for="project in conversation.projects"
+            :key="project.id"
+            class="conversation-project-tab"
+            :class="{ active: activePanel === project.id }"
+            :data-chatlog-project-tab="project.id"
+            @click.stop="activePanel = project.id"
+          >
+            [ {{ project.name.toUpperCase() }} ]
+          </button>
+        </div>
         <Transition name="quote-fade">
-          <div :key="record.id" class="conversation-rotator">
+          <div v-if="activePanel === 'chatlog'" :key="record.id" class="conversation-rotator">
             <div class="conversation-heading">
               <span>{{ conversation.channel }}</span>
               <time :datetime="conversation.date">{{ conversation.date }}</time>
@@ -224,10 +256,7 @@ onBeforeUnmount(clearTypewriter)
                     <span class="conversation-speaker">{{ message.speaker }}</span>
                     <time v-if="message.timestamp">{{ message.timestamp }}</time>
                   </div>
-                  <p
-                    :class="{ 'is-typing': isTyping && index === activeMessageIndex }"
-                    :data-chatlog-typing="isTyping && index === activeMessageIndex ? '' : undefined"
-                  >
+                  <p v-if="typedMessagesText[index] || (index === climaxMessageIndex && revealedClimaxSentence)">
                     {{ typedMessagesText[index] ?? '' }}
                     <Transition name="climax-fade">
                       <span
@@ -239,6 +268,38 @@ onBeforeUnmount(clearTypewriter)
                 </template>
               </li>
             </ol>
+          </div>
+          <div
+            v-else-if="activeProject"
+            :key="`${record.id}-${activeProject.id}`"
+            class="conversation-project-panel"
+            data-chatlog-project-panel
+          >
+            <div class="conversation-heading">
+              <span>PROJECT DOSSIER</span>
+              <span>{{ activeProject.maturity }}</span>
+            </div>
+            <h3 class="conversation-title">
+              {{ activeProject.name }}
+            </h3>
+            <p class="project-summary">
+              {{ activeProject.summary }}
+            </p>
+            <ul class="project-facts">
+              <li v-for="fact in activeProject.facts" :key="fact">
+                {{ fact }}
+              </li>
+            </ul>
+            <dl class="project-links">
+              <div>
+                <dt>HOMEPAGE</dt>
+                <dd><a :href="activeProject.homepage" target="_blank" rel="noopener noreferrer">{{ activeProject.homepage }}</a></dd>
+              </div>
+              <div>
+                <dt>DOCS</dt>
+                <dd><a :href="activeProject.documentation" target="_blank" rel="noopener noreferrer">{{ activeProject.documentation }}</a></dd>
+              </div>
+            </dl>
           </div>
         </Transition>
       </div>
@@ -275,6 +336,30 @@ onBeforeUnmount(clearTypewriter)
   @media (min-width: 1024px) {
     flex: 1;
     min-height: 0;
+  }
+
+  .conversation-project-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .conversation-project-tab {
+    border: 1px solid rgba(102, 179, 255, 0.25);
+    border-radius: 999px;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding: 6px 12px;
+
+    &.active {
+      border-color: rgba(102, 179, 255, 0.55);
+      background: rgba(59, 130, 246, 0.14);
+      color: #ffffff;
+    }
   }
 
   &:hover {
@@ -361,6 +446,45 @@ onBeforeUnmount(clearTypewriter)
   padding: 0;
 }
 
+.conversation-project-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.project-summary,
+.project-facts,
+.project-links {
+  margin: 0;
+  color: #e2e8f0;
+  line-height: 1.6;
+}
+
+.project-facts {
+  padding-left: 20px;
+}
+
+.project-links {
+  display: grid;
+  gap: 8px;
+
+  dt {
+    color: #7dd3fc;
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+  }
+
+  dd {
+    margin: 0;
+  }
+
+  a {
+    color: #ffffff;
+    overflow-wrap: anywhere;
+    text-decoration: none;
+  }
+}
+
 .conversation-message {
   border-left: 2px solid rgba(var(--color-blue-rgb), 0.45);
   padding-left: 16px;
@@ -404,23 +528,6 @@ onBeforeUnmount(clearTypewriter)
   font-size: 1.15rem;
   line-height: 1.65;
   white-space: pre-wrap;
-}
-
-.conversation-message p.is-typing {
-  &::after {
-    content: '|';
-    display: inline-block;
-    margin-left: 2px;
-    color: var(--color-blue-light);
-    font-weight: 700;
-    animation: typing-cursor-pulse 0.7s steps(2, start) infinite;
-  }
-}
-
-@keyframes typing-cursor-pulse {
-  50% {
-    opacity: 0;
-  }
 }
 
 .climax-sentence {

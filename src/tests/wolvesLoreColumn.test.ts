@@ -9,6 +9,30 @@ import { getWolvesThesisState } from '../data/wolves-thesis-sequence'
 import { wolvesLoreRecordFixtures } from './fixtures/wolves-lore-records'
 
 describe('wolvesLoreColumn Logic', () => {
+  it('combines the narrative record and dossier directory in one unified surface', async () => {
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId: 'arthur-c-clarke-3',
+        duration: 20,
+      },
+    })
+
+    expect(wrapper.find('[data-unified-lore-feed]').exists()).toBe(true)
+    expect(wrapper.find('[data-dossier-directory]').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('[ NARRATIVE FEED ]')
+    expect(wrapper.text()).not.toContain('[ DOSSIER ARCHIVE ]')
+    expect(wrapper.find('[data-lore-view-kind="quote"]').exists()).toBe(true)
+
+    const dossierLinks = wrapper.findAll('[data-dossier-record-id]')
+    expect(new Set(dossierLinks.map(link => link.attributes('data-dossier-record-id'))).size).toBe(dossierLinks.length)
+
+    await wrapper.get('[data-dossier-record-id="subjectprofile/kat-cosgrove"]').trigger('click')
+
+    expect(wrapper.find('[data-lore-view="guardian-dossier"]').exists()).toBe(true)
+    expect(wrapper.find('[data-lore-view-kind="quote"]').exists()).toBe(false)
+    expect(wrapper.find('[data-back-to-current-record]').exists()).toBe(true)
+  })
+
   it('renders the artifact selected by the soundtrack timeline', async () => {
     vi.useFakeTimers()
     const wrapper = mount(WolvesLoreColumn, {
@@ -166,16 +190,21 @@ describe('wolvesLoreColumn Logic', () => {
     const wrapper = mount(WolvesLoreColumn, {
       props: {
         artifactId: 'lorem-prologue-1',
-        duration: 0.01,
+        duration: 0.1,
       },
     })
 
-    vi.advanceTimersByTime(50)
+    vi.advanceTimersByTime(20)
     await wrapper.vm.$nextTick()
-    expect(wrapper.find('[data-chatlog-typing]').exists()).toBe(true)
+
+    // Some messages should not be fully revealed yet
+    expect(wrapper.text()).not.toContain("Where's your sense of fun?")
 
     await wrapper.find('.quote-viewport').trigger('click')
-    expect(wrapper.find('[data-chatlog-typing]').exists()).toBe(false)
+    await wrapper.vm.$nextTick()
+
+    // All messages should be fully revealed after skip
+    expect(wrapper.text()).toContain("Where's your sense of fun?")
   })
 
   it('renders The Children sound effects with the established SFX treatment', async () => {
@@ -197,6 +226,27 @@ describe('wolvesLoreColumn Logic', () => {
       'connection dropping',
     ])
     expect(soundEffects.every(effect => !effect.find('.conversation-message-header').exists())).toBe(true)
+  })
+
+  it('renders deterministic project tabs only for project-linked chats', async () => {
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId: 'openssf-reinforcements',
+        duration: 20,
+      },
+    })
+
+    expect(wrapper.findAll('[data-chatlog-project-tab]').map(button => button.text())).toEqual([
+      '[ CHATLOG ]',
+      '[ KUBESTELLAR ]',
+      '[ KUBERNETES ]',
+    ])
+
+    await wrapper.get('[data-chatlog-project-tab="kubestellar"]').trigger('click')
+
+    expect(wrapper.get('[data-chatlog-project-panel]').text()).toContain('KubeStellar')
+    expect(wrapper.get('[data-chatlog-project-panel]').text()).toContain('CNCF Sandbox')
+    expect(wrapper.get('[data-chatlog-project-panel]').text()).toContain('Continue using familiar Kubernetes APIs, tooling, and workflows.')
   })
 
   it('smoothly advances long quotes at reading beats', async () => {
@@ -416,13 +466,23 @@ describe('wolvesLoreColumn Logic', () => {
       },
     })
 
-    await wrapper.get('.lore-tab-btn.text-cyan').trigger('click')
+    expect(wrapper.find('[data-dossier-directory]').exists()).toBe(true)
 
-    expect(wrapper.text()).toContain('Robert Killen (Guardian / Warlock)')
-    expect(wrapper.text()).toContain('Kaslin Fields (Guardian / Warlock)')
-    expect(wrapper.text()).toContain('Laura Santamaria (Guardian / Warlock)')
-    expect(wrapper.text()).toContain('Christoph Blecker (Guardian / Warlock)')
-    expect(wrapper.findAll('.dossier-link-btn')).toHaveLength(13)
+    // Initially, selected record is arthur-c-clarke-3 (a quote), not a dossier
+    expect(wrapper.find('[data-back-to-current-record]').exists()).toBe(false)
+
+    // Click a dossier link in the index
+    await wrapper.get('[data-dossier-record-id="subjectprofile/robert-killen"]').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    // It should now render Robert Killen's dossier and the return button
+    expect(wrapper.find('[data-back-to-current-record]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Bob Killen')
+
+    // Click return to current record
+    await wrapper.get('[data-back-to-current-record]').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-back-to-current-record]').exists()).toBe(false)
   })
 
   afterEach(() => {

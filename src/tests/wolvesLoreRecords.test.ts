@@ -72,8 +72,10 @@ describe('wolves lore records', () => {
   it('loads every migrated record with complete authored identity and no diagnostics', () => {
     const records = loadAllLoreRecords()
     const artifact = records.find(record => record.id === 'lorem-prologue-1')
+    const laura = records.find(record => record.id === 'laura-sherman-robert')
+    const openssf = records.find(record => record.id === 'openssf-reinforcements')
 
-    expect(records).toHaveLength(44)
+    expect(records).toHaveLength(57)
     expect(records.flatMap(record => record.diagnostics)).toEqual([])
     expect(artifact).toMatchObject({
       chapterId: 'prologue',
@@ -83,6 +85,25 @@ describe('wolves lore records', () => {
         title: 'The Artifact',
         timestamp: '2326-06-16',
         channel: 'EXPLORATION//TEAM-ALPHA',
+      },
+    })
+    expect(openssf).toMatchObject({
+      chapterId: 'awakening',
+      relativePath: './lore/openssf-reinforcements.md',
+      kind: 'chatlog',
+      metadata: {
+        title: 'AAIF-7 on the net, someone need guidance?',
+        timestamp: '2326-08-01',
+        projects: ['kubestellar', 'kubernetes'],
+      },
+    })
+    expect(laura).toMatchObject({
+      chapterId: 'awakening',
+      relativePath: './lore/laura-sherman-robert.md',
+      kind: 'chatlog',
+      metadata: {
+        title: 'Wait, so who are you guys?',
+        timestamp: '2326-08-01',
       },
     })
   })
@@ -183,6 +204,38 @@ describe('wolves lore records', () => {
       .toThrow('Lore front matter guardian class must be titan, warlock, or hunter')
     expect(() => parseLoreRecord('invalid-epic-name', 'chapter', './lore/invalid.md', '---\nepic_name: 1\n---\n\nBody'))
       .toThrow('Lore front matter field "epic_name" must be a string')
+  })
+
+  it('accepts ordered authored project references for chatlogs', () => {
+    const record = parseLoreRecord('chatlog', 'awakening', './lore/chatlog.md', [
+      '---',
+      'kind: chatlog',
+      'title: Project-linked transcript',
+      'timestamp: \'2326-08-01\'',
+      'projects:',
+      '  - kubestellar',
+      '  - kubernetes',
+      '---',
+      '',
+      '**andy**: I\'m telling you it works',
+    ].join('\n'))
+
+    expect(record.metadata).toMatchObject({
+      projects: ['kubestellar', 'kubernetes'],
+    })
+  })
+
+  it('rejects malformed project reference lists', () => {
+    expect(() => parseLoreRecord('invalid-projects', 'awakening', './lore/invalid-projects.md', [
+      '---',
+      'kind: chatlog',
+      'title: Invalid projects',
+      'timestamp: \'2326-08-01\'',
+      'projects: kubernetes',
+      '---',
+      '',
+      'Body',
+    ].join('\n'))).toThrow('Lore front matter field "projects" must be an array of strings')
   })
 
   it('rejects a bond whose dinosaur does not list that bond as a rider', () => {

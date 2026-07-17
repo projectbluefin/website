@@ -1,0 +1,11 @@
+name: Kubernetes
+maturity: CNCF Graduated
+homepage: https://kubernetes.io/
+documentation: https://kubernetes.io/docs/concepts/overview/
+summary: Kubernetes is a portable, extensible, open source platform for managing containerized workloads and services that facilitate both declarative configuration and automation.
+facts:
+  - Kubernetes provides a framework to run distributed systems resiliently.
+  - Kubernetes provides service discovery and load balancing for containerized applications.
+sources:
+  - https://kubernetes.io/docs/concepts/overview/
+  - https://www.cncf.io/projects/kubernetes/

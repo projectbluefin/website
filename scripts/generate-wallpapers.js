@@ -181,6 +181,7 @@ const curatedTitles = {
   'flickr-55344127313': '0R0A9020',
   'flickr-55344186409': 'DSC04181',
   'brazil-homage': 'Brazil we see you! #diolinux #tulip',
+  'sherman-m2': 'Sherman + M2',
 }
 
 // Optional longer-form description shown in the fullscreen theater caption for a handful of

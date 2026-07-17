@@ -11,11 +11,12 @@
 51.60|Those who need us have never needed us more.
 55.24|But we could do nothing, and they would still die.
 59.84|What is a guardian in that moment?
-69.96|Now, across Last City territory, the forces of the Witness search.
-75.52|Our borders are under siege.
-82.88|Pushing back buys us only time, but the alternative is unthinkable.
-91.84|We built the city none of us dared to dream of, with allies from unlikely places.
-96.88|We've never had more to lose.
-99.24|I turn the question to you, on the eve of our darkest hour.
-108.99|What is a guardian?
-111.08|Define us in this moment for all time.
+66.24|Now, across Last City territory, the forces of the Witness search.
+72.68|Our borders are under siege.
+75.52|Does that make us soldiers?
+79.76|Pushing back buys us only time, but the alternative is unthinkable.
+86.88|We built the city none of us dared to dream of, with allies from unlikely places.
+93.52|We've never had more to lose.
+96.88|I turn the question to you, on the eve of our darkest hour.
+103.56|What is a guardian?
+107.40|Define us in this moment for all time.|112.60

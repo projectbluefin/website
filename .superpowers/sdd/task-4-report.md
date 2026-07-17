@@ -1,58 +1,291 @@
-# Task 4 Report: Dedicated Wolves Lore Views
+# Task 4 Report
 
 ## Status
 
-Complete.
+Complete in this worktree. No commit made.
 
-## Implementation
+## Task 4 files changed
 
-- Added typed authored frontmatter support for `guardian.class` (`titan`, `warlock`, or `hunter`) and string-only `epic_name`; no defaults are introduced.
-- Added dedicated full-column views for news, sources, field reports, locations, Guardian dossiers, dinosaur dossiers, and Guardian bonds.
-- Kept `WolvesLoreColumn` a thin typed router. Character sheets choose the dinosaur dossier only for `subject_kind: dinosaur`; other character sheets use the Guardian dossier.
-- Passed the record collection into views only for explicit GuardianBond lookups and fixture-driven routing tests.
-- Guardian and bond views render authored profile fields, ordered specializations, and reciprocal validation. Deterministic FNV-1a telemetry is rendered only as UI status information.
-- Dinosaur artwork resolves only when its authored species ID matches an explicit `dinosaurSpecies` registry entry. The source is built with `import.meta.env.BASE_URL`; unmatched species render no image or fallback.
-- Source fragments now use the canonical source URL held by the existing release record, independently of the authored Markdown body.
-- Added generic, non-narrative TypeScript fixtures. No lore Markdown, thesis timeline, HUD text, or authored chronology was changed.
+- `src/WolvesApp.vue`
+- `src/components/wolves/WolvesIntroOverlay.vue`
+- `src/components/wolves/cinematic/MediaWidget.vue`
+- `src/composables/useYoutubeIframeApi.ts`
+- `src/data/wolves-destiny-captions.txt`
+- `src/data/wolves-intro-sequence.ts`
+- `src/tests/wolvesApp.test.ts`
+- `src/tests/wolvesIntroOverlay.test.ts`
+- `src/tests/wolvesIntroSequence.test.ts`
+- `tests/wolves-intro-destiny-toggle.mjs`
+- `tests/wolves-intro-segments.mjs`
+- `tests/wolves-movie-flow.mjs`
+- `docs/wolves-cinematic.md`
+- `docs/wolves-maintenance.md`
 
-## TDD Evidence
+## What changed
 
-1. Added parser and router assertions before production changes. The initial focused run failed as expected: the parser omitted `epic_name`, did not reject invalid Guardian classes, and all requested dossier routes were absent.
-2. Implemented the parser contract, router, and dedicated views; the focused suite passed.
-3. Screenshot review found that staged source records lack authored sender/channel provenance. Added a failing canonical-source-URL assertion, verified it failed, then added `getSourceProvenance()` and passed the regression.
+- Switched the default Destiny intro source to unvoiced `BV3BZKbpBns`.
+- Added optional voiced override `BKm0TPqeOjY` behind the exact `Ikora voice over` checkbox, shown only during the Destiny intro segment.
+- Preserved native time across source swaps with object-form `loadVideoById({ videoId, startSeconds })`.
+- Preserved paused state across source swaps and clamped swap seeks to the active source cutoff.
+- Kept `src/data/wolves-destiny-captions.txt` canonical in both modes.
+- Updated the outro captions to:
+  - stop the old narration after `Pushing back buys us only time, but the alternative is unthinkable.`
+  - pause captions after that line via an explicit cue end
+  - show `We built a city none of us dared` at the verified black frame
+  - remove `Define us in this moment for all time.`
+- Restored title-card/canonical-caption coexistence during `Comic Hero Shots of YOU`.
+- Added application-owned top-left masking and paused-state masking for the YouTube chrome.
+- Removed `unloadModule()` typing/usages/mocks.
+- Added a real-player Playwright verification script for desktop/mobile plus screenshots.
 
-## Verification
+## Measured video durations and outro cutoff
 
-- `npm run test:run -- src/tests/wolvesLoreColumn.test.ts src/tests/wolvesLoreRecords.test.ts src/tests/wolvesDinosaurSpecies.test.ts`
-  - Passed: 3 files, 28 tests.
-- `npm run typecheck`
-  - Passed.
-- Scoped ESLint over every Task 4 source and test file
-  - Passed.
-- `git diff --check`
-  - Passed before staging.
-- Browser validation used the mounted Wolves soundtrack progress bar with a local IFrame API stand-in. All nine Track 0 `source`/`news` slots selected the expected dedicated view. The top HUD and lower thesis-overlay DOM were asserted independently at every timestamp.
-- Reviewed temporary desktop and 390px mobile screenshots for source/news rendering and footer fit. Temporary screenshots were removed.
+Measured from the real local page with the YouTube player loaded through the app:
 
-## Commit
+- Default unvoiced source `BV3BZKbpBns`
+  - natural duration: `123.221s`
+  - authored cutoff (`maxDuration`): `121.5s`
+- Optional voiced source `BKm0TPqeOjY`
+  - natural duration: `120.221s`
+  - authored cutoff (`alternateMaxDuration`): `120.2s`
 
-- `48e933c2d0029388e5be136150e2c6d8c3188d24` — `feat(wolves): add dedicated lore dossier views`
+Black-frame verification for the default source:
 
-## Self-Review
+- fine-grained paused frame scan directory: `.superpowers/sdd/task4-blackframe-fine/`
+- sampled range: `118.2s` to `119.2s` in `0.1s` steps
+- first screenshot whose grayscale mean dropped to the black threshold (`<= 4.0`) was `119.0s`
+- final canonical outro line therefore starts at `119.0s`
+- final cutoff updated to `121.5s` to preserve the parser’s trailing `2.5s` authored hold
 
-- The 2fr/1fr Wolves desktop grid is untouched.
-- Existing quote/chatlog selectors and Golden Era behavior remain covered by regression tests.
-- No generated lore aliases, titles, classes, supers, relationships, dinosaur dossiers, or Markdown records were added.
-- Artwork selection has no rotation, filename inference, or generic asset fallback.
-- No unrelated Dakota or wallpaper changes were staged.
+## Exact verification commands and results
+
+### Focused unit tests
+
+Command:
+
+```bash
+npm run test:run -- src/tests/wolvesIntroSequence.test.ts src/tests/wolvesIntroOverlay.test.ts src/tests/wolvesApp.test.ts
+```
+
+Result:
+
+- passed
+- `3` files
+- `54` tests passed
+
+### Lint / formatting
+
+Command:
+
+```bash
+npm run lint:fix
+```
+
+Result:
+
+- passed
+
+### Typecheck
+
+Command:
+
+```bash
+npm run typecheck
+```
+
+Result:
+
+- passed
+
+### Production build
+
+Command:
+
+```bash
+npm run build
+```
+
+Result:
+
+- passed
+- Vite build completed successfully
+- existing Lightning CSS warnings still appeared for Tailwind `@theme` / `@tailwind` at-rules
+
+### Desktop real-player browser verification
+
+Command:
+
+```bash
+WOLVES_SCREENSHOT_DIR=.superpowers/sdd/task4-shots-desktop WOLVES_VIEWPORT=1440x900 node tests/wolves-intro-destiny-toggle.mjs
+```
+
+Result:
+
+- passed
+- verified:
+  - checkbox hidden before Destiny and on the slate
+  - checkbox visible only on Destiny
+  - default source id is `BV3BZKbpBns`
+  - title card and canonical caption coexist at `24.2s`
+  - source toggle while playing preserves time and stays playing
+  - source toggle while paused preserves time and stays paused
+  - top-left mask, pause veil, and checkbox bounds remain inside the viewport/widget
+  - black-frame outro caption appears at `119.0s`
+
+### Mobile real-player browser verification
+
+Command:
+
+```bash
+WOLVES_SCREENSHOT_DIR=.superpowers/sdd/task4-shots-mobile WOLVES_VIEWPORT=390x844 node tests/wolves-intro-destiny-toggle.mjs
+```
+
+Result:
+
+- passed
+- repeated the same assertions under mobile layout
+
+## Screenshot artifacts
+
+Desktop:
+
+- `.superpowers/sdd/task4-shots-desktop/destiny-desktop-title-card-captions.png`
+- `.superpowers/sdd/task4-shots-desktop/destiny-paused-voice-mask.png`
+- `.superpowers/sdd/task4-shots-desktop/destiny-black-frame-outro.png`
+
+Mobile:
+
+- `.superpowers/sdd/task4-shots-mobile/destiny-desktop-title-card-captions.png`
+- `.superpowers/sdd/task4-shots-mobile/destiny-paused-voice-mask.png`
+- `.superpowers/sdd/task4-shots-mobile/destiny-black-frame-outro.png`
 
 ## Concerns
 
-None.
+1. The optional voiced source is naturally shorter than the unvoiced default, so the canonical final caption hold is shorter in voice-over mode by design (`120.2s` source cutoff vs `121.5s` default authored cutoff).
+2. `npm run build` still emits the pre-existing Lightning CSS warnings about Tailwind at-rules even though the build succeeds.
 
-## Review Follow-up: Final News Warning
+## 2026-07-17 comic hero QR addendum
 
-- Restored the explicitly passed thesis warning in `NewsLoreView` without changing thesis story text, HUD communications, authored lore, or timeline data.
-- Added a regression that derives the actual locked final artifact and warning at Track 0 405s and 425s. It first failed because `news-bulletin` had no `data-lore-warning`, then passed after the warning presentation was added.
-- Passed: `npm run test:run -- src/tests/wolvesLoreColumn.test.ts src/tests/wolvesThesisSequence.test.ts src/tests/wolvesNarrativeTimeline.test.ts` (31 tests), `npm run typecheck`, scoped ESLint, and `git diff --check`.
-- Browser validation used the mounted soundtrack progress bar with a local IFrame API stand-in at 405s and 425s. The top HUD, lower thesis overlay, and separate right-column warning were asserted independently. Desktop and 390px mobile screenshots were reviewed and removed.
+### Status
+
+Complete in this worktree. No commit made.
+
+### Additional files changed
+
+- `src/assets/svg/qr-makemeacomic.svg`
+- `src/components/wolves/WolvesIntroOverlay.vue`
+- `src/tests/wolvesIntroOverlay.test.ts`
+- `tests/wolves-intro-destiny-toggle.mjs`
+
+### What changed
+
+- Generated a scannable SVG QR for exactly `https://makemeacomic.com` with the existing `qrcode` dependency.
+- Imported the QR asset into `WolvesIntroOverlay.vue` and rendered it only inside the `Comic Hero Shots of YOU` title card.
+- Added visible `makemeacomic.com` text plus accessible link and alt text.
+- Added focused component assertions for the QR URL, imported SVG render, visible domain text, and title-card-only rendering.
+- Extended the real-player Task 4 browser script to assert QR bounds, non-overlap with the Chonky hero shot and canonical caption, and to capture a dedicated QR title-card screenshot.
+
+### Exact verification commands and results
+
+#### Focused component tests
+
+Command:
+
+```bash
+npm run test:run -- src/tests/wolvesIntroOverlay.test.ts src/tests/wolvesQrCodes.test.ts
+```
+
+Result:
+
+- passed
+- `2` files
+- `33` tests passed
+
+#### Lint / formatting
+
+Command:
+
+```bash
+npm run lint:fix
+```
+
+Result:
+
+- passed
+
+#### Typecheck
+
+Command:
+
+```bash
+npm run typecheck
+```
+
+Result:
+
+- passed
+
+#### Production build
+
+Command:
+
+```bash
+npm run build
+```
+
+Result:
+
+- passed
+- Vite build completed successfully
+- existing Lightning CSS warnings still appeared for Tailwind `@theme` / `@tailwind` at-rules
+
+#### Desktop real-player browser verification
+
+Command:
+
+```bash
+WOLVES_SCREENSHOT_DIR=.superpowers/sdd/task4-shots-desktop WOLVES_VIEWPORT=1440x900 node tests/wolves-intro-destiny-toggle.mjs
+```
+
+Result:
+
+- passed
+- verified:
+  - QR link href is exactly `https://makemeacomic.com`
+  - QR link aria label is `Open makemeacomic.com`
+  - QR image alt text is `QR code linking to makemeacomic.com`
+  - visible domain text is `makemeacomic.com`
+  - QR asset rendered from the imported SVG
+  - QR/image/link/title-card bounds stayed within the viewport
+  - QR did not overlap the Chonky hero shot
+  - QR did not overlap the canonical caption band
+  - dedicated QR title-card screenshot captured
+
+#### Mobile real-player browser verification
+
+Command:
+
+```bash
+WOLVES_SCREENSHOT_DIR=.superpowers/sdd/task4-shots-mobile WOLVES_VIEWPORT=390x844 node tests/wolves-intro-destiny-toggle.mjs
+```
+
+Result:
+
+- passed
+- repeated the same QR/link/bounds assertions under `390x844`
+
+### Screenshot artifacts
+
+Desktop:
+
+- `.superpowers/sdd/task4-shots-desktop/destiny-title-card-qr.png`
+- `.superpowers/sdd/task4-shots-desktop/destiny-desktop-title-card-captions.png`
+- `.superpowers/sdd/task4-shots-desktop/destiny-paused-voice-mask.png`
+- `.superpowers/sdd/task4-shots-desktop/destiny-black-frame-outro.png`
+
+Mobile:
+
+- `.superpowers/sdd/task4-shots-mobile/destiny-title-card-qr.png`
+- `.superpowers/sdd/task4-shots-mobile/destiny-desktop-title-card-captions.png`
+- `.superpowers/sdd/task4-shots-mobile/destiny-paused-voice-mask.png`
+- `.superpowers/sdd/task4-shots-mobile/destiny-black-frame-outro.png`

@@ -1,97 +1,34 @@
 /**
- * Wolves cinematic browser flow test — standalone Playwright script
+ * Wolves movie flow browser test — standalone Playwright script
  *
- * Verifies the rebuilt Wolves cinematic (lobby -> intro -> cinematic -> finished,
- * one Pinia store, dual-buffer YouTube player) using a deterministic mock of the
- * YouTube IFrame Player API so the test never depends on live YouTube playback,
- * ads, region, or external availability. All timeline assertions are driven by
- * player/mock-player time through the dev-only window.__wolvesCinematic hook
- * (seekTo/skip), never by mutating store state directly.
+ * Verifies the approved Wolves movie flow using a deterministic mock of the
+ * YouTube IFrame Player API so the test does not depend on live YouTube
+ * playback, ads, region, or external availability.
  *
- * Coverage:
- *   1. Lobby -> intro -> Part I cinematic handoff.
- *   2. Escalating Voice hero typography at every authored thesis boundary
- *      (visible text and mode asserted separately; computed font, blue colour,
- *      multi-layer glow, in-viewport bounds, and no overflow) on desktop and
- *      390x844 mobile.
- *   3. Creator Shorts interstitial handoff (organization ads absent during the
- *      shorts) with the two creators' captions, driven to completion by mock
- *      ENDED events.
- *   4. Part II organization ad pairs: interactive pair membership, crossfade
- *      opacities, on-screen bounds, and non-intersection with the centre gallery.
- *   5. Transition shell / team-chat separation: the transition shell decays on
- *      the player timeline independently of the team chat.
- *   6. Mobile hides the desktop-only ad and chat overlays while keeping the media
- *      widget and gallery on-screen.
+ * Flow under test:
+ *   1. Enter immersive playback at Track 0 via the test-only progress helper.
+ *   2. Advance the soundtrack playlist index from 0 to 1.
+ *   3. Assert the Creator Shorts interstitial mounts and is visible.
+ *   4. Drive the four-video chapter to completion through mock player ENDED
+ *      events.
+ *   5. Assert the interstitial is removed and the soundtrack resumes at Track 1
+ *      ("Ghosts In The Mist").
  *
- * Team chat: production WOLVES_TEAM_CHATS is empty by design, so no authored
- * dialogue exists to assert. When WOLVES_BROWSER_FIXTURES=1 (set in CI) this test
- * injects a neutral placeholder chat sequence through window.__wolvesTeamChatFixtures,
- * which CinematicTransition.vue reads ONLY under import.meta.env.DEV (tree-shaken
- * from production). The fixture dialogue lives only in this test file and is never
- * written into src/. Without the flag the test asserts the production default:
- * the team chat never renders.
+ * Prerequisites: dev server must be running at http://localhost:5173
+ *   just serve   (from repo root)
  *
- * Prerequisites: dev server must be running (Vite dev build, so import.meta.env.DEV
- * is true and the dev-only hooks exist):
- *   npm run dev
- *
- * Run (defaults to http://127.0.0.1:5173):
- *   WOLVES_BROWSER_FIXTURES=1 node tests/wolves-movie-flow.mjs
- *
- * Environment:
- *   WOLVES_BASE_URL           base URL of the running dev server
- *   WOLVES_BROWSER_FIXTURES   '1' to inject the dev-only team-chat fixture
- *   WOLVES_SCREENSHOT_DIR     directory to write flow screenshots into (optional)
+ * Run:
+ *   node tests/wolves-movie-flow.mjs
  */
 
-import { mkdirSync } from 'node:fs'
-import process from 'node:process'
 import { chromium } from 'playwright'
 
-const BASE_URL = (process.env.WOLVES_BASE_URL ?? 'http://127.0.0.1:5173').replace(/\/+$/, '')
+const BASE_URL = process.env.WOLVES_BASE_URL ?? 'http://127.0.0.1:5173'
 const WOLVES_URL = `${BASE_URL}/wolves/`
+const [width, height] = (process.env.WOLVES_VIEWPORT ?? '1440x900').split('x').map(Number)
+const VIEWPORT = { width, height }
 const SCREENSHOT_DIR = process.env.WOLVES_SCREENSHOT_DIR
-const USE_CHAT_FIXTURES = ['1', 'true'].includes(process.env.WOLVES_BROWSER_FIXTURES ?? '')
-
-const DESKTOP = { width: 1440, height: 900 }
-const MOBILE = { width: 390, height: 844 }
-
-// First video ids from src/data/wolves-creator-shorts.ts — used to capture the
-// left (Cassidy) and right (Lindsay) mock players by their initial video id.
-const CASSIDY_FIRST_VIDEO_ID = 'e6GCa-E75uk'
-const LINDSAY_FIRST_VIDEO_ID = 'T8aREn47900'
-const PART_TWO_TITLE = 'Ghosts In The Mist'
-const CHAT_SEGMENT_ID = 'ghosts-in-the-mist'
-
-// Authored thesis strings — copied verbatim from src/data/wolves-thesis-sequence.ts
-// (never paraphrased; exact ellipses preserved).
-const WELCOME_TEXT = 'We\'ve got your back.'
-const SUPPORT_TEXT = 'You\'ll never walk alone ...'
-const UNIVERSAL_BLUE_TEXT = 'We are Universal Blue.'
-const EVOLVE_TEXT = 'Evolve or die ...'
-const ASCENDED_TEXT = 'You have ascended ...'
-const LEGEND_TEXT = 'Become Legend'
-
-/**
- * Every authored Escalating Voice boundary the brief pins, mapped to the exact
- * getWolvesThesisState() outcome. `active: false` means no thesis renders;
- * `corruption: true` means the growing-corruption glyphs render with no text.
- */
-const HERO_BOUNDARIES = [
-  { t: 344.999, active: false },
-  { t: 345, mode: 'welcome', text: WELCOME_TEXT, font: 'Michroma' },
-  { t: 347.75, mode: 'welcome', text: SUPPORT_TEXT, font: 'Michroma' },
-  { t: 350.5, mode: 'universal-blue', text: UNIVERSAL_BLUE_TEXT, font: 'Share Tech Mono' },
-  { t: 359, mode: 'evolve', text: EVOLVE_TEXT, font: 'Share Tech Mono' },
-  { t: 365, active: false },
-  { t: 404.999, mode: 'growing-corruption', corruption: true },
-  { t: 405, mode: 'legend', text: ASCENDED_TEXT, font: 'Michroma' },
-  { t: 407.999, mode: 'legend', text: ASCENDED_TEXT, font: 'Michroma' },
-  { t: 408, mode: 'legend', text: LEGEND_TEXT, font: 'Michroma' },
-  { t: 425, mode: 'legend', text: LEGEND_TEXT, font: 'Michroma' },
-  { t: 425.001, active: false },
-]
+const JORGE_GHOSTS_QUOTE = 'These people inspire me to no end, and a bunch of unknowns created Aurora, Bazzite, Bluefin, Bluebuild, Secureblue, and others. Not a Universal Blue ecosystem, not a bootc ecosystem. A cloud native ecosystem. Sorry about my Titan manners sometimes. In one short weekend you\'ve proven to the world that enthusiasts matter. Thank you to Chainguard, Microsoft, Red Hat, Edera, for investing in the unknowns from Universal Blue! Need talent? Go cloud native, we\'re a proven Guardian Academy.'
 
 let passed = 0
 let failed = 0
@@ -126,33 +63,51 @@ function assertTruthy(label, actual) {
   return ok
 }
 
+async function hasVisibleControl(page, label) {
+  const control = page.getByLabel(label)
+  const count = await control.count()
+  const visible = await Promise.all(
+    Array.from({ length: count }, (_, index) => control.nth(index).isVisible()),
+  ).then(values => values.some(Boolean))
+  assert(`Visible ${label} control`, visible, true)
+}
+
 async function captureStage(page, name) {
   if (SCREENSHOT_DIR) {
     await page.screenshot({ path: `${SCREENSHOT_DIR}/${name}.png` })
   }
 }
 
-/**
- * Installs the deterministic YouTube IFrame API mock (and, when enabled, the
- * dev-only team-chat fixture) before any page script runs.
- */
-async function installMocks(page, { useFixtures }) {
-  await page.addInitScript((opts) => {
-    // Deterministic shuffles so gallery/short ordering is reproducible.
+const browser = await chromium.launch({ headless: true })
+let exitCode = 0
+
+try {
+  const page = await browser.newPage({ viewport: VIEWPORT })
+
+  // Intercept the YouTube IFrame API before any page script runs. Provide a
+  // deterministic mock Player that the Wolves soundtrack and Creator Shorts
+  // interstitial can drive without making external network requests.
+  await page.addInitScript(() => {
     Math.random = () => 0
     window.__mockWolvesPlayers = []
-
-    const normalizeVideoId = v => (typeof v === 'string' ? v : (v && v.videoId) || null)
+    window.__mockWolvesSoundtrackPlayer = null
 
     window.YT = {
       Player: class MockPlayer {
         constructor(element, config) {
           this.config = config
-          this.videoId = normalizeVideoId(config.videoId)
+          this.videoId = config.videoId ?? null
+          this.playlistIndex = 0
           this.currentTime = 0
           this.state = window.YT.PlayerState.CUED
           window.__mockWolvesPlayers.push(this)
-          // Fire ready/playing asynchronously so handlers attach first.
+
+          if (config.playerVars?.listType === 'playlist') {
+            window.__mockWolvesSoundtrackPlayer = this
+          }
+
+          // Fire ready/playing callbacks asynchronously so the component has
+          // time to attach its event handlers before they run.
           Promise.resolve().then(() => {
             this.config.events?.onReady?.({ target: this })
             this.state = window.YT.PlayerState.PLAYING
@@ -170,14 +125,27 @@ async function installMocks(page, { useFixtures }) {
           this.config.events?.onStateChange?.({ data: this.state, target: this })
         }
 
+        nextVideo() {
+          this.playlistIndex++
+          this.config.events?.onPlaylistItem?.({ target: this })
+          this.playVideo()
+        }
+
+        previousVideo() {
+          this.playlistIndex--
+          this.config.events?.onPlaylistItem?.({ target: this })
+        }
+
+        getPlaylistIndex() {
+          return this.playlistIndex
+        }
+
         getCurrentTime() {
           return this.currentTime
         }
 
-        // Large so Part I seeks to 345-425s never cross a segment's end and
-        // trigger a premature dual-buffer swap. Real durations are ~10 min.
         getDuration() {
-          return 600
+          return 500
         }
 
         seekTo(seconds) {
@@ -185,26 +153,23 @@ async function installMocks(page, { useFixtures }) {
         }
 
         setVolume() {}
+
         getVolume() {
           return 100
         }
 
-        mute() {}
-        unMute() {}
-        setPlaybackQuality() {}
-        loadModule() {}
-        unloadModule() {}
-
-        loadVideoById(v) {
-          this.videoId = normalizeVideoId(v)
-          this.currentTime = (v && typeof v === 'object' && v.startSeconds) || 0
+        loadVideoById(id) {
+          this.videoId = id.videoId ?? id
         }
 
-        cueVideoById(v) {
-          this.videoId = normalizeVideoId(v)
+        cueVideoById(id) {
+          this.videoId = id.videoId ?? id
         }
 
         destroy() {}
+
+        mute() {}
+        unMute() {}
 
         triggerEnded() {
           this.config.events?.onStateChange?.({ data: window.YT.PlayerState.ENDED, target: this })
@@ -217,409 +182,340 @@ async function installMocks(page, { useFixtures }) {
       PlayerState: { ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 },
     }
 
+    // Satisfy any code that polls for the global ready callback.
     if (!window.onYouTubeIframeAPIReady) {
       window.onYouTubeIframeAPIReady = () => {}
     }
+  })
 
-    if (opts.useFixtures) {
-      // Dev/CI-only placeholder chat sequence. Neutral lorem-ipsum, no authored
-      // dialogue, no ellipses, no emoji. CinematicTransition.vue reads this only
-      // under import.meta.env.DEV, so it can never ship in production.
-      window.__wolvesTeamChatFixtures = {
-        [opts.chatSegmentId]: {
-          messages: [
-            { atSeconds: 0, speaker: 'ci-fixture', text: 'Lorem ipsum dolor sit amet' },
-            { atSeconds: 8, speaker: 'ci-fixture', text: 'Consectetur adipiscing elit' },
-          ],
-          finalMessageEndsAtSeconds: 60,
-        },
-      }
-    }
-  }, { useFixtures, chatSegmentId: CHAT_SEGMENT_ID })
-}
+  console.log(`\nWolves movie flow browser test`)
+  console.log(`  URL:      ${WOLVES_URL}`)
+  console.log(`  Viewport: ${VIEWPORT.width}x${VIEWPORT.height}\n`)
 
-async function gotoWolves(page) {
+  // Load the Wolves page. networkidle can time out on animation-heavy pages,
+  // so we tolerate that and wait explicitly below.
   try {
     await page.goto(WOLVES_URL, { waitUntil: 'networkidle', timeout: 30_000 })
   }
   catch {
-    // networkidle can time out on animation-heavy pages; fall through to the
-    // explicit selector waits below.
+    // Fall through to explicit wait.
   }
-  await page.waitForTimeout(600)
-}
+  await page.waitForTimeout(1000)
 
-/** Lobby -> intro -> Part I cinematic stage ready, with the dev hook live. */
-async function enterCinematic(page) {
-  await page.getByRole('button', { name: /BEGIN TRANSMISSION/i }).click()
+  // The same forward/play-pause controls must cover the complete movie, including
+  // the fullscreen prologue and Destiny segments that conceal the soundtrack footer.
+  await page.getByRole('button', { name: /JOIN THE EVOLUTION|BEGIN TRANSMISSION/i }).click()
   await page.waitForSelector('.wolves-intro-overlay', { state: 'visible', timeout: 10_000 })
+  await hasVisibleControl(page, 'Pause')
+  await hasVisibleControl(page, 'Next')
+  await captureStage(page, 'prologue')
 
-  // The shared media widget transports the intro: prologue -> destiny -> done.
-  const nextButton = page.locator('.wc-widget button[aria-label="Next"]')
-  await nextButton.click()
-  await page.waitForTimeout(300)
-  await nextButton.click()
+  for (let index = 0; index < 4; index++) {
+    await page.getByLabel('Next').click()
+    await page.waitForTimeout(250)
+  }
+  await page.waitForSelector('.wolves-intro-overlay-player', { state: 'visible', timeout: 10_000 })
+  await hasVisibleControl(page, 'Pause')
+  await hasVisibleControl(page, 'Next')
+  const introPlayerIndex = await page.evaluate(() =>
+    window.__mockWolvesPlayers.findIndex(player => player.videoId === 'BV3BZKbpBns'),
+  )
+  await page.evaluate((index) => {
+    window.__mockWolvesPlayers[index].seekTo(24.01, true)
+  }, introPlayerIndex)
+  await page.waitForTimeout(250)
+  const comicHeroShotStart = page.locator('[data-comic-hero-shot]')
+  assertTruthy('Comic Hero Shots title card starts on the first Chonky slide', (await comicHeroShotStart.getAttribute('data-comic-hero-shot'))?.includes('chonky-achillibator-pose1-post'))
+  await page.evaluate((index) => {
+    window.__mockWolvesPlayers[index].seekTo(30.3, true)
+  }, introPlayerIndex)
+  await page.waitForTimeout(250)
+  const comicHeroShotMid = await comicHeroShotStart.getAttribute('data-comic-hero-shot')
+  assertTruthy('Comic Hero Shots title card advances to a later Chonky slide without repeating', comicHeroShotMid && comicHeroShotMid !== 'chonky-achillibator-pose1-post')
+  await captureStage(page, 'destiny')
 
-  await page.waitForSelector('.wc-stage', { state: 'visible', timeout: 10_000 })
+  // Complete the remaining intro stages before exercising the playlist handoff.
+  await page.getByLabel('Next').click()
+
+  // Wait for the intro overlay to disappear and the cinematic stage's dev-only
+  // seek hook to become available before exercising the Track 0 locks.
+  await page.waitForSelector('.wolves-intro-overlay', { state: 'hidden', timeout: 10_000 })
   await page.waitForFunction(
-    () => typeof window.__wolvesCinematic?.seekTo === 'function'
-      && typeof window.__wolvesCinematic?.skip === 'function',
+    () => typeof window.__wolvesCinematic?.seekTo === 'function',
+    null,
     { timeout: 10_000 },
   )
-}
 
-/** Seek Part I to a native timestamp and read the settled thesis DOM state. */
-async function heroStateAt(page, seconds) {
-  await page.evaluate(s => window.__wolvesCinematic.seekTo(s), seconds)
-  // 100ms poll -> store.updateTime, plus the 0.4s thesis opacity transition.
-  await page.waitForTimeout(650)
-  return page.evaluate(() => {
-    const layers = Array.from(document.querySelectorAll('.wc-thesis'))
-    // Ignore an element that is still leaving so counts/text reflect the current cue.
-    const isLeaving = el => el.classList.contains('wc-thesis-leave-active') || el.classList.contains('wc-thesis-leave-to')
-    const current = layers.filter(el => !isLeaving(el))
-    const wrap = current[0] ?? null
-    const textEl = wrap?.querySelector('.wc-thesis-text') ?? null
-    const corruptionEl = wrap?.querySelector('.wc-thesis-corruption') ?? null
-    const style = textEl ? getComputedStyle(textEl) : null
-    const rect = textEl ? textEl.getBoundingClientRect() : null
-    const shadowLayers = style ? (style.textShadow.match(/rgba?\(/g)?.length ?? 0) : 0
-    const rgb = style ? style.color.match(/\d+/g)?.map(Number) ?? [] : []
+  const seekStage = async (seconds) => {
+    await page.evaluate(time => window.__wolvesCinematic.seekTo(time), seconds)
+    await page.waitForTimeout(250)
+  }
+  const waitForSignalFade = () => page.waitForTimeout(3200)
+
+  await seekStage(310.4)
+  await page.waitForFunction(() =>
+    document.querySelector('[data-lore-view-kind="chatlog"]')?.textContent?.includes('Sherman'),
+  )
+  const unifiedLoreMetrics = await page.evaluate(() => {
+    const column = document.querySelector('.immersive-col-right')
+    const root = document.querySelector('.wolves-lore-column')
+    const feed = document.querySelector('[data-unified-lore-feed]')
+    const directory = document.querySelector('[data-dossier-directory]')
+    const recordViewport = document.querySelector('[data-lore-view-kind="chatlog"] .quote-viewport')
+    const columnRect = column?.getBoundingClientRect()
+    const feedRect = feed?.getBoundingClientRect()
     return {
-      thesisCount: current.length,
-      wrapClass: wrap?.className ?? null,
-      hasText: Boolean(textEl),
-      text: textEl?.textContent ?? null,
-      hasCorruption: Boolean(corruptionEl),
-      fontFamily: style?.fontFamily ?? null,
-      fontSize: style ? Number.parseFloat(style.fontSize) : null,
-      color: style?.color ?? null,
-      isBlue: rgb.length === 3 && rgb[2] > rgb[0] && rgb[2] > rgb[1] && rgb[2] > 200,
-      shadowLayers,
-      scrollW: textEl?.scrollWidth ?? null,
-      clientW: textEl?.clientWidth ?? null,
-      rect: rect ? { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom } : null,
-      vw: window.innerWidth,
-      vh: window.innerHeight,
+      columnDisplay: column ? getComputedStyle(column).display : '',
+      rootDisplay: root ? getComputedStyle(root).display : '',
+      feedDisplay: feed ? getComputedStyle(feed).display : '',
+      feedFlexGrow: feed ? getComputedStyle(feed).flexGrow : '',
+      feedMinHeight: feed ? getComputedStyle(feed).minHeight : '',
+      recordOverflowY: recordViewport ? getComputedStyle(recordViewport).overflowY : '',
+      directoryDisplay: directory ? getComputedStyle(directory).display : '',
+      withinColumn: Boolean(columnRect && feedRect
+        && feedRect.left >= columnRect.left
+        && feedRect.right <= columnRect.right
+        && feedRect.top >= columnRect.top
+        && feedRect.bottom <= columnRect.bottom),
+      oldTabsPresent: document.body.textContent?.includes('[ NARRATIVE FEED ]')
+        || document.body.textContent?.includes('[ DOSSIER ARCHIVE ]'),
     }
   })
-}
+  assert(
+    'Unified lore column follows the authored viewport state',
+    unifiedLoreMetrics.columnDisplay,
+    width < 1024 ? 'none' : 'block',
+  )
+  assert('Unified lore root uses flex layout', unifiedLoreMetrics.rootDisplay, 'flex')
+  assert('Unified lore feed uses flex layout', unifiedLoreMetrics.feedDisplay, 'flex')
+  assert('Unified lore feed fills available height', unifiedLoreMetrics.feedFlexGrow, '1')
+  assert('Unified lore feed permits shrinking', unifiedLoreMetrics.feedMinHeight, '0px')
+  assertTruthy('Unified lore record retains vertical scrolling', ['auto', 'scroll'].includes(unifiedLoreMetrics.recordOverflowY))
+  assert('Unified dossier index stays in the column flow', unifiedLoreMetrics.directoryDisplay, 'flex')
+  assert('Unified lore feed stays inside the lore column', unifiedLoreMetrics.withinColumn, true)
+  assert('Legacy split lore tabs are removed', unifiedLoreMetrics.oldTabsPresent, false)
 
-/** Assert one hero boundary. `full` runs the font/colour/glow/bounds/overflow checks. */
-async function assertHeroBoundary(page, viewportLabel, boundary, { full }) {
-  const state = await heroStateAt(page, boundary.t)
-  const tag = `[${viewportLabel} @${boundary.t}]`
-
-  if (boundary.active === false) {
-    assert(`${tag} no thesis renders (mode inactive)`, state.thesisCount, 0)
-    assert(`${tag} no hero text element`, state.hasText, false)
-    return state
-  }
-
-  // Mode asserted separately from text.
-  assertTruthy(`${tag} wrapper carries wc-thesis--${boundary.mode}`, state.wrapClass?.includes(`wc-thesis--${boundary.mode}`))
-
-  if (boundary.corruption) {
-    assert(`${tag} growing-corruption shows no thesis text`, state.hasText, false)
-    assert(`${tag} growing-corruption glyphs render`, state.hasCorruption, true)
-    return state
-  }
-
-  // Visible text asserted separately (exact string, exact ellipses).
-  assert(`${tag} visible hero text`, state.text, boundary.text)
-
-  if (full) {
-    assertTruthy(`${tag} computed font-family is ${boundary.font}`, state.fontFamily?.includes(boundary.font))
-    assertTruthy(`${tag} hero text colour is blue`, state.isBlue)
-    assertTruthy(`${tag} multi-layer glow (>=3 shadow layers)`, state.shadowLayers >= 3)
-    assertTruthy(
-      `${tag} text stays within viewport bounds`,
-      state.rect
-      && state.rect.left >= -1 && state.rect.right <= state.vw + 1
-      && state.rect.top >= -1 && state.rect.bottom <= state.vh + 1,
-    )
-    assertTruthy(`${tag} no horizontal overflow`, state.scrollW <= state.clientW + 1)
-  }
-
-  return state
-}
-
-/** Drive the Creator Shorts interstitial to completion (3 Cassidy turns, then 1 Lindsay). */
-async function driveCreatorShorts(page) {
-  await page.evaluate(({ cassidyId, lindsayId }) => {
-    const left = window.__mockWolvesPlayers.find(p => p.videoId === cassidyId)
-    const right = window.__mockWolvesPlayers.find(p => p.videoId === lindsayId)
-    if (!left || !right) {
-      throw new Error(`missing shorts players left=${Boolean(left)} right=${Boolean(right)}`)
-    }
-    left.triggerEnded()
-    left.triggerEnded()
-    left.triggerEnded()
-    right.triggerEnded()
-  }, { cassidyId: CASSIDY_FIRST_VIDEO_ID, lindsayId: LINDSAY_FIRST_VIDEO_ID })
-}
-
-/** Seek Part II to an elapsed second and read the organization-ad blend state. */
-async function adBlendAt(page, seconds) {
-  await page.evaluate(s => window.__wolvesCinematic.seekTo(s), seconds)
-  await page.waitForTimeout(400)
-  return page.evaluate(() => {
-    const rect = el => (el ? el.getBoundingClientRect().toJSON() : null)
-    const interactive = document.querySelector('.wc-org-ad-pair.is-interactive')
-    const left = interactive?.querySelector('.wc-org-ad--left') ?? null
-    const right = interactive?.querySelector('.wc-org-ad--right') ?? null
-    const gallery = document.querySelector('.flickr-gallery-wrapper') ?? document.querySelector('.wc-trackzero-viewer')
+  await seekStage(167.8)
+  const trackZeroNameplateLabel = page.locator('.wc-stage-nameplate .wc-nameplate-label')
+  assert('Track 0 nameplate enables slow signal fades', await page.locator('.wc-stage-nameplate .wc-nameplate').evaluate(node => node.classList.contains('wc-nameplate--slow-fade')), true)
+  assert('Track 0 opens with the colon-free signal label', await trackZeroNameplateLabel.textContent(), 'Incoming Signal')
+  const jonoAtStart = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assertTruthy('Jono Bacon slide is active at 2:47.8', jonoAtStart?.includes('interview-jono-bacon-cult-psychology-kubernetes.webp'))
+  const jonoBanner = page.locator('.wallpaper-theater-caption.is-title-only')
+  assert('Jono Cult Psychology banner is visible', await jonoBanner.isVisible(), true)
+  assertTruthy('Jono Cult Psychology banner preserves its exact title', (await jonoBanner.textContent())?.includes('The Cult Psychology of Kubernetes'))
+  const jonoBannerMetrics = await jonoBanner.evaluate((banner) => {
+    const title = banner.querySelector('.wallpaper-theater-caption-title')
+    const viewer = document.querySelector('.flickr-gallery-wrapper')
+    const bannerRect = banner.getBoundingClientRect()
+    const viewerRect = viewer?.getBoundingClientRect()
     return {
-      interactiveAdCount: interactive ? interactive.querySelectorAll('.wc-org-ad').length : 0,
-      pair0Opacity: document.querySelector('.wc-org-ad-pair[data-pair="0"]')?.getAttribute('data-opacity') ?? null,
-      pair1Opacity: document.querySelector('.wc-org-ad-pair[data-pair="1"]')?.getAttribute('data-opacity') ?? null,
-      leftOrg: left?.getAttribute('data-org') ?? null,
-      rightOrg: right?.getAttribute('data-org') ?? null,
-      leftAd: rect(left),
-      rightAd: rect(right),
-      gallery: rect(gallery),
-      widget: rect(document.querySelector('.wc-widget')),
-      rootFontPx: Number.parseFloat(getComputedStyle(document.documentElement).fontSize),
-      vw: window.innerWidth,
-      vh: window.innerHeight,
+      display: getComputedStyle(banner).display,
+      fontSize: Number.parseFloat(getComputedStyle(title).fontSize),
+      scrolls: banner.scrollHeight > banner.clientHeight + 1,
+      withinViewer: Boolean(viewerRect
+        && bannerRect.left >= viewerRect.left
+        && bannerRect.right <= viewerRect.right
+        && bannerRect.top >= viewerRect.top
+        && bannerRect.bottom <= viewerRect.bottom),
     }
   })
-}
+  assert('Jono Cult Psychology banner uses a block theater layout', jonoBannerMetrics.display, 'block')
+  assertTruthy('Jono Cult Psychology banner uses 10-foot typography', jonoBannerMetrics.fontSize >= (width < 600 ? 30 : 48))
+  assert('Jono Cult Psychology banner does not scroll', jonoBannerMetrics.scrolls, false)
+  assert('Jono Cult Psychology banner fits the viewer', jonoBannerMetrics.withinViewer, true)
+  assert('Track 0 stage nameplate remains visible during Jono', await page.locator('.wc-stage-nameplate .wc-nameplate').isVisible(), true)
+  assert('Track 0 lower thesis overlay remains inactive during Jono', await page.locator('.wc-thesis').count(), 0)
 
-/** Seek Part II to an elapsed second and read the transition-shell / team-chat state. */
-async function transitionStateAt(page, seconds) {
-  await page.evaluate(s => window.__wolvesCinematic.seekTo(s), seconds)
-  await page.waitForTimeout(300)
-  return page.evaluate(() => {
-    const visible = (el) => {
-      if (!el) {
-        return false
-      }
-      const r = el.getBoundingClientRect()
-      return getComputedStyle(el).display !== 'none' && r.width > 0 && r.height > 0
-    }
-    const shell = document.querySelector('.wc-transition-shell')
-    const chat = document.querySelector('.wc-team-chat')
+  await seekStage(171.878)
+  assert('Jono Cult Psychology banner persists through 2:51.878', await jonoBanner.isVisible(), true)
+
+  await seekStage(171.879)
+  const marinaAtStart = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assertTruthy('Marina Moore slide starts at 2:51.879', marinaAtStart?.includes('kubecon-55168684055.webp'))
+  assert('Jono Cult Psychology banner hands off at 2:51.879', await jonoBanner.count(), 0)
+  const marinaCaption = await page.locator('.flickr-caption').textContent()
+  assertTruthy('Marina Moore caption is visible', marinaCaption?.includes('Marina Moore'))
+  assert('Track 0 stage nameplate remains visible during Marina Moore', await page.locator('.wc-stage-nameplate .wc-nameplate').isVisible(), true)
+  assert('Track 0 lower thesis overlay remains inactive during Marina Moore', await page.locator('.wc-thesis').count(), 0)
+
+  await seekStage(175.958)
+  assert('Incoming Signal holds until the Bluefin group', await trackZeroNameplateLabel.textContent(), 'Incoming Signal')
+  const marinaBeforeComposite = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assertTruthy('Marina Moore still holds immediately before the Sherman + m2 composite', marinaBeforeComposite?.includes('kubecon-55168684055.webp'))
+
+  await seekStage(175.959)
+  const shermanAtStart = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assertTruthy('Sherman + m2 composite starts at 2:55.959', shermanAtStart?.includes('sherman-m2.webp'))
+
+  await seekStage(175.97)
+  assert('Incoming Signal uses the slow authored fade', await trackZeroNameplateLabel.evaluate(label => getComputedStyle(label).transitionDuration), '1.5s')
+  await waitForSignalFade()
+  assert('Bluefin group receives its authored signal', await trackZeroNameplateLabel.textContent(), 'The Blue Delivers')
+  await captureStage(page, 'track-zero-bluefin-signal')
+
+  await seekStage(184.118)
+  const compositeBeforeHandoff = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assertTruthy('Sherman + m2 composite remains active immediately before its handoff', compositeBeforeHandoff?.includes('sherman-m2.webp'))
+  assert('Track 0 stage nameplate remains visible during Sherman + m2', await page.locator('.wc-stage-nameplate .wc-nameplate').isVisible(), true)
+  assert('Track 0 lower thesis overlay remains inactive during Sherman + m2', await page.locator('.wc-thesis').count(), 0)
+
+  await seekStage(184.119)
+  const compositeAtHandoff = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assert('Sherman + m2 composite hands off at 3:04.119', compositeAtHandoff?.includes('sherman-m2.webp'), false)
+
+  await seekStage(188.198)
+  const kyleBeforeHikari = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assertTruthy('Kyle still holds immediately before the Hikari composite', kyleBeforeHikari?.includes('kyle.jpg'))
+
+  await seekStage(188.199)
+  const hikariAtStart = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assertTruthy('Hikari composite starts at 3:08.199', hikariAtStart?.includes('hikari.webp'))
+
+  await seekStage(192.278)
+  const hikariBeforeHandoff = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assertTruthy('Hikari composite remains active immediately before its handoff', hikariBeforeHandoff?.includes('hikari.webp'))
+
+  await seekStage(192.279)
+  const hikariAtHandoff = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assert('Hikari composite hands off at 3:12.279', hikariAtHandoff?.includes('hikari.webp'), false)
+
+  await seekStage(196.36)
+  await waitForSignalFade()
+  assert('Post-Bluefin signal reports the thriving-community pod', await trackZeroNameplateLabel.textContent(), 'pod/thriving-community created')
+  assert('Lower thesis remains separate after the Bluefin group', await page.locator('.wc-thesis').count(), 0)
+
+  await seekStage(229)
+  await waitForSignalFade()
+  assert(
+    'Chanting bridge reports the experimental collaboration image',
+    await trackZeroNameplateLabel.textContent(),
+    'Warning: ImagePullBackOff - "humans/collaboration:latest" is currently experimental.',
+  )
+  const warningNameplateBounds = await page.locator('.wc-stage-nameplate .wc-nameplate').evaluate((nameplate) => {
+    const label = nameplate.querySelector('.wc-nameplate-label')
+    const rect = nameplate.getBoundingClientRect()
     return {
-      shellCount: document.querySelectorAll('.wc-transition-shell').length,
-      shellVisible: visible(shell),
-      shellOpacity: shell?.getAttribute('data-opacity') ?? null,
-      chatCount: document.querySelectorAll('.wc-team-chat').length,
-      chatVisible: visible(chat),
-      chatLinks: Array.from(document.querySelectorAll('.wc-team-chat a')).map(a => a.getAttribute('href')),
+      withinViewport: rect.left >= 0 && rect.right <= window.innerWidth,
+      labelWraps: Boolean(label && label.scrollWidth <= label.clientWidth + 1),
     }
   })
-}
+  assert('ImagePullBackOff nameplate stays inside the viewport', warningNameplateBounds.withinViewport, true)
+  assert('ImagePullBackOff label wraps instead of overflowing', warningNameplateBounds.labelWraps, true)
+  assert('Lower thesis remains separate during the warning', await page.locator('.wc-thesis').count(), 0)
+  await captureStage(page, 'track-zero-community-warning')
 
-async function runDesktopFlow(page) {
-  console.log('\n== Desktop 1440x900 ==')
-  await enterCinematic(page)
+  await seekStage(277)
+  await waitForSignalFade()
+  assert(
+    'Heavy build-up reports the human fallback',
+    await trackZeroNameplateLabel.textContent(),
+    'Falling back to "humans/trying-their-best:v1"',
+  )
+  assert('Lower thesis remains separate during the fallback', await page.locator('.wc-thesis').count(), 0)
+  await captureStage(page, 'track-zero-community-fallback')
 
-  console.log('\n-- Part I: Escalating Voice hero typography --')
-  const sizeByMode = {}
-  for (const boundary of HERO_BOUNDARIES) {
-    // Run the full font/colour/glow/bounds/overflow checks on each distinct cue.
-    const full = Boolean(boundary.text) && ![407.999, 425].includes(boundary.t)
-    const state = await assertHeroBoundary(page, 'desktop', boundary, { full })
-    if (boundary.mode && state.fontSize) {
-      sizeByMode[boundary.mode] ??= state.fontSize
-    }
-    if (boundary.t === 345) {
-      await captureStage(page, 'desktop-hero-welcome')
-    }
-    if (boundary.t === 405) {
-      await captureStage(page, 'desktop-hero-ascended')
-    }
-    if (boundary.t === 408) {
-      await captureStage(page, 'desktop-hero-legend')
-    }
-  }
-  assertTruthy(
-    `[desktop] dominant legend cue renders larger than or equal to the welcome cue (${sizeByMode.legend}px >= ${sizeByMode.welcome}px)`,
-    sizeByMode.legend >= sizeByMode.welcome,
+  await seekStage(345)
+  await page.waitForTimeout(250)
+  assert('Fallback signal remains through the thesis opening', await trackZeroNameplateLabel.textContent(), 'Falling back to "humans/trying-their-best:v1"')
+  assertTruthy('Lower thesis keeps its authored opening text', (await page.locator('.wc-thesis').textContent())?.includes('We\'ve got your back.'))
+
+  await seekStage(408)
+  await waitForSignalFade()
+  assert('Titanfall signal remains the locked finale handoff', await trackZeroNameplateLabel.textContent(), 'Bazzite Mk6 Units: Prepare for Titanfall.')
+  assertTruthy('Lower thesis keeps its authored finale text', (await page.locator('.wc-thesis').textContent())?.includes('Become Legend'))
+  await captureStage(page, 'track-zero-composites')
+
+  await page.getByLabel('Next').click()
+  await page.waitForSelector('.wc-transition-overlay', { state: 'visible', timeout: 10_000 })
+  await page.waitForSelector('.wc-transition-overlay', { state: 'hidden', timeout: 20_000 })
+  await page.waitForFunction(() =>
+    document.querySelector('.wc-stage-nameplate')?.textContent?.includes('Ghosts In The Mist'),
   )
 
-  console.log('\n-- Creator Shorts handoff --')
-  await page.evaluate(() => window.__wolvesCinematic.skip(1))
-  await page.waitForSelector('.wolves-creator-shorts-interstitial', { state: 'visible', timeout: 10_000 })
-  assert('[desktop] organization ads are absent during Creator Shorts', await page.locator('.wc-org-ads').count(), 0)
-  const leftCaption = await page.locator('.wolves-creator-shorts-slot').nth(0).locator('.wolves-creator-shorts-caption').textContent()
-  const rightCaption = await page.locator('.wolves-creator-shorts-slot').nth(1).locator('.wolves-creator-shorts-caption').textContent()
-  assertTruthy('[desktop] left slot credits Cassidy Williams', leftCaption?.includes('Cassidy Williams'))
-  assertTruthy('[desktop] right slot credits Lindsay Nikole', rightCaption?.includes('Lindsay Nikole'))
-  await captureStage(page, 'desktop-creator-shorts')
-
-  await driveCreatorShorts(page)
-  await page.waitForSelector('.wolves-creator-shorts-interstitial', { state: 'hidden', timeout: 10_000 })
-  await page.waitForSelector('.wc-org-ads', { state: 'visible', timeout: 10_000 })
-  await page.waitForFunction(() => typeof window.__wolvesCinematic?.seekTo === 'function', { timeout: 10_000 })
-  const nameplate = (await page.locator('.wc-stage-nameplate').textContent())?.replace(/\s+/g, ' ').trim()
-  assertTruthy(`[desktop] Part II resumes at "${PART_TWO_TITLE}"`, nameplate?.includes(PART_TWO_TITLE))
-
-  console.log('\n-- Part II: organization ad pairs --')
-  const pairA = await adBlendAt(page, 0)
-  assert('[desktop] exactly two ads in the interactive pair', pairA.interactiveAdCount, 2)
-  assert('[desktop] Pair A interactive at 0s (pair 0 shown)', pairA.pair0Opacity, '1')
-  assert('[desktop] Pair B hidden at 0s', pairA.pair1Opacity, '0')
-  assert('[desktop] Pair A left ad is GNOME', pairA.leftOrg, 'gnome')
-  assert('[desktop] Pair A right ad is KubeCon', pairA.rightOrg, 'kubecon')
-  await captureStage(page, 'desktop-partii-pair-a')
-
-  const blend30 = await adBlendAt(page, 30)
-  assert('[desktop] Pair A fully shown at 30s', blend30.pair0Opacity, '1')
-  assert('[desktop] Pair B fully hidden at 30s', blend30.pair1Opacity, '0')
-
-  const blend32 = await adBlendAt(page, 32)
-  assert('[desktop] Pair A mid-crossfade at 32s', blend32.pair0Opacity, '0.5')
-  assert('[desktop] Pair B mid-crossfade at 32s', blend32.pair1Opacity, '0.5')
-
-  const blend34 = await adBlendAt(page, 34)
-  assert('[desktop] Pair A hidden at 34s', blend34.pair0Opacity, '0')
-  assert('[desktop] Pair B fully shown at 34s', blend34.pair1Opacity, '1')
-  assert('[desktop] Pair B left ad is Flathub', blend34.leftOrg, 'flathub')
-  assert('[desktop] Pair B right ad is KDE', blend34.rightOrg, 'kde')
-  await captureStage(page, 'desktop-partii-pair-b')
-
-  // Bounds and non-intersection with the centre gallery. The frozen design sizes
-  // each ad up to 16rem at left/right 2.4rem while the gallery gutter clamps to
-  // 18rem, so at wide viewports the ad's inner edge overhangs the gallery COLUMN
-  // box by ~0.4rem of letterbox margin (the visible photo, object-fit: contain,
-  // stays well clear). We assert the ads flank the gallery within that documented
-  // frozen-design spill; a real regression that moved an ad onto the gallery would
-  // exceed it and fail.
-  const spill = 12 * blend34.rootFontPx
-  const galleryCenter = blend34.gallery.left + blend34.gallery.width / 2
-  const withinViewport = ad => ad.left >= -1 && ad.right <= blend34.vw + 1 && ad.top >= -1 && ad.bottom <= blend34.vh + 1
-  assertTruthy('[desktop] left ad stays within the viewport', withinViewport(blend34.leftAd))
-  assertTruthy('[desktop] right ad stays within the viewport', withinViewport(blend34.rightAd))
-  assertTruthy('[desktop] left ad sits above the media widget', blend34.leftAd.bottom <= blend34.widget.top)
-  assertTruthy('[desktop] right ad sits above the media widget', blend34.rightAd.bottom <= blend34.widget.top)
-  assertTruthy('[desktop] left ad flanks the gallery on the left', blend34.leftAd.right < galleryCenter && blend34.leftAd.right <= blend34.gallery.left + spill)
-  assertTruthy('[desktop] right ad flanks the gallery on the right', blend34.rightAd.left > galleryCenter && blend34.rightAd.left >= blend34.gallery.right - spill)
-
-  console.log('\n-- Part II: transition shell / team-chat separation --')
-  const shell10 = await transitionStateAt(page, 10)
-  assert('[desktop] transition shell present at 10s', shell10.shellCount, 1)
-  assert('[desktop] transition shell opaque at 10s', shell10.shellOpacity, '1')
-
-  const shell12 = await transitionStateAt(page, 12)
-  assertTruthy('[desktop] transition shell still visible mid-decay at 12s', shell12.shellVisible)
-  assert('[desktop] transition shell half-faded at 12s', shell12.shellOpacity, '0.5')
-
-  const shell14 = await transitionStateAt(page, 14)
-  assert('[desktop] transition shell fully decayed (removed) at 14s', shell14.shellCount, 0)
-  await captureStage(page, 'desktop-transition-decay')
-
-  if (USE_CHAT_FIXTURES) {
-    assertTruthy('[desktop] team chat visible at 10s', shell10.chatVisible)
-    assertTruthy('[desktop] team chat visible at 12s', shell12.chatVisible)
-    // The core separation: the shell is gone while the chat still renders.
-    assertTruthy('[desktop] team chat persists after the shell decays (14s)', shell14.chatVisible)
-    assertTruthy('[desktop] team chat links to contribute.cncf.io', shell14.chatLinks.includes('https://contribute.cncf.io'))
-    assertTruthy('[desktop] team chat links to ask.cncf.io', shell14.chatLinks.includes('https://ask.cncf.io'))
-  }
-  else {
-    // Production default: WOLVES_TEAM_CHATS is empty, so no chat ever renders.
-    assert('[desktop] no team chat renders without fixtures (production default)', shell12.chatCount, 0)
-  }
-}
-
-async function runMobileFlow(page) {
-  console.log('\n== Mobile 390x844 ==')
-  await enterCinematic(page)
-
-  console.log('\n-- Part I: hero typography (mobile) --')
-  const sizeByMode = {}
-  for (const boundary of HERO_BOUNDARIES) {
-    const full = Boolean(boundary.text) && ![407.999, 425].includes(boundary.t)
-    const state = await assertHeroBoundary(page, 'mobile', boundary, { full })
-    if (boundary.mode && state.fontSize) {
-      sizeByMode[boundary.mode] ??= state.fontSize
-    }
-    if (boundary.t === 345) {
-      await captureStage(page, 'mobile-hero-welcome')
-    }
-    if (boundary.t === 408) {
-      await captureStage(page, 'mobile-hero-legend')
-    }
-  }
-  assertTruthy(
-    `[mobile] dominant legend cue renders larger than or equal to the welcome cue (${sizeByMode.legend}px >= ${sizeByMode.welcome}px)`,
-    sizeByMode.legend >= sizeByMode.welcome,
-  )
-
-  console.log('\n-- Creator Shorts + Part II (mobile) --')
-  await page.evaluate(() => window.__wolvesCinematic.skip(1))
-  await page.waitForSelector('.wolves-creator-shorts-interstitial', { state: 'visible', timeout: 10_000 })
-  await driveCreatorShorts(page)
-  await page.waitForSelector('.wolves-creator-shorts-interstitial', { state: 'hidden', timeout: 10_000 })
-  await page.waitForFunction(() => typeof window.__wolvesCinematic?.seekTo === 'function', { timeout: 10_000 })
-
-  await page.evaluate(() => window.__wolvesCinematic.seekTo(10))
-  await page.waitForTimeout(400)
-  const mobile = await page.evaluate(() => {
-    const inViewport = (el) => {
-      if (!el) {
-        return false
-      }
-      const r = el.getBoundingClientRect()
-      return getComputedStyle(el).display !== 'none' && r.width > 0 && r.height > 0
-        && r.left >= -1 && r.right <= window.innerWidth + 1
-    }
-    const orgAds = document.querySelector('.wc-org-ads')
-    const chat = document.querySelector('.wc-team-chat')
-    const gallery = document.querySelector('.flickr-gallery-wrapper') ?? document.querySelector('.wc-trackzero-viewer')
+  await seekStage(0)
+  const ghostsOpeningImage = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assertTruthy('Ghosts In The Mist opens on Jorge MN047', ghostsOpeningImage?.includes('55164222671_32d7ace307_c.jpg'))
+  const ghostsCaption = page.locator('.wallpaper-theater-caption')
+  const ghostsCaptionText = (await ghostsCaption.locator('.wallpaper-theater-caption-body').allTextContents())
+    .map(paragraph => paragraph.replace(/\s+/g, ' ').trim())
+    .join(' ')
+  assert('Ghosts opener identifies Jorge Castro', await ghostsCaption.locator('.wallpaper-theater-caption-title').textContent(), 'Jorge Castro')
+  assert('Ghosts opener preserves Jorge quote', ghostsCaptionText, JORGE_GHOSTS_QUOTE)
+  const ghostsCaptionMetrics = await ghostsCaption.evaluate((caption) => {
+    const viewer = document.querySelector('.flickr-gallery-wrapper')
+    const captionRect = caption.getBoundingClientRect()
+    const viewerRect = viewer?.getBoundingClientRect()
     return {
-      orgAdsDisplay: orgAds ? getComputedStyle(orgAds).display : 'absent',
-      chatDisplay: chat ? getComputedStyle(chat).display : 'absent',
-      widgetInViewport: inViewport(document.querySelector('.wc-widget')),
-      galleryInViewport: inViewport(gallery),
+      scrolls: caption.scrollHeight > caption.clientHeight + 1,
+      withinViewer: Boolean(viewerRect
+        && captionRect.left >= viewerRect.left
+        && captionRect.right <= viewerRect.right
+        && captionRect.top >= viewerRect.top
+        && captionRect.bottom <= viewerRect.bottom),
     }
   })
-  assertTruthy('[mobile] organization ads are hidden (display:none or absent)', mobile.orgAdsDisplay === 'none' || mobile.orgAdsDisplay === 'absent')
-  assertTruthy('[mobile] team chat is hidden (display:none or absent)', mobile.chatDisplay === 'none' || mobile.chatDisplay === 'absent')
-  assertTruthy('[mobile] media widget stays within the viewport', mobile.widgetInViewport)
-  assertTruthy('[mobile] gallery stays within the viewport', mobile.galleryInViewport)
-  await captureStage(page, 'mobile-partii')
-}
+  assert('Ghosts opener quote does not scroll', ghostsCaptionMetrics.scrolls, false)
+  assert('Ghosts opener quote stays inside the viewer', ghostsCaptionMetrics.withinViewer, true)
+  await captureStage(page, 'ghosts-mn047-jorge')
 
-if (SCREENSHOT_DIR) {
-  mkdirSync(SCREENSHOT_DIR, { recursive: true })
-}
+  await seekStage(38.399)
+  const ghostsBeforeHandoff = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assertTruthy('Jorge MN047 holds through 38.399 seconds', ghostsBeforeHandoff?.includes('55164222671_32d7ace307_c.jpg'))
 
-console.log('\nWolves cinematic browser flow test')
-console.log(`  URL:              ${WOLVES_URL}`)
-console.log(`  Chat fixtures:    ${USE_CHAT_FIXTURES ? 'on (WOLVES_BROWSER_FIXTURES)' : 'off (production default)'}`)
-console.log(`  Screenshot dir:   ${SCREENSHOT_DIR ?? '(none)'}`)
-
-const browser = await chromium.launch({ headless: true })
-let exitCode = 0
-
-try {
-  const desktop = await browser.newPage({ viewport: DESKTOP })
-  await installMocks(desktop, { useFixtures: USE_CHAT_FIXTURES })
-  await gotoWolves(desktop)
-  await runDesktopFlow(desktop)
-  await desktop.close()
-
-  const mobile = await browser.newPage({ viewport: MOBILE })
-  await installMocks(mobile, { useFixtures: USE_CHAT_FIXTURES })
-  await gotoWolves(mobile)
-  await runMobileFlow(mobile)
-  await mobile.close()
+  await seekStage(38.4)
+  const ghostsAtHandoff = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assert('Jorge MN047 hands off at 38.4 seconds', ghostsAtHandoff?.includes('55164222671_32d7ace307_c.jpg'), false)
 }
 catch (error) {
-  failed++
+  console.error(`\nTest failed with error: ${error.message}`)
+  console.error(error.stack || '')
   exitCode = 1
-  console.error('\n  FAIL  Unhandled error during the Wolves flow')
-  console.error(error)
 }
 finally {
   await browser.close()
 }
 
 console.log(`\nResults: ${passed} passed, ${failed} failed`)
-if (failed > 0) {
-  exitCode = 1
+if (failed > 0 || exitCode !== 0) {
+  process.exit(1)
 }
-process.exit(exitCode)

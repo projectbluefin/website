@@ -2,10 +2,21 @@
 import { computed, ref } from 'vue'
 import { useCinematicStore } from '@/stores/cinematic'
 
+const props = withDefaults(defineProps<{
+  showVoiceOverToggle?: boolean
+  voiceOverEnabled?: boolean
+  voiceOverLabel?: string
+}>(), {
+  showVoiceOverToggle: false,
+  voiceOverEnabled: false,
+  voiceOverLabel: 'Ikora voice over',
+})
+
 // The widget is a pure store subscriber: playback intents are emitted upward and
 // wired to the stage by the app shell, never by reaching into player components.
 const emit = defineEmits<{
   togglePlay: []
+  toggleVoiceOver: [enabled: boolean]
   skip: [delta: number]
   seek: [ratio: number]
 }>()
@@ -24,10 +35,12 @@ function formatTime(totalSeconds: number): string {
 }
 
 const segmentTime = computed(() => `${formatTime(store.segmentElapsed)} / ${formatTime(store.segmentDuration)}`)
+const overallTime = computed(() => `${formatTime(store.overallElapsed)} / ${formatTime(store.overallDuration)}`)
+const deploymentPercent = computed(() => Math.round(store.overallProgress * 100))
 // Unix-style block progress readout in the old HUD's spirit.
 const PROGRESS_CELLS = 24
 const progressBlocks = computed(() => {
-  const filled = Math.round(store.segmentProgress * PROGRESS_CELLS)
+  const filled = Math.round(store.overallProgress * PROGRESS_CELLS)
   return `[${'#'.repeat(filled)}${'-'.repeat(PROGRESS_CELLS - filled)}]`
 })
 
@@ -42,6 +55,10 @@ function handleSeek(event: MouseEvent) {
     return
   }
   emit('seek', (event.clientX - rect.left) / rect.width)
+}
+
+function handleVoiceOverChange(event: Event) {
+  emit('toggleVoiceOver', (event.target as HTMLInputElement).checked)
 }
 </script>
 
@@ -59,26 +76,36 @@ function handleSeek(event: MouseEvent) {
         class="wc-widget-progress"
         role="slider"
         aria-label="Seek"
-        :aria-valuenow="Math.round(store.segmentProgress * 100)"
+        :aria-valuenow="deploymentPercent"
         aria-valuemin="0"
         aria-valuemax="100"
         @click="handleSeek"
       >
-        <div class="wc-widget-progress-fill" :style="{ width: `${store.segmentProgress * 100}%` }" />
+        <div class="wc-widget-progress-fill" :style="{ width: `${store.overallProgress * 100}%` }" />
       </div>
       <div class="wc-widget-meta">
         <span class="wc-widget-time">{{ progressBlocks }}</span>
         <span class="wc-widget-time">{{ segmentTime }}</span>
-        <span class="wc-widget-time">TOTAL {{ formatTime(store.totalElapsed) }}</span>
+        <span class="wc-widget-time">TOTAL {{ overallTime }}</span>
       </div>
+      <label v-if="props.showVoiceOverToggle" class="wc-widget-toggle">
+        <input
+          class="wc-widget-toggle-input"
+          type="checkbox"
+          :checked="props.voiceOverEnabled"
+          :aria-label="props.voiceOverLabel"
+          @change="handleVoiceOverChange"
+        >
+        <span class="wc-widget-toggle-text">{{ props.voiceOverLabel }}</span>
+      </label>
     </div>
     <div class="wc-widget-telemetry">
       <div class="wc-widget-telemetry-row">
         <span>DEPLOYMENT: wolves-decryption-engine-7</span>
-        <span class="wc-widget-telemetry-accent">7%</span>
+        <span class="wc-widget-telemetry-accent">{{ deploymentPercent }}%</span>
       </div>
       <div class="wc-widget-meter">
-        <div class="wc-widget-meter-fill" />
+        <div class="wc-widget-meter-fill" :style="{ width: `${store.overallProgress * 100}%` }" />
       </div>
       <span class="wc-widget-telemetry-row">CLUSTER: k3s-exo-1.production // HOST: ghost.local</span>
     </div>
@@ -121,7 +148,8 @@ function handleSeek(event: MouseEvent) {
   bottom: 0;
   z-index: 1000; // above the intro overlay's fixed layer so one transport rules both phases
   display: flex;
-  align-items: center;
+  align-items: flex-end;
+  flex-wrap: wrap;
   gap: 1.6rem;
   margin: 0 auto;
   max-width: 116rem;
@@ -185,6 +213,32 @@ function handleSeek(event: MouseEvent) {
   align-items: baseline;
 }
 
+.wc-widget-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 0.2rem;
+  max-width: 100%;
+  font-family: var(--wc-font-mono);
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  color: var(--wc-grey);
+  text-transform: uppercase;
+}
+
+.wc-widget-toggle-input {
+  width: 1.6rem;
+  height: 1.6rem;
+  margin: 0;
+  accent-color: var(--wc-gold);
+  flex-shrink: 0;
+}
+
+.wc-widget-toggle-text {
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
 .wc-widget-time {
   font-family: var(--wc-font-mono);
   font-size: 1.1rem;
@@ -197,6 +251,7 @@ function handleSeek(event: MouseEvent) {
   flex-direction: column;
   gap: 0.4rem;
   flex-shrink: 0;
+  min-width: min(30rem, 100%);
   font-family: var(--wc-font-mono);
   font-size: 0.95rem;
   letter-spacing: 0.05em;
@@ -220,7 +275,6 @@ function handleSeek(event: MouseEvent) {
 }
 
 .wc-widget-meter-fill {
-  width: 7%;
   height: 100%;
   background: #7fd4d4;
   animation: wc-meter-pulse 2.4s ease-in-out infinite;
@@ -240,28 +294,110 @@ function handleSeek(event: MouseEvent) {
 .wc-widget-controls {
   display: flex;
   gap: 0.8rem;
+  margin-left: auto;
 }
 
 @media (max-width: 900px) {
+  .wc-widget {
+    gap: 1rem 1.2rem;
+    align-items: flex-start;
+    padding: 0.9rem 1.1rem;
+  }
+
+  .wc-widget-info {
+    flex: 1 1 36rem;
+  }
+
   .wc-widget-telemetry {
-    display: none;
+    order: 3;
+    width: 100%;
+    min-width: 0;
+    gap: 0.3rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+  }
+
+  .wc-widget-telemetry-row {
+    white-space: nowrap;
+  }
+
+  .wc-widget-controls {
+    margin-left: 0;
   }
 }
 
 @media (max-width: 640px) {
   .wc-widget {
     max-width: none;
-    gap: 1rem;
+    gap: 0.5rem 0.8rem;
+    padding: 0.5rem 0.9rem;
   }
 
   .wc-widget-art {
     display: none;
   }
 
+  .wc-widget-info {
+    gap: 0.3rem;
+  }
+
   .wc-widget-title {
     white-space: normal;
-    font-size: 1.5rem;
-    line-height: 1.2;
+    font-size: 1.25rem;
+    line-height: 1.1;
+  }
+
+  .wc-widget-meta {
+    gap: 0.7rem;
+    flex-wrap: wrap;
+  }
+
+  .wc-widget-time {
+    font-size: 0.92rem;
+    letter-spacing: 0.08em;
+  }
+
+  .wc-widget-toggle {
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+  }
+
+  .wc-widget-toggle-input {
+    width: 1.4rem;
+    height: 1.4rem;
+  }
+
+  .wc-widget-toggle-text {
+    white-space: normal;
+  }
+
+  .wc-widget-telemetry {
+    gap: 0.2rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+  }
+
+  .wc-widget-telemetry-row:last-child {
+    display: none;
+  }
+
+  .wc-widget-meter {
+    height: 0.25rem;
+  }
+
+  .wc-widget-controls {
+    gap: 0.5rem;
+  }
+
+  .wc-widget-controls .wc-control {
+    width: 3.4rem;
+    height: 3.4rem;
+  }
+
+  .wc-widget-controls .wc-control svg {
+    width: 1.6rem;
+    height: 1.6rem;
   }
 
   // The block readout wraps badly at phone widths; times remain.

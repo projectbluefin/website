@@ -1,11 +1,13 @@
 <script setup lang="ts">
 const emit = defineEmits<{ enter: [] }>()
+
+const lobbyBackground = `${import.meta.env.BASE_URL}evening/night-sky.webp`
 </script>
 
 <template>
-  <div class="wc-lobby">
+  <div class="wc-lobby" :style="{ '--wc-lobby-background': `url('${lobbyBackground}')` }">
     <div class="wc-lobby-frame">
-      <p class="wc-label">
+      <p class="wc-label wc-lobby-brand">
         PROJECT BLUEFIN
       </p>
       <h1 class="wc-lobby-title">
@@ -62,7 +64,7 @@ const emit = defineEmits<{ enter: [] }>()
   padding: 4rem 2rem;
   background:
     linear-gradient(rgb(8 9 12 / 82%), rgb(8 9 12 / 94%)),
-    url('/evening/night-sky.webp') center / cover no-repeat;
+    var(--wc-lobby-background) center / cover no-repeat;
 
   // Sparse angular line work; atmosphere over decoration.
   &::before,
@@ -90,35 +92,41 @@ const emit = defineEmits<{ enter: [] }>()
 .wc-lobby-frame {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  width: min(56rem, 100%);
+  gap: clamp(1.6rem, 2.4vh, 2.6rem);
+  width: min(78rem, 100%);
   text-align: center;
 }
 
+.wc-lobby-brand {
+  font-size: clamp(1.8rem, 1.8vw, 2.8rem);
+  letter-spacing: 0.44em;
+}
+
 .wc-lobby-title {
-  font-size: clamp(3.4rem, 6.8vw, 6rem);
+  font-size: clamp(3.8rem, 7.5vw, 7.6rem);
   font-weight: 800;
-  letter-spacing: 0.28em;
-  margin-right: -0.28em; // optically recenters tracked uppercase
-  line-height: 1.15;
+  letter-spacing: 0.22em;
+  margin-right: -0.22em; // optically recenters tracked uppercase
+  line-height: 1.02;
   color: var(--wc-white);
 }
 
 .wc-lobby-sub {
   font-family: var(--wc-font-mono);
-  font-size: 1.2rem;
-  letter-spacing: 0.4em;
+  font-size: clamp(1.2rem, 1.35vw, 1.6rem);
+  letter-spacing: 0.34em;
   color: var(--wc-grey);
 }
 
 .wc-lobby-status {
   min-height: 1.6rem;
+  font-size: clamp(1.05rem, 1.05vw, 1.25rem);
 }
 
 .wc-lobby-enter {
   align-self: center;
   padding: 1.4rem 4.8rem;
-  font-size: 1.5rem;
+  font-size: clamp(1.5rem, 1.45vw, 1.8rem);
   font-weight: 700;
   letter-spacing: 0.3em;
   color: var(--wc-gold);
@@ -143,7 +151,7 @@ const emit = defineEmits<{ enter: [] }>()
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
-  margin-top: 1.6rem;
+  margin-top: 1.2rem;
   padding: 2rem 2.4rem;
   border-left: 2px solid var(--wc-gold);
   text-align: left;
@@ -176,5 +184,40 @@ const emit = defineEmits<{ enter: [] }>()
   font-size: 1.05rem;
   letter-spacing: 0.1em;
   color: var(--wc-grey);
+}
+
+@media (max-width: 640px) {
+  .wc-lobby {
+    padding: 3rem 1.4rem;
+  }
+
+  .wc-lobby-frame {
+    gap: 1.5rem;
+  }
+
+  .wc-lobby-brand {
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    letter-spacing: 0.34em;
+  }
+
+  .wc-lobby-title {
+    font-size: clamp(3.4rem, 11vw, 4.8rem);
+    letter-spacing: 0.18em;
+    margin-right: -0.18em;
+  }
+
+  .wc-lobby-sub {
+    letter-spacing: 0.24em;
+  }
+
+  .wc-lobby-enter {
+    width: 100%;
+    max-width: 34rem;
+    padding-inline: 1.8rem;
+  }
+
+  .wc-lobby-quote {
+    padding: 1.8rem;
+  }
 }
 </style>

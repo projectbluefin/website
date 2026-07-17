@@ -4,6 +4,7 @@ description: Use when building or debugging a fullscreen overlay (intro video, c
 metadata:
   context7-sources:
     - /websites/developers_google_youtube
+    - /websites/vuejs_guide
 ---
 
 # Wolves Fullscreen Overlays & YouTube IFrame Embeds
@@ -107,6 +108,15 @@ bugs before being understood.
     to loopback automatically and preserves an accepted project origin. Always
     recheck the same video at `https://projectbluefin.io/wolves/` before
     treating a localhost-only error as a production failure.
+11. **Resize the layout around enlarged fixed media.** When a QR monitor,
+    guardian plate, or other fixed-width child grows, increase the containing
+    grid's maximum width too. Otherwise `minmax(0, 1fr) auto` gives the media
+    its requested width by collapsing the text column, producing one-word
+    wrapping even when the viewport has unused space. Check the computed grid
+    columns and each text element's bounding box in Chromium. Responsive labels
+    that inherit a large `-webkit-text-stroke` can also appear blank when the
+    stroke consumes the smaller glyph fill; explicitly remove the stroke and
+    heavy shadow at the compact breakpoint.
 
 ## Common Rationalizations
 
@@ -119,6 +129,7 @@ bugs before being understood.
 | "The plate name changed right after I scrubbed, so the boundary must be off." | Check how long you waited before reading. If it's more than ~300ms, the poll loop may have already advanced `currentTime` past your target — re-test with an immediate read and cross-check the time readout. |
 | "Passing a class to `WolvesControlBar` lets this component size its buttons." | A scoped parent selector cannot style nested child DOM. Keep shared control geometry in `WolvesControlBar.vue`, or use an intentional `:deep()` override. |
 | "Error 150 on 127.0.0.1 means the video is broken." | Retry through `projectbluefin.io.localhost`, then verify production. YouTube origin restrictions can reject numeric loopback while accepting the deployed project hostname. |
+| "The enlarged QR fits, so the title-card layout is done." | The fixed media can fit by collapsing its flexible sibling. Inspect the text-column width, title wrapping, compact label paint, and footer clearance independently. |
 
 ## Red Flags
 
@@ -144,6 +155,10 @@ bugs before being understood.
 - A real-player check uses `127.0.0.1` or `localhost`, receives error 150, and
   declares the source broken without retrying through
   `projectbluefin.io.localhost` and production.
+- A larger fixed-width card fits the viewport while adjacent theater text wraps
+  one word per line despite unused horizontal space.
+- A compact label has visible text in the DOM and non-zero bounds but appears
+  blank in screenshots because it inherited desktop text stroke or shadow.
 
 ## Verification
 
@@ -169,10 +184,13 @@ bugs before being understood.
       viewport-contained, clickable controls in desktop and mobile Chromium.
 - [ ] Local real-player checks use `projectbluefin.io.localhost`; any error 150
       is compared with the same video on production.
+- [ ] Enlarged fixed-width media leaves adjacent text columns wide enough for
+      authored wrapping, and all labels are visibly painted in desktop and
+      mobile screenshots rather than merely present in the DOM.
 
 ## Sources
 
-- Vue scoped CSS and `:deep()` behavior: `/vuejs/vue`
-- YouTube IFrame API `origin` guidance and player error codes:
+- Vue scoped CSS, Teleport, and scoped styling behavior: `/vuejs/vue` and `/websites/vuejs_guide`
+- YouTube IFrame API `origin` guidance, methods, parameters, and player error codes:
   `/websites/developers_google_youtube` (error 150 is equivalent to 101,
   embedding not allowed for that origin).

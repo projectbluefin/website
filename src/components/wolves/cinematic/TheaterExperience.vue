@@ -144,7 +144,7 @@ onBeforeUnmount(() => {
         </Transition>
       </div>
 
-      <aside v-if="isTrackZero" class="wc-trackzero-lore">
+      <aside v-if="isTrackZero" class="wc-trackzero-lore immersive-col-right">
         <WolvesLoreColumn
           :artifact-id="narrativeSlot.artifactId"
           :duration="slotDuration"

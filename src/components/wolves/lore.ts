@@ -1,6 +1,8 @@
 import type { LoreRecord } from '../../data/wolves-lore-records'
+import type { LoreProject } from '../../data/wolves-projects'
 import type { WolvesChapter } from '../../data/wolves-story'
 import { loadAllLoreRecords } from '../../data/wolves-lore-records'
+import { loadLoreProjectIndex } from '../../data/wolves-projects'
 import { wolvesRelease } from '../../data/wolves-story'
 
 export interface BazziteQuote {
@@ -26,6 +28,7 @@ export interface InterceptedConversation {
   sourceUrl?: string
   attribution?: string
   messages: InterceptedMessage[]
+  projects?: readonly LoreProject[]
 }
 
 export type WolvesLoreEntry
@@ -40,6 +43,7 @@ export interface LoreViewProps {
 }
 
 export const loreRecords = loadAllLoreRecords()
+const loreProjectIndex = loadLoreProjectIndex()
 
 function artifactFor(record: LoreRecord) {
   return wolvesRelease.artifacts.find(artifact => artifact.id === record.id)
@@ -80,14 +84,29 @@ export function getChatlogLore(record: LoreRecord): InterceptedConversation {
         text: match[4].replace(/<br>/g, '\n').trim()
       }
     }
+    const speakerOnlyMatch = trimmedBlock.match(/^(?:\*\*([^*]+)\*\*|([A-Z0-9-]+))$/i)
+    if (speakerOnlyMatch) {
+      return {
+        speaker: (speakerOnlyMatch[1] || speakerOnlyMatch[2]).trim(),
+        text: '',
+      }
+    }
     return { text: trimmedBlock.replace(/<br>/g, '\n') }
+  })
+  const projects = record.metadata.projects?.map((projectId) => {
+    const project = loreProjectIndex[projectId]
+    if (!project) {
+      throw new TypeError(`Lore record "${record.id}" references unknown project "${projectId}"`)
+    }
+    return project
   })
 
   return {
     title: record.metadata.title || '',
     channel: record.metadata.channel || 'ARCHIVE//LOG',
     date: record.metadata.timestamp || '',
-    messages
+    messages,
+    projects,
   }
 }
 

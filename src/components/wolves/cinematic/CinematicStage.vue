@@ -94,7 +94,7 @@ defineExpose({
     <WolvesOrgAds />
 
     <div class="wc-stage-nameplate">
-      <Nameplate :detail="plateDetail" :label="plateLabel" />
+      <Nameplate :detail="plateDetail" :label="plateLabel" :slow-fade="isTrackZero" />
     </div>
 
     <CinematicCaptions />

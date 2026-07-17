@@ -20,7 +20,6 @@ const props = defineProps<{
   records?: readonly LoreRecord[]
 }>()
 
-const activeTab = ref<'narrative' | 'database'>('narrative')
 const selectedDossierRecord = ref<LoreRecord | null>(null)
 
 const loreViewByKind: Record<LoreKind, Component> = {
@@ -40,8 +39,10 @@ const currentRecord = computed(() =>
   records.value.find(record => record.id === props.artifactId) ?? null,
 )
 
+const selectedRecord = computed(() => selectedDossierRecord.value ?? currentRecord.value)
+
 const selectedLoreView = computed(() => {
-  const record = currentRecord.value
+  const record = selectedRecord.value
   if (!record) {
     return null
   }
@@ -51,132 +52,54 @@ const selectedLoreView = computed(() => {
   return loreViewByKind[record.kind]
 })
 
-const dossierLoreView = computed(() => {
-  const record = selectedDossierRecord.value
-  if (!record) {
-    return null
-  }
-  if (record.kind === 'character-sheet' && record.metadata.subject_kind === 'dinosaur') {
-    return DinosaurDossierView
-  }
-  return loreViewByKind[record.kind]
-})
-
-const teams = [
-  {
-    name: 'TEAM ALPHA: SYSTEMS & POWER GRID',
-    members: [
-      { id: 'subjectprofile/kat-cosgrove', label: 'Kat Cosgrove (Guardian / Titan)' },
-      { id: 'subjectprofile/karl', label: 'Karl (Amargasaurus)' },
-      { id: 'guardian-bond/kat-cosgrove-karl', label: 'Kat ↔ Karl GuardianBond' },
-      { id: 'subjectprofile/robert-killen', label: 'Robert Killen (Guardian / Warlock)' },
-    ],
-  },
-  {
-    name: 'TEAM BETA: OPERATION & DEPLOYMENT',
-    members: [
-      { id: 'subjectprofile/jeefy', label: 'Jeefy (Guardian / Hunter)' },
-      { id: 'subjectprofile/mountaintop', label: 'Mountaintop (Torosaurus)' },
-      { id: 'guardian-bond/jeefy-mountaintop', label: 'Jeefy ↔ Mountaintop GuardianBond' },
-      { id: 'subjectprofile/laura-santamaria', label: 'Laura Santamaria (Guardian / Warlock)' },
-    ],
-  },
-  {
-    name: 'TEAM OMEGA: RECONCILIATION & ANCHORING',
-    members: [
-      { id: 'subjectprofile/natalie', label: 'Natalie / Natali Vlatko (Guardian / Titan)' },
-      { id: 'subjectprofile/alamo', label: 'Alamo (Alamosaurus)' },
-      { id: 'guardian-bond/natalie-alamo', label: 'Natalie ↔ Alamo GuardianBond' },
-      { id: 'subjectprofile/kaslin-fields', label: 'Kaslin Fields (Guardian / Warlock)' },
-      { id: 'subjectprofile/christopher-blecker', label: 'Christoph Blecker (Guardian / Warlock)' },
-    ],
-  },
-]
-
-function findRecordById(id: string) {
-  return records.value.find(r => r.id === id) ?? null
-}
+const dossierRecords = computed(() => records.value.filter(record =>
+  record.kind === 'character-sheet' || record.kind === 'guardian-bond',
+))
 
 watch(() => props.artifactId, () => {
-  activeTab.value = 'narrative'
   selectedDossierRecord.value = null
 })
 </script>
 
 <template>
   <div class="wolves-lore-column">
-    <!-- Futurist HUD Tab Selector -->
-    <div class="lore-tab-bar font-mono">
-      <button
-        class="lore-tab-btn"
-        :class="{ active: activeTab === 'narrative' }"
-        @click="activeTab = 'narrative'; selectedDossierRecord = null"
-      >
-        [ NARRATIVE FEED ]
-      </button>
-      <button
-        class="lore-tab-btn text-cyan"
-        :class="{ active: activeTab === 'database' }"
-        @click="activeTab = 'database'"
-      >
-        [ DOSSIER ARCHIVE ]
-      </button>
-    </div>
+    <details class="dossier-archive-directory font-mono" data-dossier-directory>
+      <summary class="directory-title">
+        [ DOSSIER INDEX · {{ dossierRecords.length }} RECORDS ]
+      </summary>
+      <p class="directory-subtitle">
+        SELECT A GUARDIAN, DINOSAUR, OR DEPLOYED BOND
+      </p>
+      <div class="team-members">
+        <button
+          v-for="record in dossierRecords"
+          :key="record.id"
+          class="dossier-link-btn"
+          :data-dossier-record-id="record.id"
+          @click="selectedDossierRecord = record"
+        >
+          &gt; {{ record.metadata.title ?? record.id }}
+        </button>
+      </div>
+    </details>
 
-    <!-- Tab Contents -->
-    <div v-if="activeTab === 'narrative'" class="tab-content flex flex-1 flex-col min-h-0">
+    <div class="tab-content flex flex-1 flex-col min-h-0" data-unified-lore-feed>
+      <button
+        v-if="selectedDossierRecord"
+        class="back-to-archive-btn font-mono"
+        data-back-to-current-record
+        @click="selectedDossierRecord = null"
+      >
+        &laquo; [ RETURN TO CURRENT RECORD ]
+      </button>
       <component
         :is="selectedLoreView"
-        v-if="currentRecord"
-        :record="currentRecord"
+        v-if="selectedRecord"
+        :record="selectedRecord"
         :records="records"
         :duration="duration"
-        :warning="warning"
+        :warning="selectedDossierRecord ? undefined : warning"
       />
-    </div>
-
-    <div v-else-if="activeTab === 'database'" class="tab-content flex flex-1 flex-col min-h-0">
-      <!-- Detail Card View -->
-      <div v-if="selectedDossierRecord" class="flex flex-1 flex-col min-h-0">
-        <button
-          class="back-to-archive-btn font-mono"
-          @click="selectedDossierRecord = null"
-        >
-          &laquo; [ BACK TO DOSSIER ARCHIVE ]
-        </button>
-        <component
-          :is="dossierLoreView"
-          :record="selectedDossierRecord"
-          :records="records"
-          :duration="duration"
-        />
-      </div>
-
-      <!-- Main Directory List View -->
-      <div v-else class="dossier-archive-directory font-mono">
-        <h3 class="directory-title">
-          // OUTPOST-6 SECURE DATABASE
-        </h3>
-        <p class="directory-subtitle">
-          SELECT COGNITIVE FILE INDEX OR DEPLOYED BOND TO EXTRACT CORE TELEMETRY
-        </p>
-
-        <div v-for="team in teams" :key="team.name" class="team-group">
-          <div class="team-header font-bold text-blue-300">
-            {{ team.name }}
-          </div>
-          <div class="team-members">
-            <button
-              v-for="member in team.members"
-              :key="member.id"
-              class="dossier-link-btn"
-              @click="selectedDossierRecord = findRecordById(member.id)"
-            >
-              &gt; {{ member.label }}
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -187,7 +110,9 @@ watch(() => props.artifactId, () => {
   flex-direction: column;
   flex: 1;
   gap: 16px;
+  height: 100%;
   min-height: 0;
+  overflow: hidden;
 }
 
 .tab-content {
@@ -195,35 +120,6 @@ watch(() => props.artifactId, () => {
   flex-direction: column;
   flex: 1;
   min-height: 0;
-}
-
-.lore-tab-bar {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 4px;
-}
-
-.lore-tab-btn {
-  background: transparent;
-  border: 1px solid rgba(102, 179, 255, 0.2);
-  color: #94a3b8;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    border-color: rgba(102, 179, 255, 0.5);
-    color: #ffffff;
-  }
-
-  &.active {
-    border-color: #3b82f6;
-    background: rgba(59, 130, 246, 0.15);
-    color: #ffffff;
-  }
 }
 
 .back-to-archive-btn {
@@ -249,19 +145,20 @@ watch(() => props.artifactId, () => {
 .dossier-archive-directory {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 16px;
-  border-radius: 16px;
+  flex: 0 0 auto;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
   border: 1px solid #272727;
   background: #10151f;
+  max-height: 34%;
   overflow-y: auto;
-  flex: 1;
 }
 
 .directory-title {
-  margin: 0;
+  cursor: pointer;
   color: #38bdf8;
-  font-size: 1.2rem;
+  font-size: 1rem;
   letter-spacing: 0.05em;
 }
 
@@ -270,20 +167,6 @@ watch(() => props.artifactId, () => {
   color: #64748b;
   font-size: 0.85rem;
   line-height: 1.4;
-}
-
-.team-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.team-header {
-  font-size: 0.95rem;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid rgba(147, 197, 253, 0.2);
-  padding-bottom: 4px;
 }
 
 .team-members {

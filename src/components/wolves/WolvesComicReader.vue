@@ -7,6 +7,7 @@ Renders the soundtrack-synced Wolves visual presentation.
 import type { SoundtrackTrack, WolvesSoundtrackManifest } from '@/data/wolves-soundtrack'
 
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { ghostsInTheMistOpeningSlide } from '@/data/wolves-gallery-featured'
 import { shuffleWolvesGalleryPhotos } from '@/data/wolves-gallery-shuffle'
 import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
 import {
@@ -331,7 +332,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   const peoplePool1 = shuffledPeople.slice(0, 15)
   const jonoPhoto = peoplePool1.find(item => item.id === jonoBaconSlideId)
   const marinaPhoto = peoplePool1.find(item => item.id === marinaMooreSlideId)
-  // The Bluefin group (sherman, m2, kyle, hikari) locks as one back-to-back run;
+  // The Bluefin group (Sherman + m2 composite, kyle, hikari) locks as one back-to-back run;
   // it only engages when every member survived into the Track 0 people pool.
   const bluefinGroupPhotos = bluefinGroupSlides.map(slide => ({
     slide,
@@ -606,7 +607,16 @@ const activeFlickrIndex = computed(() => {
     return 0
   }
 
-  return Math.floor(props.playlistCurrentTime / (laterTrackSlideHold.value ?? 7))
+  const standardHold = laterTrackSlideHold.value ?? 7
+  const hasFeaturedOpening = props.trackIndex === ghostsInTheMistOpeningSlide.trackIndex
+    && laterTrackPhotos.value[0]?.id === ghostsInTheMistOpeningSlide.photoId
+  if (!hasFeaturedOpening) {
+    return Math.floor(props.playlistCurrentTime / standardHold)
+  }
+  if (props.playlistCurrentTime < ghostsInTheMistOpeningSlide.holdSeconds) {
+    return 0
+  }
+  return 1 + Math.floor((props.playlistCurrentTime - ghostsInTheMistOpeningSlide.holdSeconds) / standardHold)
 })
 
 const activeDisplayIndex = computed(() => {
@@ -715,6 +725,10 @@ function photoObjectFit(photo: any) {
   return photo?.fit === 'cover' ? 'cover' : 'contain'
 }
 
+function photoObjectPosition(photo: any) {
+  return photo?.id === ghostsInTheMistOpeningSlide.photoId ? 'center top' : 'center'
+}
+
 function shuffleArray<T>(array: T[]): T[] {
   const copy = [...array]
   for (let i = copy.length - 1; i > 0; i--) {
@@ -727,16 +741,20 @@ function shuffleArray<T>(array: T[]): T[] {
 function snapshotLaterTrackPhotos() {
   const remotePhotos = flickrPhotos.value
     .filter(photo => !trackZeroFlickrPhotoIds.has(photo.id))
-    .map(photo => ({
-      id: photo.id,
-      isLocal: false,
-      path: `https://live.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_b.jpg`,
-      title: photo.title,
-      type: 'single' as const,
-      dayName: undefined,
-      nightName: undefined,
-      rawPhoto: photo
-    }))
+    .map((photo) => {
+      const isFeaturedOpening = photo.id === ghostsInTheMistOpeningSlide.photoId
+      return {
+        id: photo.id,
+        isLocal: false,
+        path: `https://live.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_${isFeaturedOpening ? ghostsInTheMistOpeningSlide.imageSizeSuffix : 'b'}.jpg`,
+        title: isFeaturedOpening ? ghostsInTheMistOpeningSlide.title : photo.title,
+        description: isFeaturedOpening ? ghostsInTheMistOpeningSlide.description : undefined,
+        type: 'single' as const,
+        dayName: undefined,
+        nightName: undefined,
+        rawPhoto: photo
+      }
+    })
   if (remotePhotos.length === 0) {
     shuffledLaterTrackPhotos.value = []
     shownLaterTrackPhotoIds.clear()
@@ -744,13 +762,18 @@ function snapshotLaterTrackPhotos() {
     return
   }
 
+  const featuredOpening = remotePhotos.find(photo => photo.id === ghostsInTheMistOpeningSlide.photoId)
+  const shufflePool = remotePhotos.filter(photo => photo.id !== ghostsInTheMistOpeningSlide.photoId)
   if (shuffledLaterTrackPhotos.value.length === 0) {
-    shuffledLaterTrackPhotos.value = shuffleWolvesGalleryPhotos(remotePhotos)
+    shuffledLaterTrackPhotos.value = shuffleWolvesGalleryPhotos(shufflePool)
   }
 
   const displayedPhotoIds = new Set([photoA.value?.id, photoB.value?.id])
-  laterTrackPhotos.value = shuffledLaterTrackPhotos.value
+  const availablePhotos = shuffledLaterTrackPhotos.value
     .filter(photo => !shownLaterTrackPhotoIds.has(photo.id) && !displayedPhotoIds.has(photo.id))
+  laterTrackPhotos.value = props.trackIndex === ghostsInTheMistOpeningSlide.trackIndex && featuredOpening
+    ? [featuredOpening, ...availablePhotos]
+    : availablePhotos
 }
 
 function deterministicShuffle<T>(array: T[], seed = 42): T[] {
@@ -893,7 +916,7 @@ onBeforeUnmount(() => {
                 <img
                   :src="getFlickrPhotoUrl(photoA)"
                   class="flickr-img"
-                  :style="{ objectFit: photoObjectFit(photoA) }"
+                  :style="{ objectFit: photoObjectFit(photoA), objectPosition: photoObjectPosition(photoA) }"
                   :alt="photoA.title"
                   @error="(e) => handleImageError(e, photoA)"
                 >
@@ -929,7 +952,7 @@ onBeforeUnmount(() => {
                 <img
                   :src="getFlickrPhotoUrl(photoB)"
                   class="flickr-img"
-                  :style="{ objectFit: photoObjectFit(photoB) }"
+                  :style="{ objectFit: photoObjectFit(photoB), objectPosition: photoObjectPosition(photoB) }"
                   :alt="photoB.title"
                   @error="(e) => handleImageError(e, photoB)"
                 >
@@ -941,7 +964,10 @@ onBeforeUnmount(() => {
             <div
               v-if="activePhoto && (activePhoto.description || activePhoto.theaterTitleOnly)"
               class="wallpaper-theater-caption"
-              :class="{ 'is-title-only': activePhoto.theaterTitleOnly }"
+              :class="{
+                'is-title-only': activePhoto.theaterTitleOnly,
+                'is-featured-opening': activePhoto.id === ghostsInTheMistOpeningSlide.photoId,
+              }"
             >
               <p class="wallpaper-theater-caption-title">
                 {{ activePhoto.title }}
@@ -1430,6 +1456,10 @@ onBeforeUnmount(() => {
   box-shadow: 0 8px 30px rgb(0 0 0 / 55%);
   backdrop-filter: blur(6px);
   text-shadow: 0 2px 8px rgb(0 0 0 / 70%);
+
+  &.is-featured-opening {
+    max-height: 64%;
+  }
 
   &.is-title-only {
     bottom: 8%;
