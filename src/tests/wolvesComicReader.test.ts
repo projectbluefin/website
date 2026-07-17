@@ -214,7 +214,7 @@ describe('wolvesComicReader', () => {
     await wrapper.setProps({ playlistCurrentTime: 190.238 })
     expect(activeTimelineImage(wrapper)).toContain(hikariPath)
 
-    await wrapper.setProps({ playlistCurrentTime: 190.241 })
+    await wrapper.setProps({ playlistCurrentTime: 190.239 })
     expect(activeTimelineImage(wrapper)).toContain(hikari2Path)
 
     await wrapper.setProps({ playlistCurrentTime: 192.278 })
@@ -228,6 +228,32 @@ describe('wolvesComicReader', () => {
 
     await wrapper.setProps({ playlistCurrentTime: 196.359 })
     expect(activeTimelineImage(wrapper)).not.toContain(jorgePath)
+  })
+
+  it('ignores Track 0 BPM metadata and keeps authored Hikari windows', async () => {
+    mockGalleryData([{
+      ...coverTrack,
+      bpm: 300,
+      phraseBeats: 1,
+      fadeDuration: 100,
+    }])
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        trackIndex: 0,
+        playlistCurrentTime: 188.199,
+      },
+    })
+    await flushPromises()
+
+    expect(activeTimelineImage(wrapper)).toContain('wolves/people/hikari.JPG')
+    expect(galleryCrossfadeDuration(wrapper)).toBeCloseTo(612, 5)
+
+    await wrapper.setProps({ playlistCurrentTime: 190.238 })
+    expect(activeTimelineImage(wrapper)).toContain('wolves/people/hikari.JPG')
+
+    await wrapper.setProps({ playlistCurrentTime: 190.239 })
+    expect(activeTimelineImage(wrapper)).toContain('wolves/people/hikari2.JPG')
+    expect(galleryCrossfadeDuration(wrapper)).toBeCloseTo(612, 5)
   })
 
   it('renders Jono Bacon’s Cult Psychology title as a theater banner', async () => {

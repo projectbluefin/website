@@ -1,8 +1,22 @@
 import { describe, expect, it } from 'vitest'
 import {
   bluefinGroupSlides,
+  jonoBaconSlideId,
+  jonoBaconTrackZeroWindow,
+  jorgeBluefinSlideId,
+  jorgeBluefinTrackZeroWindow,
+  hikari2SlideId,
+  hikari2TrackZeroWindow,
+  hikariSlideId,
+  hikariTrackZeroWindow,
+  kyleSlideId,
+  kyleTrackZeroWindow,
+  marinaMooreSlideId,
+  marinaMooreTrackZeroWindow,
   pinJonoBaconAtTrackZeroWindow,
   pinTrackZeroHeroSlides,
+  shermanM2CompositeSlideId,
+  shermanM2CompositeTrackZeroWindow,
   splitTrackZeroFastFinaleSlides,
   trackZeroFastFinalePhotoIds,
 } from '../data/wolves-track-zero-slides'
@@ -44,20 +58,55 @@ describe('wolves Track 0 slide locks', () => {
     ])
   })
 
-  it('orders the Bluefin group sherman+m2, kyle, hikari with contiguous windows', () => {
+  it('keeps the authored hero locks unique, exact, and contiguous', () => {
+    const lockedSlides = [
+      { id: jonoBaconSlideId, window: jonoBaconTrackZeroWindow },
+      { id: marinaMooreSlideId, window: marinaMooreTrackZeroWindow },
+      ...bluefinGroupSlides,
+    ]
+
+    expect(lockedSlides.map(slide => slide.id)).toEqual([
+      'wolves/people/interview-jono-bacon-cult-psychology-kubernetes.webp',
+      'wolves/people/kubecon-55168684055.webp',
+      shermanM2CompositeSlideId,
+      kyleSlideId,
+      hikariSlideId,
+      hikari2SlideId,
+      jorgeBluefinSlideId,
+    ])
+    expect(new Set(lockedSlides.map(slide => slide.id)).size).toBe(lockedSlides.length)
+    expect(lockedSlides.map(slide => [slide.window.startTime, slide.window.endTime])).toEqual([
+      [167.8, 171.88],
+      [171.88, 175.96],
+      [175.96, 184.12],
+      [184.12, 188.2],
+      [188.2, 190.24],
+      [190.24, 192.28],
+      [192.28, 196.36],
+    ])
+    for (let i = 1; i < lockedSlides.length; i++) {
+      expect(lockedSlides[i].window.startTime).toBe(lockedSlides[i - 1].window.endTime)
+    }
+  })
+
+  it('orders the Bluefin group sherman+m2, kyle, dual hikari, then jorge', () => {
     expect(bluefinGroupSlides.map(slide => slide.id)).toEqual([
-      'wolves/people/sherman-m2.webp',
-      'wolves/people/kyle.jpg',
-      'wolves/people/hikari.JPG',
-      'wolves/people/hikari2.JPG',
-      'wolves/people/jorge-bluefin.webp',
+      shermanM2CompositeSlideId,
+      kyleSlideId,
+      hikariSlideId,
+      hikari2SlideId,
+      jorgeBluefinSlideId,
     ])
     for (let i = 1; i < bluefinGroupSlides.length; i++) {
       expect(bluefinGroupSlides[i].window.startTime).toBe(bluefinGroupSlides[i - 1].window.endTime)
     }
-    expect(bluefinGroupSlides[0].window.startTime).toBe(175.96)
-    expect(bluefinGroupSlides[0].window.endTime).toBe(184.12)
-    expect(bluefinGroupSlides[4].window.endTime).toBe(196.36)
+    expect(bluefinGroupSlides.map(slide => slide.window)).toEqual([
+      shermanM2CompositeTrackZeroWindow,
+      kyleTrackZeroWindow,
+      hikariTrackZeroWindow,
+      hikari2TrackZeroWindow,
+      jorgeBluefinTrackZeroWindow,
+    ])
   })
 
   it('keeps an already pinned pair stable and tolerates a missing hero slide', () => {

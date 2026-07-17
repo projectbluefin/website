@@ -42,7 +42,7 @@ export const jorgeBluefinTrackZeroWindow = {
 
 /**
  * The Bluefin group: the locked run of Bluefin community photos that plays
- * back-to-back after Marina's window (Sherman + m2 composite -> kyle -> hikari -> jorge).
+ * back-to-back after Marina's window (Sherman + m2 composite -> kyle -> Hikari -> Hikari2 -> Jorge).
  */
 export const bluefinGroupSlides = [
   { id: shermanM2CompositeSlideId, window: shermanM2CompositeTrackZeroWindow },

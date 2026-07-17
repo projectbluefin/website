@@ -387,28 +387,42 @@ try {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
   })
-  assertTruthy('Kyle still holds immediately before the Hikari composite', kyleBeforeHikari?.includes('kyle.jpg'))
+  assertTruthy('Kyle still holds immediately before the first Hikari slide', kyleBeforeHikari?.includes('kyle.jpg'))
 
   await seekStage(188.199)
   const hikariAtStart = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
   })
-  assertTruthy('Hikari composite starts at 3:08.199', hikariAtStart?.includes('hikari.webp'))
+  assertTruthy('First Hikari slide starts at 3:08.199', hikariAtStart?.includes('hikari.JPG'))
+
+  await seekStage(190.238)
+  const hikariBeforeSecond = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assertTruthy('First Hikari slide remains active immediately before its handoff', hikariBeforeSecond?.includes('hikari.JPG'))
+
+  await seekStage(190.239)
+  const hikariSecondAtStart = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
+    const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+    return activeLayer?.querySelector('img')?.getAttribute('src')
+  })
+  assertTruthy('Second Hikari slide starts at 3:10.239', hikariSecondAtStart?.includes('hikari2.JPG'))
 
   await seekStage(192.278)
   const hikariBeforeHandoff = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
   })
-  assertTruthy('Hikari composite remains active immediately before its handoff', hikariBeforeHandoff?.includes('hikari.webp'))
+  assertTruthy('Second Hikari slide remains active immediately before its handoff', hikariBeforeHandoff?.includes('hikari2.JPG'))
 
   await seekStage(192.279)
   const hikariAtHandoff = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
   })
-  assert('Hikari composite hands off at 3:12.279', hikariAtHandoff?.includes('hikari.webp'), false)
+  assert('Second Hikari slide hands off at 3:12.279', hikariAtHandoff?.includes('hikari2.JPG'), false)
 
   await seekStage(196.36)
   await waitForSignalFade()
