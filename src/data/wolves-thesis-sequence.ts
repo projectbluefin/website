@@ -14,6 +14,10 @@ export interface WolvesThesisState {
 
 const THESIS_START_SECONDS = 345
 const THESIS_END_SECONDS = 425
+const TRACK_ZERO_BPM = 152
+const PHRASE_BEATS = 16
+const DEFAULT_HUD_LABEL = 'Incoming Signal: Universal Blue'
+const TITANFALL_HUD_LABEL = 'Bazzite Mk6 Units: Prepare for Titanfall'
 
 const inactive: WolvesThesisState = { active: false, mode: 'inactive', text: '', subtitle: '', warning: '', dayPulse: false, hudLabel: '' }
 
@@ -48,8 +52,13 @@ export function parseIncomingSignalMessages(source: string): readonly string[] {
 export const wolvesIncomingSignalMessages = parseIncomingSignalMessages(incomingSignalSource)
 
 export function getWolvesHudLabel(time: number): string {
+  const interval = (60 / TRACK_ZERO_BPM) * PHRASE_BEATS
   if (time < 175.96) {
-    return 'Incoming Signal'
+    if (wolvesIncomingSignalMessages.length === 0) {
+      return DEFAULT_HUD_LABEL
+    }
+    const phraseIndex = Math.floor(time / interval)
+    return wolvesIncomingSignalMessages[phraseIndex % wolvesIncomingSignalMessages.length] ?? DEFAULT_HUD_LABEL
   }
   if (time < 196.36) {
     return 'The Blue Delivers'
@@ -66,28 +75,14 @@ export function getWolvesHudLabel(time: number): string {
   if (time < 345) {
     return 'Falling back to "humans/trying-their-best:v1" slowly'
   }
-  if (time < 347.75) {
-    return 'We\'ve got your back.'
-  }
-  if (time < 350.5) {
-    return 'You\'ll never walk alone ...'
-  }
-  if (time < 359) {
-    return 'Welcome to indie cloud native'
-  }
-  if (time < 365) {
-    return 'Evolve or die ...'
-  }
-  if (time < 395) {
-    return ''
-  }
-  if (time < 405) {
-    return ''
-  }
   if (time < 408) {
-    return 'You have ascended ...'
+    if (wolvesIncomingSignalMessages.length === 0) {
+      return DEFAULT_HUD_LABEL
+    }
+    const phraseIndex = Math.floor((time - THESIS_START_SECONDS) / interval + 1e-9)
+    return wolvesIncomingSignalMessages[Math.min(phraseIndex, wolvesIncomingSignalMessages.length - 1)] ?? DEFAULT_HUD_LABEL
   }
-  return 'Become Legend'
+  return TITANFALL_HUD_LABEL
 }
 
 export function getWolvesThesisState(time: number): WolvesThesisState {
