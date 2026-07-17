@@ -503,46 +503,6 @@ surrounded by predators.`,
       ],
     },
     {
-      id: 'bluefin-cinematic-universe',
-      kind: 'text',
-      duration: 28,
-      overlays: [
-        {
-          text: 'Project Bluefin presents — Three projects, inspired by the first:',
-          start: 0,
-          end: 6,
-          preservePunctuation: true,
-        },
-        {
-          text: `Holotype [ exploding clusters ]
-[ Mecha[REDACTED] ]
-[ REDACTED ]`,
-          start: 6,
-          end: 12,
-          preservePunctuation: true,
-        },
-        {
-          text: 'and this one. The Bluefin Cinematic Universe. Buckle up, nerds —',
-          start: 12,
-          end: 19,
-          preservePunctuation: true,
-        },
-        {
-          text: 'Welcome to Indie Cloud Native —',
-          start: 19,
-          end: 24,
-          preservePunctuation: true,
-        },
-        {
-          text: 'For Nova`',
-          start: 24,
-          end: 28,
-          preservePunctuation: true,
-          highlightSubstrings: ['`'],
-        },
-      ],
-    },
-    {
       // The Destiny segment now defaults to the unvoiced source and carries an optional voiced
       // toggle. Guardian window timings below were re-verified frame-by-frame
       // against the real embed (Playwright + the YouTube IFrame API, screenshotting every

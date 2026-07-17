@@ -168,10 +168,9 @@ describe('wolves intro overlay sequence', () => {
 
   it('builds the intro sequence without the epilogue transition', () => {
     const sequence = buildIntroVideoSequence()
-    expect(sequence).toHaveLength(3)
+    expect(sequence).toHaveLength(2)
     expect(sequence.map(segment => segment.id)).toEqual([
       'wolves-prologue',
-      'bluefin-cinematic-universe',
       'wolves-intro',
     ])
     expect(JSON.stringify(sequence)).not.toContain('But who will answer the call')
@@ -397,32 +396,5 @@ And its will to survive is utterly Broken`,
         textPosition: 'bottom',
       }),
     ]))
-  })
-
-  it('adds the authored cinematic-universe slate before the Destiny trailer', () => {
-    const sequence = buildIntroVideoSequence()
-    const slate = sequence.find(segment => segment.id === 'bluefin-cinematic-universe')
-    const trailer = sequence[sequence.length - 1]
-
-    if (!slate || !trailer || !isTextSegment(slate) || !isVideoSegment(trailer)) {
-      throw new Error('Expected slate text segment followed by the Destiny trailer')
-    }
-
-    expect(slate.overlays?.map(cue => cue.text)).toEqual([
-      'Project Bluefin presents — Three projects, inspired by the first:',
-      `Holotype [ exploding clusters ]
-[ Mecha[REDACTED] ]
-[ REDACTED ]`,
-      'and this one. The Bluefin Cinematic Universe. Buckle up, nerds —',
-      'Welcome to Indie Cloud Native —',
-      'For Nova`',
-    ])
-    expect(slate.overlays?.[slate.overlays.length - 1]).toEqual(expect.objectContaining({
-      text: 'For Nova`',
-      preservePunctuation: true,
-      highlightSubstrings: ['`'],
-    }))
-    expect(slate.overlays?.every(cue => cue.preservePunctuation)).toBe(true)
-    expect(trailer.id).toBe('wolves-intro')
   })
 })

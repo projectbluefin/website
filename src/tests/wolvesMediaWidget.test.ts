@@ -24,6 +24,6 @@ describe('media widget', () => {
     expect(wrapper.text()).toContain('DEPLOYMENT: wolves-decryption-engine-7')
     expect(wrapper.text()).toContain(`${Math.round(store.overallProgress * 100)}%`)
     expect(wrapper.text()).toContain('0:10 / 4:31')
-    expect(wrapper.text()).toContain('TOTAL 34:44 / 39:05')
+    expect(wrapper.text()).toContain('TOTAL 34:16 / 38:37')
   })
 })

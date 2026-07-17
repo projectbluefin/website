@@ -47,12 +47,6 @@ const INTRO_DISPLAY: Record<string, { chapter: string, title: string, artist: st
     artist: 'AN4-ChK-12',
     artwork: 'https://i.ytimg.com/vi/EB3IokHelRk/hqdefault.jpg',
   },
-  'bluefin-cinematic-universe': {
-    chapter: 'UNIVERSAL BLUE BRIEFING',
-    title: 'Bluefin Cinematic Universe Slate',
-    artist: 'Project Bluefin',
-    artwork: 'https://i.ytimg.com/vi/BKm0TPqeOjY/hqdefault.jpg',
-  },
   'wolves-intro': {
     chapter: 'UNIVERSAL BLUE BRIEFING',
     title: 'Destiny 2: Into the Light Cinematic',
