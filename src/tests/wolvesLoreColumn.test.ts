@@ -161,6 +161,23 @@ describe('wolvesLoreColumn Logic', () => {
     expect(chatlog.messages[0].text.startsWith(renderedMessage)).toBe(true)
   })
 
+  it('shows a live typing cursor until a chatlog reveal is skipped', async () => {
+    vi.useFakeTimers()
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId: 'lorem-prologue-1',
+        duration: 0.01,
+      },
+    })
+
+    vi.advanceTimersByTime(50)
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-chatlog-typing]').exists()).toBe(true)
+
+    await wrapper.find('.quote-viewport').trigger('click')
+    expect(wrapper.find('[data-chatlog-typing]').exists()).toBe(false)
+  })
+
   it('renders The Children sound effects with the established SFX treatment', async () => {
     vi.useFakeTimers()
     const wrapper = mount(WolvesLoreColumn, {
@@ -350,7 +367,9 @@ describe('wolvesLoreColumn Logic', () => {
     expect(wrapper.find('[data-lore-view="news-bulletin"]').exists()).toBe(true)
     expect(wrapper.get('[data-lore-warning]').classes()).toContain('thesis-warning-fade')
     expect(wrapper.get('[data-lore-warning]').text()).toBe(thesisState.warning)
-    expect(wrapper.text()).not.toContain(thesisState.text)
+    if (thesisState.text) {
+      expect(wrapper.text()).not.toContain(thesisState.text)
+    }
   })
 
   it.each([
@@ -387,6 +406,23 @@ describe('wolvesLoreColumn Logic', () => {
     expect(wrapper.text()).toContain('super: Test super')
     expect(wrapper.text()).toContain('GuardianBond: guardian-dinosaur')
     expect(wrapper.text()).toContain('fnv1a:')
+  })
+
+  it('indexes every documented Guardian dossier and deployed bond', async () => {
+    const wrapper = mount(WolvesLoreColumn, {
+      props: {
+        artifactId: 'arthur-c-clarke-3',
+        duration: 20,
+      },
+    })
+
+    await wrapper.get('.lore-tab-btn.text-cyan').trigger('click')
+
+    expect(wrapper.text()).toContain('Robert Killen (Guardian / Warlock)')
+    expect(wrapper.text()).toContain('Kaslin Fields (Guardian / Warlock)')
+    expect(wrapper.text()).toContain('Laura Santamaria (Guardian / Warlock)')
+    expect(wrapper.text()).toContain('Christoph Blecker (Guardian / Warlock)')
+    expect(wrapper.findAll('.dossier-link-btn')).toHaveLength(13)
   })
 
   afterEach(() => {

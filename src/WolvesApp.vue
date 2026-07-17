@@ -4,6 +4,7 @@ import CinematicLobby from '@/components/wolves/cinematic/CinematicLobby.vue'
 import CinematicStage from '@/components/wolves/cinematic/CinematicStage.vue'
 import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import Nameplate from '@/components/wolves/cinematic/Nameplate.vue'
+import WolvesCreatorShortsInterstitial from '@/components/wolves/WolvesCreatorShortsInterstitial.vue'
 import WolvesIntroOverlay from '@/components/wolves/WolvesIntroOverlay.vue'
 import { buildIntroVideoSequence } from '@/data/wolves-intro-sequence'
 import { useCinematicStore } from '@/stores/cinematic'
@@ -17,13 +18,19 @@ async function enterCinematic() {
   await nextTick() // stage mounts with the new phase before players are created
   await stage.value?.start()
   if (import.meta.env.DEV) {
-    // Dev-only hook so browser-based boundary verification can drive the real player.
-    ;(window as any).__wolvesCinematic = { seekTo: (s: number) => stage.value?.seekTo(s) }
+    // Dev-only hook so browser-based boundary verification can drive the real player
+    // by player time (seek) and by segment handoff (skip). Never exposed in
+    // production builds — import.meta.env.DEV is false there, so this is tree-shaken.
+    ;(window as any).__wolvesCinematic = {
+      seekTo: (seconds: number) => stage.value?.seekTo(seconds),
+      skip: (delta: number) => stage.value?.skip(delta),
+    }
   }
 }
 
 const introVideos = buildIntroVideoSequence()
 const intro = ref<InstanceType<typeof WolvesIntroOverlay> | null>(null)
+const introHasActiveCue = ref(true)
 
 // Factual display metadata for the two intro segments (see wolves-intro-sequence.ts).
 const INTRO_DISPLAY: Record<string, { chapter: string, title: string, artist: string, artwork: string }> = {
@@ -47,6 +54,7 @@ function handleIntroStatus(payload: {
   paused: boolean
   segmentId: string
   canGoPrevious: boolean
+  hasActiveCue: boolean
 }) {
   const meta = INTRO_DISPLAY[payload.segmentId]
   if (meta) {
@@ -54,12 +62,20 @@ function handleIntroStatus(payload: {
   }
   store.updateTime(payload.currentTime, payload.duration)
   store.setPlaying(!payload.paused)
+  introHasActiveCue.value = payload.hasActiveCue
 }
 
 async function handleIntroComplete() {
   store.setDisplayOverride(null)
   store.resetClock()
   await enterCinematic()
+}
+
+/** Creator Shorts finishes -> resume Part II from the store's current segment. */
+async function handleCreatorShortsComplete() {
+  store.completeCreatorShorts()
+  await nextTick()
+  await stage.value?.start()
 }
 
 function restart() {
@@ -72,7 +88,7 @@ function restart() {
     <CinematicLobby v-if="store.phase === 'lobby'" @enter="store.enterIntro()" />
 
     <!--
-      The authored intro: the 85s prologue cold open and the guardian trailer,
+      The authored intro: the 94s prologue cold open and the guardian trailer,
       rendered by WolvesIntroOverlay exactly as authored in
       src/data/wolves-intro-sequence.ts. Transport lives in the same hero widget
       as the cinematic; the top plate is the universal title placard.
@@ -84,7 +100,7 @@ function restart() {
         @status="handleIntroStatus"
         @complete="handleIntroComplete"
       />
-      <div class="wc-intro-nameplate">
+      <div v-if="store.display.chapter !== 'PROLOGUE' || introHasActiveCue" class="wc-intro-nameplate">
         <Nameplate :detail="store.display.chapter" :label="store.display.title" />
       </div>
       <MediaWidget
@@ -92,6 +108,10 @@ function restart() {
         @skip="(delta: number) => (delta > 0 ? intro?.next() : intro?.previous())"
         @seek="(ratio: number) => intro?.seekToRatio(ratio)"
       />
+    </div>
+
+    <div v-else-if="store.phase === 'creator-shorts'" class="wc-runtime">
+      <WolvesCreatorShortsInterstitial @complete="handleCreatorShortsComplete" />
     </div>
 
     <div v-else-if="store.phase === 'cinematic'" class="wc-runtime">

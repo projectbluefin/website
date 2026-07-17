@@ -53,7 +53,6 @@ function handleSeek(event: MouseEvent) {
       alt=""
     >
     <div class="wc-widget-info">
-      <span class="wc-label">{{ store.display.counter }}</span>
       <span class="wc-widget-title">{{ store.display.title }}</span>
       <div
         ref="progressEl"

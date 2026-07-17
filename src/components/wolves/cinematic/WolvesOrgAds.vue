@@ -1,0 +1,113 @@
+<script setup lang="ts">
+import { usePreferredReducedMotion } from '@vueuse/core'
+import { computed } from 'vue'
+import { getWolvesOrgAdBlend, WOLVES_ORG_AD_PAIRS } from '@/data/wolves-org-ads'
+import { useCinematicStore } from '@/stores/cinematic'
+
+const store = useCinematicStore()
+const reducedMotion = usePreferredReducedMotion()
+const visible = computed(() => store.phase === 'cinematic' && store.segmentIndex > 0)
+const blend = computed(() => getWolvesOrgAdBlend(store.segmentElapsed))
+const opacities = computed(() => {
+  if (reducedMotion.value !== 'reduce') {
+    return blend.value.opacities
+  }
+  return blend.value.interactivePairIndex === 0 ? [1, 0] as const : [0, 1] as const
+})
+</script>
+
+<template>
+  <div v-if="visible" class="wc-org-ads" aria-label="Open source community links">
+    <div
+      v-for="(pair, pairIndex) in WOLVES_ORG_AD_PAIRS"
+      :key="pairIndex"
+      class="wc-org-ad-pair"
+      :class="{ 'is-interactive': blend.interactivePairIndex === pairIndex }"
+      :data-pair="pairIndex"
+      :data-opacity="opacities[pairIndex]"
+      :style="{ opacity: opacities[pairIndex] }"
+      :aria-hidden="blend.interactivePairIndex !== pairIndex"
+    >
+      <a
+        v-for="(ad, index) in pair"
+        :key="ad.id"
+        class="wc-org-ad"
+        :class="index === 0 ? 'wc-org-ad--left' : 'wc-org-ad--right'"
+        :data-org="ad.id"
+        :href="ad.href"
+        target="_blank"
+        rel="noopener noreferrer"
+        :aria-label="ad.name"
+        :tabindex="blend.interactivePairIndex === pairIndex ? 0 : -1"
+      >
+        <img class="wc-org-ad-image" :src="ad.image" :alt="ad.imageAlt">
+        <img class="wc-org-ad-qr" :src="ad.qr" :alt="ad.qrAlt">
+      </a>
+    </div>
+  </div>
+</template>
+
+<style scoped lang="scss">
+.wc-org-ads {
+  --wc-org-ad-width: clamp(18rem, 22vw, 26rem);
+  position: absolute;
+  inset: 9rem 0 10.5rem;
+  z-index: 18;
+  pointer-events: none;
+}
+
+.wc-org-ad-pair {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.wc-org-ad-pair.is-interactive .wc-org-ad {
+  pointer-events: auto;
+}
+
+.wc-org-ad {
+  position: absolute;
+  top: 50%;
+  display: flex;
+  width: var(--wc-org-ad-width);
+  min-height: 0;
+  max-height: 100%;
+  padding: 2.4rem;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid rgb(127 212 212 / 35%);
+  background: rgb(8 9 12 / 88%);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.wc-org-ad--left {
+  left: 2.4rem;
+}
+
+.wc-org-ad--right {
+  right: 2.4rem;
+}
+
+.wc-org-ad-image,
+.wc-org-ad-qr {
+  display: block;
+  width: 100%;
+  max-height: 45%;
+  object-fit: contain;
+}
+
+.wc-org-ad-qr {
+  width: min(85%, 16rem);
+}
+
+@media (max-width: 1023px) {
+  .wc-org-ads {
+    display: none;
+  }
+}
+</style>

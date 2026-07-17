@@ -1,6 +1,9 @@
 ---
 name: wolves-fullscreen-overlays
 description: Use when building or debugging a fullscreen overlay (intro video, cinematic, modal takeover) inside the Wolves immersive experience, or when embedding third-party video via the YouTube IFrame Player API anywhere on the Wolves page. Covers the containing-block gotcha that silently confines "fullscreen" overlays and the testability traps specific to the YouTube IFrame API.
+metadata:
+  context7-sources:
+    - /websites/developers_google_youtube
 ---
 
 # Wolves Fullscreen Overlays & YouTube IFrame Embeds
@@ -31,8 +34,6 @@ bugs before being understood.
 ## Core Process
 
 1. **`position: fixed` alone does not guarantee full-viewport coverage.**
-   Several ancestors in `WolvesApp.vue`'s immersive layout use
-   `transform: translateZ(0)` (for GPU-accelerated crossfade/parallax layers).
    A CSS `transform` on *any* ancestor creates a new containing block for
    `position: fixed` descendants, silently rescoping "fullscreen" to that
    ancestor's box instead of the real viewport. A component nested deep in
@@ -96,6 +97,16 @@ bugs before being understood.
    10-foot theater distance: standard cues must remain theater-readable, and
    dominant cues must be visibly larger and heavier. Fit long user-authored
    copy with line breaks, timing, or separate cues, never reduced type.
+   Treat this as a product requirement, not a style flourish. Use Nielsen
+   Norman Group's TV/10-foot UX guidance for large type, strong contrast,
+   clear hierarchy, and minimal clutter when adjusting any intro cue.
+10. **Use the project hostname for local real-player checks.** Some Wolves
+    YouTube embeds return error 150 on numeric loopback origins while playing
+    normally on production. Run Vite as usual, then open
+    `http://projectbluefin.io.localhost:<port>/wolves/`. The hostname resolves
+    to loopback automatically and preserves an accepted project origin. Always
+    recheck the same video at `https://projectbluefin.io/wolves/` before
+    treating a localhost-only error as a production failure.
 
 ## Common Rationalizations
 
@@ -107,6 +118,7 @@ bugs before being understood.
 | "One `await` guard at the top of the function is enough." | Only protects against cancellation before the first await. A second await reopens the race window. |
 | "The plate name changed right after I scrubbed, so the boundary must be off." | Check how long you waited before reading. If it's more than ~300ms, the poll loop may have already advanced `currentTime` past your target — re-test with an immediate read and cross-check the time readout. |
 | "Passing a class to `WolvesControlBar` lets this component size its buttons." | A scoped parent selector cannot style nested child DOM. Keep shared control geometry in `WolvesControlBar.vue`, or use an intentional `:deep()` override. |
+| "Error 150 on 127.0.0.1 means the video is broken." | Retry through `projectbluefin.io.localhost`, then verify production. YouTube origin restrictions can reject numeric loopback while accepting the deployed project hostname. |
 
 ## Red Flags
 
@@ -129,6 +141,9 @@ bugs before being understood.
   reflect a poll-drifted time, not the value you actually set.
 - A control bar exists in the DOM but its buttons have zero-sized bounds or
   cannot be clicked in Chromium.
+- A real-player check uses `127.0.0.1` or `localhost`, receives error 150, and
+  declares the source broken without retrying through
+  `projectbluefin.io.localhost` and production.
 
 ## Verification
 
@@ -152,7 +167,12 @@ bugs before being understood.
       readout, not just the requested scrub value.
 - [ ] Every movie stage that renders `WolvesControlBar` has visible,
       viewport-contained, clickable controls in desktop and mobile Chromium.
+- [ ] Local real-player checks use `projectbluefin.io.localhost`; any error 150
+      is compared with the same video on production.
 
 ## Sources
 
 - Vue scoped CSS and `:deep()` behavior: `/vuejs/vue`
+- YouTube IFrame API `origin` guidance and player error codes:
+  `/websites/developers_google_youtube` (error 150 is equivalent to 101,
+  embedding not allowed for that origin).

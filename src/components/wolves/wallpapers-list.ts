@@ -23,6 +23,14 @@ export const wallpapers: Wallpaper[] = [
     type: 'single',
     name: 'wolves/wolves/bluefin-chicken.webp',
     title: 'Chicken',
+    description: 'Bluefin brought to life by Andy Frazier and Jacob Schnurr',
+    fit: 'cover'
+  },
+  {
+    type: 'single',
+    name: 'wolves/wolves/bluefin-huntress.webp',
+    title: 'Huntress',
+    description: 'Bluefin brought to life by Andy Frazier and Jacob Schnurr',
     fit: 'cover'
   },
   {
@@ -44,12 +52,6 @@ export const wallpapers: Wallpaper[] = [
     type: 'single',
     name: 'wolves/wolves/bluefin-eyes.webp',
     title: 'Eyes'
-  },
-  {
-    type: 'single',
-    name: 'wolves/wolves/bluefin-huntress.webp',
-    title: 'Huntress',
-    fit: 'cover'
   },
   {
     type: 'single',
@@ -273,6 +275,11 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/people/IMG_7295.jpeg',
+    title: 'IMG 7295'
+  },
+  {
+    type: 'single',
     name: 'wolves/people/MVIMG_20180502_184727.webp',
     title: 'MVIMG 20180502 184727'
   },
@@ -315,6 +322,11 @@ export const wallpapers: Wallpaper[] = [
     type: 'single',
     name: 'wolves/people/dirkhohndel.faces21994.web_.webp',
     title: 'Dirkhohndel.faces21994'
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/distrobox.png',
+    title: 'Distrobox'
   },
   {
     type: 'single',
@@ -518,8 +530,13 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/people/hikari.webp',
+    name: 'wolves/people/hikari.JPG',
     title: 'Hikari'
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/hikari2.JPG',
+    title: 'Hikari2'
   },
   {
     type: 'single',
@@ -551,6 +568,11 @@ export const wallpapers: Wallpaper[] = [
     type: 'single',
     name: 'wolves/people/juju.webp',
     title: 'Juju'
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/kirkland.png',
+    title: 'Kirkland'
   },
   {
     type: 'single',

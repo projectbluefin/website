@@ -3,8 +3,6 @@ import type { YoutubePlayer } from '@/composables/useYoutubeIframeApi'
 import type { IntroOverlayTextCue, IntroVideoSpec } from '@/data/wolves-intro-sequence'
 import { computed, nextTick, onBeforeUnmount, ref, watch, watchEffect } from 'vue'
 import { getYoutubePlayerConstructor, getYoutubePlayerState, loadYoutubeIframeApi } from '@/composables/useYoutubeIframeApi'
-import { dinosaurSpecies } from '@/data/wolves-dinosaur-species'
-import { wolvesGuardianDinosaurBonds } from '@/data/wolves-guardian-dinosaur-bonds'
 import {
   activeOverlayCue,
   activeOverlayCues,
@@ -33,6 +31,7 @@ const emit = defineEmits<{
     paused: boolean
     segmentId: string
     canGoPrevious: boolean
+    hasActiveCue: boolean
   }): void
 }>()
 
@@ -73,7 +72,6 @@ const activeComicTitleCardCue = computed<IntroOverlayTextCue | undefined>(() => 
 })
 const overlayCueForDisplay = computed<IntroOverlayTextCue | undefined>(() => activeComicTitleCardCue.value?.comicHeroTitleCard ? activeComicTitleCardCue.value : activeCue.value)
 const overlayText = computed(() => overlayCueForDisplay.value?.text)
-const activeBurnedInCaptions = computed<readonly IntroOverlayTextCue[]>(() => activeOverlayCues(burnedInCaptionCues.value, currentTime.value))
 /**
  * All cues active right now, not just the first match — the Guardian trailer intentionally
  * overlaps Christoph Blecker's and Natali Vlatko's windows since they share the same shot, so
@@ -142,12 +140,7 @@ function titleTokens(title: string, blingTitle: string | undefined): TitleToken[
   return tokens
 }
 
-/** Bonded-dinosaur artwork URL for a guardian's plate, or undefined if no bond is documented. */
-function guardianDinosaurArtwork(guardianName: string): string | undefined {
-  const bond = wolvesGuardianDinosaurBonds.find(entry => entry.guardianName === guardianName)
-  const species = bond && dinosaurSpecies.find(entry => entry.id === bond.dinosaurSpeciesId)
-  return species && `${import.meta.env.BASE_URL}${species.artwork.slice(2)}`
-}
+// Dinosaur artwork removed
 
 /**
  * The Prologue/Epilogue's somber, BPM-paced fade only applies to text-card segments; the
@@ -513,6 +506,7 @@ watchEffect(() => {
     paused: isPaused.value,
     segmentId: currentSegment.value?.id ?? '',
     canGoPrevious: canGoToPrevious.value,
+    hasActiveCue: activeCue.value !== undefined,
   })
 })
 
@@ -578,11 +572,6 @@ defineExpose({
           Made by Paid Artists
         </p>
       </div>
-      <div v-else-if="activeBurnedInCaptions.length" class="wolves-intro-overlay-burned-captions">
-        <div v-for="cue in activeBurnedInCaptions" :key="`${cue.start}-${cue.end}-${cue.text}`" class="wolves-intro-overlay-burned-caption">
-          {{ stripIntroPunctuation(cue.text) }}
-        </div>
-      </div>
 
       <div
         v-for="cue in activeCues"
@@ -614,13 +603,6 @@ defineExpose({
           </p>
           <p class="wolves-guardian-plate-name">
             {{ parseGuardianCue(cue.text)!.name }}
-            <img
-              v-if="guardianDinosaurArtwork(parseGuardianCue(cue.text)!.name)"
-              :src="guardianDinosaurArtwork(parseGuardianCue(cue.text)!.name)"
-              alt=""
-              aria-hidden="true"
-              class="wolves-guardian-plate-dinosaur-icon"
-            >
           </p>
           <p class="wolves-guardian-plate-title">
             <template v-for="(token, index) in titleTokens(parseGuardianCue(cue.text)!.title, cue.blingTitle)" :key="index">
@@ -664,6 +646,20 @@ defineExpose({
 </template>
 
 <style scoped>
+.wolves-intro-cc-toggle {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  width: auto;
+  height: 3.6rem;
+  padding: 0 1.6rem;
+  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
+  font-size: 1.4rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  z-index: 10;
+}
+
 .wolves-intro-overlay {
   position: fixed;
   inset: 0;
@@ -1025,40 +1021,44 @@ defineExpose({
    earlier plain "nerd plate" card. */
 .wolves-guardian-plate {
   position: absolute;
-  bottom: 10%;
-  left: 5%;
-  max-width: 44rem;
-  padding: 1.75rem 2rem 1.5rem;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 25vh;
+  max-width: none;
+  padding: 2.5rem 4rem;
   overflow: visible;
-  border: 1px solid rgb(147 197 253 / 45%);
-  border-radius: 0.75rem;
-  clip-path: polygon(16px 0%, 100% 0%, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0% 100%, 0% 16px);
-  background: rgb(8 12 20 / 82%);
+  border: none;
+  border-top: 1px solid rgb(147 197 253 / 45%);
+  border-radius: 0;
+  clip-path: none;
+  background: linear-gradient(to top, rgb(4 6 12 / 96%) 0%, rgb(8 12 20 / 88%) 100%);
   color: #e2e8f0;
   text-align: center;
   text-shadow: 0 2px 10px rgb(0 0 0 / 80%);
   animation: wolves-guardian-plate-impact 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 5;
 }
 
 /* Anchors this callout to the left/right side of the frame instead of the default lower-left
    placement, reserved for cues whose window overlaps another Guardian's (they share the shot,
    so both plates need to sit side-by-side rather than stacking on top of each other). */
 .wolves-guardian-plate-left {
-  left: 5%;
-  right: auto;
+  left: 0;
+  right: 50%;
+  border-right: 1px solid rgb(147 197 253 / 35%);
 }
 
 .wolves-guardian-plate-right {
-  left: auto;
-  right: 5%;
+  left: 50%;
+  right: 0;
 }
 
 /* Raises the callout from the default lower-third anchor to sit closer to a Guardian's
    actual on-screen position when it towers above the frame's lower third (see the `raised`
    field doc comment in wolves-intro-sequence.ts). */
 .wolves-guardian-plate-raised {
-  bottom: auto;
-  top: 28%;
+  /* No offset, kept clean to occupy the bottom 1/4 widescreen bar */
 }
 
 /* Gilds the plate gold instead of the default silver/blue treatment to signify leadership.
@@ -1066,8 +1066,8 @@ defineExpose({
    comment in wolves-intro-sequence.ts. Overrides border, horizon lines, crest, burst flash,
    and the title line so the gold reads consistently across the whole plate. */
 .wolves-guardian-plate-leader {
-  border-color: rgb(250 204 21 / 55%);
-  box-shadow: 0 0 24px rgb(250 204 21 / 20%);
+  border-top-color: rgb(250 204 21 / 55%) !important;
+  box-shadow: 0 -4px 24px rgb(250 204 21 / 20%);
 }
 
 .wolves-guardian-plate-leader .wolves-guardian-plate-burst {
@@ -1240,7 +1240,7 @@ defineExpose({
 }
 
 .wolves-guardian-plate-dinosaur-icon {
-  display: inline-block;
+  display: none !important;
   height: clamp(2.2rem, 1.6rem + 1.4vw, 3rem);
   width: auto;
   margin-left: 0.6rem;

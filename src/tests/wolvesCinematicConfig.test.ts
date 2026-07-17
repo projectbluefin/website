@@ -32,6 +32,11 @@ describe('wolves cinematic config', () => {
     expect(ids.size).toBe(CINEMATIC_SEGMENTS.length)
   })
 
+  it('has a unique stable id for every segment', () => {
+    expect(new Set(CINEMATIC_SEGMENTS.map(segment => segment.id)).size)
+      .toBe(CINEMATIC_SEGMENTS.length)
+  })
+
   it('resolves per-segment crossfades with a default fallback', () => {
     expect(segmentCrossfadeMs(0)).toBe(DEFAULT_CROSSFADE_MS)
     expect(segmentCrossfadeMs(1)).toBe(1500)

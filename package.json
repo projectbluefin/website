@@ -13,7 +13,8 @@
     "test:run": "vitest run",
     "typecheck": "vue-tsc --noEmit",
     "update:wolves-playlist": "node scripts/update-wolves-playlist.js",
-    "record:wolves": "node record-wolves.cjs"
+    "record:wolves": "node record-wolves.cjs",
+    "generate:wolves-qrs": "node scripts/generate-qrs.js"
   },
   "dependencies": {
     "@fontsource/michroma": "^5.2.8",

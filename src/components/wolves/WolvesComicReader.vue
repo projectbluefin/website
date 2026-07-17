@@ -286,6 +286,12 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   const shuffledNormalShowcase = deterministicShuffle(normalShowcase, 202)
   const { regularSlides, finaleSlides } = splitTrackZeroFastFinaleSlides(localPeople)
   const shuffledPeople = pinTrackZeroHeroSlides(deterministicShuffle(regularSlides, 303))
+  const waltersTarget = 'wolves/people/walters.JPG'
+  const waltersIndex = shuffledPeople.findIndex(wp => wp.id === waltersTarget)
+  if (waltersIndex !== -1) {
+    const waltersPhoto = shuffledPeople.splice(waltersIndex, 1)[0]
+    shuffledPeople.unshift(waltersPhoto)
+  }
 
   const result: TimelineSlide[] = []
   let currentTime = 0
@@ -436,7 +442,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   // 5. Heavy Build-Up [277, 345] seconds (68s total) -> 34 people wallpapers
   const peoplePool3 = shuffledPeople.slice(39, 73)
   if (heartPhoto) {
-    peoplePool3.splice(21, 0, heartPhoto)
+    peoplePool3.splice(22, 0, heartPhoto)
   }
   const sec5BaseDuration = 68 / peoplePool3.length
   for (const item of peoplePool3) {

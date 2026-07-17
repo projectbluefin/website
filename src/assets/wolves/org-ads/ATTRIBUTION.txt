@@ -1,0 +1,44 @@
+GNOME logo
+Source: https://brand.gnome.org/logos/gnome-logos.zip (official GNOME brand
+kit, "Download Complete Asset Kit" on https://brand.gnome.org/)
+File: gnome_brandmark_dark.svg, extracted from that kit unmodified
+License: CC BY-SA 4.0, per the cc:license metadata embedded in the SVG file
+itself; GNOME logo and name are also trademarks of the GNOME Foundation, see
+https://foundation.gnome.org/trademark-and-logo/.
+Note: the brief's originally specified source
+(https://design.gnome.org/static/media/gnome-footprint-black.6890a3fa.svg) no
+longer resolves; design.gnome.org has been superseded by brand.gnome.org.
+brand.gnome.org links out to the official downloadable asset kit above rather
+than exposing individual static file URLs; the kit was downloaded and the
+"_dark" brandmark variant (a dark-background-suited footprint mark) was
+extracted for use on the theater's dark background.
+
+Flathub logo
+Source: https://github.com/flathub-infra/assets
+File: https://raw.githubusercontent.com/flathub-infra/assets/main/brand/logo-white.svg
+License: CC0 (public domain dedication), per the flathub-infra/assets repository.
+Note: the brief's originally specified repository (flathub/branding) no longer
+exists; Flathub's branding assets now live in flathub-infra/assets. The white
+wordmark variant was selected for legibility on the theater's dark background,
+matching the treatment used elsewhere on this page (for example, white QR
+codes on a transparent background).
+
+KDE logo
+Source: https://kde.org/stuff/clipart/
+File: https://kde.org/stuff/clipart/logo/kde-logo-white-blue-rounded-source.svg
+License: KDE Logo copying is subject to the LGPL copyright license; trademark
+usage is subject to KDE e.V.'s trademark notice (https://kde.org/community/whatiskde/impressum/),
+linked as "Legal" from the trademark statement in the footer of every kde.org page.
+Note: the brief's originally specified source
+(https://invent.kde.org/teams/artwork/branding/-/raw/master/logos/app/kde-logo-blueonwhite.svg)
+requires GitLab sign-in and is not publicly reachable; kde.org/stuff/clipart/
+is KDE's current public logo distribution page. The self-contained "White on
+Blue Rounded" badge variant was selected so the mark stays legible regardless
+of the surrounding ad-tile background.
+
+KubeCon CloudNativeCon Japan 2026 banner
+Source: https://cncf.github.io/banners/banners.yml
+Image: https://cncf.github.io/banners/events/Kubecon-Japan-2026-600x500.png
+Link: https://events.linuxfoundation.org/kubecon-cloudnativecon-japan/?utm_source=artifacthub&utm_campaign=KubeCon-Japan-2026
+License: Official CNCF event banner, distributed by the Cloud Native Computing
+Foundation for use by artifact/project pages linking to the event.

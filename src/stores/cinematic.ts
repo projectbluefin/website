@@ -1,7 +1,12 @@
 import { defineStore } from 'pinia'
 import { CINEMATIC_SEGMENTS } from '@/config/wolves-cinematic'
 
-export type CinematicPhase = 'lobby' | 'intro' | 'cinematic' | 'finished'
+export type CinematicPhase
+  = 'lobby'
+    | 'intro'
+    | 'cinematic'
+    | 'creator-shorts'
+    | 'finished'
 
 /**
  * All cinematic runtime state lives here. The player composable and the intro
@@ -22,6 +27,8 @@ export const useCinematicStore = defineStore('cinematic', {
     completedElapsed: 0,
     playing: false,
     crossfading: false,
+    /** Whether the one-time Creator Shorts interstitial has already been shown. */
+    shortsConsumed: false,
     /**
      * When the authored intro overlay is on stage it owns playback; this override
      * feeds the hero widget its display metadata and transport gating instead of
@@ -108,6 +115,32 @@ export const useCinematicStore = defineStore('cinematic', {
       this.nativeTime = 0
       this.segmentDuration = 0
       this.crossfading = false
+    },
+    /**
+     * True exactly once: the natural or manual Part I -> Part II boundary, before
+     * the one-time Creator Shorts interstitial has been shown.
+     */
+    creatorShortsDueFor(targetIndex: number): boolean {
+      return this.phase === 'cinematic'
+        && this.segmentIndex === 0
+        && targetIndex === 1
+        && !this.shortsConsumed
+    },
+    /** Bridges Part I into the Creator Shorts interstitial instead of Part II. */
+    enterCreatorShorts() {
+      this.completedElapsed += this.segmentDuration || this.segmentElapsed
+      this.segmentIndex = 1
+      this.segmentElapsed = 0
+      this.nativeTime = 0
+      this.segmentDuration = 0
+      this.playing = false
+      this.crossfading = false
+      this.shortsConsumed = true
+      this.phase = 'creator-shorts'
+    },
+    /** Resumes Part II once the Creator Shorts interstitial has finished. */
+    completeCreatorShorts() {
+      this.phase = 'cinematic'
     },
     finish() {
       this.phase = 'finished'

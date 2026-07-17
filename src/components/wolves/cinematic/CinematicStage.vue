@@ -8,6 +8,7 @@ import CinematicCaptions from './CinematicCaptions.vue'
 import CinematicTransition from './CinematicTransition.vue'
 import Nameplate from './Nameplate.vue'
 import TheaterExperience from './TheaterExperience.vue'
+import WolvesOrgAds from './WolvesOrgAds.vue'
 
 const store = useCinematicStore()
 const hostA = ref<HTMLElement | null>(null)
@@ -25,7 +26,7 @@ const plateLabel = computed(() =>
   isTrackZero.value ? getWolvesHudLabel(store.nativeTime) : store.segment.title,
 )
 const plateDetail = computed(() =>
-  isTrackZero.value ? store.segment.title : store.segment.chapter,
+  isTrackZero.value ? 'kubectl apply -f ublue.yaml -n k8s-community' : store.segment.chapter,
 )
 
 onBeforeUnmount(() => player.destroy())
@@ -89,6 +90,8 @@ defineExpose({
     <!-- Authored theater layer over the audio-source video: the 7 Days grid
          (slideshow + lore + thesis) and the later-part CNCF galleries. -->
     <TheaterExperience />
+
+    <WolvesOrgAds />
 
     <div class="wc-stage-nameplate">
       <Nameplate :detail="plateDetail" :label="plateLabel" />

@@ -31,8 +31,8 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 1. Read `docs/wolves-maintenance.md` before touching anything. It names every region, lists locked and open surfaces, and gives the exact pattern for each content addition.
 2. Confirm the requested change lands entirely on an open surface (see the Open Surfaces table in the reference). If it requires a locked surface, stop and tell the user.
 3. Apply user-supplied text verbatim. Never generate fiction, chapter names, or creative prose (see `docs/skills/editorial-policy.md`).
-4. Keep the three Track 0 content layers separate: top-bar comms (`wolves-incoming-signal.txt`), thesis overlay (`wolves-thesis-sequence.ts`, locked), lore column (`src/data/lore/*.md`).
-5. Treat intro copy as a 10-foot theater experience: retain theater-readable type, use user-authorized line breaks and cue splits for long copy, and keep `dominant` cues more forceful than standard cues. Do not make text smaller to fit.
+4. Keep the four authored content layers separate: Track 0 incoming-signal communications (`wolves-incoming-signal.txt`), Track 0 thesis overlay (`wolves-thesis-sequence.ts`, locked), Track 0 lore column (`src/data/lore/*.md`), and Parts II-VII team chat (`wolves-team-chats.ts`).
+5. Treat intro copy as a 10-foot theater experience: retain theater-readable type, use user-authorized line breaks and cue splits for long copy, and keep `dominant` cues more forceful than standard cues. Do not make text smaller to fit. Follow Nielsen Norman Group's TV/10-foot UX guidance for large type, strong contrast, and clear hierarchy.
 6. For an explicit owner-authorized fixed slide window, put the identifier and interval in `src/data/wolves-track-zero-slides.ts`; add independent reorder, rendered-boundary, and player-progress assertions. Do not turn a generated-order coincidence into an undocumented lock.
 7. For post-hero Flickr galleries, use one complete Fisher-Yates shuffle across songs 2 onward. Do not group, rotate, or reuse photos. Preserve Track 0's authored schedule and locks.
 8. Run the "Before You Commit" checklist in the reference: diff confined to open surfaces, lint/typecheck/test/build green, `public/dakota-versions.json` unstaged, real-player timestamp verification for timeline-adjacent edits.
@@ -54,7 +54,7 @@ The Wolves page (`/wolves`) reached final production design. The canonical refer
 ## Red Flags
 
 - A diff touching any `.vue`, `.scss`, or generated file for a content request.
-- Text moved between the top-bar, thesis, and lore layers.
+- Text moved between incoming-signal, thesis, lore, and team-chat layers.
 - Reordered lore, music, or timeline entries without explicit user instruction.
 - Hand-edits to `src/components/wolves/wallpapers-list.ts` (generated) or thesis constants.
 - Adding or changing the theater-caption rendering mechanism itself in `WolvesComicReader.vue` (it already exists; only the `curatedDescriptions` text content is an open surface).

@@ -228,8 +228,10 @@ onBeforeUnmount(() => {
 
   // Later parts: the centered CNCF community gallery takes the full stage.
   &--gallery {
+    --wc-org-ad-gutter: clamp(12rem, 16vw, 18rem);
     grid-template-columns: minmax(0, 1fr);
     justify-items: center;
+    padding-inline: var(--wc-org-ad-gutter);
 
     .wc-trackzero-viewer {
       width: min(100%, 120rem);
@@ -297,16 +299,44 @@ onBeforeUnmount(() => {
 }
 
 .wc-thesis-text {
+  font-family: var(--wc-font-weyland-mono);
   font-size: clamp(3.2rem, 5.4vw, 6rem);
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--wc-white);
-  text-shadow: 0 0 24px rgb(8 9 12 / 90%);
+  color: #93c5fd;
+  text-shadow:
+    0 0 12px rgb(125 211 252 / 95%),
+    0 0 32px rgb(59 130 246 / 78%),
+    0 0 68px rgb(37 99 235 / 48%),
+    0 0 24px rgb(8 9 12 / 90%);
 }
 
+.wc-thesis--universal-blue .wc-thesis-text,
+.wc-thesis--evolve .wc-thesis-text {
+  font-size: clamp(3.6rem, 5.8vw, 6.4rem);
+  color: #bfdbfe;
+}
+
+.wc-thesis--welcome,
+.wc-thesis--legend {
+  background: radial-gradient(circle, rgb(26 95 160 / 42%), transparent 62%);
+}
+
+.wc-thesis--welcome .wc-thesis-text,
 .wc-thesis--legend .wc-thesis-text {
-  color: var(--wc-gold);
+  font-family: var(--wc-font-weyland);
+  font-size: clamp(3.6rem, 6vw, 6.8rem);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: 0.14em;
+  color: #dbeafe;
+  text-shadow:
+    0 0 14px rgb(125 211 252 / 100%),
+    0 0 38px rgb(59 130 246 / 92%),
+    0 0 82px rgb(37 99 235 / 68%),
+    0 0 24px rgb(8 9 12 / 90%);
 }
 
 .wc-thesis-subtitle {
@@ -343,6 +373,10 @@ onBeforeUnmount(() => {
 @media (max-width: 1023px) {
   .wc-trackzero-grid {
     grid-template-columns: 1fr;
+  }
+
+  .wc-trackzero-grid--gallery {
+    padding-inline: 2.4rem; // desktop ad gutters are hidden below 1024px
   }
 
   .wc-trackzero-lore {

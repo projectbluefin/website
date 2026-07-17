@@ -36,6 +36,8 @@ jobs:
       - run: npm ci
       - run: npx playwright install chromium
       - name: Run Wolves movie flow browser test
+        env:
+          WOLVES_BROWSER_FIXTURES: '1'
         run: |
           npm run dev -- --host 127.0.0.1 &
           DEV_PID=$!

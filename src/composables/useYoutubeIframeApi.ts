@@ -3,7 +3,7 @@
  *
  * Extracted so any component embedding a real YouTube video (a legitimate `youtubeVideoId`
  * reference, never a downloaded/re-encoded local copy) can reuse the same script-load dance
- * instead of duplicating it. `WolvesSoundtrack.vue` has its own, older copy of this same logic
+ * instead of duplicating it across the intro, cinematic, and interstitial players
  * for the playlist player; this composable is used by newer embeds (e.g. the intro overlay)
  * to avoid a second divergent implementation.
  */

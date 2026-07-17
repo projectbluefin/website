@@ -67,65 +67,97 @@ describe('cinematic store', () => {
     expect(store.crossfading).toBe(false)
   })
 
-  it('computes canonical overall elapsed/progress from intro status and keeps the intro-to-cinematic handoff continuous', () => {
-    const store = useCinematicStore()
-    store.enterIntro()
-    store.syncIntroStatus({
-      segmentIndex: 3,
-      segmentElapsed: 60,
-      segmentDuration: 119.5,
-      nativeTime: 62,
-    })
-
-    expect(store.sequenceElapsed).toBeCloseTo(214)
-    expect(store.sequenceDuration).toBeCloseTo(273.5)
-    expect(store.overallElapsed).toBeCloseTo(214)
-    expect(store.overallDuration).toBeCloseTo(2377.5)
-    expect(store.overallProgress).toBeCloseTo(214 / 2377.5)
-
-    store.enterCinematic()
-    store.updateTime(0, 424, 0)
-
-    expect(store.sequenceElapsed).toBe(0)
-    expect(store.sequenceDuration).toBe(2104)
-    expect(store.overallElapsed).toBeCloseTo(273.5)
-    expect(store.overallProgress).toBeCloseTo(273.5 / 2377.5)
+it('computes canonical overall elapsed/progress from intro status and keeps the intro-to-cinematic handoff continuous', () => {
+  const store = useCinematicStore()
+  store.enterIntro()
+  store.syncIntroStatus({
+    segmentIndex: 3,
+    segmentElapsed: 60,
+    segmentDuration: 119.5,
+    nativeTime: 62,
   })
 
-  it('maps an overall ratio to the correct intro or cinematic segment and native time', () => {
-    expect(resolveOverallRatioTarget(0)).toEqual(expect.objectContaining({
-      phase: 'intro',
-      segmentIndex: 0,
-      segmentElapsed: 0,
-      nativeTime: 0,
-    }))
+  expect(store.sequenceElapsed).toBeCloseTo(214)
+  expect(store.sequenceDuration).toBeCloseTo(273.5)
+  expect(store.overallElapsed).toBeCloseTo(214)
+  expect(store.overallDuration).toBeCloseTo(2377.5)
+  expect(store.overallProgress).toBeCloseTo(214 / 2377.5)
 
-    expect(resolveOverallRatioTarget(154 / 2377.5)).toEqual(expect.objectContaining({
-      phase: 'intro',
-      segmentIndex: 3,
-      segmentElapsed: 0,
-      nativeTime: 2,
-    }))
+  store.enterCinematic()
+  store.updateTime(0, 424, 0)
 
-    expect(resolveOverallRatioTarget(273.5 / 2377.5)).toEqual(expect.objectContaining({
-      phase: 'cinematic',
-      segmentIndex: 0,
-      segmentElapsed: 0,
-      nativeTime: 0,
-    }))
+  expect(store.sequenceElapsed).toBe(0)
+  expect(store.sequenceDuration).toBe(2104)
+  expect(store.overallElapsed).toBeCloseTo(273.5)
+  expect(store.overallProgress).toBeCloseTo(273.5 / 2377.5)
+})
 
-    expect(resolveOverallRatioTarget((273.5 + 5) / 2377.5)).toEqual(expect.objectContaining({
-      phase: 'cinematic',
-      segmentIndex: 0,
-      segmentElapsed: 5,
-      nativeTime: 5,
-    }))
+it('maps an overall ratio to the correct intro or cinematic segment and native time', () => {
+  expect(resolveOverallRatioTarget(0)).toEqual(expect.objectContaining({
+    phase: 'intro',
+    segmentIndex: 0,
+    segmentElapsed: 0,
+    nativeTime: 0,
+  }))
 
-    expect(resolveOverallRatioTarget(1)).toEqual(expect.objectContaining({
-      phase: 'cinematic',
-      segmentIndex: 6,
-      segmentElapsed: 271,
-      nativeTime: 271,
-    }))
+  expect(resolveOverallRatioTarget(154 / 2377.5)).toEqual(expect.objectContaining({
+    phase: 'intro',
+    segmentIndex: 3,
+    segmentElapsed: 0,
+    nativeTime: 2,
+  }))
+
+  expect(resolveOverallRatioTarget(273.5 / 2377.5)).toEqual(expect.objectContaining({
+    phase: 'cinematic',
+    segmentIndex: 0,
+    segmentElapsed: 0,
+    nativeTime: 0,
+  }))
+
+  expect(resolveOverallRatioTarget((273.5 + 5) / 2377.5)).toEqual(expect.objectContaining({
+    phase: 'cinematic',
+    segmentIndex: 0,
+    segmentElapsed: 5,
+    nativeTime: 5,
+  }))
+
+  expect(resolveOverallRatioTarget(1)).toEqual(expect.objectContaining({
+    phase: 'cinematic',
+    segmentIndex: 6,
+    segmentElapsed: 271,
+    nativeTime: 271,
+  }))
+})
+
+  it('enters Creator Shorts once when Part I advances to Part II', () => {
+    const store = useCinematicStore()
+    store.enterCinematic()
+    store.updateTime(425, 425)
+
+    expect(store.creatorShortsDueFor(1)).toBe(true)
+
+    store.enterCreatorShorts()
+
+    expect(store.phase).toBe('creator-shorts')
+    expect(store.segmentIndex).toBe(1)
+    expect(store.shortsConsumed).toBe(true)
+    expect(store.completedElapsed).toBe(425)
+    expect(store.playing).toBe(false)
+  })
+
+  it('resumes Part II without reopening Creator Shorts', () => {
+    const store = useCinematicStore()
+    store.enterCinematic()
+    store.updateTime(425, 425)
+    store.enterCreatorShorts()
+    store.completeCreatorShorts()
+
+    expect(store.phase).toBe('cinematic')
+    expect(store.segmentIndex).toBe(1)
+    expect(store.creatorShortsDueFor(1)).toBe(false)
+
+    store.jumpToSegment(0)
+    expect(store.creatorShortsDueFor(1)).toBe(false)
+})
   })
 })

@@ -11,7 +11,7 @@
 
 import { chromium } from 'playwright'
 
-const URL = 'http://localhost:5173/'
+const URL = (process.env.WOLVES_BASE_URL ?? 'http://localhost:5173/').replace(/\/+$/, '') + '/'
 const SCREENSHOT = '/tmp/nav-test-result.png'
 const VIEWPORT = { width: 1440, height: 900 }
 

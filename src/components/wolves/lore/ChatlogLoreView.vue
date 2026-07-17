@@ -11,6 +11,7 @@ const activeMessageIndex = ref(0)
 const typedMessagesText = ref<string[]>([])
 const climaxMessageIndex = ref<number | null>(null)
 const revealedClimaxSentence = ref('')
+const isTyping = ref(false)
 let typewriterTimer: ReturnType<typeof setInterval> | null = null
 let scrollPending = false
 
@@ -53,6 +54,7 @@ function runTypewriter() {
     ? conversation.value.messages.findIndex(message => message.speaker === CLIMAX_SPEAKER)
     : null
   revealedClimaxSentence.value = ''
+  isTyping.value = conversation.value.messages.length > 0
 
   let stepTime = 35
   {
@@ -94,6 +96,7 @@ function runTypewriter() {
 
     if (activeMessageIndex.value >= conversation.value.messages.length) {
       clearTypewriter()
+      isTyping.value = false
       return
     }
 
@@ -168,6 +171,7 @@ function runTypewriter() {
 
 function skipTypewriter() {
   clearTypewriter()
+  isTyping.value = false
 
   activeMessageIndex.value = conversation.value.messages.length - 1
   typedMessagesText.value = conversation.value.messages.map(message => message.text)
@@ -220,7 +224,10 @@ onBeforeUnmount(clearTypewriter)
                     <span class="conversation-speaker">{{ message.speaker }}</span>
                     <time v-if="message.timestamp">{{ message.timestamp }}</time>
                   </div>
-                  <p>
+                  <p
+                    :class="{ 'is-typing': isTyping && index === activeMessageIndex }"
+                    :data-chatlog-typing="isTyping && index === activeMessageIndex ? '' : undefined"
+                  >
                     {{ typedMessagesText[index] ?? '' }}
                     <Transition name="climax-fade">
                       <span
@@ -397,6 +404,23 @@ onBeforeUnmount(clearTypewriter)
   font-size: 1.15rem;
   line-height: 1.65;
   white-space: pre-wrap;
+}
+
+.conversation-message p.is-typing {
+  &::after {
+    content: '|';
+    display: inline-block;
+    margin-left: 2px;
+    color: var(--color-blue-light);
+    font-weight: 700;
+    animation: typing-cursor-pulse 0.7s steps(2, start) infinite;
+  }
+}
+
+@keyframes typing-cursor-pulse {
+  50% {
+    opacity: 0;
+  }
 }
 
 .climax-sentence {

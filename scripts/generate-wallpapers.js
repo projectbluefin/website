@@ -188,6 +188,8 @@ const curatedTitles = {
 // its actual subject/quote, not just a name). Reserved for cases like this; most slides have
 // no entry here and fall back to the standard short caption pill.
 const curatedDescriptions = {
+  'bluefin-chicken': 'Bluefin brought to life by Andy Frazier and Jacob Schnurr',
+  'bluefin-huntress': 'Bluefin brought to life by Andy Frazier and Jacob Schnurr',
 }
 
 // Owner-authorized title-only 10-foot theater banner for the Track 0 Jono cue.
@@ -291,10 +293,12 @@ async function generate() {
     }
 
     // Single story file
+    const description = formatDescription(base)
     wallpapers.push({
       type: 'single',
       name: `wolves/wolves/${file}`,
       title: formatTitle(base),
+      ...(description ? { description } : {}),
       ...(wideAspectStems.has(base) ? { fit: 'cover' } : {})
     })
     processedStory.add(file)
@@ -321,6 +325,15 @@ async function generate() {
       ...(description ? { description } : {}),
       ...(titleOnlyTheaterCaptions.has(base) ? { theaterTitleOnly: true } : {})
     })
+  }
+
+  // Reorder story wallpapers to place bluefin-huntress right after bluefin-chicken
+  const chickenIndex = wallpapers.findIndex(w => w.name === 'wolves/wolves/bluefin-chicken.webp')
+  const huntressIndex = wallpapers.findIndex(w => w.name === 'wolves/wolves/bluefin-huntress.webp')
+  if (chickenIndex !== -1 && huntressIndex !== -1) {
+    const [huntress] = wallpapers.splice(huntressIndex, 1)
+    const newChickenIndex = wallpapers.findIndex(w => w.name === 'wolves/wolves/bluefin-chicken.webp')
+    wallpapers.splice(newChickenIndex + 1, 0, huntress)
   }
 
   const outputPath = join(ROOT_DIR, 'src/components/wolves/wallpapers-list.ts')
