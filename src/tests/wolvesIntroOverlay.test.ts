@@ -628,7 +628,6 @@ AN4-ChK-12: Potential. Unlimited. Solution. Imagination. Probability? Most certa
 
     expect(wrapper.get('.wolves-intro-overlay-text').text()).toBe('and this one. The Blue Delivers. Buckle up, nerds —')
   })
-
   it('still strips periods and commas for normal Gayane cues', async () => {
     const textSequence = [
       {
@@ -648,29 +647,6 @@ surrounded by predators.`,
 
     expect(wrapper.get('.wolves-intro-overlay-text').text()).toBe(`Now what's left of a proud order fights for survival
 surrounded by predators`)
-  })
-
-  it('highlights only the final backtick in For Nova`', async () => {
-    const textSequence = [
-      {
-        id: 'bluefin-cinematic-universe',
-        kind: 'text' as const,
-        duration: 5,
-        overlays: [{
-          text: 'For Nova`',
-          start: 0,
-          end: 5,
-          preservePunctuation: true,
-          highlightSubstrings: ['`'],
-        }],
-      },
-    ]
-    const wrapper = mount(WolvesIntroOverlay, { props: { videos: textSequence } })
-    await flushPromises()
-
-    const highlightedText = wrapper.findAll('.wolves-intro-letter-highlight').map(node => node.text()).join('')
-    expect(wrapper.get('.wolves-intro-overlay-text').text()).toBe('For Nova`')
-    expect(highlightedText).toBe('`')
   })
 
   it('auto-advances once the authored duration elapses', async () => {

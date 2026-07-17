@@ -6,10 +6,10 @@ const [width, height] = (process.env.WOLVES_VIEWPORT ?? '1440x900').split('x').m
 const VIEWPORT = { width, height }
 const SCREENSHOT_DIR = process.env.WOLVES_SCREENSHOT_DIR
 
-const INTRO_DURATION = 316.5
-const OVERALL_DURATION = 2420.5
-const PART_VII_START = 2149.5
-const DESTINY_SEEK_ELAPSED = 257
+const INTRO_DURATION = 213.5
+const OVERALL_DURATION = 2317.5
+const PART_VII_START = 2046.5
+const DESTINY_SEEK_ELAPSED = 156
 
 let passed = 0
 let failed = 0
@@ -222,7 +222,7 @@ try {
   assertWithin('Intro footer stays within the 140px budget', introTelemetry.height, 0, 140)
   assert('Intro telemetry stays visible', introTelemetry.telemetryVisible, true)
   assertTruthy('Intro telemetry shows the deployment label', introTelemetry.text.includes('DEPLOYMENT: wolves-decryption-engine-7'))
-  await capture(page, '02-intro-species')
+  await capture(page, '02-intro-prologue')
 
   await clickOverallRatio(page, (INTRO_DURATION + 20) / OVERALL_DURATION)
   await page.waitForSelector('.wc-trackzero-grid', { state: 'visible', timeout: 10_000 })
@@ -308,7 +308,7 @@ try {
     text: widget.textContent ?? '',
   }))
   assertWithin('Destiny intro footer stays within the 140px budget', destinyTelemetry.height, 0, 140)
-  assertWithin('Destiny intro deployment percent reflects the overall intro/cinematic timeline', Number(destinyTelemetry.valueNow), 10, 11)
+  assertWithin('Destiny intro deployment percent reflects the overall intro/cinematic timeline', Number(destinyTelemetry.valueNow), 6, 7)
   assertTruthy('Destiny intro telemetry remains visible on the shared widget', destinyTelemetry.text.includes('DEPLOYMENT: wolves-decryption-engine-7'))
   await capture(page, '05-intro-destiny')
 }

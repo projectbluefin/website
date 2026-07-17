@@ -166,7 +166,7 @@ describe('wolves intro overlay sequence', () => {
     ])
   })
 
-  it('builds the intro sequence without the epilogue transition', () => {
+  it('hands directly from the prologue to the Destiny trailer', () => {
     const sequence = buildIntroVideoSequence()
     expect(sequence).toHaveLength(2)
     expect(sequence.map(segment => segment.id)).toEqual([
@@ -174,7 +174,7 @@ describe('wolves intro overlay sequence', () => {
       'wolves-intro',
     ])
     expect(JSON.stringify(sequence)).not.toContain('But who will answer the call')
-    expect(JSON.stringify(sequence)).not.toContain('Welcome to indie cloud native')
+    expect(JSON.stringify(sequence)).not.toContain('Bluefin Cinematic Universe')
   })
 
   it('defaults the Destiny segment to the unvoiced source and keeps the Ikora track optional', () => {
@@ -362,5 +362,16 @@ And its will to survive is utterly Broken`,
         textPosition: 'bottom',
       }),
     ]))
+  })
+  it('does not retain a text slate after the prologue', () => {
+    const sequence = buildIntroVideoSequence()
+    const trailer = sequence[1]
+
+    if (!trailer || !isVideoSegment(trailer)) {
+      throw new Error('Expected the Destiny trailer after the prologue')
+    }
+
+    expect(trailer.id).toBe('wolves-intro')
+    expect(sequence.every(segment => segment.id !== 'bluefin-cinematic-universe')).toBe(true)
   })
 })

@@ -6,12 +6,12 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/night-sky.webp`
 
 <template>
   <div class="wc-lobby" :style="{ '--wc-lobby-background': `url('${lobbyBackground}')` }">
-    <div class="wc-lobby-frame wc-lobby-frame--left">
+    <div class="wc-lobby-frame">
       <p class="wc-label wc-lobby-brand">
         PROJECT BLUEFIN
       </p>
       <h1 class="wc-lobby-title">
-        BLUEFIN
+        SEVEN DAYS<br>TO THE WOLVES
       </h1>
       <div class="wc-hairline" />
       <p class="wc-lobby-sub">
@@ -97,10 +97,6 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/night-sky.webp`
   text-align: center;
 }
 
-.wc-lobby-frame--left {
-  text-align: left;
-}
-
 .wc-lobby-brand {
   font-size: clamp(1.8rem, 1.8vw, 2.8rem);
   letter-spacing: 0.44em;
@@ -113,10 +109,6 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/night-sky.webp`
   margin-right: -0.22em; // optically recenters tracked uppercase
   line-height: 1.02;
   color: var(--wc-white);
-}
-
-.wc-lobby-frame--left .wc-lobby-title {
-  margin-right: 0;
 }
 
 .wc-lobby-sub {

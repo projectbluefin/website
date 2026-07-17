@@ -177,8 +177,7 @@ authored data keeps its punctuation.
 
 Accent scheme: default B/F letter highlights are blue (the project is
 BLUEfin), but cue-authored `highlightSubstrings` override that fallback for
-exact range work such as the LIFE/DROSS/GARDEN cue and the closing
-``For Nova``` backtick. Dominant (POWERFUL) cues render in muted gold `#e6d5ae` with a soft
+exact range work such as the LIFE/DROSS/GARDEN cue. Dominant (POWERFUL) cues render in muted gold `#e6d5ae` with a soft
 warm glow — the saturated leader-plate yellow proved too jarring at theater
 scale. Captions use the plate blue for their edge so gold stays reserved for
 power moments.
