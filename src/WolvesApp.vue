@@ -35,12 +35,6 @@ const introSegmentIndexById = new Map(introVideos.map((segment, index) => [segme
 
 // Factual display metadata for the authored intro segments (see wolves-intro-sequence.ts).
 const INTRO_DISPLAY: Record<string, { chapter: string, title: string, artist: string, artwork: string }> = {
-  'species-prelude': {
-    chapter: 'UNIVERSAL BLUE BRIEFING',
-    title: 'Dimetrodon limbatus // Deinonychus antirrhopus',
-    artist: 'Factual Species Prelude',
-    artwork: 'https://i.ytimg.com/vi/EB3IokHelRk/hqdefault.jpg',
-  },
   'wolves-prologue': {
     chapter: 'PROLOGUE',
     title: 'Gayane Ballet Suite (Adagio)',
@@ -128,7 +122,7 @@ async function handleIntroComplete() {
 
 async function seekIntroTarget(ratio: number) {
   if (store.phase !== 'intro') {
-    const meta = INTRO_DISPLAY['species-prelude']
+    const meta = INTRO_DISPLAY['wolves-prologue']
     store.setDisplayOverride({
       ...meta,
       canPrevious: false,

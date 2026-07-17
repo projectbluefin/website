@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import qrMakeMeAComic from '@/assets/svg/qr-makemeacomic.svg'
 import { resetYoutubeIframeApiCacheForTests } from '../composables/useYoutubeIframeApi'
+import { wolvesComicHeroShots } from '../data/wolves-comic-hero-shots'
 
 const { default: WolvesIntroOverlay } = await import('../components/wolves/WolvesIntroOverlay.vue')
 
@@ -214,7 +215,7 @@ describe('wolvesIntroOverlay video segments', () => {
     const cueDuration = 14
     const shotIds: string[] = []
     const shotSrcs: string[] = []
-    const sampleCount = 9
+    const sampleCount = wolvesComicHeroShots.length
     const slotDuration = cueDuration / sampleCount
 
     for (let index = 0; index < sampleCount; index++) {
@@ -226,17 +227,7 @@ describe('wolvesIntroOverlay video segments', () => {
       shotSrcs.push(shot.attributes('src')!)
     }
 
-    expect(shotIds).toEqual([
-      'chonky-achillibator-pose1-post',
-      'chonky-achillibator-pose2-post',
-      'chonky-alamo-blue',
-      'chonky-alamo-vector',
-      'chonky-dakosaurus-bluefinskin',
-      'chonky-dromaeosaurus-bluefin',
-      'bob-torosaurus',
-      'kaslin-torosaurus',
-      'chonky-utahraptor-bluefinskin',
-    ])
+    expect(shotIds).toEqual(wolvesComicHeroShots.map(s => s.id))
     expect(new Set(shotIds)).toHaveLength(sampleCount)
     expect(shotSrcs.every(src => src.includes('/characters/') && src.endsWith('.webp'))).toBe(true)
   })

@@ -50,6 +50,71 @@ export const wolvesComicHeroShots = [
     src: 'characters/chonky-utahraptor-bluefinskin.webp',
     label: 'Chonky Utahraptor BlueFinSkin',
   },
+  {
+    id: 'custom-chonk-jorge-concavenator-post1',
+    src: 'characters/CustomChonk_Jorge_Concavenator_Post1.webp',
+    label: 'Custom Chonk Jorge Concavenator Post1',
+  },
+  {
+    id: 'deinonychus-antirrhopus-and-achillobator-giganticus',
+    src: 'characters/Deinonychus_antirrhopus_and_Achillobator_giganticus.webp',
+    label: 'Deinonychus Antirrhopus and Achillobator Giganticus',
+  },
+  {
+    id: 'jorge-custom-chonks-intrigued',
+    src: 'characters/Jorge_CustomChonks_Intrigued.webp',
+    label: 'Jorge Custom Chonks Intrigued',
+  },
+  {
+    id: 'jorge-custom-chonks-kentrosaurus-post1',
+    src: 'characters/Jorge_CustomChonks_Kentrosaurus_Post1.webp',
+    label: 'Jorge Custom Chonks Kentrosaurus Post1',
+  },
+  {
+    id: 'jorge-custom-chonks-leaping',
+    src: 'characters/Jorge_CustomChonks_Leaping.webp',
+    label: 'Jorge Custom Chonks Leaping',
+  },
+  {
+    id: 'jorge-custom-chonks-pivotraptor-blmblackgold-post',
+    src: 'characters/Jorge_CustomChonks_PivotRaptor_BLMBlackGold_Post.webp',
+    label: 'Jorge Custom Chonks PivotRaptor BLM Black Gold Post',
+  },
+  {
+    id: 'youre-holding-it-wrong2-post2',
+    src: 'characters/Youre_Holding_It_Wrong2_Post2.webp',
+    label: 'You\'re Holding It Wrong 2 Post 2',
+  },
+  {
+    id: 'youre-holding-it-wrong-post1',
+    src: 'characters/Youre_Holding_It_Wrong_Post1.webp',
+    label: 'Youre Holding It Wrong Post 1',
+  },
+  {
+    id: 'bluefin-nesting',
+    src: 'characters/bluefin_nesting.webp',
+    label: 'Bluefin Nesting',
+  },
+  {
+    id: 'bluefin-original',
+    src: 'characters/bluefin_original.webp',
+    label: 'Bluefin Original',
+  },
+  {
+    id: 'bluefin-pride',
+    src: 'characters/bluefin_pride.webp',
+    label: 'Bluefin Pride',
+  },
+  {
+    id: 'dolly',
+    src: 'characters/dolly.webp',
+    label: 'Dolly',
+  },
+  {
+    id: 'karl',
+    src: 'characters/karl.webp',
+    label: 'Karl',
+  },
 ] as const satisfies readonly WolvesComicHeroShot[]
 
 export function getComicHeroShotIndex(

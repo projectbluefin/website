@@ -71,25 +71,25 @@ describe('cinematic store', () => {
     const store = useCinematicStore()
     store.enterIntro()
     store.syncIntroStatus({
-      segmentIndex: 3,
+      segmentIndex: 2,
       segmentElapsed: 60,
       segmentDuration: 119.5,
       nativeTime: 62,
     })
 
-    expect(store.sequenceElapsed).toBeCloseTo(214)
-    expect(store.sequenceDuration).toBeCloseTo(273.5)
-    expect(store.overallElapsed).toBeCloseTo(214)
-    expect(store.overallDuration).toBeCloseTo(2377.5)
-    expect(store.overallProgress).toBeCloseTo(214 / 2377.5)
+    expect(store.sequenceElapsed).toBeCloseTo(182)
+    expect(store.sequenceDuration).toBeCloseTo(241.5)
+    expect(store.overallElapsed).toBeCloseTo(182)
+    expect(store.overallDuration).toBeCloseTo(2345.5)
+    expect(store.overallProgress).toBeCloseTo(182 / 2345.5)
 
     store.enterCinematic()
     store.updateTime(0, 424, 0)
 
     expect(store.sequenceElapsed).toBe(0)
     expect(store.sequenceDuration).toBe(2104)
-    expect(store.overallElapsed).toBeCloseTo(273.5)
-    expect(store.overallProgress).toBeCloseTo(273.5 / 2377.5)
+    expect(store.overallElapsed).toBeCloseTo(241.5)
+    expect(store.overallProgress).toBeCloseTo(241.5 / 2345.5)
   })
 
   it('maps an overall ratio to the correct intro or cinematic segment and native time', () => {
@@ -100,21 +100,21 @@ describe('cinematic store', () => {
       nativeTime: 0,
     }))
 
-    expect(resolveOverallRatioTarget(154 / 2377.5)).toEqual(expect.objectContaining({
+    expect(resolveOverallRatioTarget(122 / 2345.5)).toEqual(expect.objectContaining({
       phase: 'intro',
-      segmentIndex: 3,
+      segmentIndex: 2,
       segmentElapsed: 0,
       nativeTime: 2,
     }))
 
-    expect(resolveOverallRatioTarget(273.5 / 2377.5)).toEqual(expect.objectContaining({
+    expect(resolveOverallRatioTarget(241.5 / 2345.5)).toEqual(expect.objectContaining({
       phase: 'cinematic',
       segmentIndex: 0,
       segmentElapsed: 0,
       nativeTime: 0,
     }))
 
-    expect(resolveOverallRatioTarget((273.5 + 5) / 2377.5)).toEqual(expect.objectContaining({
+    expect(resolveOverallRatioTarget((241.5 + 5) / 2345.5)).toEqual(expect.objectContaining({
       phase: 'cinematic',
       segmentIndex: 0,
       segmentElapsed: 5,

@@ -400,42 +400,6 @@ function bluefinMonthCrossfadePair(month: number): IntroBackgroundCrossfade {
 export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
   return [
     {
-      id: 'species-prelude',
-      kind: 'text',
-      duration: 32,
-      overlays: [
-        {
-          text: `Dimetrodon limbatus
-Permian Period
-About 286 million to 270 million years ago`,
-          start: 0,
-          end: 8,
-        },
-        {
-          text: `Extinct synapsid relative on the lineage toward mammals, not a dinosaur
-Carnivore with differentiated teeth and elongated vertebral spines supporting a sail
-Fossils found in North America`,
-          start: 8,
-          end: 16,
-        },
-        {
-          text: `Deinonychus antirrhopus
-Early Cretaceous Period
-Western North America`,
-          start: 16,
-          end: 24,
-        },
-        {
-          text: `Dromaeosaur theropod, bipedal
-Large sicklelike talon on the second toe
-Stiffened tail supported balance while running or attacking
-Long arms, hands, and a wrist able to flex sideways`,
-          start: 24,
-          end: 32,
-        },
-      ],
-    },
-    {
       id: 'wolves-prologue',
       kind: 'text',
       // Cut down from the song's full 5:26 (326s) to a 94s excerpt per explicit user request

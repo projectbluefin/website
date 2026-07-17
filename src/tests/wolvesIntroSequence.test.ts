@@ -168,9 +168,8 @@ describe('wolves intro overlay sequence', () => {
 
   it('builds the intro sequence without the epilogue transition', () => {
     const sequence = buildIntroVideoSequence()
-    expect(sequence).toHaveLength(4)
+    expect(sequence).toHaveLength(3)
     expect(sequence.map(segment => segment.id)).toEqual([
-      'species-prelude',
       'wolves-prologue',
       'bluefin-cinematic-universe',
       'wolves-intro',
@@ -254,35 +253,10 @@ describe('wolves intro overlay sequence', () => {
     expect(cues.some(cue => cue.start === 119.0)).toBe(false)
   })
 
-  it('opens with a silent factual species prelude before the locked Gayane prologue', () => {
-    const [prelude, prologue] = buildIntroVideoSequence()
-    if (!isTextSegment(prelude) || !isTextSegment(prologue)) {
-      throw new Error('Expected the first two intro segments to be text-only')
-    }
-
-    expect(prelude.audioYoutubeVideoId).toBeUndefined()
-    expect(prelude.overlays?.map(cue => cue.text)).toEqual([
-      `Dimetrodon limbatus
-Permian Period
-About 286 million to 270 million years ago`,
-      `Extinct synapsid relative on the lineage toward mammals, not a dinosaur
-Carnivore with differentiated teeth and elongated vertebral spines supporting a sail
-Fossils found in North America`,
-      `Deinonychus antirrhopus
-Early Cretaceous Period
-Western North America`,
-      `Dromaeosaur theropod, bipedal
-Large sicklelike talon on the second toe
-Stiffened tail supported balance while running or attacking
-Long arms, hands, and a wrist able to flex sideways`,
-    ])
-    expect(prologue.duration).toBe(94)
-  })
-
   it('gives the revised prologue copy readable holds within its 94-second runtime', () => {
-    const [, prologue] = buildIntroVideoSequence()
+    const [prologue] = buildIntroVideoSequence()
     if (!isTextSegment(prologue)) {
-      throw new Error('Expected the second intro segment to be text-only')
+      throw new Error('Expected the first intro segment to be text-only')
     }
 
     expect(prologue.duration).toBe(94)
@@ -371,9 +345,9 @@ And its will to survive is utterly Broken`,
   })
 
   it('fades the Collapse to night with the armies line before the combined closing words', () => {
-    const [, prologue] = buildIntroVideoSequence()
+    const [prologue] = buildIntroVideoSequence()
     if (!isTextSegment(prologue)) {
-      throw new Error('Expected the second intro segment to be text-only')
+      throw new Error('Expected the first intro segment to be text-only')
     }
 
     const serializedCues = JSON.stringify(prologue.overlays)

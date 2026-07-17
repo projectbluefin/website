@@ -166,17 +166,17 @@ describe('wolvesApp intro status handling', () => {
     })
     await wrapper.vm.$nextTick()
 
-    expect(store.segmentIndex).toBe(3)
+    expect(store.segmentIndex).toBe(2)
     expect(store.segmentElapsed).toBeCloseTo(60)
     expect(store.segmentDuration).toBeCloseTo(119.5)
     expect(store.nativeTime).toBe(62)
-    expect(store.sequenceElapsed).toBeCloseTo(214)
-    expect(store.overallElapsed).toBeCloseTo(214)
+    expect(store.sequenceElapsed).toBeCloseTo(182)
+    expect(store.overallElapsed).toBeCloseTo(182)
 
     intro.vm.$emit('complete')
     await wrapper.vm.$nextTick()
 
     expect(store.phase).toBe('cinematic')
-    expect(store.overallElapsed).toBeCloseTo(273.5)
+    expect(store.overallElapsed).toBeCloseTo(241.5)
   })
 })
