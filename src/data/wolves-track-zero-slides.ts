@@ -28,7 +28,7 @@ export const kyleTrackZeroWindow = {
   endTime: 188.2,
 } as const
 
-export const hikariSlideId = 'wolves/people/hikari.webp'
+export const hikariSlideId = 'wolves/people/hikari.JPG'
 export const hikariTrackZeroWindow = {
   startTime: kyleTrackZeroWindow.endTime,
   endTime: 192.28,

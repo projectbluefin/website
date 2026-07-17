@@ -66,9 +66,10 @@ const teams = [
   {
     name: 'TEAM ALPHA: SYSTEMS & POWER GRID',
     members: [
-      { id: 'subjectprofile/kat-cosgrove', label: 'Kat Cosgrove (Guardian / Warlock)' },
+      { id: 'subjectprofile/kat-cosgrove', label: 'Kat Cosgrove (Guardian / Titan)' },
       { id: 'subjectprofile/karl', label: 'Karl (Amargasaurus)' },
       { id: 'guardian-bond/kat-cosgrove-karl', label: 'Kat ↔ Karl GuardianBond' },
+      { id: 'subjectprofile/robert-killen', label: 'Robert Killen (Guardian / Warlock)' },
     ],
   },
   {
@@ -77,14 +78,17 @@ const teams = [
       { id: 'subjectprofile/jeefy', label: 'Jeefy (Guardian / Hunter)' },
       { id: 'subjectprofile/mountaintop', label: 'Mountaintop (Torosaurus)' },
       { id: 'guardian-bond/jeefy-mountaintop', label: 'Jeefy ↔ Mountaintop GuardianBond' },
+      { id: 'subjectprofile/laura-santamaria', label: 'Laura Santamaria (Guardian / Warlock)' },
     ],
   },
   {
     name: 'TEAM OMEGA: RECONCILIATION & ANCHORING',
     members: [
-      { id: 'subjectprofile/natalie', label: 'Natalie (Guardian / Titan)' },
+      { id: 'subjectprofile/natalie', label: 'Natalie / Natali Vlatko (Guardian / Titan)' },
       { id: 'subjectprofile/alamo', label: 'Alamo (Alamosaurus)' },
       { id: 'guardian-bond/natalie-alamo', label: 'Natalie ↔ Alamo GuardianBond' },
+      { id: 'subjectprofile/kaslin-fields', label: 'Kaslin Fields (Guardian / Warlock)' },
+      { id: 'subjectprofile/christopher-blecker', label: 'Christoph Blecker (Guardian / Warlock)' },
     ],
   },
 ]

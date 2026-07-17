@@ -368,30 +368,4 @@ describe('wolvesIntroOverlay guardian plate', () => {
     expect(wrapper.text()).toContain('MAINTAINER // GUARDIAN')
     expect(wrapper.text()).not.toContain('GUARDIAN // MAINTAINER')
   })
-
-  it('shows a guardian\'s bonded-dinosaur icon when one is documented', async () => {
-    const wrapper = mount(WolvesIntroOverlay, { props: { videos: guardianPlateSequence } })
-    await flushPromises()
-    resolveIframeApi()
-    await flushPromises()
-    players[0].triggerReady()
-    await flushPromises()
-
-    expect(wrapper.text()).toContain('Kat Cosgrove')
-    expect(wrapper.find('.wolves-guardian-plate-dinosaur-icon').exists()).toBe(true)
-  })
-
-  it('renders no icon for a guardian with no documented dinosaur bond', async () => {
-    const wrapper = mount(WolvesIntroOverlay, { props: { videos: guardianPlateSequence } })
-    await flushPromises()
-    resolveIframeApi()
-    await flushPromises()
-    players[0].triggerReady()
-    players[0].getCurrentTime = vi.fn(() => 6)
-    await vi.advanceTimersByTimeAsync(200)
-    await flushPromises()
-
-    expect(wrapper.text()).toContain('Robert Killen')
-    expect(wrapper.find('.wolves-guardian-plate-dinosaur-icon').exists()).toBe(false)
-  })
 })

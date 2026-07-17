@@ -18,7 +18,6 @@
 <script setup lang="ts">
 import type { YoutubePlayer } from '@/composables/useYoutubeIframeApi'
 import { computed, onBeforeUnmount, reactive, ref } from 'vue'
-import WolvesControlBar from '@/components/wolves/WolvesControlBar.vue'
 import { getYoutubePlayerConstructor, getYoutubePlayerState, loadYoutubeIframeApi } from '@/composables/useYoutubeIframeApi'
 import { wolvesCreatorShortsCassidyWilliams, wolvesCreatorShortsLindsayNikole } from '@/data/wolves-creator-shorts'
 
@@ -198,6 +197,15 @@ async function init() {
   players.right = createPlayer(rightMountHost.value, 'right', false)
 }
 
+const showTitleCard = ref(true)
+
+function startShorts() {
+  showTitleCard.value = false
+  if (players.left && !isPaused.value) {
+    players.left.playVideo?.()
+  }
+}
+
 init()
 
 function togglePause() {
@@ -224,6 +232,7 @@ onBeforeUnmount(() => {
   <Teleport to="body">
     <div class="wolves-creator-shorts-interstitial" :style="{ backgroundImage: wallpaperUrl }">
       <div class="wolves-creator-shorts-backdrop-scrim" aria-hidden="true" />
+
       <div class="wolves-creator-shorts-stage">
         <div class="wolves-creator-shorts-slot" :class="{ 'is-active': activeSide === 'left' }">
           <div ref="leftMountHost" class="wolves-creator-shorts-player" />
@@ -241,26 +250,45 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <div class="wolves-creator-shorts-controls" :style="{ backgroundImage: wallpaperUrl }">
+      <div class="wolves-creator-shorts-controls wc-plate wc-plate--sheen">
         <div class="wolves-creator-shorts-controls-overlay">
-          <WolvesControlBar
-            container-class="wolves-creator-shorts-controls-overlay"
-            play-button-class="soundtrack-icon-btn play-pause"
-            next-button-class="soundtrack-icon-btn"
-            :show-previous="false"
-            :show-next="true"
-            :show-play-pause="true"
-            previous-aria-label="Previous video"
-            next-aria-label="Skip video"
-            play-aria-label="Resume video"
-            pause-aria-label="Pause video"
-            :is-playing="!isPaused"
-            :can-go-next="true"
-            @toggle="togglePause"
-            @next="skip"
-          />
+          <button
+            class="wc-control"
+            type="button"
+            :aria-label="isPaused ? 'Play' : 'Pause'"
+            @click="togglePause"
+          >
+            <svg v-if="!isPaused" viewBox="0 0 24 24" style="width: 1.5rem; height: 1.5rem; fill: currentColor;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+            <svg v-else viewBox="0 0 24 24" style="width: 1.5rem; height: 1.5rem; fill: currentColor;"><path d="M8 5v14l11-7z" /></svg>
+          </button>
+          <button
+            class="wc-control"
+            type="button"
+            aria-label="Skip video"
+            @click="skip"
+          >
+            <svg viewBox="0 0 24 24" style="width: 1.5rem; height: 1.5rem; fill: currentColor;"><path d="M16 6h2v12h-2zm-1 6-9 6V6z" /></svg>
+          </button>
         </div>
       </div>
+
+      <Transition name="wc-title-fade">
+        <div v-if="showTitleCard" class="wolves-creator-shorts-title-screen" :style="{ backgroundImage: wallpaperUrl }">
+          <div class="wolves-creator-shorts-backdrop-scrim" aria-hidden="true" />
+          <div class="wolves-creator-shorts-title-content wc-plate wc-plate--sheen">
+            <span class="wc-label">DEVELOPER COMEDY // IMMERSIVE SHORT SELECTION</span>
+            <h1 class="wolves-creator-shorts-main-title">
+              MEET THE CREATORS
+            </h1>
+            <p class="wolves-creator-shorts-subtitle">
+              Featuring Cassidy Williams & Lindsay Nikole
+            </p>
+            <button class="wolves-creator-shorts-start-btn" type="button" @click="startShorts">
+              [ START SHORTS ]
+            </button>
+          </div>
+        </div>
+      </Transition>
     </div>
   </Teleport>
 </template>
@@ -364,6 +392,72 @@ onBeforeUnmount(() => {
   padding: 12px;
   background: rgba(6, 10, 18, 0.72);
   backdrop-filter: blur(4px);
+}
+
+.wolves-creator-shorts-title-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 1005;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #000;
+  background-size: cover;
+  background-position: center;
+}
+
+.wolves-creator-shorts-title-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.6rem;
+  padding: 4rem;
+  max-width: min(600px, 90vw);
+  text-align: center;
+}
+
+.wolves-creator-shorts-main-title {
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--wc-white);
+  font-family: 'Share Tech Mono', monospace;
+  margin: 0;
+}
+
+.wolves-creator-shorts-subtitle {
+  font-size: 1.2rem;
+  color: var(--wc-grey);
+  margin: 0;
+}
+
+.wolves-creator-shorts-start-btn {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 1.5rem;
+  color: var(--wc-gold);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 1rem 2rem;
+
+  &:hover {
+    color: var(--wc-white);
+    text-shadow: 0 0 10px var(--wc-gold);
+  }
+}
+
+.wc-title-fade-enter-active,
+.wc-title-fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.wc-title-fade-enter-from,
+.wc-title-fade-leave-to {
+  opacity: 0;
 }
 
 /* Reuses the soundtrack widget's icon-button look for visual consistency. */

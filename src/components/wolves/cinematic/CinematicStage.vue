@@ -26,7 +26,7 @@ const plateLabel = computed(() =>
   isTrackZero.value ? getWolvesHudLabel(store.nativeTime) : store.segment.title,
 )
 const plateDetail = computed(() =>
-  isTrackZero.value ? store.segment.title : store.segment.chapter,
+  isTrackZero.value ? 'kubectl apply -f ublue.yaml -n k8s-community' : store.segment.chapter,
 )
 
 onBeforeUnmount(() => player.destroy())

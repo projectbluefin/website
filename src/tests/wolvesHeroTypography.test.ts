@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { nextTick } from 'vue'
 import TheaterExperience from '@/components/wolves/cinematic/TheaterExperience.vue'
+import { getWolvesHudLabel } from '@/data/wolves-thesis-sequence'
 import { useCinematicStore } from '@/stores/cinematic'
 
 describe('wolves hero typography timeline', () => {
@@ -27,16 +28,15 @@ describe('wolves hero typography timeline', () => {
   }
 
   it.each([
-    [345, 'welcome', 'We\'ve got your back.'],
-    [347.75, 'welcome', 'You\'ll never walk alone ...'],
-    [350.5, 'universal-blue', 'We are Universal Blue.'],
-    [359, 'evolve', 'Evolve or die ...'],
-    [405, 'legend', 'You have ascended ...'],
-    [408, 'legend', 'Become Legend'],
-    [425, 'legend', 'Become Legend'],
-  ])('renders the exact authored cue at %s seconds', async (time, mode, text) => {
-    const wrapper = await renderAt(Number(time))
-    expect(wrapper.get(`.wc-thesis--${mode}`).text()).toContain(text)
+    [345, 'We\'ve got your back.'],
+    [347.75, 'You\'ll never walk alone ...'],
+    [350.5, 'Welcome to indie cloud native'],
+    [359, 'Evolve or die ...'],
+    [405, 'You have ascended ...'],
+    [408, 'Become Legend'],
+    [425, 'Become Legend'],
+  ])('renders the exact authored cue at %s seconds in HUD label', (time, text) => {
+    expect(getWolvesHudLabel(time)).toBe(text)
   })
 
   it.each([344.999, 365, 404.999, 425.001])(

@@ -49,7 +49,7 @@ const opacities = computed(() => {
 
 <style scoped lang="scss">
 .wc-org-ads {
-  --wc-org-ad-width: clamp(10rem, 13vw, 16rem);
+  --wc-org-ad-width: clamp(18rem, 22vw, 26rem);
   position: absolute;
   inset: 9rem 0 10.5rem;
   z-index: 18;
@@ -73,9 +73,9 @@ const opacities = computed(() => {
   width: var(--wc-org-ad-width);
   min-height: 0;
   max-height: 100%;
-  padding: 1rem;
+  padding: 2.4rem;
   flex-direction: column;
-  gap: 1rem;
+  gap: 2rem;
   align-items: center;
   justify-content: center;
   overflow: hidden;
@@ -97,12 +97,12 @@ const opacities = computed(() => {
 .wc-org-ad-qr {
   display: block;
   width: 100%;
-  max-height: 60%;
+  max-height: 45%;
   object-fit: contain;
 }
 
 .wc-org-ad-qr {
-  width: min(70%, 9rem);
+  width: min(85%, 16rem);
 }
 
 @media (max-width: 1023px) {

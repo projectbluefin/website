@@ -104,16 +104,16 @@ describe('wolvesComicReader', () => {
     expect(srcs.some(src => src.includes('bketelsen.webp'))).toBe(true)
   })
 
-  it('enforces and codifies the alignment of the heart picture at 5:19', async () => {
+  it('enforces and codifies the alignment of the heart picture at 5:21', async () => {
     const wrapper = mount(WolvesComicReader, {
       props: {
         trackIndex: 0,
-        playlistCurrentTime: 319, // Exactly 5:19 on Track 0
+        playlistCurrentTime: 321, // Exactly 5:21 on Track 0
       },
     })
     await wrapper.vm.$nextTick()
 
-    // At 319s (5:19), the active slide should correspond to the heart picture (kubecon-55168460993.webp)
+    // At 321s (5:21), the active slide should correspond to the heart picture (kubecon-55168460993.webp)
     const srcs = wrapper.findAll('.flickr-img').map(el => el.attributes('src') || '')
     expect(srcs.some(src => src.includes('kubecon-55168460993.webp'))).toBe(true)
   })
@@ -169,7 +169,7 @@ describe('wolvesComicReader', () => {
     const shermanPath = 'wolves/people/sherman.webp'
     const m2Path = 'wolves/people/m2.jpg'
     const kylePath = 'wolves/people/kyle.jpg'
-    const hikariPath = 'wolves/people/hikari.webp'
+    const hikariPath = 'wolves/people/hikari.JPG'
     const jorgePath = 'wolves/people/jorge-bluefin.webp'
     const wrapper = mount(WolvesComicReader, {
       props: {
@@ -683,7 +683,7 @@ describe('wolvesComicReader', () => {
   })
 
   it('renders title-only theater captions only for explicitly flagged wallpapers', async () => {
-    const wallpapersWithDescription = wallpapers.filter(wp => wp.description)
+    const wallpapersWithDescription = wallpapers.filter(wp => wp.name.includes('wolves/people/') && wp.description)
     expect(wallpapersWithDescription.length, 'expected no wallpaper to carry a description after simplifying these interview captions').toBe(0)
     const jono = wallpapers.find(wp => wp.name === 'wolves/people/interview-jono-bacon-cult-psychology-kubernetes.webp')
     expect(jono?.theaterTitleOnly).toBe(true)

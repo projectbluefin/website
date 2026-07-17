@@ -30,6 +30,7 @@ async function enterCinematic() {
 
 const introVideos = buildIntroVideoSequence()
 const intro = ref<InstanceType<typeof WolvesIntroOverlay> | null>(null)
+const introHasActiveCue = ref(true)
 
 // Factual display metadata for the two intro segments (see wolves-intro-sequence.ts).
 const INTRO_DISPLAY: Record<string, { chapter: string, title: string, artist: string, artwork: string }> = {
@@ -53,6 +54,7 @@ function handleIntroStatus(payload: {
   paused: boolean
   segmentId: string
   canGoPrevious: boolean
+  hasActiveCue: boolean
 }) {
   const meta = INTRO_DISPLAY[payload.segmentId]
   if (meta) {
@@ -60,6 +62,7 @@ function handleIntroStatus(payload: {
   }
   store.updateTime(payload.currentTime, payload.duration)
   store.setPlaying(!payload.paused)
+  introHasActiveCue.value = payload.hasActiveCue
 }
 
 async function handleIntroComplete() {
@@ -97,7 +100,7 @@ function restart() {
         @status="handleIntroStatus"
         @complete="handleIntroComplete"
       />
-      <div class="wc-intro-nameplate">
+      <div v-if="store.display.chapter !== 'PROLOGUE' || introHasActiveCue" class="wc-intro-nameplate">
         <Nameplate :detail="store.display.chapter" :label="store.display.title" />
       </div>
       <MediaWidget

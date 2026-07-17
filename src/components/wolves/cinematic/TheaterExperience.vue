@@ -319,10 +319,12 @@ onBeforeUnmount(() => {
   color: #bfdbfe;
 }
 
+.wc-thesis--welcome,
 .wc-thesis--legend {
   background: radial-gradient(circle, rgb(26 95 160 / 42%), transparent 62%);
 }
 
+.wc-thesis--welcome .wc-thesis-text,
 .wc-thesis--legend .wc-thesis-text {
   font-family: var(--wc-font-weyland);
   font-size: clamp(3.6rem, 6vw, 6.8rem);

@@ -26,7 +26,7 @@ describe('wolves Track 0 slide locks', () => {
     const sherman = { id: 'wolves/people/sherman.webp' }
     const m2 = { id: 'wolves/people/m2.jpg' }
     const kyle = { id: 'wolves/people/kyle.jpg' }
-    const hikari = { id: 'wolves/people/hikari.webp' }
+    const hikari = { id: 'wolves/people/hikari.JPG' }
     const jorge = { id: 'wolves/people/jorge-bluefin.webp' }
     const before = [{ id: 'people-a' }, marina, hikari, { id: 'people-b' }, m2, jorge, jono, kyle, sherman, { id: 'people-c' }]
 
@@ -49,7 +49,7 @@ describe('wolves Track 0 slide locks', () => {
       'wolves/people/sherman.webp',
       'wolves/people/m2.jpg',
       'wolves/people/kyle.jpg',
-      'wolves/people/hikari.webp',
+      'wolves/people/hikari.JPG',
       'wolves/people/jorge-bluefin.webp',
     ])
     for (let i = 1; i < bluefinGroupSlides.length; i++) {
@@ -65,7 +65,7 @@ describe('wolves Track 0 slide locks', () => {
     const sherman = { id: 'wolves/people/sherman.webp' }
     const m2 = { id: 'wolves/people/m2.jpg' }
     const kyle = { id: 'wolves/people/kyle.jpg' }
-    const hikari = { id: 'wolves/people/hikari.webp' }
+    const hikari = { id: 'wolves/people/hikari.JPG' }
     const jorge = { id: 'wolves/people/jorge-bluefin.webp' }
     const regular = { id: 'people-a' }
 

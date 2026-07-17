@@ -14,16 +14,6 @@ export interface WolvesThesisState {
 
 const THESIS_START_SECONDS = 345
 const THESIS_END_SECONDS = 425
-const TRACK_ZERO_BPM = 152
-const PHRASE_BEATS = 16
-const WELCOME_TEXT = 'We\'ve got your back.'
-const SUPPORT_TEXT = 'You\'ll never walk alone ...'
-const UNIVERSAL_BLUE_TEXT = 'We are Universal Blue.'
-const EVOLVE_TEXT = 'Evolve or die ...'
-const ASCENDED_TEXT = 'You have ascended ...'
-const LEGEND_TEXT = 'Become Legend'
-const TITANFALL_HUD_LABEL = 'Bazzite Mk6 Units: Prepare for Titanfall.'
-const DEFAULT_HUD_LABEL = 'Incoming Signal: Universal Blue'
 
 const inactive: WolvesThesisState = { active: false, mode: 'inactive', text: '', subtitle: '', warning: '', dayPulse: false, hudLabel: '' }
 
@@ -57,25 +47,47 @@ export function parseIncomingSignalMessages(source: string): readonly string[] {
 
 export const wolvesIncomingSignalMessages = parseIncomingSignalMessages(incomingSignalSource)
 
-function incomingSignalLabel(time: number): string {
-  if (wolvesIncomingSignalMessages.length === 0) {
-    return DEFAULT_HUD_LABEL
-  }
-
-  const phraseIndex = Math.floor(
-    (time - THESIS_START_SECONDS) / (60 / TRACK_ZERO_BPM * PHRASE_BEATS) + 1e-9,
-  )
-  return wolvesIncomingSignalMessages[Math.min(phraseIndex, wolvesIncomingSignalMessages.length - 1)]
-}
-
 export function getWolvesHudLabel(time: number): string {
-  if (time >= 408) {
-    return TITANFALL_HUD_LABEL
+  if (time < 175.96) {
+    return 'Incoming Signal'
   }
-  if (time < THESIS_START_SECONDS) {
-    return wolvesIncomingSignalMessages[0] ?? DEFAULT_HUD_LABEL
+  if (time < 196.36) {
+    return 'The Blue Delivers'
   }
-  return incomingSignalLabel(time)
+  if (time < 229) {
+    return 'pod/thriving-community created'
+  }
+  if (time < 253) {
+    return 'Warning: ImagePullBackOff'
+  }
+  if (time < 277) {
+    return '"humans/collaboration:latest" is currently experimental.'
+  }
+  if (time < 345) {
+    return 'Falling back to "humans/trying-their-best:v1" slowly'
+  }
+  if (time < 347.75) {
+    return 'We\'ve got your back.'
+  }
+  if (time < 350.5) {
+    return 'You\'ll never walk alone ...'
+  }
+  if (time < 359) {
+    return 'Welcome to indie cloud native'
+  }
+  if (time < 365) {
+    return 'Evolve or die ...'
+  }
+  if (time < 395) {
+    return ''
+  }
+  if (time < 405) {
+    return ''
+  }
+  if (time < 408) {
+    return 'You have ascended ...'
+  }
+  return 'Become Legend'
 }
 
 export function getWolvesThesisState(time: number): WolvesThesisState {
@@ -83,16 +95,16 @@ export function getWolvesThesisState(time: number): WolvesThesisState {
     return inactive
   }
   if (time < 347.75) {
-    return active('welcome', WELCOME_TEXT, '', '', true, getWolvesHudLabel(time))
+    return active('welcome', 'We\'ve got your back.', '', '', true, getWolvesHudLabel(time))
   }
   if (time < 350.5) {
-    return active('welcome', SUPPORT_TEXT, '', '', true, getWolvesHudLabel(time))
+    return active('welcome', 'You\'ll never walk alone ...', '', '', true, getWolvesHudLabel(time))
   }
   if (time < 359) {
-    return active('universal-blue', UNIVERSAL_BLUE_TEXT, '', '', false, getWolvesHudLabel(time))
+    return active('universal-blue', 'We are Universal Blue.', '', '', false, getWolvesHudLabel(time))
   }
   if (time < 365) {
-    return active('evolve', EVOLVE_TEXT, '', '', false, getWolvesHudLabel(time))
+    return active('evolve', 'Evolve or die ...', '', '', false, getWolvesHudLabel(time))
   }
   if (time < 395) {
     return inactive
@@ -101,7 +113,7 @@ export function getWolvesThesisState(time: number): WolvesThesisState {
     return active('growing-corruption', '', '', '', false, getWolvesHudLabel(time))
   }
   if (time < 408) {
-    return active('legend', ASCENDED_TEXT, '', 'truly a great loss for humanity.', false, getWolvesHudLabel(time))
+    return active('legend', 'You have ascended ...', '', 'truly a great loss for humanity.', false, getWolvesHudLabel(time))
   }
-  return active('legend', LEGEND_TEXT, '', 'truly a great loss for humanity.', false, getWolvesHudLabel(time))
+  return active('legend', 'Become Legend', '', 'truly a great loss for humanity.', false, getWolvesHudLabel(time))
 }
