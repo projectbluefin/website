@@ -185,7 +185,7 @@ async function assertComicHeroQrLayout(page) {
   expectEqual('Comic hero QR aria label', layout.qrLabel, 'Open makemeacomic.com')
   expectEqual('Comic hero QR alt text', layout.qrAlt, 'QR code linking to makemeacomic.com')
   expectEqual('Comic hero QR domain text', layout.domainText, 'makemeacomic.com')
-  expectEqual('Comic hero QR dialogue text', layout.dialogueText, 'Scan for comic hero shots')
+  expectEqual('Comic hero QR dialogue text', layout.dialogueText, 'Immortalize a Maintainer')
   expectEqual('Comic hero QR card display', layout.qrCardDisplay, 'block')
   expectEqual('Comic hero QR link display', layout.qrLinkDisplay, 'flex')
   expectTruthy(

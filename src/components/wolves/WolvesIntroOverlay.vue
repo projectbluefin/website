@@ -34,7 +34,7 @@ const emit = defineEmits<{
 const baseUrl = import.meta.env.BASE_URL
 const comicHeroQrUrl = 'https://makemeacomic.com'
 const comicHeroQrDomain = 'makemeacomic.com'
-const comicHeroQrDialogue = 'Scan for comic hero shots'
+const comicHeroQrDialogue = 'Immortalize a Maintainer'
 
 const sequenceState = ref(createIntroSequenceState())
 const currentTime = ref(0)
