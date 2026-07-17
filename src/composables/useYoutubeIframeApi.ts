@@ -23,6 +23,12 @@ export interface YoutubePlayer {
   mute?: () => void
   /** Restores the player's audio output after `mute`. */
   unMute?: () => void
+  /**
+   * Detaches an internal player module. Used with 'captions' (html5 player) and
+   * 'cc' (legacy) to force YouTube's own closed captions off — `cc_load_policy: 0`
+   * only defers to the viewer's account preference, it cannot disable them.
+   */
+  unloadModule?: (module: string) => void
   /** Loads and immediately plays a new video in this same player instance. */
   loadVideoById?: (video: string | { videoId: string, startSeconds?: number }) => void
   /**

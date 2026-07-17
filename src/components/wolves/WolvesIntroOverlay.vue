@@ -411,6 +411,11 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
     playerVars,
     events: {
       onReady: () => {
+        // Force YouTube's own captions off even for viewers whose account
+        // preference enables them; the burned-in styled captions are the only
+        // caption layer on this trailer.
+        player?.unloadModule?.('captions')
+        player?.unloadModule?.('cc')
         activeSegmentDuration.value = segment.maxDuration ?? player?.getDuration?.() ?? 0
         segmentDurations.value[sequenceState.value.index] = activeSegmentDuration.value
         stopPolling()
@@ -422,6 +427,11 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
         }, 200)
       },
       onStateChange: (event: { data: number }) => {
+        if (event.data === getYoutubePlayerState().PLAYING) {
+          // YouTube can re-attach the caption module on play/seek; keep it off.
+          player?.unloadModule?.('captions')
+          player?.unloadModule?.('cc')
+        }
         if (event.data === getYoutubePlayerState().ENDED) {
           advance()
         }
