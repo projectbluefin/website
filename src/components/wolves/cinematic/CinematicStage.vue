@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import { useDualBufferPlayer } from '@/composables/useDualBufferPlayer'
 import { segmentCrossfadeMs } from '@/config/wolves-cinematic'
+import { getWolvesHudLabel } from '@/data/wolves-thesis-sequence'
 import { useCinematicStore } from '@/stores/cinematic'
 import CinematicCaptions from './CinematicCaptions.vue'
+import CinematicTransition from './CinematicTransition.vue'
 import Nameplate from './Nameplate.vue'
+import TrackZeroExperience from './TrackZeroExperience.vue'
 
 const props = defineProps<{
   /** False when Spotify supplies the soundtrack (YouTube stays muted). */
@@ -17,12 +20,23 @@ const hostB = ref<HTMLElement | null>(null)
 
 const player = useDualBufferPlayer({ hostA, hostB, audioEnabled: props.audioEnabled })
 
+const isTrackZero = computed(() => store.segment.trackZeroExperience === true)
+
+// The plate is the single title placard on every segment. During the seven-days
+// segment its detail line carries the incoming-signal communications ticker
+// (the old top status bar's role); everywhere else it shows the chapter label.
+const plateDetail = computed(() =>
+  isTrackZero.value ? getWolvesHudLabel(store.nativeTime) : store.segment.chapter,
+)
+
 onBeforeUnmount(() => player.destroy())
 
 defineExpose({
   start: player.start,
   togglePlay: player.togglePlay,
   seekTo: player.seekTo,
+  seekToRatio: player.seekToRatio,
+  skip: player.skip,
 })
 </script>
 
@@ -73,11 +87,16 @@ defineExpose({
       </div>
     </Transition>
 
+    <!-- Authored seven-days immersive layer (slideshow + lore + thesis) over the audio-source video. -->
+    <TrackZeroExperience v-if="isTrackZero" />
+
     <div class="wc-stage-nameplate">
-      <Nameplate :detail="store.segment.chapter" :label="store.segment.title" />
+      <Nameplate :detail="plateDetail" :label="store.segment.title" />
     </div>
 
     <CinematicCaptions />
+
+    <CinematicTransition />
   </div>
 </template>
 
@@ -124,6 +143,7 @@ defineExpose({
 .wc-veil {
   position: absolute;
   inset: 0;
+  z-index: 35;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -149,6 +169,8 @@ defineExpose({
   position: absolute;
   top: 3rem;
   left: 3rem;
+  z-index: 20;
+  max-width: min(72rem, calc(100vw - 6rem));
   pointer-events: none;
 }
 </style>

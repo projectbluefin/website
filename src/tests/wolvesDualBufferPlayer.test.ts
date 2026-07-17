@@ -155,6 +155,44 @@ describe('useDualBufferPlayer', () => {
     expect(playerA.volume).toBe(0)
   })
 
+  it('skips forward and backward on manual command', async () => {
+    const player = await startPlayer()
+    const store = useCinematicStore()
+    const [playerA, playerB] = FakePlayer.instances
+
+    store.updateTime(10, 300)
+    player.skip(1)
+    expect(player.activeSide.value).toBe('b')
+    expect(playerB.loadedId).toBe(CINEMATIC_SEGMENTS[1].youtubeId)
+    // Trimmed segments load at their authored start.
+    expect(playerB.currentTime).toBe(2)
+
+    vi.advanceTimersByTime(2000)
+    expect(store.segmentIndex).toBe(1)
+    expect(playerA.cuedId).toBe(CINEMATIC_SEGMENTS[2].youtubeId)
+
+    player.skip(-1)
+    vi.advanceTimersByTime(2000)
+    expect(player.activeSide.value).toBe('a')
+    expect(playerA.loadedId).toBe(CINEMATIC_SEGMENTS[0].youtubeId)
+    expect(store.segmentIndex).toBe(0)
+  })
+
+  it('ignores skips past the ends and while crossfading', async () => {
+    const player = await startPlayer()
+    const store = useCinematicStore()
+
+    player.skip(-1)
+    expect(store.segmentIndex).toBe(0)
+    expect(player.activeSide.value).toBe('a')
+
+    player.skip(1)
+    // Mid-crossfade, further skips are ignored.
+    player.skip(1)
+    vi.advanceTimersByTime(2000)
+    expect(store.segmentIndex).toBe(1)
+  })
+
   it('falls back to swapping on the ENDED event', async () => {
     const player = await startPlayer()
     const [playerA] = FakePlayer.instances

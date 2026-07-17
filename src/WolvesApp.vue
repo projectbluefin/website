@@ -78,7 +78,11 @@ function restart() {
 
     <div v-else-if="store.phase === 'cinematic'" class="wc-runtime">
       <CinematicStage ref="stage" :audio-enabled="audioEnabled" />
-      <MediaWidget @toggle-play="stage?.togglePlay()" />
+      <MediaWidget
+        @toggle-play="stage?.togglePlay()"
+        @skip="(delta: number) => stage?.skip(delta)"
+        @seek="(ratio: number) => stage?.seekToRatio(ratio)"
+      />
     </div>
 
     <div v-else class="wc-finished">

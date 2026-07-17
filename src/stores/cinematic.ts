@@ -71,6 +71,15 @@ export const useCinematicStore = defineStore('cinematic', {
       this.segmentDuration = 0
       this.crossfading = false
     },
+    /** Manual skip to an arbitrary segment (prev/next); only watched time accrues. */
+    jumpToSegment(index: number) {
+      this.completedElapsed += this.segmentElapsed
+      this.segmentIndex = Math.min(Math.max(index, 0), CINEMATIC_SEGMENTS.length - 1)
+      this.segmentElapsed = 0
+      this.nativeTime = 0
+      this.segmentDuration = 0
+      this.crossfading = false
+    },
     finish() {
       this.phase = 'finished'
       this.playing = false

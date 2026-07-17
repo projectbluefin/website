@@ -24,6 +24,12 @@ describe('wolves cinematic config', () => {
     expect(intro.captionsText).toContain('What is a guardian?')
   })
 
+  it('mounts the seven-days immersive experience only on the 7 Days segment', () => {
+    const flagged = CINEMATIC_SEGMENTS.filter(segment => segment.trackZeroExperience)
+    expect(flagged).toHaveLength(1)
+    expect(flagged[0].youtubeId).toBe('LASru9j0oIc')
+  })
+
   it('has unique, well-formed YouTube ids and complete metadata', () => {
     const ids = new Set<string>()
     for (const segment of CINEMATIC_SEGMENTS) {

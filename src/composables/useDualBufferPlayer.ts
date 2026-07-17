@@ -130,6 +130,41 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     })
   }
 
+  /**
+   * Manual prev/next skip. Unlike the natural handoff, the inactive side has the
+   * wrong video buffered for backward jumps or double-skips, so the target is
+   * hard-loaded there; the transition overlay covers the brief buffering gap.
+   */
+  function skip(delta: number) {
+    const target = Math.min(Math.max(store.segmentIndex + delta, 0), CINEMATIC_SEGMENTS.length - 1)
+    if (swapping || target === store.segmentIndex) {
+      return
+    }
+    const fromSide = activeSide.value
+    const toSide = other(fromSide)
+    const outgoing = sides[fromSide].player
+    const incoming = sides[toSide].player
+    if (!incoming) {
+      return
+    }
+
+    swapping = true
+    store.beginCrossfade()
+
+    const segment = CINEMATIC_SEGMENTS[target]
+    sides[toSide].segmentIndex = target
+    applyVolume(incoming, 0)
+    incoming.loadVideoById?.({ videoId: segment.youtubeId, startSeconds: segment.startSeconds })
+    activeSide.value = toSide
+
+    rampVolumes(outgoing, incoming, segmentCrossfadeMs(store.segmentIndex), () => {
+      outgoing?.pauseVideo?.()
+      store.jumpToSegment(target)
+      cueNext(fromSide, target + 1)
+      swapping = false
+    })
+  }
+
   function pollActiveTime() {
     const player = activePlayer()
     if (!player) {
@@ -264,6 +299,16 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     activePlayer()?.seekTo?.(seconds, true)
   }
 
+  /** Seek within the current segment's authored window by 0..1 ratio (widget progress bar). */
+  function seekToRatio(ratio: number) {
+    if (store.segmentDuration <= 0) {
+      return
+    }
+    const startAt = CINEMATIC_SEGMENTS[store.segmentIndex]?.startSeconds ?? 0
+    const clamped = Math.min(Math.max(ratio, 0), 1)
+    activePlayer()?.seekTo?.(startAt + clamped * store.segmentDuration, true)
+  }
+
   function destroy() {
     stopPolling()
     cancelAnimationFrame(rampFrame)
@@ -273,5 +318,5 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     sides.b.player = null
   }
 
-  return { activeSide, started, start, togglePlay, seekTo, destroy }
+  return { activeSide, started, start, togglePlay, seekTo, seekToRatio, skip, destroy }
 }

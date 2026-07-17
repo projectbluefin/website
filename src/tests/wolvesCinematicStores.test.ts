@@ -41,6 +41,20 @@ describe('cinematic store', () => {
     expect(store.isLastSegment).toBe(true)
   })
 
+  it('jumps to arbitrary segments with clamping and accrues only watched time', () => {
+    const store = useCinematicStore()
+    store.updateTime(30, 300)
+    store.jumpToSegment(4)
+    expect(store.segmentIndex).toBe(4)
+    expect(store.completedElapsed).toBe(30)
+    expect(store.segmentElapsed).toBe(0)
+
+    store.jumpToSegment(-5)
+    expect(store.segmentIndex).toBe(0)
+    store.jumpToSegment(999)
+    expect(store.segmentIndex).toBe(CINEMATIC_SEGMENTS.length - 1)
+  })
+
   it('clears crossfade and playing on finish', () => {
     const store = useCinematicStore()
     store.setPlaying(true)

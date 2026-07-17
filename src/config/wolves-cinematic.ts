@@ -32,6 +32,17 @@ export interface CinematicSegment {
   /** True for non-musical segments that have no Spotify soundtrack counterpart. */
   excludeFromSoundtrack?: boolean
   /**
+   * Mounts the authored seven-days immersive experience over this segment:
+   * the Track 0 beat-synced slideshow, lore column, and thesis overlay, all
+   * driven by the video's native timeline (the video becomes the audio source).
+   */
+  trackZeroExperience?: boolean
+  /**
+   * Authored lore lines shown in the transition overlay leading INTO this
+   * segment. Agents never write these; empty means the default terminal block.
+   */
+  transitionLore?: string[]
+  /**
    * Optional caption track. Format: one cue per line, `seconds|text`, timestamps
    * keyed to the source video's native timeline (matching
    * src/data/wolves-destiny-captions.txt).
@@ -55,10 +66,11 @@ export const DEFAULT_CROSSFADE_MS = 800
 export const PRE_END_THRESHOLD_S = 0.3
 
 /**
- * The IFrame API has no timeupdate event, so current time must be polled. 250ms is
- * frequent enough for caption sync and the pre-end swap without measurable cost.
+ * The IFrame API has no timeupdate event, so current time must be polled. 100ms
+ * matches the old immersive experience's progress resolution — the beat-synced
+ * slideshow, ticker phrases, and thesis boundaries are all keyed to it.
  */
-export const TIME_POLL_MS = 250
+export const TIME_POLL_MS = 100
 
 export const CINEMATIC_SEGMENTS: CinematicSegment[] = [
   {
@@ -89,6 +101,7 @@ export const CINEMATIC_SEGMENTS: CinematicSegment[] = [
     title: '7 Days to the Wolves',
     artist: 'Nightwish',
     artwork: 'wolves-artwork/LASru9j0oIc.jpg',
+    trackZeroExperience: true,
   },
   {
     youtubeId: 'amKIngGUvCk',
