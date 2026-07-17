@@ -1000,12 +1000,7 @@ defineExpose({
   font-size: clamp(4rem, 8vw, 8rem);
   line-height: 1.2;
   letter-spacing: 0.015em;
-  /* POWERFUL statements: muted gold presence (the B/F highlights stay blue —
-     the project is BLUEfin). Softer than the leader-plate yellow by request. */
-  color: #e6d5ae;
-  text-shadow:
-    0 4px 24px rgb(0 0 0 / 90%),
-    0 0 28px rgb(200 180 137 / 20%);
+  text-shadow: 0 4px 24px rgb(0 0 0 / 90%);
 }
 
 .wolves-intro-overlay-text-slim {
