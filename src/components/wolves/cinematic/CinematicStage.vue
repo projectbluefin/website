@@ -7,7 +7,7 @@ import { useCinematicStore } from '@/stores/cinematic'
 import CinematicCaptions from './CinematicCaptions.vue'
 import CinematicTransition from './CinematicTransition.vue'
 import Nameplate from './Nameplate.vue'
-import TrackZeroExperience from './TrackZeroExperience.vue'
+import TheaterExperience from './TheaterExperience.vue'
 
 const store = useCinematicStore()
 const hostA = ref<HTMLElement | null>(null)
@@ -18,10 +18,14 @@ const player = useDualBufferPlayer({ hostA, hostB })
 const isTrackZero = computed(() => store.segment.trackZeroExperience === true)
 
 // The plate is the single title placard on every segment. During the seven-days
-// segment its detail line carries the incoming-signal communications ticker
-// (the old top status bar's role); everywhere else it shows the chapter label.
+// segment the incoming-signal communication IS the large white text (flipped by
+// owner request), with the track title as the detail line; everywhere else the
+// plate shows chapter + title.
+const plateLabel = computed(() =>
+  isTrackZero.value ? getWolvesHudLabel(store.nativeTime) : store.segment.title,
+)
 const plateDetail = computed(() =>
-  isTrackZero.value ? getWolvesHudLabel(store.nativeTime) : store.segment.chapter,
+  isTrackZero.value ? store.segment.title : store.segment.chapter,
 )
 
 onBeforeUnmount(() => player.destroy())
@@ -82,11 +86,12 @@ defineExpose({
       </div>
     </Transition>
 
-    <!-- Authored seven-days immersive layer (slideshow + lore + thesis) over the audio-source video. -->
-    <TrackZeroExperience v-if="isTrackZero" />
+    <!-- Authored theater layer over the audio-source video: the 7 Days grid
+         (slideshow + lore + thesis) and the later-part CNCF galleries. -->
+    <TheaterExperience />
 
     <div class="wc-stage-nameplate">
-      <Nameplate :detail="plateDetail" :label="store.segment.title" />
+      <Nameplate :detail="plateDetail" :label="plateLabel" />
     </div>
 
     <CinematicCaptions />
