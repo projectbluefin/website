@@ -10,6 +10,8 @@
  */
 
 export interface CinematicSegment {
+  /** Stable identifier for this segment, used to key per-segment content records. */
+  id: string
   /** YouTube video id for this segment. */
   youtubeId: string
   /** Organizational part label (non-creative numbering). */
@@ -64,6 +66,7 @@ export const TIME_POLL_MS = 100
 
 export const CINEMATIC_SEGMENTS: CinematicSegment[] = [
   {
+    id: 'seven-days-to-the-wolves',
     youtubeId: 'LASru9j0oIc',
     chapter: 'PART I',
     title: '7 Days to the Wolves',
@@ -72,6 +75,7 @@ export const CINEMATIC_SEGMENTS: CinematicSegment[] = [
     trackZeroExperience: true,
   },
   {
+    id: 'ghosts-in-the-mist',
     youtubeId: 'amKIngGUvCk',
     chapter: 'PART II',
     title: 'Ghosts In The Mist',
@@ -80,6 +84,7 @@ export const CINEMATIC_SEGMENTS: CinematicSegment[] = [
     crossfadeMs: 1500,
   },
   {
+    id: 'tonight-we-must-be-warriors',
     youtubeId: '9skBT5TUqzo',
     chapter: 'PART III',
     title: 'Tonight We Must Be Warriors',
@@ -88,6 +93,7 @@ export const CINEMATIC_SEGMENTS: CinematicSegment[] = [
     crossfadeMs: 1000,
   },
   {
+    id: 'not-your-monster',
     youtubeId: 'Z--vLaXdlgk',
     chapter: 'PART IV',
     title: 'Not Your Monster',
@@ -96,6 +102,7 @@ export const CINEMATIC_SEGMENTS: CinematicSegment[] = [
     crossfadeMs: 2000,
   },
   {
+    id: 'end-of-you',
     youtubeId: '5OFLFVC11Cg',
     chapter: 'PART V',
     title: 'End of You',
@@ -104,6 +111,7 @@ export const CINEMATIC_SEGMENTS: CinematicSegment[] = [
     crossfadeMs: 800,
   },
   {
+    id: 'soulbound',
     youtubeId: 'san94Q93IcY',
     chapter: 'PART VI',
     title: 'Soulbound',
@@ -112,6 +120,7 @@ export const CINEMATIC_SEGMENTS: CinematicSegment[] = [
     crossfadeMs: 1200,
   },
   {
+    id: 'last-ride-of-the-day',
     youtubeId: 'rYkYLIYvI18',
     chapter: 'PART VII',
     title: 'Last Ride of the Day',
