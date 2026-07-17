@@ -228,8 +228,10 @@ onBeforeUnmount(() => {
 
   // Later parts: the centered CNCF community gallery takes the full stage.
   &--gallery {
+    --wc-org-ad-gutter: clamp(12rem, 16vw, 18rem);
     grid-template-columns: minmax(0, 1fr);
     justify-items: center;
+    padding-inline: var(--wc-org-ad-gutter);
 
     .wc-trackzero-viewer {
       width: min(100%, 120rem);
@@ -343,6 +345,10 @@ onBeforeUnmount(() => {
 @media (max-width: 1023px) {
   .wc-trackzero-grid {
     grid-template-columns: 1fr;
+  }
+
+  .wc-trackzero-grid--gallery {
+    padding-inline: 2.4rem; // desktop ad gutters are hidden below 1024px
   }
 
   .wc-trackzero-lore {

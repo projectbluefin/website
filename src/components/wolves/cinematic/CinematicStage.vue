@@ -8,6 +8,7 @@ import CinematicCaptions from './CinematicCaptions.vue'
 import CinematicTransition from './CinematicTransition.vue'
 import Nameplate from './Nameplate.vue'
 import TheaterExperience from './TheaterExperience.vue'
+import WolvesOrgAds from './WolvesOrgAds.vue'
 
 const store = useCinematicStore()
 const hostA = ref<HTMLElement | null>(null)
@@ -89,6 +90,8 @@ defineExpose({
     <!-- Authored theater layer over the audio-source video: the 7 Days grid
          (slideshow + lore + thesis) and the later-part CNCF galleries. -->
     <TheaterExperience />
+
+    <WolvesOrgAds />
 
     <div class="wc-stage-nameplate">
       <Nameplate :detail="plateDetail" :label="plateLabel" />
