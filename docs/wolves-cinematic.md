@@ -12,11 +12,11 @@ simplicity audit). Verified live at commit `9d78d25`.
 
 ## 1. System overview
 
-The experience is a single Vue 3 + Pinia page with five phases, held in one
+The experience is a single Vue 3 + Pinia page with four phases, held in one
 store field (`useCinematicStore().phase`), no router:
 
 ```
-lobby -> intro -> cinematic Part I -> creator-shorts -> cinematic Parts II-VII -> finished
+lobby -> intro -> cinematic Part I -> creator-shorts -> cinematic Parts II-VI
 ```
 
 `creator-shorts` is a one-time forward-only branch: `store.creatorShortsDueFor()`
@@ -27,9 +27,8 @@ only fires it on the natural or manual Part I -> Part II boundary, and
 |---|---|---|
 | lobby | `cinematic/CinematicLobby.vue` | Destiny-styled gate. No account, no OAuth; the click is the browser autoplay gesture. |
 | intro | `WolvesIntroOverlay.vue` | The locked 94s Gayane prologue and Destiny guardian trailer, driven by `src/data/wolves-intro-sequence.ts`. |
-| cinematic | `cinematic/CinematicStage.vue` | Dual-buffer YouTube playback of the six musical parts, with the theater layer above. |
+| cinematic | `cinematic/CinematicStage.vue` | Dual-buffer YouTube playback of the six musical parts, with the theater layer above. The final part remains in this phase, paused and available to the normal transport. |
 | creator-shorts | `WolvesCreatorShortsInterstitial.vue` | One-time fullscreen bridge between Part I and Part II. `CinematicStage.vue` (and its two `YT.Player` instances) is unmounted for the duration, not merely hidden; see section 2. |
-| finished | inline in `WolvesApp.vue` | End plate + replay. |
 
 Three invariants hold everywhere:
 
@@ -47,7 +46,7 @@ Three invariants hold everywhere:
    `WolvesApp.vue` wires whichever phase is active to the widget.
 
 The widget's primary meter and seek position represent the complete authored
-intro plus all seven cinematic parts. Segment time remains secondary. The
+intro plus all six cinematic parts. Segment time remains secondary. The
 `DEPLOYMENT: wolves-decryption-engine-7` telemetry stays visible through the
 entire show, including the compact mobile layout.
 
@@ -59,7 +58,8 @@ transition entry; blocked audio never delays the six-second visual handoff.
 ## 2. The dual-buffer player (`composables/useDualBufferPlayer.ts`)
 
 Two `YT.Player` instances (sides `a`/`b`). While one plays segment N, the
-other holds N+1 cued and muted at opacity 0. The handoff:
+other holds N+1 cued and muted at opacity 0. During the intro, the same pair
+is constructed and cues Parts I and II before the overlay handoff. The handoff:
 
 - A 100ms poll reads the active player's `getCurrentTime()`/`getDuration()`.
 - At `duration - PRE_END_THRESHOLD_S` (0.3s — YouTube videos end on a black
@@ -75,9 +75,8 @@ other holds N+1 cued and muted at opacity 0. The handoff:
   native timeline); elapsed/duration are reported window-relative while
   `store.nativeTime` keeps the raw clock for caption/lore/thesis sync.
 
-Segments live in `src/config/wolves-cinematic.ts` (derived from tracks 1-7 of
-the authored `public/wolves-playlist.json`). Adding/reordering parts is a data
-change only.
+Segments live in `src/config/wolves-cinematic.ts`. Adding/reordering parts is
+a data change only.
 
 **Creator Shorts destroy/remount**: the Part I -> Part II boundary (natural
 handoff in `beginSwap()` or manual `skip()`) first calls
@@ -122,7 +121,7 @@ components unchanged:
   only: the underlying thesis text constants, mode windows, and 345-425s
   timing in `wolves-thesis-sequence.ts` remain locked authored data,
   unchanged by this work.
-- **Parts 2-7**: centered CNCF community gallery (`grid--gallery` mode). Part II
+- **Parts 2-6**: centered CNCF community gallery (`grid--gallery` mode). Part II
   starts with the owner-authored Jorge `MN_047` tribute from
   `wolves-gallery-featured.ts`, held for 38.4 seconds before the remaining
   photos enter the shuffle. One **persistent** reader instance across all parts
@@ -234,12 +233,12 @@ surfaces:
 
 ## 6. Organization ads (`cinematic/WolvesOrgAds.vue`)
 
-A desktop-only, Parts II-VII-only rotation of open-source project donation
+A desktop-only, Parts II-VI-only rotation of open-source project donation
 tiles, mounted inside `CinematicStage.vue` alongside the theater layer:
 
 - **Visibility**: `store.phase === 'cinematic' && store.segmentIndex > 0` —
   never rendered on Part I (`segmentIndex === 0`) or during `creator-shorts`/
-  `intro`/`lobby`/`finished`. Hidden entirely below 1024px (`display: none`),
+  `intro`/`lobby`. Hidden entirely below 1024px (`display: none`),
   same breakpoint as `WolvesTeamChat.vue`.
 - **Exactly two visible ads at rest**: ads are authored as two fixed pairs in
   `src/data/wolves-org-ads.ts` (`WOLVES_ORG_AD_PAIRS`) — Pair A is

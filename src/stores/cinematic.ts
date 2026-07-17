@@ -7,9 +7,8 @@ export type CinematicPhase
     | 'intro'
     | 'cinematic'
     | 'creator-shorts'
-    | 'finished'
 
-type TimelinePhase = Exclude<CinematicPhase, 'lobby' | 'finished'>
+type TimelinePhase = Exclude<CinematicPhase, 'lobby' | 'creator-shorts'>
 
 interface TimelineEntry {
   phase: TimelinePhase
@@ -33,7 +32,7 @@ export interface OverallTimelineTarget {
 }
 
 const INTRO_SEGMENTS = buildIntroVideoSequence()
-const CINEMATIC_AUTHORED_DURATIONS = [424, 347, 251, 384, 193, 234, 271] as const
+const CINEMATIC_AUTHORED_DURATIONS = [424, 347, 251, 384, 193, 234] as const
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
@@ -210,7 +209,7 @@ export const useCinematicStore = defineStore('cinematic', {
       if (state.phase === 'intro') {
         return INTRO_SEQUENCE_DURATION
       }
-      if (state.phase === 'cinematic' || state.phase === 'finished') {
+      if (state.phase === 'cinematic') {
         return CINEMATIC_SEQUENCE_DURATION
       }
       return 0
@@ -219,7 +218,7 @@ export const useCinematicStore = defineStore('cinematic', {
       if (state.phase === 'intro') {
         return authoredSequenceElapsed(INTRO_TIMELINE, state.segmentIndex, state.segmentElapsed)
       }
-      if (state.phase === 'cinematic' || state.phase === 'finished') {
+      if (state.phase === 'cinematic') {
         return authoredSequenceElapsed(CINEMATIC_TIMELINE, state.segmentIndex, state.segmentElapsed)
       }
       return 0
@@ -229,7 +228,7 @@ export const useCinematicStore = defineStore('cinematic', {
       if (this.phase === 'intro') {
         return this.sequenceElapsed
       }
-      if (this.phase === 'cinematic' || this.phase === 'finished') {
+      if (this.phase === 'cinematic') {
         return INTRO_SEQUENCE_DURATION + this.sequenceElapsed
       }
       return 0
@@ -348,7 +347,6 @@ export const useCinematicStore = defineStore('cinematic', {
       this.phase = 'cinematic'
     },
     finish() {
-      this.phase = 'finished'
       this.segmentIndex = CINEMATIC_SEGMENTS.length - 1
       this.segmentDuration = CINEMATIC_TIMELINE[this.segmentIndex]?.segmentDuration ?? this.segmentDuration
       this.segmentElapsed = this.segmentDuration

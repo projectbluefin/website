@@ -39,6 +39,7 @@ interface SideState {
 export function useDualBufferPlayer(options: DualBufferOptions) {
   const store = useCinematicStore()
   const activeSide = ref<PlayerSide>('a')
+  const prepared = ref(false)
   const started = ref(false)
 
   const sides: Record<PlayerSide, SideState> = {
@@ -49,6 +50,9 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
   let pollTimer: ReturnType<typeof setInterval> | null = null
   let swapping = false
   let rampFrame = 0
+  let lifecycleToken = 0
+  let preparePromise: Promise<void> | null = null
+  let resolveStart: (() => void) | null = null
 
   const other = (side: PlayerSide): PlayerSide => (side === 'a' ? 'b' : 'a')
   const activePlayer = () => sides[activeSide.value].player
@@ -125,7 +129,9 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     const incoming = sides[toSide].player
 
     if (!incoming || sides[toSide].segmentIndex < 0) {
-      // Nothing buffered: last segment just ended.
+      // The last segment remains in the normal cinematic runtime so the transport
+      // can still navigate backward instead of being replaced by a terminal plate.
+      outgoing?.pauseVideo?.()
       store.finish()
       stopPolling()
       return
@@ -228,6 +234,8 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     if (playerState === states.PLAYING) {
       store.setPlaying(true)
       startPolling()
+      resolveStart?.()
+      resolveStart = null
     }
     else if (playerState === states.PAUSED) {
       store.setPlaying(false)
@@ -265,6 +273,8 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
           onError: () => {
             // Skip an unplayable segment instead of stalling the whole cinematic.
             if (side === activeSide.value) {
+              resolveStart?.()
+              resolveStart = null
               beginSwap()
             }
           },
@@ -273,28 +283,82 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     })
   }
 
-  /** Must be called from a user gesture (the lobby entry click) to satisfy autoplay policy. */
-  async function start(): Promise<void> {
-    if (started.value || !options.hostA.value || !options.hostB.value) {
+  /**
+   * Constructs the existing double buffer and cues its first two segments without
+   * starting playback. This lets the intro remain opaque until the cinematic is
+   * ready to take over.
+   */
+  async function prepare(): Promise<void> {
+    if (prepared.value) {
       return
     }
+    if (preparePromise) {
+      return preparePromise
+    }
+
+    const token = lifecycleToken
+    const hostA = options.hostA.value
+    const hostB = options.hostB.value
+    if (!hostA || !hostB) {
+      return
+    }
+
+    preparePromise = (async () => {
+      await loadYoutubeIframeApi()
+      if (token !== lifecycleToken) {
+        return
+      }
+
+      const results = await Promise.allSettled([
+        createPlayer('a', hostA),
+        createPlayer('b', hostB),
+      ])
+      const playerA = results[0].status === 'fulfilled' ? results[0].value : null
+      const playerB = results[1].status === 'fulfilled' ? results[1].value : null
+      if (token !== lifecycleToken || !playerA || !playerB) {
+        playerA?.destroy?.()
+        playerB?.destroy?.()
+        return
+      }
+
+      sides.a.player = playerA
+      sides.b.player = playerB
+      const startIndex = store.phase === 'cinematic' ? store.segmentIndex : 0
+      cueNext('a', startIndex)
+      cueNext('b', startIndex + 1)
+      prepared.value = true
+    })().finally(() => {
+      if (token === lifecycleToken) {
+        preparePromise = null
+      }
+    })
+
+    return preparePromise
+  }
+
+  /** Must be called from a user gesture (the lobby entry click) to satisfy autoplay policy. */
+  async function start(): Promise<void> {
+    if (started.value) {
+      return
+    }
+
+    await prepare()
+    if (!prepared.value) {
+      return
+    }
+
     started.value = true
-
-    await loadYoutubeIframeApi()
-    const [playerA, playerB] = await Promise.all([
-      createPlayer('a', options.hostA.value),
-      createPlayer('b', options.hostB.value),
-    ])
-    sides.a.player = playerA
-    sides.b.player = playerB
-
-    const startIndex = store.segmentIndex
-    sides.a.segmentIndex = startIndex
-    const first = CINEMATIC_SEGMENTS[startIndex]
-    playerA.loadVideoById?.({ videoId: first.youtubeId, startSeconds: first.startSeconds })
-    applyVolume(playerA, 100)
-    cueNext('b', startIndex + 1)
-    startPolling()
+    const player = activePlayer()
+    applyVolume(player, 100)
+    const playVideo = player?.playVideo
+    if (!playVideo) {
+      started.value = false
+      return
+    }
+    await new Promise<void>((resolve) => {
+      resolveStart = resolve
+      playVideo.call(player)
+    })
   }
 
   function togglePlay() {
@@ -325,13 +389,19 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
   }
 
   function destroy() {
+    lifecycleToken += 1
     stopPolling()
     cancelAnimationFrame(rampFrame)
+    resolveStart?.()
+    resolveStart = null
     sides.a.player?.destroy?.()
     sides.b.player?.destroy?.()
     sides.a.player = null
     sides.b.player = null
+    prepared.value = false
+    started.value = false
+    swapping = false
   }
 
-  return { activeSide, started, start, togglePlay, seekTo, seekToRatio, skip, destroy }
+  return { activeSide, prepared, started, prepare, start, togglePlay, seekTo, seekToRatio, skip, destroy }
 }

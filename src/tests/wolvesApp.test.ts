@@ -1,13 +1,60 @@
-import { shallowMount } from '@vue/test-utils'
+import { flushPromises, shallowMount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it } from 'vitest'
-import { defineComponent } from 'vue'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { defineComponent, nextTick } from 'vue'
 import { useCinematicStore } from '@/stores/cinematic'
 import WolvesApp from '@/WolvesApp.vue'
+
+const CinematicLobbyStub = defineComponent({
+  name: 'CinematicLobby',
+  emits: ['enter'],
+  template: '<button class="cinematic-lobby-stub" @click="$emit(\'enter\')" />',
+})
+
+const handoffCalls: string[] = []
+
+const CinematicStageStub = defineComponent({
+  name: 'CinematicStage',
+  setup(_, { expose }) {
+    expose({
+      prepare: vi.fn(async () => handoffCalls.push('prepare')),
+      start: vi.fn(async () => handoffCalls.push('start')),
+      releaseHandoff: vi.fn(() => handoffCalls.push('release')),
+      togglePlay: vi.fn(),
+      seekTo: vi.fn(),
+      seekToRatio: vi.fn(),
+      skip: vi.fn(),
+    })
+    return {}
+  },
+  template: '<div class="cinematic-stage-stub" />',
+})
+
+const WolvesCreatorShortsInterstitialStub = defineComponent({
+  name: 'WolvesCreatorShortsInterstitial',
+  emits: ['complete'],
+  template: '<div class="creator-shorts-stub" />',
+})
 
 const WolvesIntroOverlayStub = defineComponent({
   name: 'WolvesIntroOverlay',
   emits: ['status', 'complete'],
+  props: {
+    holdForHandoff: { type: Boolean, default: false },
+    transparentHandoff: { type: Boolean, default: false },
+  },
+  updated() {
+    if (this.transparentHandoff) {
+      handoffCalls.push('transparent')
+    }
+  },
+  methods: {
+    next: vi.fn(),
+    previous: vi.fn(),
+    toggle: vi.fn(),
+    seekToRatio: vi.fn(),
+    setVoiceOverEnabled: vi.fn(),
+  },
   template: '<div class="wolves-intro-overlay-stub" />',
 })
 
@@ -37,6 +84,87 @@ const NameplateStub = defineComponent({
 describe('wolvesApp intro status handling', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    handoffCalls.length = 0
+  })
+
+  afterEach(() => {
+    Object.defineProperty(document, 'startViewTransition', {
+      configurable: true,
+      value: undefined,
+    })
+  })
+
+  function stubs() {
+    return {
+      CinematicLobby: CinematicLobbyStub,
+      CinematicStage: CinematicStageStub,
+      WolvesCreatorShortsInterstitial: WolvesCreatorShortsInterstitialStub,
+      MediaWidget: MediaWidgetStub,
+      WolvesIntroOverlay: WolvesIntroOverlayStub,
+      Nameplate: NameplateStub,
+    }
+  }
+
+  it('preloads the cinematic stage during the intro and hands off through a supported view transition', async () => {
+    const startViewTransition = vi.fn((update: () => Promise<void>) => {
+      expect(handoffCalls).toEqual(['prepare', 'start'])
+      return { updateCallbackDone: update() }
+    })
+    Object.defineProperty(document, 'startViewTransition', {
+      configurable: true,
+      value: startViewTransition,
+    })
+
+    const wrapper = shallowMount(WolvesApp, {
+      global: { stubs: stubs() },
+    })
+
+    await wrapper.get('.cinematic-lobby-stub').trigger('click')
+    await nextTick()
+    expect(handoffCalls).toEqual(['prepare'])
+
+    wrapper.getComponent(WolvesIntroOverlayStub).vm.$emit('complete')
+    await flushPromises()
+    await nextTick()
+
+    expect(startViewTransition).toHaveBeenCalledTimes(1)
+    expect(handoffCalls).toEqual(['prepare', 'start', 'transparent'])
+    expect(useCinematicStore().phase).toBe('cinematic')
+    expect(wrapper.find('.wolves-intro-overlay-stub').exists()).toBe(false)
+  })
+
+  it('hands off without requesting a view transition when the API is unavailable', async () => {
+    const store = useCinematicStore()
+    store.enterIntro()
+    const wrapper = shallowMount(WolvesApp, {
+      global: { stubs: stubs() },
+    })
+
+    wrapper.getComponent(WolvesIntroOverlayStub).vm.$emit('complete')
+    await flushPromises()
+    await nextTick()
+
+    expect(handoffCalls).toEqual(['start', 'transparent'])
+    expect(store.phase).toBe('cinematic')
+  })
+
+  it('resumes the next cinematic video after Creator Shorts completes', async () => {
+    const store = useCinematicStore()
+    store.enterCinematic()
+    store.enterCreatorShorts()
+    const wrapper = shallowMount(WolvesApp, {
+      global: { stubs: stubs() },
+    })
+
+    const shorts = wrapper.getComponent(WolvesCreatorShortsInterstitialStub)
+    shorts.vm.$emit('complete')
+    await Promise.resolve()
+    await nextTick()
+
+    expect(store.phase).toBe('cinematic')
+    expect(store.segmentIndex).toBe(1)
+    expect(handoffCalls).toEqual(['start'])
+    expect(wrapper.find('.cinematic-stage-stub').exists()).toBe(true)
   })
 
   it('hides the prologue nameplate absent a cue-level title and shows it only for the authored override', async () => {
@@ -45,13 +173,7 @@ describe('wolvesApp intro status handling', () => {
 
     const wrapper = shallowMount(WolvesApp, {
       global: {
-        stubs: {
-          CinematicLobby: true,
-          CinematicStage: true,
-          MediaWidget: MediaWidgetStub,
-          WolvesIntroOverlay: WolvesIntroOverlayStub,
-          Nameplate: NameplateStub,
-        },
+        stubs: stubs(),
       },
     })
 
@@ -100,13 +222,7 @@ describe('wolvesApp intro status handling', () => {
 
     const wrapper = shallowMount(WolvesApp, {
       global: {
-        stubs: {
-          CinematicLobby: true,
-          CinematicStage: true,
-          MediaWidget: MediaWidgetStub,
-          WolvesIntroOverlay: WolvesIntroOverlayStub,
-          Nameplate: NameplateStub,
-        },
+        stubs: stubs(),
       },
     })
 
@@ -146,13 +262,7 @@ describe('wolvesApp intro status handling', () => {
 
     const wrapper = shallowMount(WolvesApp, {
       global: {
-        stubs: {
-          CinematicLobby: true,
-          CinematicStage: true,
-          MediaWidget: MediaWidgetStub,
-          WolvesIntroOverlay: WolvesIntroOverlayStub,
-          Nameplate: NameplateStub,
-        },
+        stubs: stubs(),
       },
     })
 

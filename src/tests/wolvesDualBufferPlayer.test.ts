@@ -14,6 +14,7 @@ interface FakeEvents {
 
 class FakePlayer {
   static instances: FakePlayer[] = []
+  static emitPlayingOnPlay = true
   events: FakeEvents
   currentTime = 0
   duration = 0
@@ -32,7 +33,9 @@ class FakePlayer {
 
   playVideo() {
     this.playing = true
-    this.events.onStateChange?.({ data: 1 })
+    if (FakePlayer.emitPlayingOnPlay) {
+      this.events.onStateChange?.({ data: 1 })
+    }
   }
 
   pauseVideo() {
@@ -83,6 +86,10 @@ function installFakeYoutubeApi() {
 }
 
 async function startPlayer() {
+  const store = useCinematicStore()
+  if (store.phase === 'lobby') {
+    store.enterCinematic()
+  }
   const hostA = ref<HTMLElement | null>(document.createElement('div'))
   const hostB = ref<HTMLElement | null>(document.createElement('div'))
   const player = useDualBufferPlayer({ hostA, hostB })
@@ -96,6 +103,7 @@ describe('useDualBufferPlayer', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     FakePlayer.instances = []
+    FakePlayer.emitPlayingOnPlay = true
     installFakeYoutubeApi()
     vi.useFakeTimers({
       toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
@@ -108,14 +116,49 @@ describe('useDualBufferPlayer', () => {
     delete (window as any).YT
   })
 
-  it('plays segment 0 on side A and pre-buffers segment 1 on side B', async () => {
+  it('cues the first two segments before starting side A', async () => {
     const player = await startPlayer()
     const [playerA, playerB] = FakePlayer.instances
 
     expect(player.activeSide.value).toBe('a')
-    expect(playerA.loadedId).toBe(CINEMATIC_SEGMENTS[0].youtubeId)
+    expect(playerA.cuedId).toBe(CINEMATIC_SEGMENTS[0].youtubeId)
     expect(playerB.cuedId).toBe(CINEMATIC_SEGMENTS[1].youtubeId)
+    expect(playerA.playing).toBe(true)
     expect(playerB.volume).toBe(0)
+  })
+
+  it('waits for the preloaded first side to play before completing startup', async () => {
+    FakePlayer.emitPlayingOnPlay = false
+    const hostA = ref<HTMLElement | null>(document.createElement('div'))
+    const hostB = ref<HTMLElement | null>(document.createElement('div'))
+    const player = useDualBufferPlayer({ hostA, hostB })
+    await player.prepare()
+
+    const start = player.start()
+    let settled = false
+    void start.then(() => {
+      settled = true
+    })
+    await Promise.resolve()
+    expect(settled).toBe(false)
+
+    FakePlayer.instances[0].events.onStateChange?.({ data: 1 })
+    await start
+    expect(settled).toBe(true)
+  })
+
+  it('settles pending startup and destroys the prepared buffers on teardown', async () => {
+    FakePlayer.emitPlayingOnPlay = false
+    const hostA = ref<HTMLElement | null>(document.createElement('div'))
+    const hostB = ref<HTMLElement | null>(document.createElement('div'))
+    const player = useDualBufferPlayer({ hostA, hostB })
+    await player.prepare()
+
+    const start = player.start()
+    player.destroy()
+    await start
+
+    expect(FakePlayer.instances.every(instance => instance.destroyed)).toBe(true)
   })
 
   it('publishes time into the store while playing', async () => {
@@ -149,12 +192,13 @@ describe('useDualBufferPlayer', () => {
 
   it('starts directly from the store segment after Creator Shorts', async () => {
     const store = useCinematicStore()
+    store.enterCinematic()
     store.segmentIndex = 1
 
     await startPlayer()
     const [playerA, playerB] = FakePlayer.instances
 
-    expect(playerA.loadedId).toBe(CINEMATIC_SEGMENTS[1].youtubeId)
+    expect(playerA.cuedId).toBe(CINEMATIC_SEGMENTS[1].youtubeId)
     expect(playerB.cuedId).toBe(CINEMATIC_SEGMENTS[2].youtubeId)
   })
 
@@ -175,6 +219,7 @@ describe('useDualBufferPlayer', () => {
     const store = useCinematicStore()
     const [playerA, playerB] = FakePlayer.instances
 
+    store.shortsConsumed = true
     store.updateTime(10, 300)
     player.skip(1)
     expect(player.activeSide.value).toBe('b')
@@ -195,6 +240,7 @@ describe('useDualBufferPlayer', () => {
     const player = await startPlayer()
     const store = useCinematicStore()
 
+    store.shortsConsumed = true
     player.skip(-1)
     expect(store.segmentIndex).toBe(0)
     expect(player.activeSide.value).toBe('a')
@@ -208,6 +254,7 @@ describe('useDualBufferPlayer', () => {
 
   it('falls back to swapping on the ENDED event', async () => {
     const player = await startPlayer()
+    useCinematicStore().shortsConsumed = true
     const [playerA] = FakePlayer.instances
 
     playerA.events.onStateChange?.({ data: 0 })
@@ -225,6 +272,7 @@ describe('useDualBufferPlayer', () => {
       const store = useCinematicStore()
       const [playerA, playerB] = FakePlayer.instances
 
+      store.shortsConsumed = true
       playerA.duration = 100
       playerA.currentTime = 100
       vi.advanceTimersByTime(TIME_POLL_MS)
@@ -253,6 +301,7 @@ describe('useDualBufferPlayer', () => {
   it('finishes the cinematic when the last segment ends', async () => {
     const player = await startPlayer()
     const store = useCinematicStore()
+    store.shortsConsumed = true
 
     // Walk every boundary to the end of the seven-segment show.
     for (let i = 0; i < CINEMATIC_SEGMENTS.length - 1; i++) {
@@ -270,7 +319,12 @@ describe('useDualBufferPlayer', () => {
     active.currentTime = 1000
     vi.advanceTimersByTime(TIME_POLL_MS)
 
-    expect(store.phase).toBe('finished')
+    expect(store.phase).toBe('cinematic')
+    expect(store.playing).toBe(false)
+
+    player.skip(-1)
+    vi.advanceTimersByTime(3000)
+    expect(store.segmentIndex).toBe(CINEMATIC_SEGMENTS.length - 2)
   })
 
   it('destroys both players on teardown', async () => {

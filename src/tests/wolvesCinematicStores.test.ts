@@ -54,17 +54,21 @@ describe('cinematic store', () => {
     expect(store.segmentDuration).toBe(424)
     store.jumpToSegment(999)
     expect(store.segmentIndex).toBe(CINEMATIC_SEGMENTS.length - 1)
-    expect(store.segmentDuration).toBe(271)
+    expect(store.segmentDuration).toBe(234)
   })
 
-  it('clears crossfade and playing on finish', () => {
+  it('keeps the final segment navigable when playback reaches its end', () => {
     const store = useCinematicStore()
+    store.enterCinematic()
+    store.jumpToSegment(CINEMATIC_SEGMENTS.length - 1)
     store.setPlaying(true)
     store.beginCrossfade()
     store.finish()
-    expect(store.phase).toBe('finished')
+    expect(store.phase).toBe('cinematic')
+    expect(store.segmentIndex).toBe(CINEMATIC_SEGMENTS.length - 1)
     expect(store.playing).toBe(false)
     expect(store.crossfading).toBe(false)
+    expect(store.widgetCanPrevious).toBe(true)
   })
 
   it('computes canonical overall elapsed/progress from intro status and keeps the intro-to-cinematic handoff continuous', () => {
@@ -80,16 +84,16 @@ describe('cinematic store', () => {
     expect(store.sequenceElapsed).toBeCloseTo(154)
     expect(store.sequenceDuration).toBeCloseTo(213.5)
     expect(store.overallElapsed).toBeCloseTo(154)
-    expect(store.overallDuration).toBeCloseTo(2317.5)
-    expect(store.overallProgress).toBeCloseTo(154 / 2317.5)
+    expect(store.overallDuration).toBeCloseTo(2046.5)
+    expect(store.overallProgress).toBeCloseTo(154 / 2046.5)
 
     store.enterCinematic()
     store.updateTime(0, 424, 0)
 
     expect(store.sequenceElapsed).toBe(0)
-    expect(store.sequenceDuration).toBe(2104)
+    expect(store.sequenceDuration).toBe(1833)
     expect(store.overallElapsed).toBeCloseTo(213.5)
-    expect(store.overallProgress).toBeCloseTo(213.5 / 2317.5)
+    expect(store.overallProgress).toBeCloseTo(213.5 / 2046.5)
   })
 
   it('maps an overall ratio to the correct intro or cinematic segment and native time', () => {
@@ -100,20 +104,20 @@ describe('cinematic store', () => {
       nativeTime: 0,
     }))
 
-    expect(resolveOverallRatioTarget(94 / 2317.5)).toEqual(expect.objectContaining({
+    expect(resolveOverallRatioTarget(94 / 2046.5)).toEqual(expect.objectContaining({
       phase: 'intro',
       segmentIndex: 1,
       segmentElapsed: 0,
       nativeTime: 2,
     }))
 
-    const startOfCinematic = resolveOverallRatioTarget(213.5 / 2317.5)
+    const startOfCinematic = resolveOverallRatioTarget(213.5 / 2046.5)
     expect(startOfCinematic.phase).toBe('cinematic')
     expect(startOfCinematic.segmentIndex).toBe(0)
     expect(startOfCinematic.segmentElapsed).toBeCloseTo(0)
     expect(startOfCinematic.nativeTime).toBeCloseTo(0)
 
-    expect(resolveOverallRatioTarget((213.5 + 5) / 2317.5)).toEqual(expect.objectContaining({
+    expect(resolveOverallRatioTarget((213.5 + 5) / 2046.5)).toEqual(expect.objectContaining({
       phase: 'cinematic',
       segmentIndex: 0,
       segmentElapsed: 5,
@@ -122,9 +126,9 @@ describe('cinematic store', () => {
 
     expect(resolveOverallRatioTarget(1)).toEqual(expect.objectContaining({
       phase: 'cinematic',
-      segmentIndex: 6,
-      segmentElapsed: 271,
-      nativeTime: 271,
+      segmentIndex: 5,
+      segmentElapsed: 234,
+      nativeTime: 234,
     }))
   })
 

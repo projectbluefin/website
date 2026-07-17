@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { IntroStatusPayload } from '@/data/wolves-intro-sequence'
-import { nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import CinematicLobby from '@/components/wolves/cinematic/CinematicLobby.vue'
 import CinematicStage from '@/components/wolves/cinematic/CinematicStage.vue'
 import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import Nameplate from '@/components/wolves/cinematic/Nameplate.vue'
+import WolvesCreatorShortsInterstitial from '@/components/wolves/WolvesCreatorShortsInterstitial.vue'
 import WolvesIntroOverlay from '@/components/wolves/WolvesIntroOverlay.vue'
 import { buildIntroVideoSequence, isTextSegment } from '@/data/wolves-intro-sequence'
 import { resolveOverallRatioTarget, useCinematicStore } from '@/stores/cinematic'
@@ -12,14 +13,43 @@ import { resolveOverallRatioTarget, useCinematicStore } from '@/stores/cinematic
 const store = useCinematicStore()
 
 const stage = ref<InstanceType<typeof CinematicStage> | null>(null)
+const introHandoff = ref(false)
+const introTransparent = ref(false)
+const showIntroOverlay = computed(() => store.phase === 'intro' || introHandoff.value)
+let handoffToken = 0
+let unmounted = false
 
-async function enterCinematic() {
-  store.enterCinematic()
-  await nextTick() // stage mounts with the new phase before players are created
+async function startCinematicStage() {
+  await nextTick()
   await stage.value?.start?.()
+  if (unmounted) {
+    return
+  }
   if (import.meta.env.DEV) {
     // Dev-only hook so browser-based boundary verification can drive the real player.
     ;(window as any).__wolvesCinematic = { seekTo: (s: number) => stage.value?.seekTo(s) }
+  }
+}
+
+async function enterCinematic() {
+  store.enterCinematic()
+  await startCinematicStage()
+}
+
+async function enterIntro() {
+  const token = ++handoffToken
+  introHandoff.value = false
+  introTransparent.value = false
+  store.enterIntro()
+  await nextTick()
+  if (unmounted || token !== handoffToken || store.phase !== 'intro') {
+    return
+  }
+  try {
+    await stage.value?.prepare?.()
+  }
+  catch {
+    // `start()` retries the shared loader at the handoff; prewarming must not block the intro.
   }
 }
 
@@ -104,8 +134,37 @@ function clearIntroUi() {
 }
 
 async function handleIntroComplete() {
+  const token = ++handoffToken
+  introHandoff.value = true
+  introTransparent.value = false
   clearIntroUi()
-  await enterCinematic()
+  store.enterCinematic()
+  await startCinematicStage()
+  if (unmounted || token !== handoffToken) {
+    return
+  }
+  const releaseIntroOwnership = async () => {
+    introTransparent.value = true
+    await nextTick()
+    if (!unmounted && token === handoffToken) {
+      introHandoff.value = false
+    }
+  }
+  const viewTransitionDocument = document as Document & {
+    startViewTransition?: (callback: () => Promise<void>) => { updateCallbackDone: Promise<void> }
+  }
+  if (typeof viewTransitionDocument.startViewTransition === 'function') {
+    const transition = viewTransitionDocument.startViewTransition(releaseIntroOwnership)
+    await transition.updateCallbackDone.catch(() => {})
+    return
+  }
+  await releaseIntroOwnership()
+}
+
+/** Creator Shorts finishes -> resume the preloaded next cinematic segment. */
+async function handleCreatorShortsComplete() {
+  store.completeCreatorShorts()
+  await startCinematicStage()
 }
 
 async function seekIntroTarget(ratio: number) {
@@ -228,55 +287,57 @@ async function handleOverallSeek(ratio: number) {
   await seekCinematicTarget(ratio)
 }
 
-function restart() {
-  window.location.reload()
-}
+onBeforeUnmount(() => {
+  unmounted = true
+  handoffToken += 1
+})
 </script>
 
 <template>
   <div class="wolves-cinematic">
-    <CinematicLobby v-if="store.phase === 'lobby'" @enter="store.enterIntro()" />
+    <CinematicLobby v-if="store.phase === 'lobby'" @enter="enterIntro" />
 
     <!--
       The authored intro: locked 94s Gayane prologue, then the guardian trailer. Transport
       lives in the same hero widget as the cinematic; the top plate is the universal
       title placard.
     -->
-    <div v-else-if="store.phase === 'intro'" class="wc-runtime">
-      <WolvesIntroOverlay
-        ref="intro"
-        :videos="introVideos"
-        @status="handleIntroStatus"
-        @complete="handleIntroComplete"
-      />
-      <div v-if="introNameplateVisible" class="wc-intro-nameplate">
-        <Nameplate :detail="store.display.chapter" :label="store.display.title" />
-      </div>
-      <MediaWidget
-        :show-voice-over-toggle="introShowVoiceOverToggle"
-        :voice-over-enabled="introVoiceOverEnabled"
-        voice-over-label="Ikora voice over"
-        @toggle-play="intro?.toggle()"
-        @toggle-voice-over="(enabled: boolean) => intro?.setVoiceOverEnabled(enabled)"
-        @skip="(delta: number) => (delta > 0 ? intro?.next() : intro?.previous())"
-        @seek="handleOverallSeek"
-      />
-    </div>
-
-    <div v-else-if="store.phase === 'cinematic'" class="wc-runtime">
+    <div v-else-if="store.phase === 'intro' || store.phase === 'cinematic'" class="wc-runtime">
       <CinematicStage ref="stage" />
+
+      <template v-if="showIntroOverlay">
+        <WolvesIntroOverlay
+          ref="intro"
+          hold-for-handoff
+          :transparent-handoff="introTransparent"
+          :videos="introVideos"
+          @status="handleIntroStatus"
+          @complete="handleIntroComplete"
+        />
+        <div v-if="introNameplateVisible" class="wc-intro-nameplate">
+          <Nameplate :detail="store.display.chapter" :label="store.display.title" />
+        </div>
+        <MediaWidget
+          :show-voice-over-toggle="introShowVoiceOverToggle"
+          :voice-over-enabled="introVoiceOverEnabled"
+          voice-over-label="Ikora voice over"
+          @toggle-play="intro?.toggle()"
+          @toggle-voice-over="(enabled: boolean) => intro?.setVoiceOverEnabled(enabled)"
+          @skip="(delta: number) => (delta > 0 ? intro?.next() : intro?.previous())"
+          @seek="handleOverallSeek"
+        />
+      </template>
+
       <MediaWidget
+        v-else
         @toggle-play="stage?.togglePlay()"
         @skip="(delta: number) => stage?.skip(delta)"
         @seek="handleOverallSeek"
       />
     </div>
 
-    <div v-else class="wc-finished">
-      <Nameplate detail="END OF LINE" label="TRANSMISSION COMPLETE" />
-      <button class="wc-control wc-finished-replay" type="button" aria-label="Replay" @click="restart">
-        <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" /></svg>
-      </button>
+    <div v-else-if="store.phase === 'creator-shorts'" class="wc-runtime">
+      <WolvesCreatorShortsInterstitial @complete="handleCreatorShortsComplete" />
     </div>
   </div>
 </template>
@@ -287,21 +348,6 @@ function restart() {
   width: 100vw;
   height: 100vh;
   height: 100dvh;
-}
-
-.wc-finished {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3rem;
-  min-height: 100vh;
-  min-height: 100dvh;
-}
-
-.wc-finished-replay {
-  width: 5.6rem;
-  height: 5.6rem;
 }
 
 .wc-intro-nameplate {

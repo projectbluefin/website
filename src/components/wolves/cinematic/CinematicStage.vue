@@ -32,6 +32,7 @@ const plateDetail = computed(() =>
 onBeforeUnmount(() => player.destroy())
 
 defineExpose({
+  prepare: player.prepare,
   start: player.start,
   togglePlay: player.togglePlay,
   seekTo: player.seekTo,

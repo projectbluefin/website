@@ -9,6 +9,7 @@ metadata:
   context7-sources:
     - /websites/developers_google_youtube
     - /websites/vuejs_guide
+    - /mdn/content
 ---
 
 # Wolves Fullscreen Overlays
@@ -30,6 +31,12 @@ Routine Wolves content uses `wolves-content-maintenance.md`. Unapproved visual w
 - Reuse `src/composables/useYoutubeIframeApi.ts`; reset its module cache in tests.
 - happy-dom tests loading a real script URL set `handleDisabledFileLoadingAsSuccess = true`.
 - Re-check cancellation or skip state after every `await` before side effects.
+- For an intro-to-cinematic handoff, mount the existing `CinematicStage` beneath
+  the opaque `WolvesIntroOverlay`, call its dual-buffer `prepare()` method to
+  cue the first segment, and keep the overlay opaque until the active player
+  reports `PLAYING`. Make the overlay transparent only then.
+- Feature-detect `document.startViewTransition`; put the reactive handoff
+  update in its callback, and run the same update directly when unsupported.
 - Read scrub-derived state immediately; the live player poll loop can overwrite test positions.
 - Shared control geometry belongs in the shared control component, not a parent's scoped style.
 - Test embeds through `projectbluefin.io.localhost`; compare localhost error 150 with production before declaring a source broken.

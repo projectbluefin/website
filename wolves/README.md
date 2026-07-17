@@ -1,21 +1,21 @@
 # Project Bluefin: Wolves Cinematic
 
 The `/wolves/` entry at [projectbluefin.io](https://projectbluefin.io/wolves/)
-presents the seven-part Wolves series as one fullscreen Vue 3 and Pinia
+presents the six-part Wolves series as one fullscreen Vue 3 and Pinia
 experience. It requires no account, login, OAuth application, or API key.
 
 ## Runtime
 
-One Pinia field in `src/stores/cinematic.ts` owns the five-phase flow:
+One Pinia field in `src/stores/cinematic.ts` owns the four-phase flow:
 
 ```text
-lobby -> intro -> cinematic Part I -> creator-shorts -> cinematic Parts II-VII -> finished
+lobby -> intro -> cinematic Part I -> creator-shorts -> cinematic Parts II-VI
 ```
 
 - `CinematicLobby.vue` provides the autoplay gesture.
 - `WolvesIntroOverlay.vue` runs the authored 94-second prologue and guardian
   trailer from `src/data/wolves-intro-sequence.ts`.
-- `CinematicStage.vue` and `useDualBufferPlayer.ts` double-buffer the seven
+- `CinematicStage.vue` and `useDualBufferPlayer.ts` double-buffer the six
   musical parts.
 - `WolvesCreatorShortsInterstitial.vue` runs once between Part I and Part II.
   The cinematic players are destroyed during the interstitial and remounted at
@@ -36,7 +36,7 @@ left and `WolvesLoreColumn` on the right. The thesis timeline at 345-425 seconds
 uses Share Tech Mono through the evolve cue and Michroma for ascended and
 legend, with the locked blue presentation.
 
-Parts II-VII use the persistent non-repeating CNCF gallery. Desktop organization
+Parts II-VI use the persistent non-repeating CNCF gallery. Desktop organization
 ads show GNOME with KubeCon, then Flathub with KDE, changing both sides together
 every 30 seconds with a four-second player-clock crossfade. Per-song team chat
 is a fourth independent authored layer; production records remain empty until

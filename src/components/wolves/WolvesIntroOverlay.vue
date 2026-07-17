@@ -24,6 +24,8 @@ import {
 
 const props = defineProps<{
   videos: readonly IntroVideoSpec[]
+  holdForHandoff?: boolean
+  transparentHandoff?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -268,6 +270,7 @@ let pollTimer: ReturnType<typeof setInterval> | null = null
 let textTimer: ReturnType<typeof setInterval> | null = null
 let loadToken = 0
 let pendingPausedSourceSwitchTime: number | null = null
+const handoffPending = ref(false)
 
 /** Seek within the active segment by 0..1 ratio, driven by the hero widget's progress bar. */
 function seekToSeconds(targetSeconds: number) {
@@ -538,6 +541,7 @@ watch(() => sequenceState.value.done, (done) => {
     destroyPlayer()
     stopTextTimer()
     destroyAudioPlayer()
+    handoffPending.value = props.holdForHandoff ?? false
     emit('complete')
   }
 })
@@ -647,7 +651,11 @@ defineExpose({
 </script>
 
 <template>
-  <div v-if="currentSegment && !sequenceState.done" class="wolves-intro-overlay">
+  <div
+    v-if="currentSegment && (!sequenceState.done || handoffPending)"
+    class="wolves-intro-overlay"
+    :class="{ 'wolves-intro-overlay--transparent-handoff': props.transparentHandoff }"
+  >
     <div v-if="currentSegment.kind === 'video'" ref="mountHost" class="wolves-intro-overlay-player" />
     <div
       v-if="currentSegment.kind === 'video'"
@@ -872,6 +880,16 @@ defineExpose({
   justify-content: center;
   background: #000;
   overflow: hidden;
+}
+
+.wolves-intro-overlay--transparent-handoff {
+  background: transparent;
+}
+
+.wolves-intro-overlay--transparent-handoff .wolves-intro-overlay-player,
+.wolves-intro-overlay--transparent-handoff .wolves-intro-overlay-top-left-mask,
+.wolves-intro-overlay--transparent-handoff .wolves-intro-overlay-pause-veil {
+  opacity: 0;
 }
 
 .wolves-intro-overlay-player {
