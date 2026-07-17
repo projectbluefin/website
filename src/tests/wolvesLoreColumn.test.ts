@@ -198,13 +198,13 @@ describe('wolvesLoreColumn Logic', () => {
     await wrapper.vm.$nextTick()
 
     // Some messages should not be fully revealed yet
-    expect(wrapper.text()).not.toContain("Where's your sense of fun?")
+    expect(wrapper.text()).not.toContain('Where\'s your sense of fun?')
 
     await wrapper.find('.quote-viewport').trigger('click')
     await wrapper.vm.$nextTick()
 
     // All messages should be fully revealed after skip
-    expect(wrapper.text()).toContain("Where's your sense of fun?")
+    expect(wrapper.text()).toContain('Where\'s your sense of fun?')
   })
 
   it('renders The Children sound effects with the established SFX treatment', async () => {

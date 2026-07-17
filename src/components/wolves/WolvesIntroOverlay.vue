@@ -844,11 +844,17 @@ defineExpose({
       }"
       :style="isSomberTextSegment ? { animationDuration: `${somberFadeDuration}s` } : undefined"
     >
-      <span
-        v-for="(part, index) in overlayTextParts"
-        :key="index"
-        :class="{ 'wolves-intro-letter-highlight': part.highlight }"
-      >{{ part.char }}</span>
+      <template v-if="overlayCueForDisplay?.slim && overlayText.includes('\n')">
+        <span class="wolves-intro-overlay-text-slim-line1">{{ overlayText.split('\n')[0] }}</span>
+        <span class="wolves-intro-overlay-text-slim-line2">{{ formatIntroCueText(overlayText.split('\n')[1], overlayCueForDisplay?.preservePunctuation) }}</span>
+      </template>
+      <template v-else>
+        <span
+          v-for="(part, index) in overlayTextParts"
+          :key="index"
+          :class="{ 'wolves-intro-letter-highlight': part.highlight }"
+        >{{ part.char }}</span>
+      </template>
     </p>
 
     <!-- Transport now lives in the app-level Destiny hero widget; the overlay
@@ -1421,6 +1427,27 @@ defineExpose({
 .wolves-intro-overlay-text-slim {
   font-weight: 500;
   letter-spacing: 0.03em;
+  text-align: center;
+}
+
+.wolves-intro-overlay-text-slim-line1 {
+  display: block;
+  font-size: clamp(3.2rem, 5.8vw, 5.6rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.6rem;
+  color: #fff;
+  text-align: center;
+}
+
+.wolves-intro-overlay-text-slim-line2 {
+  display: block;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: #cbd5e1;
+  text-transform: uppercase;
+  text-align: center;
 }
 
 /* Guardian trailer callout, redesigned as a Destiny 2 "Guardian Rank Up" style HUD burst:

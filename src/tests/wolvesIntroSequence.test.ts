@@ -307,7 +307,7 @@ And its will to survive is utterly Broken`,
       'When its children are taken from it',
       `Now, what's left of a proud order fights for survival,
 surrounded by predators.`,
-      'B L U E F I N — seven days to the wolves',
+      'PROJECT BLUEFIN\nseven days to the wolves',
     ])
     expect(prologue.overlays).toEqual(expect.arrayContaining([
       expect.objectContaining({ text: 'A Gardener and a Winnower walked among the stars.', start: 0, end: 5 }),
@@ -361,7 +361,7 @@ And its will to survive is utterly Broken`,
         end: 78.5,
         textPosition: 'bottom',
       }),
-      expect.objectContaining({ text: 'B L U E F I N — seven days to the wolves', start: 78.5, end: 94 }),
+      expect.objectContaining({ text: 'PROJECT BLUEFIN\nseven days to the wolves', start: 78.5, end: 94 }),
     ]))
     expect(prologue.overlays?.every(cue => !cue.text.includes('<br>'))).toBe(true)
     expect(prologue.overlays?.every(cue => !cue.text.includes('(hold this'))).toBe(true)

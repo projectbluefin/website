@@ -535,7 +535,7 @@ surrounded by predators.`,
           backgroundImage: 'wolves-intro/bluefin-collapse-day.webp',
           highlightSubstring: 'fights',
         },
-        { text: 'B L U E F I N — seven days to the wolves', start: 78.5, end: 94, slim: true },
+        { text: 'PROJECT BLUEFIN\nseven days to the wolves', start: 78.5, end: 94, slim: true },
       ],
     },
     {
