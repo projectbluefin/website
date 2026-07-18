@@ -26,6 +26,8 @@ export interface IntroOverlayTextCue {
   readonly end: number
   /** Optional top nameplate title to publish while this cue is active. */
   readonly nameplateTitle?: string
+  /** Optional bottom music-plaque title to publish while this cue is active. */
+  readonly mediaTitle?: string
   /** Static background image shown behind the text for this cue only (e.g. a single hero photo). */
   readonly backgroundImage?: string
   /** Renders a full-screen comic title card instead of the standard overlay treatment. */
@@ -158,6 +160,7 @@ export interface IntroStatusPayload {
   readonly segmentId: string
   readonly canGoPrevious: boolean
   readonly nameplateTitle?: string
+  readonly mediaTitle?: string
   readonly showVoiceOverToggle?: boolean
   readonly voiceOverEnabled?: boolean
 }
@@ -319,10 +322,11 @@ export function buildDestinyCaptionCues(): readonly IntroOverlayTextCue[] {
     ...cues,
     { text: 'Comic Hero Shots of YOU', start: 24, end: 38, comicHeroTitleCard: true },
     {
-      text: 'they serve humanity, they fight for their something greater than themselves\n#nova4ever',
+      text: 'they serve humanity, they fight for their something greater than themselves',
       start: 48,
       end: 70.5,
       preservePunctuation: true,
+      mediaTitle: '#nova4ever',
     },
   ]
 }

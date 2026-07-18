@@ -351,7 +351,7 @@ describe('wolvesApp intro status handling', () => {
     expect(widget().text()).toBe('true|true|Ikora voice over')
   })
 
-  it('labels the Destiny intro as Meet your Fireteam', async () => {
+  it('shows the Nova tag only in the bottom music plaque during the candle sequence', async () => {
     const store = useCinematicStore()
     store.enterIntro()
 
@@ -378,6 +378,30 @@ describe('wolvesApp intro status handling', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|We fight for something bigger than ourselves.')
+    expect(wrapper.getComponent(MediaWidgetStub).props('title')).toBe('Destiny 2: Into the Light Cinematic')
+
+    intro.vm.$emit('status', {
+      currentTime: 48,
+      duration: 121.5,
+      paused: false,
+      segmentId: 'wolves-intro',
+      canGoPrevious: true,
+      mediaTitle: '#nova4ever',
+    })
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|We fight for something bigger than ourselves.')
+    expect(wrapper.getComponent(MediaWidgetStub).props('title')).toBe('#nova4ever')
+
+    intro.vm.$emit('status', {
+      currentTime: 70.5,
+      duration: 121.5,
+      paused: false,
+      segmentId: 'wolves-intro',
+      canGoPrevious: true,
+    })
+    await wrapper.vm.$nextTick()
+
     expect(wrapper.getComponent(MediaWidgetStub).props('title')).toBe('Destiny 2: Into the Light Cinematic')
   })
 

@@ -86,6 +86,7 @@ const activeBurnedInCaptions = computed<readonly IntroOverlayTextCue[]>(() =>
   activeOverlayCues(burnedInCaptionCues.value, currentTime.value)
     .filter(cue => !cue.comicHeroTitleCard),
 )
+const activeMediaTitle = computed(() => activeBurnedInCaptions.value.find(cue => cue.mediaTitle)?.mediaTitle)
 /**
  * All cues active right now, not just the first match — the Guardian trailer intentionally
  * overlaps Christoph Blecker's and Natali Vlatko's windows since they share the same shot, so
@@ -613,6 +614,7 @@ watchEffect(() => {
     segmentId: currentSegment.value?.id ?? '',
     canGoPrevious: canGoToPrevious.value,
     nameplateTitle: activeCue.value?.nameplateTitle,
+    mediaTitle: activeMediaTitle.value,
     showVoiceOverToggle: canToggleDestinyVoiceOver.value,
     voiceOverEnabled: canToggleDestinyVoiceOver.value ? destinyVoiceOverEnabled.value : false,
   })

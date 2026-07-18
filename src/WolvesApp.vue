@@ -117,7 +117,7 @@ function normalizeIntroStatus(payload: IntroStatusPayload) {
 function handleIntroStatus(payload: IntroStatusPayload) {
   const meta = INTRO_DISPLAY[payload.segmentId]
   if (meta) {
-    introMediaTitle.value = meta.mediaTitle
+    introMediaTitle.value = payload.mediaTitle ?? meta.mediaTitle
     store.setDisplayOverride({
       ...meta,
       title: payload.nameplateTitle ?? meta.title,

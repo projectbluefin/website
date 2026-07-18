@@ -215,15 +215,16 @@ describe('wolves intro overlay sequence', () => {
     ]))
   })
 
-  it('keeps only the authored post-Kaslin status when the caption file is empty', () => {
+  it('keeps only the authored post-Kaslin status and moves the Nova tag to the music plaque', () => {
     const cues = buildDestinyCaptionCues().filter(cue => !cue.comicHeroTitleCard)
 
     expect(cues).toEqual([
       {
-        text: 'they serve humanity, they fight for their something greater than themselves\n#nova4ever',
+        text: 'they serve humanity, they fight for their something greater than themselves',
         start: 48,
         end: 70.5,
         preservePunctuation: true,
+        mediaTitle: '#nova4ever',
       },
     ])
   })
@@ -248,10 +249,11 @@ describe('wolves intro overlay sequence', () => {
     expect(destiny.burnedInCaptions).toEqual([
       { text: 'Comic Hero Shots of YOU', start: 24, end: 38, comicHeroTitleCard: true },
       {
-        text: 'they serve humanity, they fight for their something greater than themselves\n#nova4ever',
+        text: 'they serve humanity, they fight for their something greater than themselves',
         start: 48,
         end: 70.5,
         preservePunctuation: true,
+        mediaTitle: '#nova4ever',
       },
     ])
   })

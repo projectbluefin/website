@@ -251,9 +251,14 @@ try {
   }, introPlayerIndex)
   await page.waitForSelector('.wolves-intro-overlay-burned-caption', { state: 'visible', timeout: 5_000 })
   assert(
-    'Post-Kaslin status keeps the authored humanity line and Nova tag',
+    'Post-Kaslin status keeps only the authored humanity line',
     await page.locator('.wolves-intro-overlay-burned-caption').textContent(),
-    'they serve humanity, they fight for their something greater than themselves\n#nova4ever',
+    'they serve humanity, they fight for their something greater than themselves',
+  )
+  assert(
+    'Candle sequence shows the Nova tag in the music plaque',
+    await page.locator('.wc-widget-title').textContent(),
+    '#nova4ever',
   )
   await captureStage(page, 'destiny')
 
