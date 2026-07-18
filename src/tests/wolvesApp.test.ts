@@ -392,7 +392,7 @@ describe('wolvesApp intro status handling', () => {
     })
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|We fight for something bigger than ourselves.')
+    expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|Fighting for something greater than ourselves.')
     expect(wrapper.getComponent(MediaWidgetStub).props('title')).toBe('Destiny 2: Into the Light Cinematic')
 
     intro.vm.$emit('status', {
@@ -405,7 +405,7 @@ describe('wolvesApp intro status handling', () => {
     })
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|We fight for something bigger than ourselves.')
+    expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|Fighting for something greater than ourselves.')
     expect(wrapper.getComponent(MediaWidgetStub).props('title')).toBe('#nova4ever')
 
     intro.vm.$emit('status', {

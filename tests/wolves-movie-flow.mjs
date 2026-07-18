@@ -224,7 +224,7 @@ try {
   assert(
     'Destiny nameplate label',
     await page.locator('.wc-intro-nameplate .wc-nameplate-label').textContent(),
-    'We fight for something bigger than ourselves.',
+    'Fighting for something greater than ourselves.',
   )
   assert(
     'Destiny media plaque retains the cinematic title',
