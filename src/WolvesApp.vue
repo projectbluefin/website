@@ -36,23 +36,6 @@ async function enterCinematic() {
   await startCinematicStage()
 }
 
-async function enterIntro() {
-  const token = ++handoffToken
-  introHandoff.value = false
-  introTransparent.value = false
-  store.enterIntro()
-  await nextTick()
-  if (unmounted || token !== handoffToken || store.phase !== 'intro') {
-    return
-  }
-  try {
-    await stage.value?.prepare?.()
-  }
-  catch {
-    // `start()` retries the shared loader at the handoff; prewarming must not block the intro.
-  }
-}
-
 const introVideos = buildIntroVideoSequence()
 const intro = ref<InstanceType<typeof WolvesIntroOverlay> | null>(null)
 const introShowVoiceOverToggle = ref(false)
@@ -64,19 +47,40 @@ const introNameplateVisible = ref(true)
 const introSegmentIndexById = new Map(introVideos.map((segment, index) => [segment.id, index]))
 
 // Factual display metadata for the authored intro segments (see wolves-intro-sequence.ts).
-const INTRO_DISPLAY: Record<string, { chapter: string, title: string, artist: string, artwork: string }> = {
+const INTRO_DISPLAY: Record<string, { chapter: string, title: string, mediaTitle: string, artist: string, artwork: string }> = {
   'wolves-prologue': {
     chapter: 'PROLOGUE',
     title: 'Gayane Ballet Suite (Adagio)',
+    mediaTitle: 'Gayane Ballet Suite (Adagio)',
     artist: 'Aram Khachaturian',
     artwork: 'https://i.ytimg.com/vi/EB3IokHelRk/hqdefault.jpg',
   },
   'wolves-intro': {
     chapter: 'Meet your Fireteam',
     title: 'We fight for something bigger than ourselves.',
+    mediaTitle: 'Destiny 2: Into the Light Cinematic',
     artist: 'Bungie',
     artwork: 'https://i.ytimg.com/vi/BV3BZKbpBns/hqdefault.jpg',
   },
+}
+const introMediaTitle = ref(INTRO_DISPLAY['wolves-prologue'].mediaTitle)
+
+async function enterIntro() {
+  const token = ++handoffToken
+  introHandoff.value = false
+  introTransparent.value = false
+  store.enterIntro()
+  introMediaTitle.value = INTRO_DISPLAY['wolves-prologue'].mediaTitle
+  await nextTick()
+  if (unmounted || token !== handoffToken || store.phase !== 'intro') {
+    return
+  }
+  try {
+    await stage.value?.prepare?.()
+  }
+  catch {
+    // `start()` retries the shared loader at the handoff; prewarming must not block the intro.
+  }
 }
 
 function normalizeIntroStatus(payload: IntroStatusPayload) {
@@ -113,6 +117,7 @@ function normalizeIntroStatus(payload: IntroStatusPayload) {
 function handleIntroStatus(payload: IntroStatusPayload) {
   const meta = INTRO_DISPLAY[payload.segmentId]
   if (meta) {
+    introMediaTitle.value = meta.mediaTitle
     store.setDisplayOverride({
       ...meta,
       title: payload.nameplateTitle ?? meta.title,
@@ -369,6 +374,7 @@ onBeforeUnmount(() => {
           <Nameplate :detail="store.display.chapter" :label="store.display.title" />
         </div>
         <MediaWidget
+          :title="introMediaTitle"
           :show-voice-over-toggle="introShowVoiceOverToggle"
           :voice-over-enabled="introVoiceOverEnabled"
           voice-over-label="Ikora voice over"

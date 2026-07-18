@@ -226,6 +226,11 @@ try {
     await page.locator('.wc-intro-nameplate .wc-nameplate-label').textContent(),
     'We fight for something bigger than ourselves.',
   )
+  assert(
+    'Destiny media plaque retains the cinematic title',
+    await page.locator('.wc-widget-title').textContent(),
+    'Destiny 2: Into the Light Cinematic',
+  )
   const introPlayerIndex = await page.evaluate(() =>
     window.__mockWolvesPlayers.findIndex(player => player.videoId === 'BV3BZKbpBns'),
   )

@@ -73,6 +73,7 @@ const MediaWidgetStub = defineComponent({
   name: 'MediaWidget',
   emits: ['seek', 'skip'],
   props: {
+    title: { type: String, default: '' },
     showVoiceOverToggle: { type: Boolean, default: false },
     voiceOverEnabled: { type: Boolean, default: false },
     voiceOverLabel: { type: String, default: '' },
@@ -377,6 +378,7 @@ describe('wolvesApp intro status handling', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|We fight for something bigger than ourselves.')
+    expect(wrapper.getComponent(MediaWidgetStub).props('title')).toBe('Destiny 2: Into the Light Cinematic')
   })
 
   it('normalizes intro native time into canonical segment/sequence progress and preserves overall continuity on handoff', async () => {

@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useCinematicStore } from '@/stores/cinematic'
 
 const props = withDefaults(defineProps<{
+  title?: string
   showVoiceOverToggle?: boolean
   voiceOverEnabled?: boolean
   voiceOverLabel?: string
@@ -23,6 +24,7 @@ const emit = defineEmits<{
 
 const store = useCinematicStore()
 const base = import.meta.env.BASE_URL
+const mediaTitle = computed(() => props.title ?? store.display.title)
 const artworkSrc = computed(() =>
   store.display.artwork.startsWith('http') ? store.display.artwork : `${base}${store.display.artwork}`,
 )
@@ -70,7 +72,7 @@ function handleVoiceOverChange(event: Event) {
       alt=""
     >
     <div class="wc-widget-info">
-      <span class="wc-widget-title">{{ store.display.title }}</span>
+      <span class="wc-widget-title">{{ mediaTitle }}</span>
       <div
         ref="progressEl"
         class="wc-widget-progress"
