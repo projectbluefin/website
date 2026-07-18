@@ -109,6 +109,52 @@ function parseGuardianCue(text: string): { guardianClass: string, name: string, 
   return { guardianClass, name, title: titleParts.join(' — ') }
 }
 
+/**
+ * Splits a title line into plain/"bling" segments around one exact substring (`cue.blingTitle`),
+ * so the template can wrap just that piece in a shimmering gold span instead of the whole title.
+ * Falls back to a single plain segment if `blingTitle` is unset or isn't found verbatim.
+ */
+function titleSegments(title: string, blingTitle: string | undefined): { text: string, bling: boolean }[] {
+  if (!blingTitle) {
+    return [{ text: title, bling: false }]
+  }
+  const index = title.indexOf(blingTitle)
+  if (index === -1) {
+    return [{ text: title, bling: false }]
+  }
+  const before = title.slice(0, index)
+  const after = title.slice(index + blingTitle.length)
+  return [
+    ...(before ? [{ text: before, bling: false }] : []),
+    { text: blingTitle, bling: true },
+    ...(after ? [{ text: after, bling: false }] : []),
+  ]
+}
+
+type TitleToken = { kind: 'text', text: string, bling: boolean } | { kind: 'sep' }
+
+/**
+ * Flattens a multi-segment title (authored with ` — ` joins, see `parseGuardianCue`) into a
+ * render-ready token stream: text segments plus explicit `sep` tokens where the author's em-dash
+ * joins used to sit. The template renders `sep` tokens as a blue vertical bar
+ * (`wolves-guardian-plate-title-sep`) instead of the literal em-dash characters, per explicit
+ * user request, so multi-title guardians read as distinct badges divided by a UI rule rather
+ * than punctuation. `blingTitle` matching still runs per segment via `titleSegments`.
+ */
+function titleTokens(title: string, blingTitle: string | undefined): TitleToken[] {
+  const parts = title.split(' — ')
+  const tokens: TitleToken[] = []
+  parts.forEach((part, index) => {
+    if (index > 0) {
+      tokens.push({ kind: 'sep' })
+    }
+    for (const segment of titleSegments(part, blingTitle)) {
+      tokens.push({ kind: 'text', text: segment.text, bling: segment.bling })
+    }
+  })
+  return tokens
+}
+
 function guardianDinosaurProfile(guardianName: string): { artworkSource: string, label: string, scientificName: string } | undefined {
   const bond = wolvesGuardianDinosaurBonds.find(entry => entry.guardianName === guardianName)
   const species = bond && dinosaurSpecies.find(entry => entry.id === bond.dinosaurSpeciesId)
@@ -727,9 +773,21 @@ defineExpose({
         :class="{
           'wolves-guardian-plate-left': cue.position === 'left',
           'wolves-guardian-plate-right': cue.position === 'right',
+          'wolves-guardian-plate-raised': cue.raised,
+          'wolves-guardian-plate-leader': cue.leader,
         }"
       >
         <template v-if="parseGuardianCue(cue.text)">
+          <div class="wolves-guardian-plate-burst" aria-hidden="true" />
+          <div class="wolves-guardian-plate-header">
+            <div class="wolves-guardian-plate-horizon wolves-guardian-plate-horizon-left" aria-hidden="true" />
+            <svg class="wolves-guardian-plate-crest" viewBox="0 0 100 100" aria-hidden="true">
+              <polygon points="50,5 85,20 95,55 50,95 5,55 15,20" class="wolves-guardian-plate-crest-outer" />
+              <polygon points="50,12 78,25 87,52 50,85 13,52 22,25" class="wolves-guardian-plate-crest-inner" />
+              <path d="M35,45 L50,60 L65,45" class="wolves-guardian-plate-crest-chevron" />
+            </svg>
+            <div class="wolves-guardian-plate-horizon wolves-guardian-plate-horizon-right" aria-hidden="true" />
+          </div>
           <p class="wolves-guardian-plate-label">
             MAINTAINER // GUARDIAN
           </p>
@@ -745,7 +803,13 @@ defineExpose({
                 {{ parseGuardianCue(cue.text)!.name }}
               </p>
               <p class="wolves-guardian-plate-title">
-                {{ parseGuardianCue(cue.text)!.title }}
+                <template v-for="(token, index) in titleTokens(parseGuardianCue(cue.text)!.title, cue.blingTitle)" :key="index">
+                  <span v-if="token.kind === 'sep'" class="wolves-guardian-plate-title-sep" aria-hidden="true">|</span>
+                  <span v-else-if="token.bling" class="wolves-guardian-plate-bling">{{ token.text }}</span>
+                  <template v-else>
+                    {{ token.text }}
+                  </template>
+                </template>
               </p>
             </div>
             <div
@@ -1404,18 +1468,26 @@ defineExpose({
   text-align: center;
 }
 
-/* Guardian trailer callouts use the same compact lower-third treatment as the dossiers. */
+/* Guardian trailer callout, redesigned as a Destiny 2 "Guardian Rank Up" style HUD burst:
+   a chamfered plate with a radial ignition flash, a crest badge flanked by horizon accent
+   lines, and a slow letter-spacing text drift -- built from research into Bungie's diegetic
+   HUD notification style (geometry, glow/bloom, and animation choreography). Replaces the
+   earlier plain "nerd plate" card. */
 .wolves-guardian-plate {
   position: absolute;
   bottom: 10%;
   left: 5%;
-  max-width: 34rem;
-  padding: 1rem 1.35rem;
+  max-width: 44rem;
+  padding: 1.75rem 2rem 1.5rem;
+  overflow: visible;
   border: 1px solid rgb(147 197 253 / 45%);
   border-radius: 0.75rem;
-  background: rgb(8 12 20 / 80%);
+  clip-path: polygon(16px 0%, 100% 0%, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0% 100%, 0% 16px);
+  background: rgb(8 12 20 / 82%);
   color: #e2e8f0;
+  text-align: center;
   text-shadow: 0 2px 10px rgb(0 0 0 / 80%);
+  animation: wolves-guardian-plate-impact 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Anchors this callout to the left/right side of the frame instead of the default lower-left
@@ -1434,16 +1506,135 @@ defineExpose({
 /* Raises the callout from the default lower-third anchor to sit closer to a Guardian's
    actual on-screen position when it towers above the frame's lower third (see the `raised`
    field doc comment in wolves-intro-sequence.ts). */
+.wolves-guardian-plate-raised {
+  bottom: auto;
+  top: 28%;
+}
+
+/* Gilds the plate gold instead of the default silver/blue treatment to signify leadership.
+   Reserved for Christoph Blecker's "First Among Equals" cue — see the `leader` field doc
+   comment in wolves-intro-sequence.ts. Overrides border, horizon lines, crest, burst flash,
+   and the title line so the gold reads consistently across the whole plate. */
+.wolves-guardian-plate-leader {
+  border-color: rgb(250 204 21 / 55%);
+  box-shadow: 0 0 24px rgb(250 204 21 / 20%);
+}
+
+.wolves-guardian-plate-leader .wolves-guardian-plate-burst {
+  background: radial-gradient(circle, #fff 0%, #facc15 45%, transparent 70%);
+}
+
+.wolves-guardian-plate-leader .wolves-guardian-plate-horizon {
+  background: linear-gradient(to right, transparent, #facc15 60%, #fff 100%);
+  box-shadow: 0 0 8px rgb(250 204 21 / 55%);
+}
+
+.wolves-guardian-plate-leader .wolves-guardian-plate-horizon-right {
+  background: linear-gradient(to left, transparent, #facc15 60%, #fff 100%);
+}
+
+.wolves-guardian-plate-leader .wolves-guardian-plate-crest {
+  filter: drop-shadow(0 0 8px rgb(250 204 21 / 70%));
+}
+
+.wolves-guardian-plate-leader .wolves-guardian-plate-crest-outer,
+.wolves-guardian-plate-leader .wolves-guardian-plate-crest-chevron {
+  stroke: #facc15;
+}
+
+.wolves-guardian-plate-leader .wolves-guardian-plate-label {
+  color: #facc15;
+}
+
+.wolves-guardian-plate-leader .wolves-guardian-plate-title {
+  color: #fde68a;
+  font-weight: 600;
+}
+
+/* Radial ignition flash behind the crest at the moment the plate appears. */
+.wolves-guardian-plate-burst {
+  position: absolute;
+  top: 1.25rem;
+  left: 50%;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, #93c5fd 45%, transparent 70%);
+  mix-blend-mode: color-dodge;
+  filter: blur(8px);
+  transform: translate(-50%, -50%) scale(0.1);
+  animation: wolves-guardian-plate-ignite 0.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+.wolves-guardian-plate-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.4rem;
+}
+
+.wolves-guardian-plate-horizon {
+  flex: 1 1 auto;
+  height: 2px;
+  min-width: 2rem;
+  background: linear-gradient(to right, transparent, #93c5fd 60%, #fff 100%);
+  box-shadow: 0 0 8px rgb(147 197 253 / 55%);
+  transform: scaleX(0);
+}
+
+.wolves-guardian-plate-horizon-left {
+  transform-origin: right center;
+  animation: wolves-guardian-plate-line-sweep 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+}
+
+.wolves-guardian-plate-horizon-right {
+  transform-origin: left center;
+  background: linear-gradient(to left, transparent, #93c5fd 60%, #fff 100%);
+  animation: wolves-guardian-plate-line-sweep 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+}
+
+.wolves-guardian-plate-crest {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 0 6px rgb(147 197 253 / 65%));
+  opacity: 0;
+  animation: wolves-guardian-plate-crest-drop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.15) 0.05s forwards;
+}
+
+.wolves-guardian-plate-crest-outer {
+  fill: none;
+  stroke: #93c5fd;
+  stroke-width: 2;
+}
+
+.wolves-guardian-plate-crest-inner {
+  fill: rgb(8 12 20 / 95%);
+  stroke: #f5f5f5;
+  stroke-width: 1;
+}
+
+.wolves-guardian-plate-crest-chevron {
+  fill: none;
+  stroke: #93c5fd;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .wolves-guardian-plate-label {
   margin: 0;
-  font-size: 1.05rem;
-  letter-spacing: 0.2em;
+  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
+  font-size: clamp(1.4rem, 1.1rem + 0.6vw, 1.8rem);
+  letter-spacing: 0.35em;
   color: #93c5fd;
 }
 
 .wolves-guardian-plate-class {
   margin: 0.35rem 0 0;
-  font-size: 1.15rem;
+  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
+  font-size: clamp(1.6rem, 1.2rem + 0.9vw, 2.1rem);
   letter-spacing: 0.05em;
   color: #bfdbfe;
   text-transform: uppercase;
@@ -1451,9 +1642,16 @@ defineExpose({
 
 .wolves-guardian-plate-name {
   margin: 0.2rem 0 0;
-  font-size: 2rem;
-  font-weight: 700;
+  font-family: var(--wc-font-weyland, 'Michroma', sans-serif);
+  font-size: clamp(2.2rem, 1.7rem + 1.3vw, 3.1rem);
+  font-weight: 400;
   color: #f5f5f5;
+  background: linear-gradient(to bottom, #fff 0%, #e2e8f0 60%, #a0aec0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 10px rgb(255 255 255 / 25%));
+  animation: wolves-guardian-plate-text-drift 1.4s cubic-bezier(0.1, 0.9, 0.2, 1) 0.15s backwards;
 }
 
 .wolves-guardian-plate-body {
@@ -1473,8 +1671,41 @@ defineExpose({
 
 .wolves-guardian-plate-title {
   margin: 0.35rem 0 0;
-  font-size: 1.2rem;
+  font-family: var(--wc-font-weyland-mono, 'Share Tech Mono', monospace);
+  font-size: clamp(1.5rem, 1.2rem + 0.7vw, 1.9rem);
   color: #94a3b8;
+}
+
+/* Blue vertical rule dividing a multi-segment title (e.g. Christoph Blecker's four titles, or
+   Natali Vlatko's two), replacing the authored ` — ` em-dash join with a UI separator instead of
+   punctuation, per explicit user request. Uses the same blue accent as the rest of the plate
+   chrome (crest, horizon lines, class label) so it reads as structure, not text. */
+.wolves-guardian-plate-title-sep {
+  display: inline-block;
+  margin: 0 0.4em;
+  color: #93c5fd;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+/* Distinctive gold "bling" treatment for a single called-out title segment (e.g. Christoph
+   Blecker's "Platinum Member"), separate from the plain title text around it. A shimmer sweeps
+   across the gold gradient text on a loop, with a soft pulsing glow, so it reads as a
+   deliberately flashy inline award rather than a plain title word. */
+.wolves-guardian-plate-bling {
+  position: relative;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: linear-gradient(100deg, #92700f 20%, #fff6d0 40%, #fde68a 50%, #fff6d0 60%, #92700f 80%);
+  background-size: 250% 100%;
+  background-position: 0% 0%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 6px rgb(250 204 21 / 55%));
+  animation:
+    wolves-guardian-plate-bling-shimmer 2.6s linear infinite,
+    wolves-guardian-plate-bling-pulse 1.8s ease-in-out infinite;
 }
 
 .wolves-guardian-plate-dinosaur {
@@ -1489,6 +1720,7 @@ defineExpose({
     radial-gradient(circle at top left, rgb(147 197 253 / 16%), transparent 55%),
     linear-gradient(135deg, rgb(15 23 42 / 92%), rgb(2 6 23 / 82%));
   box-shadow: inset 0 0 0 1px rgb(255 255 255 / 4%);
+  animation: wolves-guardian-plate-text-drift 1.4s cubic-bezier(0.1, 0.9, 0.2, 1) 0.25s backwards;
 }
 
 .wolves-guardian-plate-dinosaur-art {
@@ -1533,6 +1765,92 @@ defineExpose({
 
   .wolves-guardian-plate-dinosaur-copy {
     text-align: center;
+  }
+}
+
+@keyframes wolves-guardian-plate-ignite {
+  0% {
+    transform: translate(-50%, -50%) scale(0.1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(3);
+    opacity: 0;
+  }
+}
+
+@keyframes wolves-guardian-plate-line-sweep {
+  0% {
+    transform: scaleX(0);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes wolves-guardian-plate-crest-drop {
+  0% {
+    opacity: 0;
+    transform: scale(2.2) rotate(12deg);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes wolves-guardian-plate-text-drift {
+  0% {
+    opacity: 0;
+    letter-spacing: -0.05em;
+    filter: blur(4px);
+  }
+  25% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    letter-spacing: normal;
+    filter: blur(0);
+  }
+}
+
+@keyframes wolves-guardian-plate-bling-shimmer {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: -250% 0%;
+  }
+}
+
+@keyframes wolves-guardian-plate-bling-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 4px rgb(250 204 21 / 45%));
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgb(250 204 21 / 85%));
+  }
+}
+
+@keyframes wolves-guardian-plate-impact {
+  0% {
+    filter: contrast(1) saturate(1);
+  }
+  12% {
+    filter: contrast(1.2) saturate(1.4) drop-shadow(2px 0 0 rgb(255 0 100 / 50%))
+      drop-shadow(-2px 0 0 rgb(0 255 255 / 50%));
+  }
+  35% {
+    filter: contrast(1) saturate(1);
   }
 }
 

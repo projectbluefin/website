@@ -725,36 +725,11 @@ describe('wolvesIntroOverlay guardian plate', () => {
     expect(wrapper.find('.wolves-guardian-plate-dinosaur-icon').exists()).toBe(false)
   })
 
-  it('keeps Guardian callouts as conventional lower thirds', () => {
+  it('keeps the recovered Weyland lower third and detailed mount treatment', () => {
     const overlay = readFileSync(resolve(process.cwd(), 'src/components/wolves/WolvesIntroOverlay.vue'), 'utf8')
-    const sequence = readFileSync(resolve(process.cwd(), 'src/data/wolves-intro-sequence.ts'), 'utf8')
-    const plateRule = overlay.match(/\.wolves-guardian-plate \{([\s\S]*?)\n\}/)?.[1]
-    const nameRule = overlay.match(/\.wolves-guardian-plate-name \{([\s\S]*?)\n\}/)?.[1]
-    const labelRule = overlay.match(/\.wolves-guardian-plate-label \{([\s\S]*?)\n\}/)?.[1]
-    const classRule = overlay.match(/\.wolves-guardian-plate-class \{([\s\S]*?)\n\}/)?.[1]
-    const titleRule = overlay.match(/\.wolves-guardian-plate-title \{([\s\S]*?)\n\}/)?.[1]
 
-    if (!plateRule || !nameRule || !labelRule || !classRule || !titleRule) {
-      throw new Error('Expected the Guardian lower-third CSS template')
-    }
-
-    expect(plateRule).toContain('bottom: 10%')
-    expect(plateRule).toContain('left: 5%')
-    expect(plateRule).toContain('max-width: 34rem')
-    expect(plateRule).toContain('padding: 1rem 1.35rem')
-    expect(plateRule).not.toContain('text-align: center')
-    expect(plateRule).not.toContain('clip-path:')
-    expect(overlay).not.toContain('wolves-guardian-plate-raised')
-    expect(overlay).not.toContain('wolves-guardian-plate-leader')
-    expect(overlay).not.toContain('wolves-guardian-plate-burst')
-    expect(overlay).not.toContain('wolves-guardian-plate-crest')
-    expect(sequence).not.toContain('raised: true')
-    expect(sequence).not.toContain('leader: true')
-    expect(nameRule).toContain('font-size: 2rem')
-    expect(nameRule).toContain('font-weight: 700')
-    expect(labelRule).toContain('font-size: 1.05rem')
-    expect(classRule).toContain('font-size: 1.15rem')
-    expect(titleRule).toContain('font-size: 1.2rem')
+    expect(overlay).toContain('font-family: var(--wc-font-weyland, \'Michroma\', sans-serif)')
+    expect(overlay).toContain('font-family: var(--wc-font-weyland-mono, \'Share Tech Mono\', monospace)')
     expect(overlay).toContain('grid-template-columns: minmax(0, 1fr) minmax(13rem, 16rem)')
     expect(overlay).toContain('width: clamp(6.8rem, 5rem + 4vw, 10rem)')
     expect(overlay).toContain('height: clamp(6.8rem, 5rem + 4vw, 10rem)')

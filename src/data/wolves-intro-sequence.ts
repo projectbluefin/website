@@ -64,6 +64,13 @@ export interface IntroOverlayTextCue {
    */
   readonly position?: 'left' | 'right'
   /**
+   * Raises a Guardian trailer callout from the default lower-third anchor to sit closer to
+   * that Guardian's actual position in the shot. Reserved for cues where the default bottom
+   * placement would sit far below the Guardian's on-screen character (e.g. Natali Vlatko's
+   * Behemoth Titan towers in the upper/center of the shared Christoph Blecker shot).
+   */
+  readonly raised?: boolean
+  /**
    * Overrides the default `backgroundCrossfade` caption placement (which moves text up to the
    * top of the frame, since most Bluefin wallpaper scenes are sky-led landscapes with their
    * busiest imagery lower down). Reserved for scenes where that's reversed, e.g. scene 9's
@@ -81,6 +88,20 @@ export interface IntroOverlayTextCue {
   readonly highlightSubstring?: string
   /** Highlights multiple exact substrings inside this cue's text, disabling default B/F highlighting. */
   readonly highlightSubstrings?: readonly string[]
+  /**
+   * Gilds a Guardian trailer callout with a gold treatment instead of the default silver/blue
+   * plate, signifying leadership. Reserved for Christoph Blecker's "First Among Equals" cue
+   * per explicit user request (2026-07-15) — do not apply broadly, it should read as singular.
+   */
+  readonly leader?: boolean
+  /**
+   * A single exact substring of this cue's title line to render with a distinctive gold
+   * shimmer/"bling" effect (`wolves-guardian-plate-bling` in `WolvesIntroOverlay.vue`), calling
+   * it out from the rest of the title line. Reserved for Christoph Blecker's "Platinum Member"
+   * segment per explicit user request (2026-07-15) — must match a title substring exactly
+   * (case-sensitive) or it silently renders with no special treatment.
+   */
+  readonly blingTitle?: string
 }
 
 interface IntroSegmentBase {
@@ -505,8 +526,15 @@ surrounded by predators.`,
       //   (matching Natali's own end) at explicit user request, confirmed 2026-07-15 — his green
       //   Strand arm is still clearly visible reaching into frame through 94-96s (re-verified via
       //   frame capture), so this also corrects the plate disappearing while he's still on
-      //   screen, not just a stylistic hold. His title line retains the two authored segments,
-      //   "First Among Equals — The North Star".
+      //   screen, not just a stylistic hold. His plate additionally carries `leader: true`,
+      //   gilding it gold instead of the standard silver/blue treatment to signify leadership,
+      //   pairing with his existing "First Among Equals" title line — reserved for him alone,
+      //   do not apply broadly. His title line carries two segments joined the same way
+      //   ("First Among Equals — The North Star"), rendered on one `wolves-guardian-plate-title`
+      //   line with identical styling so both read with equal visual weight. "Uncompromising
+      //   Purity" and "Platinum Member" (added 2026-07-15, the latter with a `blingTitle`
+      //   shimmer) were removed the same day per a follow-up explicit user request to drop back
+      //   to just the original two titles — do not re-add either without a fresh user request.
       // - Natali Vlatko's title line is "Some build walls to protect — I build walls shatter.",
       //   per explicit user request, confirmed 2026-07-17. The user's original line ended
       //   in a trailing ellipsis; substituted with an em dash to match this file's join
@@ -538,8 +566,8 @@ surrounded by predators.`,
         { text: 'Harbinger Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 },
         { text: 'Arc Warlock — Kaslin Fields — Rage of the Paradox', start: 38, end: 48 },
         { text: 'Solar Hunter — Laura Santamaria — Paragon to the Order of 7', start: 70.5, end: 77 },
-        { text: 'Strand Warlock — Christoph Blecker — First Among Equals — The North Star', start: 83, end: 96, position: 'left' },
-        { text: 'Behemoth Titan — Natali Vlatko — Some build walls to protect — I build walls shatter.', start: 87.5, end: 96, position: 'right' },
+        { text: 'Strand Warlock — Christoph Blecker — First Among Equals — The North Star', start: 83, end: 96, position: 'left', leader: true },
+        { text: 'Behemoth Titan — Natali Vlatko — Some build walls to protect — I build walls shatter.', start: 87.5, end: 96, position: 'right', raised: true },
       ],
     },
   ] as const
