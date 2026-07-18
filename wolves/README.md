@@ -84,7 +84,8 @@ npm run lint:fix
 npm run typecheck
 npm run test:run
 npm run build
-WOLVES_SCREENSHOT_DIR=/tmp/wolves node tests/wolves-movie-flow.mjs
+mkdir -p "$HOME/.cache/wolves-screenshots"
+TMPDIR="$HOME/.cache" WOLVES_SCREENSHOT_DIR="$HOME/.cache/wolves-screenshots" node tests/wolves-movie-flow.mjs
 ```
 
 Pushes to `main` deploy through the `Deploy to GitHub Pages` workflow. A change

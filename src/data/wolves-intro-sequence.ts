@@ -557,10 +557,11 @@ surrounded by predators.`,
       // Starting 2s in skips past it entirely without touching any of the cue windows below,
       // since those are keyed to the video's absolute/native timeline, not this offset.
       startOffset: 2,
-      // Applies the retained unvoiced-source visual cutoff described above. Destiny
-      // dialogue captions are intentionally disabled; only Guardian plates are timed here.
+      // Applies the retained unvoiced-source visual cutoff described above. Destiny dialogue
+      // captions are intentionally disabled; the Comic Hero Shots title card remains timed.
       maxDuration: 121.5,
       alternateMaxDuration: 120.2,
+      burnedInCaptions: buildDestinyCaptionCues(),
       overlays: [
         { text: 'Void Warlock — Bob Killen — Reconciler of the Plane', start: 5, end: 16.5 },
         { text: 'Harbinger Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 },

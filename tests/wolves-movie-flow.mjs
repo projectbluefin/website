@@ -210,13 +210,22 @@ try {
   await hasVisibleControl(page, 'Next')
   await captureStage(page, 'prologue')
 
-  for (let index = 0; index < 4; index++) {
-    await page.getByLabel('Next').click()
-    await page.waitForTimeout(250)
-  }
+  await page.getByLabel('Next').click()
+  await page.waitForTimeout(250)
+
   await page.waitForSelector('.wolves-intro-overlay-player', { state: 'visible', timeout: 10_000 })
   await hasVisibleControl(page, 'Pause')
   await hasVisibleControl(page, 'Next')
+  assert(
+    'Destiny nameplate detail',
+    await page.locator('.wc-intro-nameplate .wc-nameplate-detail').textContent(),
+    'Meet your Fireteam',
+  )
+  assert(
+    'Destiny nameplate label',
+    await page.locator('.wc-intro-nameplate .wc-nameplate-label').textContent(),
+    'We fight for something bigger than ourselves.',
+  )
   const introPlayerIndex = await page.evaluate(() =>
     window.__mockWolvesPlayers.findIndex(player => player.videoId === 'BV3BZKbpBns'),
   )
@@ -250,7 +259,6 @@ try {
     await page.evaluate(time => window.__wolvesCinematic.seekTo(time), seconds)
     await page.waitForTimeout(250)
   }
-  const waitForSignalFade = () => page.waitForTimeout(3200)
 
   await seekStage(310.4)
   await page.waitForFunction(() =>
@@ -297,8 +305,10 @@ try {
 
   await seekStage(167.8)
   const trackZeroNameplateLabel = page.locator('.wc-stage-nameplate .wc-nameplate-label')
+  const trackZeroSignal = page.locator('.wc-stage-nameplate .wc-nameplate-detail')
   assert('Track 0 nameplate enables slow signal fades', await page.locator('.wc-stage-nameplate .wc-nameplate').evaluate(node => node.classList.contains('wc-nameplate--slow-fade')), true)
-  assert('Track 0 opens with the colon-free signal label', await trackZeroNameplateLabel.textContent(), 'Incoming Signal')
+  assert('Track 0 keeps its static command label', await trackZeroNameplateLabel.textContent(), 'kubectl apply -f ublue.yaml -n k8s-community')
+  assert('Track 0 opens with the colon-free signal detail', await trackZeroSignal.textContent(), 'Incoming Signal')
   const jonoAtStart = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
@@ -346,7 +356,7 @@ try {
   assert('Track 0 lower thesis overlay remains inactive during Marina Moore', await page.locator('.wc-thesis').count(), 0)
 
   await seekStage(175.958)
-  assert('Incoming Signal holds until the Bluefin group', await trackZeroNameplateLabel.textContent(), 'Incoming Signal')
+  assert('Incoming Signal holds until the Bluefin group', await trackZeroSignal.textContent(), 'Incoming Signal')
   const marinaBeforeComposite = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
@@ -361,9 +371,7 @@ try {
   assertTruthy('Sherman + m2 composite starts at 2:55.959', shermanAtStart?.includes('sherman-m2.webp'))
 
   await seekStage(175.97)
-  assert('Incoming Signal uses the slow authored fade', await trackZeroNameplateLabel.evaluate(label => getComputedStyle(label).transitionDuration), '1.5s')
-  await waitForSignalFade()
-  assert('Bluefin group receives its authored signal', await trackZeroNameplateLabel.textContent(), 'The Blue Delivers')
+  assert('Bluefin group receives its authored signal', await trackZeroSignal.textContent(), 'The Blue Delivers')
   await captureStage(page, 'track-zero-bluefin-signal')
 
   await seekStage(184.118)
@@ -425,15 +433,13 @@ try {
   assert('Second Hikari slide hands off at 3:12.279', hikariAtHandoff?.includes('hikari2.JPG'), false)
 
   await seekStage(196.36)
-  await waitForSignalFade()
-  assert('Post-Bluefin signal reports the thriving-community pod', await trackZeroNameplateLabel.textContent(), 'pod/thriving-community created')
+  assert('Post-Bluefin signal reports the thriving-community pod', await trackZeroSignal.textContent(), 'pod/thriving-community created')
   assert('Lower thesis remains separate after the Bluefin group', await page.locator('.wc-thesis').count(), 0)
 
   await seekStage(229)
-  await waitForSignalFade()
   assert(
     'Chanting bridge reports the experimental collaboration image',
-    await trackZeroNameplateLabel.textContent(),
+    await trackZeroSignal.textContent(),
     'Warning: ImagePullBackOff - "humans/collaboration:latest" is currently experimental.',
   )
   const warningNameplateBounds = await page.locator('.wc-stage-nameplate .wc-nameplate').evaluate((nameplate) => {
@@ -450,10 +456,9 @@ try {
   await captureStage(page, 'track-zero-community-warning')
 
   await seekStage(277)
-  await waitForSignalFade()
   assert(
     'Heavy build-up reports the human fallback',
-    await trackZeroNameplateLabel.textContent(),
+    await trackZeroSignal.textContent(),
     'Falling back to "humans/trying-their-best:v1"',
   )
   assert('Lower thesis remains separate during the fallback', await page.locator('.wc-thesis').count(), 0)
@@ -461,18 +466,21 @@ try {
 
   await seekStage(345)
   await page.waitForTimeout(250)
-  assert('Fallback signal remains through the thesis opening', await trackZeroNameplateLabel.textContent(), 'Falling back to "humans/trying-their-best:v1"')
+  assert('Fallback signal remains through the thesis opening', await trackZeroSignal.textContent(), 'Falling back to "humans/trying-their-best:v1"')
   assertTruthy('Lower thesis keeps its authored opening text', (await page.locator('.wc-thesis').textContent())?.includes('We\'ve got your back.'))
 
   await seekStage(408)
-  await waitForSignalFade()
-  assert('Titanfall signal remains the locked finale handoff', await trackZeroNameplateLabel.textContent(), 'Bazzite Mk6 Units: Prepare for Titanfall.')
+  assert('Titanfall signal remains the locked finale handoff', await trackZeroSignal.textContent(), 'Bazzite Mk6 Units: Prepare for Titanfall.')
   assertTruthy('Lower thesis keeps its authored finale text', (await page.locator('.wc-thesis').textContent())?.includes('Become Legend'))
   await captureStage(page, 'track-zero-composites')
 
   await page.getByLabel('Next').click()
-  await page.waitForSelector('.wc-transition-overlay', { state: 'visible', timeout: 10_000 })
-  await page.waitForSelector('.wc-transition-overlay', { state: 'hidden', timeout: 20_000 })
+  await page.waitForSelector('.wolves-creator-shorts-interstitial', { state: 'visible', timeout: 10_000 })
+  await page.getByRole('button', { name: /\[ START SHORTS \]/ }).click()
+  for (let index = 0; index < 4; index++) {
+    await page.getByLabel('Skip video').click()
+  }
+  await page.waitForSelector('.wolves-creator-shorts-interstitial', { state: 'hidden', timeout: 10_000 })
   await page.waitForFunction(() =>
     document.querySelector('.wc-stage-nameplate')?.textContent?.includes('Ghosts In The Mist'),
   )

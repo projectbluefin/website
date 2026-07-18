@@ -232,6 +232,17 @@ describe('wolves intro overlay sequence', () => {
     expect(texts).not.toContain('Define us in this moment for all time.')
   })
 
+  it('wires only the Comic Hero Shots title card into the Destiny segment', () => {
+    const destiny = buildIntroVideoSequence().find(segment => segment.id === 'wolves-intro')
+    if (!destiny || !isVideoSegment(destiny)) {
+      throw new Error('Expected the Destiny segment to exist')
+    }
+
+    expect(destiny.burnedInCaptions).toEqual([
+      { text: 'Comic Hero Shots of YOU', start: 24, end: 38, comicHeroTitleCard: true },
+    ])
+  })
+
   it('gives the revised prologue copy readable holds within its 94-second runtime', () => {
     const [prologue] = buildIntroVideoSequence()
     if (!isTextSegment(prologue)) {

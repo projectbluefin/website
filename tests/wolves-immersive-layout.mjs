@@ -9,7 +9,7 @@ async function verifyMobileLoreLayout() {
     const page = await browser.newPage({ viewport: { width: 390, height: 1000 } })
 
     await page.goto(`${baseUrl}/wolves/`, { waitUntil: 'networkidle', timeout: 60_000 })
-    await page.getByRole('button', { name: /join the evolution/i }).click()
+    await page.getByRole('button', { name: /join the evolution|begin transmission/i }).click()
     await page.waitForTimeout(1_000)
 
     const bounds = await page.evaluate(() => {
@@ -40,7 +40,7 @@ async function verifySourceFragmentLayout() {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
 
     await page.goto(`${baseUrl}/wolves/`, { waitUntil: 'networkidle', timeout: 60_000 })
-    await page.getByRole('button', { name: /join the evolution/i }).click()
+    await page.getByRole('button', { name: /join the evolution|begin transmission/i }).click()
     await page.waitForTimeout(1_000)
     await page.evaluate(() => {
       document.querySelector('iframe[src*="youtube"]')?.contentWindow?.postMessage(
@@ -79,7 +79,7 @@ async function verifyNewsBulletinLayout() {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
 
     await page.goto(`${baseUrl}/wolves/`, { waitUntil: 'networkidle', timeout: 60_000 })
-    await page.getByRole('button', { name: /join the evolution/i }).click()
+    await page.getByRole('button', { name: /join the evolution|begin transmission/i }).click()
     await page.waitForTimeout(1_000)
     await page.evaluate(() => {
       document.querySelector('iframe[src*="youtube"]')?.contentWindow?.postMessage(

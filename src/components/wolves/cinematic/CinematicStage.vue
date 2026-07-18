@@ -19,9 +19,8 @@ const player = useDualBufferPlayer({ hostA, hostB })
 const isTrackZero = computed(() => store.segment.trackZeroExperience === true)
 
 // The plate is the single title placard on every segment. During the seven-days
-// segment the incoming-signal communication IS the large white text (flipped by
-// owner request), with the track title as the detail line; everywhere else the
-// plate shows chapter + title.
+// segment it retains the static kubectl command as the large label and places the
+// time-varying incoming signal in the detail line; elsewhere it shows chapter + title.
 const plateLabel = computed(() =>
   isTrackZero.value ? 'kubectl apply -f ublue.yaml -n k8s-community' : store.segment.title,
 )

@@ -72,8 +72,8 @@ const INTRO_DISPLAY: Record<string, { chapter: string, title: string, artist: st
     artwork: 'https://i.ytimg.com/vi/EB3IokHelRk/hqdefault.jpg',
   },
   'wolves-intro': {
-    chapter: 'UNIVERSAL BLUE BRIEFING',
-    title: 'Destiny 2: Into the Light Cinematic',
+    chapter: 'Meet your Fireteam',
+    title: 'We fight for something bigger than ourselves.',
     artist: 'Bungie',
     artwork: 'https://i.ytimg.com/vi/BV3BZKbpBns/hqdefault.jpg',
   },

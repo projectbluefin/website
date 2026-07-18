@@ -350,6 +350,35 @@ describe('wolvesApp intro status handling', () => {
     expect(widget().text()).toBe('true|true|Ikora voice over')
   })
 
+  it('labels the Destiny intro as Meet your Fireteam', async () => {
+    const store = useCinematicStore()
+    store.enterIntro()
+
+    const wrapper = shallowMount(WolvesApp, {
+      global: {
+        stubs: {
+          CinematicLobby: true,
+          CinematicStage: true,
+          MediaWidget: MediaWidgetStub,
+          WolvesIntroOverlay: WolvesIntroOverlayStub,
+          Nameplate: NameplateStub,
+        },
+      },
+    })
+
+    const intro = wrapper.getComponent(WolvesIntroOverlayStub)
+    intro.vm.$emit('status', {
+      currentTime: 5,
+      duration: 121.5,
+      paused: false,
+      segmentId: 'wolves-intro',
+      canGoPrevious: true,
+    })
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|We fight for something bigger than ourselves.')
+  })
+
   it('normalizes intro native time into canonical segment/sequence progress and preserves overall continuity on handoff', async () => {
     const store = useCinematicStore()
     store.enterIntro()
