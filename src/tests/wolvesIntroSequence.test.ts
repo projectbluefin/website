@@ -211,7 +211,7 @@ describe('wolves intro overlay sequence', () => {
       expect.objectContaining({ text: 'Harbinger Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 }),
       expect.objectContaining({ text: 'Solar Hunter — Laura Santamaria — Paragon to the Order of 7', start: 70.5, end: 77 }),
       expect.objectContaining({ text: 'Strand Warlock — Christoph Blecker — First Among Equals — The North Star', start: 83, end: 96, position: 'left' }),
-      expect.objectContaining({ text: 'Behemoth Titan — Natali Vlatko — Some build walls to protect — I build walls shatter.', start: 87.5, end: 96, position: 'right' }),
+      expect.objectContaining({ text: 'Behemoth Titan — Natali Vlatko — Punch first, document later.', start: 87.5, end: 96, position: 'right' }),
     ]))
   })
 

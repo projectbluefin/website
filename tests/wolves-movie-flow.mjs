@@ -264,6 +264,15 @@ try {
     await page.locator('.wc-widget-title').textContent(),
     '#novaforever',
   )
+  await page.evaluate((index) => {
+    window.__mockWolvesPlayers[index].seekTo(87.5, true)
+  }, introPlayerIndex)
+  await page.waitForSelector('.wolves-guardian-plate', { state: 'visible', timeout: 5_000 })
+  assert(
+    'Natali guardian plate has the authored title',
+    await page.locator('.wolves-guardian-plate-right .wolves-guardian-plate-title').textContent(),
+    'Punch first, document later.',
+  )
   await captureStage(page, 'destiny')
 
   // Complete the remaining intro stages before exercising the playlist handoff.
