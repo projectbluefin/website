@@ -330,7 +330,6 @@ export function buildDestinyCaptionCues(): readonly IntroOverlayTextCue[] {
       start: 48,
       end: 70.5,
       preservePunctuation: true,
-      mediaTitle: '#nova4ever',
       requiresCaptionToggle: true,
     },
   ]

@@ -60,7 +60,7 @@ const INTRO_DISPLAY: Record<string, { chapter: string, title: string, mediaTitle
   'wolves-intro': {
     chapter: 'Meet your Fireteam',
     title: 'Fighting for something greater than ourselves.',
-    mediaTitle: 'Destiny 2: Into the Light Cinematic',
+    mediaTitle: '#novaforever',
     artist: 'Bungie',
     artwork: 'https://i.ytimg.com/vi/BV3BZKbpBns/hqdefault.jpg',
   },
