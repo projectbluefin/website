@@ -54,7 +54,7 @@ if (typeof window !== 'undefined' && 'matchMedia' in window) {
 watch(
   () => store.segmentIndex,
   () => {
-    if (store.phase !== 'cinematic') {
+    if (store.phase !== 'cinematic' || store.segmentIndex === 0) {
       return
     }
     active.value = true

@@ -541,6 +541,7 @@ surrounded by predators.`,
         { text: 'Strand Warlock — Christoph Blecker — First Among Equals — The North Star', start: 83, end: 96, position: 'left' },
         { text: 'Behemoth Titan — Natali Vlatko — Some build walls to protect — I build walls shatter.', start: 87.5, end: 96, position: 'right' },
       ],
+      burnedInCaptions: buildDestinyCaptionCues(),
     },
   ] as const
 }

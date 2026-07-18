@@ -201,21 +201,42 @@ describe('wolves intro overlay sequence', () => {
     expect(JSON.stringify(destiny.overlays)).not.toContain('Robert Killen')
   })
 
-  it('builds no Destiny caption cues when the caption file is empty', () => {
-    const cues = buildDestinyCaptionCues().filter(cue => !cue.comicHeroTitleCard)
+  it('keeps the Destiny guardian wide plates authored with their wide-plate positioning flags', () => {
+    const destiny = buildIntroVideoSequence().find(segment => segment.id === 'wolves-intro')
+    if (!destiny || !isVideoSegment(destiny)) {
+      throw new Error('Expected the Destiny segment to exist')
+    }
 
-    expect(cues).toEqual([])
+    expect(destiny.overlays).toEqual(expect.arrayContaining([
+      expect.objectContaining({ text: 'Harbinger Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 }),
+      expect.objectContaining({ text: 'Solar Hunter — Laura Santamaria — Paragon to the Order of 7', start: 70.5, end: 77 }),
+      expect.objectContaining({ text: 'Strand Warlock — Christoph Blecker — First Among Equals — The North Star', start: 83, end: 96, position: 'left' }),
+      expect.objectContaining({ text: 'Behemoth Titan — Natali Vlatko — Some build walls to protect — I build walls shatter.', start: 87.5, end: 96, position: 'right' }),
+    ]))
   })
 
-  it('does not surface any legacy Destiny caption lines', () => {
+  it('restores the authored Destiny dialogue captions', () => {
+    const cues = buildDestinyCaptionCues().filter(cue => !cue.comicHeroTitleCard)
+
+    expect(cues).toEqual(expect.arrayContaining([
+      expect.objectContaining({ text: 'What is a guardian?', start: 4.36, end: 9.4 }),
+      expect.objectContaining({
+        text: 'Define us in this moment for all time.',
+        start: 107.4,
+        end: 112.6,
+      }),
+    ]))
+  })
+
+  it('keeps the restored Destiny captions on their authored timings', () => {
     const cues = buildDestinyCaptionCues().filter(cue => !cue.comicHeroTitleCard)
     const texts = cues.map(cue => cue.text)
 
-    expect(texts).not.toContain('Does that make us soldiers?')
-    expect(texts).not.toContain('We built the city none of us dared to dream of, with allies from unlikely places.')
-    expect(texts).not.toContain('We\'ve never had more to lose.')
-    expect(texts).not.toContain('I turn the question to you, on the eve of our darkest hour.')
-    expect(texts).not.toContain('Define us in this moment for all time.')
+    expect(texts).toContain('Does that make us soldiers?')
+    expect(texts).toContain('We built the city none of us dared to dream of, with allies from unlikely places.')
+    expect(texts).toContain('We\'ve never had more to lose.')
+    expect(texts).toContain('I turn the question to you, on the eve of our darkest hour.')
+    expect(texts).toContain('Define us in this moment for all time.')
   })
 
   it('gives the revised prologue copy readable holds within its 94-second runtime', () => {

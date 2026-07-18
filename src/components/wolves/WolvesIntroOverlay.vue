@@ -1024,6 +1024,8 @@ defineExpose({
   z-index: 7;
 }
 .wolves-intro-overlay-burned-caption {
+  box-sizing: border-box;
+  width: 100%;
   max-width: 72rem;
   padding: 1rem 2.2rem;
   background: rgb(8 9 12 / 78%);
@@ -1408,8 +1410,11 @@ defineExpose({
 .wolves-guardian-plate {
   position: absolute;
   bottom: 10%;
-  left: 5%;
-  max-width: 34rem;
+  right: 0;
+  left: 0;
+  box-sizing: border-box;
+  width: auto;
+  max-width: none;
   padding: 1rem 1.35rem;
   border: 1px solid rgb(147 197 253 / 45%);
   border-radius: 0.75rem;
@@ -1424,11 +1429,13 @@ defineExpose({
 .wolves-guardian-plate-left {
   left: 5%;
   right: auto;
+  width: 40%;
 }
 
 .wolves-guardian-plate-right {
   left: auto;
   right: 5%;
+  width: 40%;
 }
 
 /* Raises the callout from the default lower-third anchor to sit closer to a Guardian's

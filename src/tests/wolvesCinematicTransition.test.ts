@@ -50,4 +50,16 @@ describe('cinematicTransition overlay duration', () => {
 
     expect(wrapper.find('.wc-transition-overlay').exists()).toBe(false)
   })
+
+  it('does not show a transition when returning to 7 Days to the Wolves', async () => {
+    const store = useCinematicStore()
+    store.phase = 'cinematic'
+    store.segmentIndex = 1
+
+    const wrapper = mount(CinematicTransition)
+    store.segmentIndex = 0
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('.wc-transition-overlay').exists()).toBe(false)
+  })
 })

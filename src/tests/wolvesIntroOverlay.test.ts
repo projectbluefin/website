@@ -725,7 +725,7 @@ describe('wolvesIntroOverlay guardian plate', () => {
     expect(wrapper.find('.wolves-guardian-plate-dinosaur-icon').exists()).toBe(false)
   })
 
-  it('keeps Guardian callouts as conventional lower thirds', () => {
+  it('keeps Guardian callouts as full-width lower thirds', () => {
     const overlay = readFileSync(resolve(process.cwd(), 'src/components/wolves/WolvesIntroOverlay.vue'), 'utf8')
     const sequence = readFileSync(resolve(process.cwd(), 'src/data/wolves-intro-sequence.ts'), 'utf8')
     const plateRule = overlay.match(/\.wolves-guardian-plate \{([\s\S]*?)\n\}/)?.[1]
@@ -739,8 +739,11 @@ describe('wolvesIntroOverlay guardian plate', () => {
     }
 
     expect(plateRule).toContain('bottom: 10%')
-    expect(plateRule).toContain('left: 5%')
-    expect(plateRule).toContain('max-width: 34rem')
+    expect(plateRule).toContain('right: 0')
+    expect(plateRule).toContain('left: 0')
+    expect(plateRule).toContain('box-sizing: border-box')
+    expect(plateRule).toContain('width: auto')
+    expect(plateRule).toContain('max-width: none')
     expect(plateRule).toContain('padding: 1rem 1.35rem')
     expect(plateRule).not.toContain('text-align: center')
     expect(plateRule).not.toContain('clip-path:')
