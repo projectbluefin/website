@@ -88,10 +88,13 @@ components unchanged:
 - **7 Days (`trackZeroExperience: true`)**: 2fr/1fr grid — `WolvesComicReader`
   (`trackIndex=0`, the authored beat-synced slideshow with all hero locks,
   including the Bluefin group: sherman-m2, kyle, hikari, jorge-bluefin across
-  contiguous windows 175.96-196.36s) plus `WolvesLoreColumn` (narrative
-  timeline) on the right, plus the thesis overlay (345-425s) rendered in
-  Destiny type. The thesis `warning` string renders **only** in the lore
-  sidebar's news record, not in the overlay.
+  contiguous windows 175.96-196.36s) plus `WolvesLoreColumn` (the
+  timeline-selected narrative record only) on the right, with a desktop-only
+  Track 0 sidecar below it holding a native muted looping 16:9 YouTube
+  documentary playlist (the iframe does not mount below 1024px), plus the
+  thesis overlay (345-425s) rendered in Destiny type. The thesis `warning`
+  string renders **only** in the lore sidebar's news record, not in the
+  overlay.
 - **Escalating Voice hero typography** (`.wc-thesis` in `TheaterExperience.vue`):
   the thesis overlay's font escalates with `WolvesThesisMode`
   (`src/data/wolves-thesis-sequence.ts`). `welcome`, `corruption`,
@@ -131,12 +134,10 @@ the voiced cut (`BKm0TPqeOjY`) using object-form
 `loadVideoById({ videoId, startSeconds })` so native time and pause state
 survive the swap. The default unvoiced source keeps its black-frame cutoff
 (`maxDuration: 121.5`) and the voiced cutoff remains
-`alternateMaxDuration: 120.2`. A documented guardian bond renders a small
-dinosaur icon next to the Guardian name, never a separate dinosaur panel;
-`leader: true` and `trustee: true` mark Christoph Blecker as a leader and
-trustee. The trustee flag gives him the silver **TRUSTEE // GUARDIAN** plate
-while `goldName: true` keeps only his displayed name gold. The gold-name class
-disables the shared text blur animation so it remains sharp.
+`alternateMaxDuration: 120.2`. A documented guardian bond renders in its own
+companion nameplate. `leader: true` and `trustee: true` mark Christoph Blecker
+as a leader and trustee; his **TRUSTEE // GUARDIAN** label remains while the
+complete plate uses the gold leader treatment.
 
 Typography (intro only, by owner direction): **Michroma** for theater text
 (the Microgramma/Eurostile Bold Extended stand-in from the Alien/Prometheus

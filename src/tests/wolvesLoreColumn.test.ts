@@ -9,7 +9,7 @@ import { getWolvesThesisState } from '../data/wolves-thesis-sequence'
 import { wolvesLoreRecordFixtures } from './fixtures/wolves-lore-records'
 
 describe('wolvesLoreColumn Logic', () => {
-  it('combines the narrative record and dossier directory in one unified surface', async () => {
+  it('renders the narrative record in a unified surface without the removed dossier directory', () => {
     const wrapper = mount(WolvesLoreColumn, {
       props: {
         artifactId: 'arthur-c-clarke-3',
@@ -18,19 +18,16 @@ describe('wolvesLoreColumn Logic', () => {
     })
 
     expect(wrapper.find('[data-unified-lore-feed]').exists()).toBe(true)
-    expect(wrapper.find('[data-dossier-directory]').exists()).toBe(true)
     expect(wrapper.text()).not.toContain('[ NARRATIVE FEED ]')
     expect(wrapper.text()).not.toContain('[ DOSSIER ARCHIVE ]')
     expect(wrapper.find('[data-lore-view-kind="quote"]').exists()).toBe(true)
 
-    const dossierLinks = wrapper.findAll('[data-dossier-record-id]')
-    expect(new Set(dossierLinks.map(link => link.attributes('data-dossier-record-id'))).size).toBe(dossierLinks.length)
-
-    await wrapper.get('[data-dossier-record-id="subjectprofile/kat-cosgrove"]').trigger('click')
-
-    expect(wrapper.find('[data-lore-view="guardian-dossier"]').exists()).toBe(true)
-    expect(wrapper.find('[data-lore-view-kind="quote"]').exists()).toBe(false)
-    expect(wrapper.find('[data-back-to-current-record]').exists()).toBe(true)
+    // The dossier directory (index, links, and return-to-current-record
+    // navigation) has been removed entirely; only the timeline-selected
+    // record surface remains.
+    expect(wrapper.find('[data-dossier-directory]').exists()).toBe(false)
+    expect(wrapper.find('[data-dossier-record-id]').exists()).toBe(false)
+    expect(wrapper.find('[data-back-to-current-record]').exists()).toBe(false)
   })
 
   it('renders the artifact selected by the soundtrack timeline', async () => {
@@ -461,7 +458,7 @@ describe('wolvesLoreColumn Logic', () => {
     expect(wrapper.text()).toContain('fnv1a:')
   })
 
-  it('indexes every documented Guardian dossier and deployed bond', async () => {
+  it('keeps the timeline-selected record current with no dossier navigation available', async () => {
     const wrapper = mount(WolvesLoreColumn, {
       props: {
         artifactId: 'arthur-c-clarke-3',
@@ -469,22 +466,20 @@ describe('wolvesLoreColumn Logic', () => {
       },
     })
 
-    expect(wrapper.find('[data-dossier-directory]').exists()).toBe(true)
-
-    // Initially, selected record is arthur-c-clarke-3 (a quote), not a dossier
+    // Selected record is the timeline-driven artifact (a quote), and there is
+    // no dossier index or return-to-current-record control to navigate away
+    // from it.
+    expect(wrapper.find('[data-lore-view-kind="quote"]').exists()).toBe(true)
+    expect(wrapper.find('[data-dossier-directory]').exists()).toBe(false)
+    expect(wrapper.find('[data-dossier-record-id]').exists()).toBe(false)
     expect(wrapper.find('[data-back-to-current-record]').exists()).toBe(false)
 
-    // Click a dossier link in the index
-    await wrapper.get('[data-dossier-record-id="subjectprofile/robert-killen"]').trigger('click')
+    await wrapper.setProps({ artifactId: 'lorem-prologue-1' })
     await wrapper.vm.$nextTick()
 
-    // It should now render Robert Killen's dossier and the return button
-    expect(wrapper.find('[data-back-to-current-record]').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Bob Killen')
-
-    // Click return to current record
-    await wrapper.get('[data-back-to-current-record]').trigger('click')
-    await wrapper.vm.$nextTick()
+    // Advancing the timeline-selected artifact still routes to its own view,
+    // with the dossier navigation staying absent.
+    expect(wrapper.find('[data-lore-view-kind="chatlog"]').exists()).toBe(true)
     expect(wrapper.find('[data-back-to-current-record]').exists()).toBe(false)
   })
 

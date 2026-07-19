@@ -18,6 +18,58 @@ const slotDuration = computed(() => Math.max(1, narrativeSlot.value.endTime - na
 const isTrackZero = computed(() => store.segment.trackZeroExperience === true)
 const thesis = computed(() => (isTrackZero.value ? getWolvesThesisState(time.value) : getWolvesThesisState(0)))
 
+// Static ordered video-loop sidecar for Track 0's desktop right column, below
+// the scheduled lore panel. This is a plain native <iframe> embed (no IFrame
+// Player API, no controls, no local media): muted, autoplaying, looping
+// through the authored playlist, and inline on mobile browsers that support
+// it. It must not mount on narrow viewports, so it is gated behind a
+// reactive desktop media-query guard rather than CSS alone.
+const TRACKZERO_SIDECAR_VIDEO_IDS = [
+  'xu_yE8h3jT8',
+  'PjryN2F6fF0',
+  'jRXB67fcXZA',
+  'tcj7O-hsCN0',
+  '-lo2IXn9RK4',
+  '_4SQ2mWxnEc',
+  'bCA6l-VlpAY',
+] as const
+
+const trackZeroSidecarSrc = computed(() => {
+  const [firstVideoId] = TRACKZERO_SIDECAR_VIDEO_IDS
+  const params = new URLSearchParams({
+    autoplay: '1',
+    mute: '1',
+    loop: '1',
+    controls: '0',
+    playsinline: '1',
+    playlist: TRACKZERO_SIDECAR_VIDEO_IDS.join(','),
+  })
+  return `https://www.youtube.com/embed/${firstVideoId}?${params.toString()}`
+})
+
+// The sidecar iframe only mounts at the authored desktop breakpoint (matches
+// the `.wc-trackzero-lore` 1024px CSS breakpoint below). CSS `display: none`
+// alone would still let the browser fetch and run the embed beneath 1024px,
+// so this reactive guard keeps the iframe out of the DOM entirely on narrow
+// viewports, mirroring the reduced-motion media-query pattern already used
+// in `CinematicTransition.vue`.
+const DESKTOP_SIDECAR_QUERY = '(min-width: 1024px)'
+const isDesktopViewport = ref(false)
+let desktopMedia: MediaQueryList | null = null
+
+function syncDesktopViewport() {
+  isDesktopViewport.value = desktopMedia?.matches ?? false
+}
+
+if (typeof window !== 'undefined' && 'matchMedia' in window) {
+  desktopMedia = window.matchMedia(DESKTOP_SIDECAR_QUERY)
+  syncDesktopViewport()
+  desktopMedia.addEventListener?.('change', syncDesktopViewport)
+  desktopMedia.addListener?.(syncDesktopViewport)
+}
+
+const showTrackZeroSidecar = computed(() => isTrackZero.value && isDesktopViewport.value)
+
 // Background wallpaper layers, carried over from the original immersive
 // theater: monthly Bluefin day/night pairs crossfade over 1.5s as soundtrack
 // progress advances, with a sine-modulated night blend. Progress spans the
@@ -110,6 +162,8 @@ onBeforeUnmount(() => {
   if (wallpaperTimeout) {
     clearTimeout(wallpaperTimeout)
   }
+  desktopMedia?.removeEventListener?.('change', syncDesktopViewport)
+  desktopMedia?.removeListener?.(syncDesktopViewport)
 })
 </script>
 
@@ -152,11 +206,31 @@ onBeforeUnmount(() => {
       </div>
 
       <aside v-if="isTrackZero" class="wc-trackzero-lore immersive-col-right">
-        <WolvesLoreColumn
-          :artifact-id="narrativeSlot.artifactId"
-          :duration="slotDuration"
-          :warning="thesis.warning"
-        />
+        <div class="wc-trackzero-lore-row">
+          <WolvesLoreColumn
+            :artifact-id="narrativeSlot.artifactId"
+            :duration="slotDuration"
+            :warning="thesis.warning"
+          />
+        </div>
+
+        <section
+          v-if="showTrackZeroSidecar"
+          class="wc-trackzero-video-row"
+          data-trackzero-video-sidecar
+        >
+          <h3 class="wc-trackzero-video-title font-mono">
+            [ SIGNAL RELAY - EARTH ]
+          </h3>
+          <div class="wc-trackzero-video-frame">
+            <iframe
+              :src="trackZeroSidecarSrc"
+              title="Track 0 companion video loop"
+              allow="autoplay; encrypted-media"
+              frameborder="0"
+            />
+          </div>
+        </section>
       </aside>
     </div>
   </div>
@@ -289,10 +363,62 @@ onBeforeUnmount(() => {
 }
 
 .wc-trackzero-lore {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.6rem;
   min-width: 0;
   min-height: 0;
   height: 100%;
+}
+
+.wc-trackzero-lore-row {
+  display: flex;
+  min-height: 0;
   overflow: hidden auto;
+}
+
+.wc-trackzero-lore-row :deep(.wolves-lore-column) {
+  flex: 1;
+  min-height: 0;
+}
+
+.wc-trackzero-video-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  min-height: 0;
+  padding: 1.2rem;
+  border-radius: 12px;
+  border: 1px solid #272727;
+  background: #10151f;
+  overflow: hidden;
+}
+
+.wc-trackzero-video-title {
+  margin: 0;
+  color: #38bdf8;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+}
+
+.wc-trackzero-video-frame {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+}
+
+.wc-trackzero-video-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  pointer-events: none;
 }
 
 .wc-thesis {
