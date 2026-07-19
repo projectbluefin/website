@@ -239,6 +239,28 @@ describe('wolvesIntroOverlay video segments', () => {
     expect(shotSrcs.every(src => src.includes('/characters/') && src.endsWith('.webp'))).toBe(true)
   })
 
+  it('spreads the comic hero shot rotation so no character repeats back-to-back', () => {
+    const ids = wolvesComicHeroShots.map(shot => shot.id)
+
+    // The Jorge hero shots bookend the rotation.
+    expect(ids[0]).toBe('youre-holding-it-wrong-post1')
+    expect(ids[ids.length - 1]).toBe('youre-holding-it-wrong2-post2')
+
+    // Same-character art must never sit adjacent, or the fast title-card
+    // cycle reads as one dinosaur jumping between poses.
+    const characterKey = (id: string) => id
+      .replace(/-pose\d.*$/, '')
+      .replace(/-post\d*$/, '')
+      .replace(/-(blue|vector|bluefinskin|bluefin)$/, '')
+      .replace(/^(bob|kaslin)-/, '')
+      .replace(/^(bluefin)-.*$/, '$1')
+    for (let index = 1; index < ids.length; index++) {
+      expect(characterKey(ids[index]), `adjacent shots ${ids[index - 1]} / ${ids[index]}`)
+        .not
+        .toBe(characterKey(ids[index - 1]))
+    }
+  })
+
   it('force-advances at maxDuration instead of waiting for the natural end', async () => {
     const cutoffSequence = [
       { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BV3BZKbpBns', maxDuration: 1 },
