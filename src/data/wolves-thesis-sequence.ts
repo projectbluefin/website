@@ -21,7 +21,7 @@ const EVOLVE_TEXT = 'Evolve or die ...'
 const ASCENDED_TEXT = 'You have ascended ...'
 const LEGEND_TEXT = 'Become Legend'
 const TITANFALL_HUD_LABEL = 'Bazzite Mk6 Units: Prepare for Titanfall'
-const DEFAULT_HUD_LABEL = 'Incoming Signal: Universal Blue'
+const DEFAULT_HUD_LABEL = 'Celebrating Five Years of Universal Blue'
 // Finale top-status compression window: thesis lines end at 365, Titanfall holds from 408.
 const SIGNAL_COMPRESS_START_SECONDS = 365
 const SIGNAL_COMPRESS_END_SECONDS = 408

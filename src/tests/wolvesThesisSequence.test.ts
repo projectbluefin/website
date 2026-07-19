@@ -65,7 +65,7 @@ describe('wolves thesis sequence', () => {
         text: '',
         hudLabel: 'We\'ve got your back.',
       })
-      expect(reloadedSequence.getWolvesHudLabel(365)).toBe('Incoming Signal: Universal Blue')
+      expect(reloadedSequence.getWolvesHudLabel(365)).toBe('Celebrating Five Years of Universal Blue')
     }
     finally {
       vi.doUnmock(sourceModule)
