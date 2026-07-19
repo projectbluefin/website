@@ -124,7 +124,7 @@ function handleCaptionChange(event: Event) {
     </div>
     <div class="wc-widget-telemetry">
       <div class="wc-widget-telemetry-row">
-        <span>DEPLOYMENT: wolves-decryption-engine-7</span>
+        <span>DEPLOYMENT: five-years-of-universal-blue</span>
         <span class="wc-widget-telemetry-accent">{{ deploymentPercent }}%</span>
       </div>
       <div class="wc-widget-meter">

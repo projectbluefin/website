@@ -47,7 +47,7 @@ Three invariants hold everywhere:
 
 The widget's primary meter and seek position represent the complete authored
 intro plus all six cinematic parts. Segment time remains secondary. The
-`DEPLOYMENT: wolves-decryption-engine-7` telemetry stays visible through the
+`DEPLOYMENT: five-years-of-universal-blue` telemetry stays visible through the
 entire show, including the compact mobile layout.
 
 Track handoffs can carry structured authored speaker, cue, static, and SFX

@@ -221,7 +221,7 @@ try {
   })
   assertWithin('Intro footer stays within the 140px budget', introTelemetry.height, 0, 140)
   assert('Intro telemetry stays visible', introTelemetry.telemetryVisible, true)
-  assertTruthy('Intro telemetry shows the deployment label', introTelemetry.text.includes('DEPLOYMENT: wolves-decryption-engine-7'))
+  assertTruthy('Intro telemetry shows the deployment label', introTelemetry.text.includes('DEPLOYMENT: five-years-of-universal-blue'))
   await capture(page, '02-intro-prologue')
 
   await clickOverallRatio(page, (INTRO_DURATION + 20) / OVERALL_DURATION)
@@ -286,7 +286,7 @@ try {
     valueNow: widget.querySelector('.wc-widget-progress')?.getAttribute('aria-valuenow') ?? '',
   }))
   assertWithin('Part VII footer stays within the 140px budget', partVIITelemetry.height, 0, 140)
-  assertTruthy('Part VII telemetry still shows the deployment label', partVIITelemetry.text.includes('DEPLOYMENT: wolves-decryption-engine-7'))
+  assertTruthy('Part VII telemetry still shows the deployment label', partVIITelemetry.text.includes('DEPLOYMENT: five-years-of-universal-blue'))
   assert('Part VII deployment percent reflects overall progress', partVIITelemetry.valueNow, '89')
   await capture(page, '04-part-vii')
 
@@ -309,7 +309,7 @@ try {
   }))
   assertWithin('Destiny intro footer stays within the 140px budget', destinyTelemetry.height, 0, 140)
   assertWithin('Destiny intro deployment percent reflects the overall intro/cinematic timeline', Number(destinyTelemetry.valueNow), 6, 7)
-  assertTruthy('Destiny intro telemetry remains visible on the shared widget', destinyTelemetry.text.includes('DEPLOYMENT: wolves-decryption-engine-7'))
+  assertTruthy('Destiny intro telemetry remains visible on the shared widget', destinyTelemetry.text.includes('DEPLOYMENT: five-years-of-universal-blue'))
   await capture(page, '05-intro-destiny')
 }
 catch (error) {

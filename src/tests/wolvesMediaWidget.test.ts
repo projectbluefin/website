@@ -21,7 +21,7 @@ describe('media widget', () => {
 
     expect(fill.attributes('style')).toContain(`width: ${store.overallProgress * 100}%`)
     expect(wrapper.get('.wc-widget-progress').attributes('aria-valuenow')).toBe(String(Math.round(store.overallProgress * 100)))
-    expect(wrapper.text()).toContain('DEPLOYMENT: wolves-decryption-engine-7')
+    expect(wrapper.text()).toContain('DEPLOYMENT: five-years-of-universal-blue')
     expect(wrapper.text()).toContain(`${Math.round(store.overallProgress * 100)}%`)
     expect(wrapper.text()).toContain('0:10 / 4:31')
     expect(wrapper.text()).toContain('TOTAL 30:22 / 34:06')
