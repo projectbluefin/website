@@ -56,7 +56,7 @@ async function launchExperience(manifest: ExperienceManifest) {
 }
 
 const introVideos = buildIntroVideoSequence()
-const INTRO_HANDOFF_FADE_MS = 1400
+const INTRO_HANDOFF_FADE_MS = 400
 const intro = ref<InstanceType<typeof WolvesIntroOverlay> | null>(null)
 const introShowVoiceOverToggle = ref(false)
 const introVoiceOverEnabled = ref(false)

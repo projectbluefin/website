@@ -987,19 +987,11 @@ defineExpose({
   background-color: #000;
   overflow: hidden;
   /* Handoff dissolve duration; must match INTRO_HANDOFF_FADE_MS in WolvesApp.vue. */
-  transition: background-color 1.4s ease;
+  transition: opacity 0.4s ease;
 }
 
 .wolves-intro-overlay--transparent-handoff {
-  background-color: transparent;
-}
-
-.wolves-intro-overlay--transparent-handoff .wolves-intro-overlay-player,
-.wolves-intro-overlay--transparent-handoff .wolves-intro-overlay-boot-cover,
-.wolves-intro-overlay--transparent-handoff .wolves-intro-overlay-top-left-mask,
-.wolves-intro-overlay--transparent-handoff .wolves-intro-overlay-pause-veil {
   opacity: 0;
-  transition: opacity 1.4s ease;
 }
 
 .wolves-intro-overlay-player {

@@ -321,6 +321,22 @@ try {
   // Complete the remaining intro stages before exercising the playlist handoff.
   await page.getByLabel('Next').click()
 
+  await page.waitForSelector('.wolves-intro-overlay--transparent-handoff', { state: 'visible', timeout: 10_000 })
+  await page.waitForTimeout(250)
+  const handoffPresentation = await page.evaluate(() => {
+    const overlay = document.querySelector('.wolves-intro-overlay')
+    const stage = document.querySelector('.wc-stage')
+    return {
+      opacity: overlay ? getComputedStyle(overlay).opacity : '',
+      transitionDuration: overlay ? getComputedStyle(overlay).transitionDuration : '',
+      stageVisible: Boolean(stage && getComputedStyle(stage).visibility !== 'hidden'),
+    }
+  })
+  assertTruthy('Intro handoff fades the complete Destiny overlay', Number(handoffPresentation.opacity) < 0.2, handoffPresentation)
+  assert('Intro handoff uses the fast presentation dissolve', handoffPresentation.transitionDuration, '0.4s')
+  assert('Track 0 stage is present before the intro overlay unmounts', handoffPresentation.stageVisible, true)
+  await captureStage(page, 'intro-handoff')
+
   // Wait for the intro overlay to disappear and the cinematic stage's dev-only
   // seek hook to become available before exercising the Track 0 locks.
   await page.waitForSelector('.wolves-intro-overlay', { state: 'hidden', timeout: 10_000 })

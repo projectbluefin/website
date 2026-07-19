@@ -151,7 +151,7 @@ describe('wolvesApp intro status handling', () => {
     expect(useCinematicStore().phase).toBe('cinematic')
     expect(wrapper.find('.wolves-intro-overlay-stub').exists()).toBe(true)
 
-    await vi.advanceTimersByTimeAsync(1400)
+    await vi.advanceTimersByTimeAsync(400)
     await nextTick()
     expect(wrapper.find('.wolves-intro-overlay-stub').exists()).toBe(false)
   })
@@ -237,7 +237,7 @@ describe('wolvesApp intro status handling', () => {
     expect(store.phase).toBe('cinematic')
     expect(wrapper.find('.wolves-intro-overlay-stub').exists()).toBe(true)
 
-    await vi.advanceTimersByTimeAsync(1399)
+    await vi.advanceTimersByTimeAsync(399)
     await nextTick()
     expect(wrapper.find('.wolves-intro-overlay-stub').exists()).toBe(true)
 

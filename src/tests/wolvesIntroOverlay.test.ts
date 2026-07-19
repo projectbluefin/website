@@ -118,6 +118,13 @@ const videoOnlySequence = [
 ]
 
 describe('wolvesIntroOverlay video segments', () => {
+  it('fades the whole overlay during the cinematic handoff', () => {
+    const source = readFileSync(resolve(process.cwd(), 'src/components/wolves/WolvesIntroOverlay.vue'), 'utf8')
+
+    expect(source).toMatch(/\.wolves-intro-overlay \{[\s\S]*?transition: opacity 0\.4s ease/)
+    expect(source).toMatch(/\.wolves-intro-overlay--transparent-handoff \{[\s\S]*?opacity: 0/)
+  })
+
   it('embeds the real YouTube video id, not a local file', async () => {
     const wrapper = mount(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
     await flushPromises()
