@@ -1702,8 +1702,11 @@ onBeforeUnmount(() => {
 .theater-guardian-title-sep {
   display: inline-block;
   margin: 0 0.4em;
-  color: #93c5fd;
+  color: #38bdf8;
   font-weight: 400;
+  text-shadow:
+    0 0 6px rgba(56, 189, 248, 0.95),
+    0 0 14px rgba(14, 165, 233, 0.7);
 }
 
 .animate-fade {
