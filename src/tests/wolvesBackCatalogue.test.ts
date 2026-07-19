@@ -5,7 +5,13 @@ import WolvesBackCatalogue from '@/components/wolves/WolvesBackCatalogue.vue'
 import { parseBackCatalogue } from '@/config/experience-manifest'
 import { resolveOverallRatioTarget, useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 // @ts-expect-error script module is intentionally plain Node ESM
-import { buildExperience, buildSegments } from '../../scripts/update-back-catalogue.js'
+import * as catalogueGenerator from '../../scripts/update-back-catalogue.js'
+
+const { buildExperience, buildSegments, cleanArtist, cleanTitle, stripArtistPrefix } = catalogueGenerator as typeof catalogueGenerator & {
+  cleanArtist: (value: string) => string
+  cleanTitle: (value: string) => string
+  stripArtistPrefix: (title: string, artist: string) => string
+}
 
 const ALBUM = {
   id: 'test-album',
@@ -87,6 +93,54 @@ describe('back catalogue experiences', () => {
     )
     expect(experience.artwork).toBe('experiences/PL123.jpg')
     expect(experience.segments).toHaveLength(1)
+    expect(experience.segments[0].chapter).toBe('Album')
+  })
+
+  it('filters unplayable entries and dedupes repeated recordings', () => {
+    const segments = buildSegments([
+      { id: 'v1', title: 'Eleine - All Shall Burn (OFFICIAL VIDEO)', duration: 200 },
+      { id: 'v1', title: 'Eleine - All Shall Burn (OFFICIAL VIDEO)', duration: 200 },
+      { id: 'v2', title: 'ELEINE - All Shall Burn', duration: 200 },
+      { id: 'v3', title: '[Private video]', duration: null },
+      { id: 'v4', title: '[Deleted video]', duration: null },
+      { id: 'v5', title: 'Rammstein - Mein Herz brennt (Piano Instrumental)', duration: 260 },
+    ])
+    expect(segments.map((s: { youtubeId: string }) => s.youtubeId)).toEqual(['v1', 'v5'])
+    expect(segments.map((s: { chapter: string }) => s.chapter)).toEqual(['TRACK 1', 'TRACK 2'])
+    expect(segments[0].title).toBe('All Shall Burn')
+    expect(segments[1].title).toBe('Mein Herz brennt (Piano Instrumental)')
+  })
+
+  it('cleans uploader noise from titles and artists', () => {
+    expect(cleanTitle).toBeTypeOf('function')
+    expect(cleanArtist).toBeTypeOf('function')
+    expect(stripArtistPrefix).toBeTypeOf('function')
+    expect(cleanTitle('Wasted Years (2015 Remaster)')).toBe('Wasted Years')
+    expect(cleanTitle('Blur The Technicolor (Album Version (Explicit))')).toBe('Blur The Technicolor')
+    expect(cleanTitle('JUKE JOINT JEZEBEL | REMASTERED | - Official Music Video')).toBe('JUKE JOINT JEZEBEL')
+    expect(cleanTitle('This Is Mongol (Warrior Souls) (feat. William DuVall of Alice In Chains)'))
+      .toBe('This Is Mongol (Warrior Souls) (feat. William DuVall of Alice In Chains)')
+    expect(cleanTitle('Separate Ways (Worlds Apart)')).toBe('Separate Ways (Worlds Apart)')
+    expect(cleanArtist('White Zombie - Topic')).toBe('White Zombie')
+    expect(cleanArtist('Rammstein Official')).toBe('Rammstein')
+    expect(cleanArtist('EleineOfficial')).toBe('Eleine')
+    expect(cleanArtist('Official Arctic Monkeys')).toBe('Arctic Monkeys')
+    expect(stripArtistPrefix('BAND-MAID / from now on', 'BAND-MAID')).toBe('from now on')
+    expect(stripArtistPrefix('Kelsy Karter & The Heroines "Call Me" (Blondie Cover)', 'Kelsy Karter & The Heroines'))
+      .toBe('Call Me (Blondie Cover)')
+  })
+
+  it('fixes known source metadata anomalies without broad guesses', () => {
+    const segments = buildSegments([
+      { id: 'SRXH9AbT280', title: 'The Emptiness Machine (Official Music Video) - Linkin Park', uploader: 'Linkin Park', duration: 190 },
+      { id: 'Ma440BTErHw', title: 'Tori Amos I Don\'t Like Mondays', uploader: 'levani vanishvili', duration: 240 },
+      { id: 'Z6VpX-feA2M', title: 'Quake 2- Sonic Mayhem - Quad Machine', uploader: 'Ishykawa', duration: 220 },
+    ])
+    expect(segments.map(({ title, artist }: { title: string, artist: string }) => ({ title, artist }))).toEqual([
+      { title: 'The Emptiness Machine', artist: 'Linkin Park' },
+      { title: 'I Don\'t Like Mondays', artist: 'Tori Amos' },
+      { title: 'Quad Machine', artist: 'Sonic Mayhem' },
+    ])
   })
 
   it('renders the grid from the catalogue and emits launch', async () => {

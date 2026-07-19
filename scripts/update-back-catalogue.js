@@ -10,10 +10,15 @@
  *   playlistUrl }.
  * - Album cover: https://docs.projectbluefin.io/img/playlists/<id>.jpg,
  *   downloaded byte-for-byte (no re-encode) to public/experiences/<id>.jpg.
+ * - The documentation source currently publishes no track lyrics or timed
+ *   text, so generated segments intentionally omit captionsText. Never invent
+ *   it; add a direct mapping only when the source gains an authored field.
  * - Per-album tracks come from yt-dlp --flat-playlist against playlistUrl:
  *   entry.id -> youtubeId, entry.title -> "Artist - Title" split (uploader
  *   fallback), entry.duration -> durationSeconds, best entry thumbnail ->
- *   original-resolution track artwork URL (never downscaled).
+ *   original-resolution track artwork URL (never downscaled). Each generated
+ *   segment uses the album title as its chapter/status label; track position
+ *   remains visible through the runtime's N/total counter.
  *
  * Follows the scripts/update-wolves-playlist.js convention. Idempotent:
  * re-running rewrites the catalogue from current source data, picking up new
@@ -44,29 +49,119 @@ function bestThumbnail(entry) {
   return `https://i.ytimg.com/vi/${entry.id}/hqdefault.jpg`
 }
 
+/** Private/deleted/region-locked playlist remnants must never render a card. */
+export function isPlayableEntry(entry) {
+  return Boolean(entry && typeof entry.id === 'string' && typeof entry.title === 'string')
+    && !/^\[?(?:private|deleted|unavailable) video\]?$/i.test(entry.title.trim())
+}
+
+const TITLE_JUNK = /\b(?:official\s*(?:music\s*|lyric\s*)?(?:video|audio|visuali[sz]er)?|(?:\d{4}\s*)?remaster(?:ed)?(?:\s*\d{4})?|album version|explicit|full\s*(?:album|video)|4k|hd|hq)\b/i
+
+export function cleanTitle(raw) {
+  let title = raw
+  for (const pattern of [/\s*\(([^()]*)\)/g, /\s*\[([^[\]]*)\]/g, /\s*\|([^|]*)\|?/g]) {
+    let previous
+    do {
+      previous = title
+      title = title.replace(pattern, (match, inner) =>
+        TITLE_JUNK.test(inner) && !/\b(?:feat|from|live|cover|instrumental|intro|part)\b/i.test(inner) ? '' : match)
+    } while (title !== previous)
+  }
+  for (const separator of [' - ', ' | ']) {
+    let splitAt = title.lastIndexOf(separator)
+    while (splitAt >= 0 && TITLE_JUNK.test(title.slice(splitAt + separator.length))) {
+      title = title.slice(0, splitAt)
+      splitAt = title.lastIndexOf(separator)
+    }
+  }
+  return title.replace(/\s{2,}/g, ' ').replace(/\s+([)\]])/g, '$1').trim()
+}
+
+export function cleanArtist(raw) {
+  return raw
+    .replace(/^Official\s+/i, '')
+    .replace(/\s*-\s*Topic$/i, '')
+    .replace(/(?:\s+|(?<=[a-z]))official$/i, '')
+    .trim()
+}
+
+const TRACK_METADATA_OVERRIDES = {
+  '9skBT5TUqzo': { artist: 'Avatar' },
+  'C1PtgOWJvWk': { artist: 'Avatar' },
+  'Z--vLaXdlgk': { artist: 'The Dark Element' },
+  'liYmtzt1lOE': { artist: 'Metric' },
+  'nomxKG2nIZU': { artist: 'Lacuna Coil' },
+  'NxhBE5taiIU': { artist: 'Puscifer' },
+  'ql3bQXbObks': { artist: 'Puscifer' },
+  'kXovV2keBP4': { artist: 'Puscifer' },
+  'TBnacM1Tbds': { artist: 'The Cranberries' },
+  'lSDfCdycdvk': { artist: 'The Cranberries' },
+  'nyuo9-OjNNg': { artist: 'Arctic Monkeys' },
+  'IOBYFzxfbU0': { artist: 'Plush' },
+  'r6L-GUOAhGo': { artist: 'MAPHRA' },
+  '_HGZBLdn9_c': { artist: 'Ice Cube' },
+  'Ma440BTErHw': { title: 'I Don\'t Like Mondays', artist: 'Tori Amos' },
+  'Z6VpX-feA2M': { title: 'Quad Machine', artist: 'Sonic Mayhem' },
+}
+
+export function stripArtistPrefix(title, artist) {
+  if (!artist || !title.toLowerCase().startsWith(artist.toLowerCase()) || title.length <= artist.length) {
+    return title
+  }
+  let rest = title.slice(artist.length).replace(/^\s*[-/:—·]\s*/, '').trim()
+  rest = rest.replace(/^["“]([^"”]+)["”]/, '$1').replace(/\s{2,}/g, ' ').trim()
+  return rest.length > 0 ? rest : title
+}
+
+function normalizeIdentity(value) {
+  return value.normalize('NFKD').toLowerCase().replace(/[^a-z0-9]+/g, '')
+}
+
 export function buildSegments(entries) {
   if (!Array.isArray(entries)) {
     throw new TypeError('Malformed yt-dlp output: expected an entries array')
   }
-  return entries.map((entry, index) => {
-    if (!entry || typeof entry.id !== 'string' || typeof entry.title !== 'string') {
-      throw new TypeError(`Malformed yt-dlp entry at index ${index}`)
+  const seenVideoIds = new Set()
+  const seenSongs = new Set()
+  const segments = []
+  for (const entry of entries) {
+    if (!isPlayableEntry(entry)) {
+      continue
     }
-    const [artistPrefix, ...titleParts] = entry.title.split(' - ')
+    const cleanedRawTitle = cleanTitle(entry.title)
+    const uploader = cleanArtist(entry.uploader ?? entry.channel ?? '')
+    const titleParts = cleanedRawTitle.split(' - ')
+    const artistPrefix = titleParts.shift() ?? cleanedRawTitle
     const hasArtistPrefix = titleParts.length > 0
-    return {
+    const reversed = hasArtistPrefix
+      && uploader.length > 0
+      && cleanArtist(titleParts.join(' - ')).toLowerCase() === uploader.toLowerCase()
+    const override = TRACK_METADATA_OVERRIDES[entry.id] ?? {}
+    const artist = override.artist ?? (reversed
+      ? uploader
+      : cleanArtist(hasArtistPrefix ? artistPrefix.trim() : uploader))
+    const title = override.title ?? stripArtistPrefix(
+      reversed ? artistPrefix.trim() : (hasArtistPrefix ? titleParts.join(' - ').trim() : cleanedRawTitle),
+      artist,
+    )
+    const songKey = `${normalizeIdentity(artist)}::${normalizeIdentity(title)}`
+    if (seenVideoIds.has(entry.id) || seenSongs.has(songKey)) {
+      continue
+    }
+    seenVideoIds.add(entry.id)
+    seenSongs.add(songKey)
+    segments.push({
       id: entry.id,
       kind: 'youtube',
       youtubeId: entry.id,
-      chapter: `TRACK ${index + 1}`,
-      title: hasArtistPrefix ? titleParts.join(' - ').trim() : entry.title,
-      artist: hasArtistPrefix ? artistPrefix.trim() : (entry.uploader ?? entry.channel ?? ''),
+      chapter: `TRACK ${segments.length + 1}`,
+      title,
+      artist,
       artwork: bestThumbnail(entry),
-      // ponytail: 240s fallback only shapes the seek-bar mapping; the player
-      // reports the real duration once the video loads.
       durationSeconds: Math.round(entry.duration ?? 240),
-    }
-  })
+    })
+  }
+  return segments
 }
 
 export function buildExperience(album, entries) {
@@ -75,7 +170,10 @@ export function buildExperience(album, entries) {
     title: album.title,
     subtitle: album.description,
     artwork: `experiences/${album.id}.jpg`,
-    segments: buildSegments(entries),
+    segments: buildSegments(entries).map(segment => ({
+      ...segment,
+      chapter: album.title,
+    })),
   }
 }
 
