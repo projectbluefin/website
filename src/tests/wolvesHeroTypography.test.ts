@@ -88,7 +88,7 @@ describe('wolves track zero video sidecar', () => {
     return wrapper
   }
 
-  it('mounts a static, titled, muted, autoplaying, looping, controls-free 16:9 iframe with the exact ordered video IDs on desktop Track 0', async () => {
+  it('mounts a chrome-masked, static, titled, muted, autoplaying, looping, controls-free 16:9 iframe with the exact ordered video IDs on desktop Track 0', async () => {
     const wrapper = await renderTrackZeroAt(1280)
 
     const sidecar = wrapper.find('[data-trackzero-video-sidecar]')
@@ -105,6 +105,7 @@ describe('wolves track zero video sidecar', () => {
     expect(src.searchParams.get('playsinline')).toBe('1')
     expect(src.searchParams.get('playlist')?.split(',')).toEqual(EXPECTED_VIDEO_IDS)
     expect(iframe.attributes('title')).toBeTruthy()
+    expect(sidecar.get('[data-trackzero-video-chrome-mask]').attributes('aria-hidden')).toBe('true')
   })
 
   it('renders the sidecar only for Track 0', async () => {

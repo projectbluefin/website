@@ -30,6 +30,10 @@ Routine Wolves content uses `wolves-content-maintenance.md`. Unapproved visual w
 - A transformed ancestor contains `position: fixed`; wrap true fullscreen overlays in `<Teleport to="body">`.
 - Tests for teleported content query `document.body`, not the component wrapper.
 - Reuse `src/composables/useYoutubeIframeApi.ts`; reset its module cache in tests.
+- `controls=0` does not remove all native YouTube visual overlays, and
+  `modestbranding`/`showinfo` are deprecated. For a decorative native iframe,
+  place an inert app-owned edge mask above the frame to conceal title, action,
+  and branding chrome; keep the iframe non-interactive.
 - happy-dom tests loading a real script URL set `handleDisabledFileLoadingAsSuccess = true`.
 - Re-check cancellation or skip state after every `await` before side effects.
 - For an intro-to-cinematic handoff, mount the existing `CinematicStage` beneath

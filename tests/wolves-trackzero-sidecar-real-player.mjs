@@ -21,7 +21,8 @@
  *     `loop=1`, `controls=0`, `playsinline=1`, and `playlist` equal to the
  *     exact seven-id CSV `xu_yE8h3jT8,PjryN2F6fF0,jRXB67fcXZA,tcj7O-hsCN0,
  *     -lo2IXn9RK4,_4SQ2mWxnEc,bCA6l-VlpAY`. The iframe is `pointer-events:
- *     none` (non-interactive background loop).
+ *     none` (non-interactive background loop). An app-owned edge mask sits
+ *     above it to conceal YouTube-native title, action, and branding chrome.
  *   - The sidecar must stay clear of the bottom `.wc-widget` footer HUD and
  *     the top `.wc-stage-nameplate` plate.
  *   - Mobile (<1024px): the sidecar is gated by a reactive `matchMedia`
@@ -301,10 +302,11 @@ try {
       const videoRow = document.querySelector('[data-trackzero-video-sidecar]')
       const videoFrame = videoRow?.querySelector('.wc-trackzero-video-frame')
       const iframe = videoRow?.querySelector('iframe')
+      const chromeMask = videoRow?.querySelector('[data-trackzero-video-chrome-mask]')
       const footer = document.querySelector('.wc-widget')
       const nameplateFrame = document.querySelector('.wc-stage-nameplate')
 
-      if (!grid || !viewer || !lore || !loreRow || !videoRow || !videoFrame || !iframe || !footer) {
+      if (!grid || !viewer || !lore || !loreRow || !videoRow || !videoFrame || !iframe || !chromeMask || !footer) {
         return { missing: true }
       }
 
@@ -315,6 +317,7 @@ try {
       const videoRowRect = videoRow.getBoundingClientRect()
       const frameRect = videoFrame.getBoundingClientRect()
       const iframeRect = iframe.getBoundingClientRect()
+      const chromeMaskRect = chromeMask.getBoundingClientRect()
       const footerRect = footer.getBoundingClientRect()
       const nameplateRect = nameplateFrame?.getBoundingClientRect() ?? null
       const iframeUrl = new URL(iframe.getAttribute('src') ?? '', window.location.href)
@@ -347,6 +350,13 @@ try {
         iframeVisibleSize: iframeRect.width > 0 && iframeRect.height > 0,
         iframeTitle: iframe.getAttribute('title') ?? '',
         iframePointerEvents: getComputedStyle(iframe).pointerEvents,
+        chromeMaskAriaHidden: chromeMask.getAttribute('aria-hidden'),
+        chromeMaskPointerEvents: getComputedStyle(chromeMask).pointerEvents,
+        chromeMaskPosition: getComputedStyle(chromeMask).position,
+        chromeMaskCoversFrame: chromeMaskRect.top <= frameRect.top + 1
+          && chromeMaskRect.right >= frameRect.right - 1
+          && chromeMaskRect.bottom >= frameRect.bottom - 1
+          && chromeMaskRect.left <= frameRect.left + 1,
         iframeHost: iframeUrl.hostname,
         iframePath: iframeUrl.pathname,
         iframeAutoplay: iframeUrl.searchParams.get('autoplay'),
@@ -373,6 +383,10 @@ try {
       assertTruthy('Track 0 sidecar row stays within the viewport bounds', layout.videoRowWithinViewport, layout)
       assertTruthy('Track 0 sidecar iframe has a non-empty accessible title', layout.iframeTitle.trim().length > 0, layout.iframeTitle)
       assert('Track 0 sidecar iframe stays non-interactive', layout.iframePointerEvents, 'none')
+      assert('Track 0 sidecar chrome mask is hidden from assistive technology', layout.chromeMaskAriaHidden, 'true')
+      assert('Track 0 sidecar chrome mask stays non-interactive', layout.chromeMaskPointerEvents, 'none')
+      assert('Track 0 sidecar chrome mask overlays the video frame', layout.chromeMaskPosition, 'absolute')
+      assertTruthy('Track 0 sidecar chrome mask covers the video frame', layout.chromeMaskCoversFrame, layout)
       assert('Track 0 sidecar iframe embeds from youtube.com', layout.iframeHost, 'www.youtube.com')
       assert('Track 0 sidecar iframe keeps the authored lead video id', layout.iframePath, `/embed/${EXPECTED_FIRST_VIDEO_ID}`)
       assert('Track 0 sidecar keeps autoplay enabled', layout.iframeAutoplay, '1')

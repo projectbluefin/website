@@ -229,6 +229,11 @@ onBeforeUnmount(() => {
               allow="autoplay; encrypted-media"
               frameborder="0"
             />
+            <div
+              class="wc-trackzero-video-chrome-mask"
+              data-trackzero-video-chrome-mask
+              aria-hidden="true"
+            />
           </div>
         </section>
       </aside>
@@ -419,6 +424,16 @@ onBeforeUnmount(() => {
   height: 100%;
   border: 0;
   pointer-events: none;
+}
+
+.wc-trackzero-video-chrome-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom, #000 0 3.5rem, transparent 5rem),
+    linear-gradient(to top, #000 0 2.5rem, transparent 4rem);
 }
 
 .wc-thesis {
