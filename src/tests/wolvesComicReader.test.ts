@@ -375,12 +375,15 @@ describe('wolvesComicReader', () => {
   it('opens Ghosts In The Mist with the held MN047 Jorge tribute', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
     const jorgeQuotePartOne = [
-      'Our projects depend on good apps, support GNOME, KDE, and Flathub to bring app developers to Linux!',
-      'Not a Universal Blue ecosystem or a bootc ecosystem. A cloud native ecosystem. In one short weekend you\'ve proven to the world that enthusiasts matter.',
+      'Not a Universal Blue ecosystem or a bootc ecosystem. A cloud native ecosystem. In one short weekend you\'ve proven to the world that enthusiasts matter. Happy Fifth Birthday Universal Blue!',
     ]
     const jorgeQuotePartTwo = [
       'Thank you to Chainguard, Microsoft, Red Hat, Edera, for sourcing talent from Universal Blue!',
-      'Need talent? Cloud native projets like ours are focused on sustainability. Judge us by our metrics.',
+      'Need talent? Cloud native projets like ours are focused on sustainability. Judge us by the quality of our people.',
+    ]
+    const jorgeQuotePartThree = [
+      'If you\'re new to cloud native then I hope this small glimpse of the people will inspire to work in your own local communities. Trust me we have work to do! Be the one who moves, not the one who is moved. With you at our side, how can we fail?',
+      '-- July 21, Ann Arbor, USA',
     ]
     mockGalleryData([
       coverTrack,
@@ -418,6 +421,10 @@ describe('wolvesComicReader', () => {
     await wrapper.setProps({ playlistCurrentTime: 19.3 })
     expect(activeTimelineImage(wrapper)).toContain('55164222671_32d7ace307_c.jpg')
     expect(wrapper.findAll('.wallpaper-theater-caption-body').map(paragraph => paragraph.text())).toEqual(jorgeQuotePartTwo)
+
+    await wrapper.setProps({ playlistCurrentTime: 30 })
+    expect(activeTimelineImage(wrapper)).toContain('55164222671_32d7ace307_c.jpg')
+    expect(wrapper.findAll('.wallpaper-theater-caption-body').map(paragraph => paragraph.text())).toEqual(jorgeQuotePartThree)
 
     await wrapper.setProps({ playlistCurrentTime: 38.399 })
     expect(activeTimelineImage(wrapper)).toContain('55164222671_32d7ace307_c.jpg')

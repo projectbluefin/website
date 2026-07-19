@@ -5,6 +5,7 @@ Mechaphippy Deployment: [UNAUTHORIZED]
 M2 Status: [ Unknown ]
 Field Medical Exoskeleton: [ Missing ]
 ---
+
 TARGET ACQUIRED: GOSPO, KYLE
 TARGET ACQUIRED: EGGROLL, GLORIOUS
 TARGET ACQUIRED: People who read documentation
@@ -12,9 +13,17 @@ PREVENT OPEN GAMING COLLECTIVE AT ALL COSTS
 Kube of Destiny location: Earth
 Projected Joining: Salt Lake City, Utah
 Longhorn Long Range Ballistic Mech Package: Deployed (Sponsored by SUSE)
-Mechaphippy Deployment: [UNAUTHORIZED]
+k8s Buildstream Cluster: ENABLED
+k8s Buildbarn Control Plane: OPTIMAL
+Buildstream Dakota[GNOMEOS] Prototype: DEADLY
 Hammer of Dawn: OFFLINE
+Buildstream Dakota[GNOMEOS] Prototype: RUTHLESS
+Mechaphippy Deployment: [UNAUTHORIZED]
+Buildstream Dakota[GNOMEOS] Prototype: GA 2026
+Buildstream Dakota[GNOMEOS] Build System: Founder OpsLOL
 AN4-ChK-12: Consider a Blue Universal Unobtanium Sponsorship Today!
+Ecosystem: KDE Linux / GNOME OS / Ubuntu Core / Dakotaraptor
+VERDICT: All previous desktops rendered OBSOLETE - with prejudice
 Agones.dev Cluster: [Unknown] - Value: ABSOLUTE
 Why do they shackle themselves 
 Software is Supposed to Die
@@ -22,7 +31,7 @@ Without death there is no life
 Software is Supposed to Die
 We're about to get a bunch of shitty software
 Software is Supposed to Die
-But some good ones
+But probably some good stuff too
 Software is Supposed to Die
-Fight.
+Fight
 Software is Supposed to Die

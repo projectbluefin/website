@@ -50,7 +50,7 @@ const introSegmentIndexById = new Map(introVideos.map((segment, index) => [segme
 const INTRO_DISPLAY: Record<string, { chapter: string, title: string, mediaTitle: string, artist: string, artwork: string }> = {
   'wolves-intro': {
     chapter: 'Meet your Fireteam',
-    title: 'Fighting for something greater',
+    title: 'fighting for something greater than themselves',
     mediaTitle: 'The Wolves are Coming',
     artist: 'Bungie',
     artwork: 'https://i.ytimg.com/vi/BV3BZKbpBns/hqdefault.jpg',
@@ -397,7 +397,7 @@ onBeforeUnmount(() => {
   top: 3rem;
   left: 3rem;
   z-index: 1000;
-  max-width: min(72rem, calc(100vw - 6rem));
+  width: calc(100vw - 6rem);
   pointer-events: none;
 }
 </style>

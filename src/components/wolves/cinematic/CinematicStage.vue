@@ -25,7 +25,7 @@ const plateLabel = computed(() =>
   isTrackZero.value ? getWolvesHudLabel(store.nativeTime) : store.segment.title,
 )
 const plateDetail = computed(() =>
-  isTrackZero.value ? store.segment.title : store.segment.chapter,
+  isTrackZero.value ? 'Seven Days to the Wolves' : store.segment.chapter,
 )
 
 onBeforeUnmount(() => player.destroy())
@@ -173,10 +173,12 @@ defineExpose({
   position: absolute;
   top: 3rem;
   left: 3rem;
+  width: calc(100% - 6rem);
   z-index: 20;
-  /* Long signal lines must render on one line; the plate may use the full
-     viewport width minus its own margins before wrapping as a last resort. */
-  max-width: calc(100vw - 6rem);
   pointer-events: none;
+}
+
+.wc-stage-nameplate :deep(.wc-nameplate) {
+  width: 100%;
 }
 </style>

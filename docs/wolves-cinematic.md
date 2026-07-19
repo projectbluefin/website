@@ -133,7 +133,10 @@ survive the swap. The default unvoiced source keeps its black-frame cutoff
 (`maxDuration: 121.5`) and the voiced cutoff remains
 `alternateMaxDuration: 120.2`. A documented guardian bond renders a small
 dinosaur icon next to the Guardian name, never a separate dinosaur panel;
-`trustee: true` applies the burnished silver trustee treatment to Christoph Blecker's plate.
+`leader: true` and `trustee: true` mark Christoph Blecker as a leader and
+trustee. The trustee flag gives him the silver **TRUSTEE // GUARDIAN** plate
+while `goldName: true` keeps only his displayed name gold. The gold-name class
+disables the shared text blur animation so it remains sharp.
 
 Typography (intro only, by owner direction): **Michroma** for theater text
 (the Microgramma/Eurostile Bold Extended stand-in from the Alien/Prometheus

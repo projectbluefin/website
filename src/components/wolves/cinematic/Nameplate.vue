@@ -144,7 +144,7 @@ onBeforeUnmount(() => window.clearInterval(avatarTimer))
   text-transform: uppercase;
   color: var(--wc-white);
   line-height: 1.1;
-  overflow-wrap: break-word;
+  white-space: nowrap;
 }
 
 /* Quoted technical tokens in authored labels (e.g. humans/trying-their-best:v1)
@@ -156,7 +156,7 @@ onBeforeUnmount(() => window.clearInterval(avatarTimer))
 }
 
 .wc-nameplate--slow-fade .wc-nameplate-label {
-  transition: opacity 1.5s ease;
+  transition: opacity 0.2s ease;
 }
 
 .wc-nameplate--blue-delivers .wc-nameplate-label {

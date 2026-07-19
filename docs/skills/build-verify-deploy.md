@@ -63,7 +63,7 @@ Use the smallest relevant checks. Documentation-only changes need path/link chec
 
 - Run oracles against `npm run dev` (the `window.__wolvesCinematic.seekTo` hook is dev-only). `npm run preview` binds IPv6 `::1`; use `localhost`, never `127.0.0.1`, in `WOLVES_BASE_URL`.
 - Any change to Wolves content, plate wiring, intro stage count, or component markup must update the affected browser oracles in the same change. Stale oracle expectations have turned CI red without any product bug.
-- The Track 0 nameplate label slow-fades (1.5s `out-in`). Never assert its text by instant `textContent()` equality; wait for the expected value:
+- The Track 0 nameplate label crossfades in 200ms (`out-in`). Never assert its text by instant `textContent()` equality; wait for the expected value:
   `await page.waitForFunction(text => document.querySelector('.wc-stage-nameplate .wc-nameplate-label')?.textContent === text, expected, { timeout: 5_000 })`.
 - `window.__mockWolvesPlayers` accumulates destroyed instances. Always select the newest match: `[...window.__mockWolvesPlayers].reverse().find(entry => entry.videoId === id)`.
 - Transition overlays render the terminal block on every handoff; `transitionLore` conversations are hidden from the overlay but still drive the transition SFX.

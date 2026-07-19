@@ -14,11 +14,6 @@ export const wolvesComicHeroShots = [
     label: 'Youre Holding It Wrong Post 1',
   },
   {
-    id: 'chonky-alamo-blue',
-    src: 'characters/chonky-alamo-blue.webp',
-    label: 'Chonky Alamo Blue',
-  },
-  {
     id: 'chonky-achillibator-pose1-post',
     src: 'characters/chonky-achillibator-pose1-post.webp',
     label: 'Chonky Achillibator Pose1 Post',
@@ -27,11 +22,6 @@ export const wolvesComicHeroShots = [
     id: 'bluefin-original',
     src: 'characters/bluefin_original.webp',
     label: 'Bluefin Original',
-  },
-  {
-    id: 'bob-torosaurus',
-    src: 'characters/bob-torosaurus.webp',
-    label: 'Bob Torosaurus',
   },
   {
     id: 'chonky-dakosaurus-bluefinskin',
@@ -59,34 +49,9 @@ export const wolvesComicHeroShots = [
     label: 'Custom Chonk Jorge Concavenator Post1',
   },
   {
-    id: 'bluefin-pride',
-    src: 'characters/bluefin_pride.webp',
-    label: 'Bluefin Pride',
-  },
-  {
     id: 'chonky-utahraptor-bluefinskin',
     src: 'characters/chonky-utahraptor-bluefinskin.webp',
     label: 'Chonky Utahraptor BlueFinSkin',
-  },
-  {
-    id: 'kaslin-torosaurus',
-    src: 'characters/kaslin-torosaurus.webp',
-    label: 'Kaslin Torosaurus',
-  },
-  {
-    id: 'chonky-alamo-vector',
-    src: 'characters/chonky-alamo-vector.webp',
-    label: 'Chonky Alamo Vector',
-  },
-  {
-    id: 'jorge-custom-chonks-intrigued',
-    src: 'characters/Jorge_CustomChonks_Intrigued.webp',
-    label: 'Jorge Custom Chonks Intrigued',
-  },
-  {
-    id: 'karl',
-    src: 'characters/karl.webp',
-    label: 'Karl',
   },
   {
     id: 'chonky-achillibator-pose2-post',
@@ -94,24 +59,64 @@ export const wolvesComicHeroShots = [
     label: 'Chonky Achillibator Pose2 Post',
   },
   {
-    id: 'jorge-custom-chonks-leaping',
-    src: 'characters/Jorge_CustomChonks_Leaping.webp',
-    label: 'Jorge Custom Chonks Leaping',
-  },
-  {
-    id: 'bluefin-nesting',
-    src: 'characters/bluefin_nesting.webp',
-    label: 'Bluefin Nesting',
-  },
-  {
-    id: 'jorge-custom-chonks-pivotraptor-blmblackgold-post',
-    src: 'characters/Jorge_CustomChonks_PivotRaptor_BLMBlackGold_Post.webp',
-    label: 'Jorge Custom Chonks PivotRaptor BLM Black Gold Post',
-  },
-  {
     id: 'deinonychus-antirrhopus-and-achillobator-giganticus',
     src: 'characters/Deinonychus_antirrhopus_and_Achillobator_giganticus.webp',
     label: 'Deinonychus Antirrhopus and Achillobator Giganticus',
+  },
+  {
+    id: 'achillobator',
+    src: 'characters/achillobator.webp',
+    label: 'Achillobator',
+  },
+  {
+    id: 'angry',
+    src: 'characters/angry.webp',
+    label: 'Angry',
+  },
+  {
+    id: 'dakota',
+    src: 'characters/dakota.webp',
+    label: 'Dakota',
+  },
+  {
+    id: 'devs',
+    src: 'characters/devs.webp',
+    label: 'Devs',
+  },
+  {
+    id: 'intrigued',
+    src: 'characters/intrigued.webp',
+    label: 'Intrigued',
+  },
+  {
+    id: 'leaping',
+    src: 'characters/leaping.webp',
+    label: 'Leaping',
+  },
+  {
+    id: 'nest',
+    src: 'characters/nest.webp',
+    label: 'Nest',
+  },
+  {
+    id: 'pride',
+    src: 'characters/pride.webp',
+    label: 'Pride',
+  },
+  {
+    id: 'roaring',
+    src: 'characters/roaring.webp',
+    label: 'Roaring',
+  },
+  {
+    id: 'utah',
+    src: 'characters/utah.webp',
+    label: 'Utah',
+  },
+  {
+    id: 'jorge-custom-chonks-pivotraptor-post1',
+    src: 'characters/Jorge_CustomChonks_PivotRaptor_Post1.webp',
+    label: 'Jorge Custom Chonks PivotRaptor Post1',
   },
   {
     id: 'youre-holding-it-wrong2-post2',

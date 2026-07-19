@@ -848,8 +848,8 @@ defineExpose({
           <div
             class="wolves-guardian-plate font-mono"
             :class="{
-              'wolves-guardian-plate-leader': cue.leader,
               'wolves-guardian-plate-trustee': cue.trustee,
+              'wolves-guardian-plate-leader': cue.leader,
             }"
           >
             <template v-if="parseGuardianCue(cue.text)">
@@ -869,7 +869,10 @@ defineExpose({
               <p class="wolves-guardian-plate-class">
                 {{ parseGuardianCue(cue.text)!.guardianClass }}
               </p>
-              <p class="wolves-guardian-plate-name">
+              <p
+                class="wolves-guardian-plate-name"
+                :class="{ 'wolves-guardian-plate-name-gold': cue.goldName }"
+              >
                 {{ parseGuardianCue(cue.text)!.name }}
               </p>
               <p class="wolves-guardian-plate-title">
@@ -895,6 +898,7 @@ defineExpose({
               alt=""
               aria-hidden="true"
               class="wolves-companion-plate-art"
+              :class="{ 'wolves-companion-plate-art-alamo': guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)!.name === 'Alamo' }"
             >
             <div class="wolves-companion-plate-card">
               <p class="wolves-companion-plate-label">
@@ -1710,6 +1714,13 @@ defineExpose({
   animation: wolves-guardian-plate-text-drift 1.4s cubic-bezier(0.1, 0.9, 0.2, 1) 0.25s backwards;
 }
 
+/* Alamo's source canvas has more transparent padding than Karl's, so normalize
+   the visible dinosaur height without moving the shared companion card. */
+.wolves-companion-plate-art-alamo {
+  width: 124.2%;
+  margin: 0 -12.1% -3.9rem;
+}
+
 .wolves-companion-plate-card {
   position: relative;
   padding: 4.2rem 1.6rem 1.4rem;
@@ -1748,49 +1759,9 @@ defineExpose({
   color: #94a3b8;
 }
 
-/* Gilds the plate gold instead of the default silver/blue treatment to signify leadership.
-   Reserved for Christoph Blecker's "First Among Equals" cue — see the `leader` field doc
-   comment in wolves-intro-sequence.ts. Overrides border, horizon lines, crest, burst flash,
-   and the title line so the gold reads consistently across the whole plate. */
-.wolves-guardian-plate-leader {
-  border-color: rgb(250 204 21 / 55%);
-  box-shadow: 0 0 24px rgb(250 204 21 / 20%);
-}
-
-.wolves-guardian-plate-leader .wolves-guardian-plate-burst {
-  background: radial-gradient(circle, #fff 0%, #facc15 45%, transparent 70%);
-}
-
-.wolves-guardian-plate-leader .wolves-guardian-plate-horizon {
-  background: linear-gradient(to right, transparent, #facc15 60%, #fff 100%);
-  box-shadow: 0 0 8px rgb(250 204 21 / 55%);
-}
-
-.wolves-guardian-plate-leader .wolves-guardian-plate-horizon-right {
-  background: linear-gradient(to left, transparent, #facc15 60%, #fff 100%);
-}
-
-.wolves-guardian-plate-leader .wolves-guardian-plate-crest {
-  filter: drop-shadow(0 0 8px rgb(250 204 21 / 70%));
-}
-
-.wolves-guardian-plate-leader .wolves-guardian-plate-crest-outer,
-.wolves-guardian-plate-leader .wolves-guardian-plate-crest-chevron {
-  stroke: #facc15;
-}
-
-.wolves-guardian-plate-leader .wolves-guardian-plate-label {
-  color: #facc15;
-}
-
-.wolves-guardian-plate-leader .wolves-guardian-plate-title {
-  color: #fde68a;
-  font-weight: 600;
-}
-
 /* Burnished silver treatment for Universal Blue trustees (Bob Killen's cue; Jorge
    Castro's Ghosts In The Mist plate mirrors it in WolvesComicReader.vue). Distinct
-   from the default blue plate and from the singular gold leader plate. */
+   from the default blue plate. */
 .wolves-guardian-plate-trustee {
   border-color: rgb(203 213 225 / 55%);
   box-shadow: 0 0 24px rgb(226 232 240 / 20%);
@@ -1824,6 +1795,17 @@ defineExpose({
 
 .wolves-guardian-plate-trustee .wolves-guardian-plate-title {
   color: #cbd5e1;
+}
+
+/* A trustee identity can remain gold while its surrounding plate retains the
+   standard trustee treatment. */
+.wolves-guardian-plate-name.wolves-guardian-plate-name-gold {
+  background: linear-gradient(to bottom, #fff7c2 0%, #facc15 60%, #ca8a04 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: none;
+  filter: none;
+  text-shadow: none;
 }
 
 /* Radial ignition flash behind the crest at the moment the plate appears. */

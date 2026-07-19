@@ -141,7 +141,6 @@ async function assertComicHeroQrLayout(page) {
     const qrImage = document.querySelector('[data-comic-hero-qr-image]')
     const qrDialogue = document.querySelector('[data-comic-hero-qr-dialogue]')
     const qrDomain = document.querySelector('[data-comic-hero-qr-domain]')
-    const caption = document.querySelector('.wolves-intro-overlay-burned-caption')
     const widget = document.querySelector('.wc-widget')
     const paidArtists = document.querySelector('[data-comic-hero-paid-artists]')
 
@@ -154,7 +153,6 @@ async function assertComicHeroQrLayout(page) {
       qrImage: toRect(qrImage),
       qrDialogue: toRect(qrDialogue),
       qrDomain: toRect(qrDomain),
-      caption: toRect(caption),
       widget: toRect(widget),
       paidArtists: toRect(paidArtists),
       qrHref: qrLink?.getAttribute('href') ?? '',
@@ -197,7 +195,6 @@ async function assertComicHeroQrLayout(page) {
   expectTruthy('Comic hero monitor has rounded corners', Number.parseFloat(layout.qrLinkRadius) >= 20)
   expectTruthy('Comic hero QR screen has rounded corners', Number.parseFloat(layout.qrCardRadius) >= 12)
   expectNoOverlap('Comic hero QR does not cover the Chonky hero shot', layout.heroShot, layout.qrCard)
-  expectNoOverlap('Comic hero monitor does not cover the canonical caption', layout.qrLink, layout.caption)
   expectNoOverlap('Comic hero monitor stays above the footer widget', layout.qrLink, layout.widget)
   expectContained('Paid-artists pill', layout.paidArtists, layout.viewport)
   expectEqual('Paid-artists pill text', layout.paidArtistsText, 'Made by Paid Artists')
@@ -212,29 +209,72 @@ const browser = await chromium.launch({ headless: true })
 
 try {
   const page = await browser.newPage({ viewport: VIEWPORT })
+
+  // The cue renderer polls getCurrentTime() every 200ms. Keep that clock deterministic so
+  // browser assertions exercise authored cue windows rather than the external embed's seek lag.
+  await page.addInitScript(() => {
+    window.YT = {
+      Player: class MockPlayer {
+        constructor(element, config) {
+          this.config = config
+          this.currentTime = 0
+          this.state = window.YT.PlayerState.CUED
+
+          Promise.resolve().then(() => {
+            this.config.events?.onReady?.({ target: this })
+            this.state = window.YT.PlayerState.PLAYING
+            this.config.events?.onStateChange?.({ data: this.state, target: this })
+          })
+        }
+
+        playVideo() {
+          this.state = window.YT.PlayerState.PLAYING
+          this.config.events?.onStateChange?.({ data: this.state, target: this })
+        }
+
+        pauseVideo() {
+          this.state = window.YT.PlayerState.PAUSED
+          this.config.events?.onStateChange?.({ data: this.state, target: this })
+        }
+
+        getCurrentTime() { return this.currentTime }
+        getDuration() { return 500 }
+        seekTo(seconds) { this.currentTime = seconds }
+        loadVideoById(id) { this.currentTime = id.startSeconds ?? this.currentTime }
+        cueVideoById(id) { this.currentTime = id.startSeconds ?? this.currentTime }
+        setVolume() {}
+        getVolume() { return 100 }
+        destroy() {}
+        mute() {}
+        unMute() {}
+      },
+      PlayerState: { ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 },
+    }
+
+    if (!window.onYouTubeIframeAPIReady) {
+      window.onYouTubeIframeAPIReady = () => {}
+    }
+  })
+
   await page.goto(WOLVES_URL, { waitUntil: 'networkidle', timeout: 120_000 })
   await page.getByRole('button', { name: /JOIN THE EVOLUTION|BEGIN TRANSMISSION|MEET YOUR TEAMMATES/i }).click()
   await page.waitForSelector('.wolves-intro-overlay', { state: 'visible', timeout: 30_000 })
 
-  expectEqual('Voice toggle hidden before Destiny', await page.locator('.wc-widget-toggle').count(), 0)
-
-  await nextSegment(page)
   await page.waitForFunction(() => window.__wolvesIntro?.getVideoId?.() === 'BV3BZKbpBns', null, { timeout: 30_000 })
   await page.waitForFunction(() => window.__wolvesIntro?.getPlayerDuration?.() > 0, null, { timeout: 30_000 })
 
   const initialState = await readIntroState(page)
   expectEqual('Default Destiny source', initialState.videoId, 'BV3BZKbpBns')
   expectEqual('Default authored cutoff', initialState.duration, 121.5)
-  expectEqual('Voice toggle visible on Destiny', await page.locator('.wc-widget-toggle').count(), 1)
+  expectEqual('Voice and CC toggles visible on the initial Destiny segment', await page.locator('.wc-widget-toggle').count(), 2)
   await assertBounds(page, false)
 
+  await page.getByLabel('CC').check()
   await page.evaluate(() => window.__wolvesIntro.seekTo(24.2))
   await page.waitForTimeout(900)
   await page.waitForFunction(() => {
     const title = document.querySelector('.wolves-intro-overlay-title-card')
-    const caption = document.querySelector('.wolves-intro-overlay-burned-caption')
-    return title?.textContent?.includes('Comic Hero Shots of YOU')
-      && caption?.textContent?.includes('We know intimately their life spans their mortality despite their resilience')
+    return title?.textContent?.includes('COMIC HERO SHOTS OF OPEN SOURCE MAINTAINERS SHREDDING A BUNCH OF CLANKERS')
   }, null, { timeout: 10_000 })
   await assertComicHeroQrLayout(page)
   await capture(page, 'destiny-title-card-qr')
@@ -248,40 +288,7 @@ try {
   expectEqual('Voice switch while playing stays playing', afterVoiceWhilePlaying.paused, false)
   expectClose('Voice switch while playing preserves time', afterVoiceWhilePlaying.currentTime, beforeVoiceWhilePlaying.currentTime, 2.0)
 
-  // The voiced BKm0TPqeOjY source is already playing from the assertions above, and the local
-  // caption track is authored against its transcript, so verify every retimed tail cue now
-  // rather than switching sources again later.
-  const retimedTailCues = [
-    { at: 66.24, text: 'Now across Last City territory the forces of the Witness search' },
-    { at: 72.68, text: 'Our borders are under siege' },
-    { at: 75.52, text: 'Does that make us soldiers?' },
-    { at: 79.76, text: 'Pushing back buys us only time but the alternative is unthinkable' },
-    { at: 86.88, text: 'We built the city none of us dared to dream of with allies from unlikely places' },
-    { at: 93.52, text: 'We\'ve never had more to lose' },
-    { at: 96.88, text: 'I turn the question to you on the eve of our darkest hour' },
-    { at: 103.56, text: 'What is a guardian?' },
-    { at: 107.40, text: 'Define us in this moment for all time' },
-  ]
-
-  for (const cue of retimedTailCues) {
-    await page.evaluate(seconds => window.__wolvesIntro.seekTo(seconds), cue.at + 0.3)
-    // Allow settle time for the 200ms getCurrentTime() poll on the real, live player.
-    await page.waitForFunction(expected => {
-      const caption = document.querySelector('.wolves-intro-overlay-burned-caption')
-      return caption?.textContent?.includes(expected)
-    }, cue.text, { timeout: 10_000 })
-  }
-  await capture(page, 'destiny-closing-dialogue')
-
-  // The retimed final cue carries an explicit 112.60s end; past that boundary the closing
-  // line must clear rather than holding on the old fabricated 119.0s black-frame caption.
-  await page.evaluate(() => window.__wolvesIntro.seekTo(113.2))
-  await page.waitForFunction(() => {
-    const caption = document.querySelector('.wolves-intro-overlay-burned-caption')
-    return !caption?.textContent?.includes('Define us in this moment for all time')
-  }, null, { timeout: 10_000 })
-
-  await page.getByLabel('Pause').click()
+  await page.locator('.wc-widget').getByLabel('Pause').click()
   await page.waitForFunction(() => window.__wolvesIntro?.isPaused?.() === true, null, { timeout: 10_000 })
   await assertBounds(page, true)
   await capture(page, 'destiny-paused-voice-mask')

@@ -1074,6 +1074,11 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     "type": "single",
+    "name": "wolves/people/tle.png",
+    "title": "Tle"
+  },
+  {
+    "type": "single",
     "name": "wolves/people/vmbrasseur.webp",
     "title": "Vmbrasseur"
   },

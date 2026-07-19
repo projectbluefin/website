@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { flushPromises, shallowMount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -98,6 +100,12 @@ const NameplateStub = defineComponent({
 })
 
 describe('wolvesApp intro status handling', () => {
+  it('gives the one-line intro status plate the full available viewport width', () => {
+    const source = readFileSync(resolve(process.cwd(), 'src/WolvesApp.vue'), 'utf8')
+
+    expect(source).toMatch(/\.wc-intro-nameplate \{[\s\S]*?width: calc\(100vw - 6rem\)/)
+  })
+
   beforeEach(() => {
     setActivePinia(createPinia())
     handoffCalls.length = 0
@@ -308,7 +316,7 @@ describe('wolvesApp intro status handling', () => {
     })
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|Fighting for something greater')
+    expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|fighting for something greater than themselves')
     expect(wrapper.getComponent(MediaWidgetStub).props('title')).toBe('The Wolves are Coming')
 
     intro.vm.$emit('status', {
@@ -335,7 +343,7 @@ describe('wolvesApp intro status handling', () => {
     })
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|Fighting for something greater')
+    expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|fighting for something greater than themselves')
     expect(wrapper.get('.nameplate-stub').classes()).not.toContain('glitching')
     expect(wrapper.getComponent(MediaWidgetStub).props('title')).toBe('The Wolves are Coming')
   })

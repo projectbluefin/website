@@ -18,14 +18,16 @@
  */
 
 import { chromium } from 'playwright'
+import { readFileSync } from 'node:fs'
 
 const BASE_URL = process.env.WOLVES_BASE_URL ?? 'http://127.0.0.1:5173'
 const WOLVES_URL = `${BASE_URL}/wolves/`
 const [width, height] = (process.env.WOLVES_VIEWPORT ?? '1440x900').split('x').map(Number)
 const VIEWPORT = { width, height }
 const SCREENSHOT_DIR = process.env.WOLVES_SCREENSHOT_DIR
-const JORGE_GHOSTS_QUOTE_PART_ONE = 'Our projects depend on good apps, support GNOME, KDE, and Flathub to bring app developers to Linux! Not a Universal Blue ecosystem or a bootc ecosystem. A cloud native ecosystem. In one short weekend you\'ve proven to the world that enthusiasts matter.'
-const JORGE_GHOSTS_QUOTE_PART_TWO = 'Thank you to Chainguard, Microsoft, Red Hat, Edera, for sourcing talent from Universal Blue! Need talent? Cloud native projets like ours are focused on sustainability. Judge us by our metrics.'
+const JORGE_GHOSTS_QUOTE_PART_ONE = 'Not a Universal Blue ecosystem or a bootc ecosystem. A cloud native ecosystem. In one short weekend you\'ve proven to the world that enthusiasts matter. Happy Fifth Birthday Universal Blue!'
+const JORGE_GHOSTS_QUOTE_PART_TWO = 'Thank you to Chainguard, Microsoft, Red Hat, Edera, for sourcing talent from Universal Blue! Need talent? Cloud native projets like ours are focused on sustainability. Judge us by the quality of our people.'
+const JORGE_GHOSTS_QUOTE_PART_THREE = 'If you\'re new to cloud native then I hope this small glimpse of the people will inspire to work in your own local communities. Trust me we have work to do! Be the one who moves, not the one who is moved. With you at our side, how can we fail? -- July 21, Ann Arbor, USA'
 
 let passed = 0
 let failed = 0
@@ -216,7 +218,7 @@ try {
   assert(
     'Destiny nameplate label',
     await page.locator('.wc-intro-nameplate .wc-nameplate-label').textContent(),
-    'Fighting for something greater',
+    'fighting for something greater than themselves',
   )
   assert(
     'Destiny media plaque uses the authored title',
@@ -277,7 +279,7 @@ try {
   assert(
     'Top status holds the default title at 48 (no standing #nova4ever)',
     await page.locator('.wc-intro-nameplate .wc-nameplate-label').textContent(),
-    'Fighting for something greater',
+    'fighting for something greater than themselves',
   )
   await page.evaluate((index) => {
     window.__mockWolvesPlayers[index].seekTo(52.2, true)
@@ -296,7 +298,7 @@ try {
     window.__mockWolvesPlayers[index].seekTo(55, true)
   }, introPlayerIndex)
   await page.waitForFunction(
-    () => document.querySelector('.wc-intro-nameplate .wc-nameplate-label')?.textContent === 'Fighting for something greater',
+    () => document.querySelector('.wc-intro-nameplate .wc-nameplate-label')?.textContent === 'fighting for something greater than themselves',
     null,
     { timeout: 5_000 },
   )
@@ -332,6 +334,41 @@ try {
     await page.evaluate(time => window.__wolvesCinematic.seekTo(time), seconds)
     await page.waitForTimeout(250)
   }
+
+  await seekStage(365.05)
+  const statusbarBounds = await page.evaluate(() => {
+    const stage = document.querySelector('.wc-stage')
+    const frame = document.querySelector('.wc-stage-nameplate')
+    const nameplate = document.querySelector('.wc-stage-nameplate .wc-nameplate')
+    const stageRect = stage?.getBoundingClientRect()
+    const frameRect = frame?.getBoundingClientRect()
+    const nameplateRect = nameplate?.getBoundingClientRect()
+    return {
+      stageWidth: stageRect?.width ?? 0,
+      frameLeft: frameRect?.left ?? 0,
+      nameplateWidth: nameplateRect?.width ?? 0,
+    }
+  })
+  assertTruthy(
+    'Track 0 statusbar spans the viewer width',
+    Math.abs(statusbarBounds.nameplateWidth - (statusbarBounds.stageWidth - statusbarBounds.frameLeft * 2)) < 2,
+  )
+
+  const incomingSignals = readFileSync('src/data/wolves-incoming-signal.txt', 'utf8')
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(line => line && line !== '---')
+  const signalSlotSeconds = (408 - 365) / incomingSignals.length
+  for (const [index, expected] of incomingSignals.entries()) {
+    await seekStage(365 + index * signalSlotSeconds + 0.05)
+    await page.waitForFunction(
+      text => document.querySelector('.wc-stage-nameplate .wc-nameplate-label')?.textContent === text,
+      expected,
+      { timeout: 5_000 },
+    )
+    assert(`Finale status ${index + 1} renders in authored order`, await page.locator('.wc-stage-nameplate .wc-nameplate-label').textContent(), expected)
+  }
+  await captureStage(page, 'finale-interleaved-statuses')
 
   await seekStage(310.4)
   await page.waitForFunction(() =>
@@ -391,7 +428,7 @@ try {
   }
   assert('Track 0 nameplate enables slow signal fades', await page.locator('.wc-stage-nameplate .wc-nameplate').evaluate(node => node.classList.contains('wc-nameplate--slow-fade')), true)
   await assertSignal('Track 0 holds the opening signal line before the hero run', 'Welcome to Indie Cloud Native')
-  assert('Track 0 keeps the authored track title in the detail line', await trackZeroSignal.textContent(), '7 Days to the Wolves')
+  assert('Track 0 spells the theater title differently from the sound widget', await trackZeroSignal.textContent(), 'Seven Days to the Wolves')
   await seekStage(44.211)
   await assertSignal('Opening line holds through the early stretch without spoilers', 'Welcome to Indie Cloud Native')
   await seekStage(167.8)
@@ -621,6 +658,12 @@ try {
     .join(' ')
   assert('Ghosts opener advances to Jorge quote part two', ghostsCaptionPartTwo, JORGE_GHOSTS_QUOTE_PART_TWO)
   await captureStage(page, 'ghosts-mn047-jorge-part-two')
+
+  await seekStage(30)
+  const ghostsCaptionPartThree = (await ghostsCaption.locator('.wallpaper-theater-caption-body').allTextContents())
+    .map(paragraph => paragraph.replace(/\s+/g, ' ').trim())
+    .join(' ')
+  assert('Ghosts opener advances to Jorge quote part three', ghostsCaptionPartThree, JORGE_GHOSTS_QUOTE_PART_THREE)
 
   await seekStage(38.399)
   const ghostsBeforeHandoff = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {

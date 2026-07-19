@@ -55,6 +55,6 @@ describe('wolves cinematic stage status plate', () => {
 
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.get('.nameplate-stub').text()).toBe('7 Days to the Wolves|The Blue Delivers')
+    expect(wrapper.get('.nameplate-stub').text()).toBe('Seven Days to the Wolves|The Blue Delivers')
   })
 })

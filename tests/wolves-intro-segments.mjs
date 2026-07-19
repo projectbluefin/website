@@ -107,6 +107,16 @@ try {
     await nameplate.waitFor({ state: 'visible', timeout: 5_000 })
     expectEqual('Nameplate detail', await nameplate.locator('.wc-nameplate-detail').textContent(), detail)
     expectEqual('Nameplate label', await nameplate.locator('.wc-nameplate-label').textContent(), label)
+    expectEqual('Nameplate label stays on one line', await nameplate.locator('.wc-nameplate-label').evaluate(element => getComputedStyle(element).whiteSpace), 'nowrap')
+    const [plateBox, labelBox] = await Promise.all([
+      nameplate.boundingBox(),
+      nameplate.locator('.wc-nameplate-label').boundingBox(),
+    ])
+    expectTruthy('Nameplate bounds', plateBox)
+    expectTruthy('Nameplate label bounds', labelBox)
+    if (plateBox && labelBox) {
+      expectTruthy('Nameplate label remains inside the plate', labelBox.x + labelBox.width <= plateBox.x + plateBox.width + 1)
+    }
   }
 
   async function assertNoNameplate() {
@@ -176,7 +186,7 @@ try {
   }
 
   await page.waitForSelector('.wolves-intro-overlay-player', { state: 'visible', timeout: 10_000 })
-  await assertNameplate('Meet your Fireteam', 'Fighting for something greater')
+  await assertNameplate('Meet your Fireteam', 'fighting for something greater than themselves')
   expectTruthy('Destiny player mounted', await page.locator('.wolves-intro-overlay-player').isVisible())
   await capture(page, '08-destiny-trailer')
 
@@ -219,6 +229,15 @@ try {
   }
   const christophBox = await page.locator('.wolves-guardian-plate').filter({ hasText: 'Christoph Blecker' }).boundingBox()
   expectTruthy('Christoph Blecker guardian plate bounds', christophBox)
+  const christophClasses = await page.locator('.wolves-guardian-plate').filter({ hasText: 'Christoph Blecker' }).getAttribute('class')
+  expectTruthy('Christoph Blecker uses the trustee badge', christophClasses?.includes('wolves-guardian-plate-trustee'))
+  expectTruthy('Christoph Blecker is classified as a leader', christophClasses?.includes('wolves-guardian-plate-leader'))
+  const christophName = page.locator('.wolves-guardian-plate').filter({ hasText: 'Christoph Blecker' })
+    .locator('.wolves-guardian-plate-name')
+  expectTruthy('Christoph Blecker has the gold name class', await christophName.getAttribute('class').then(classes => classes?.includes('wolves-guardian-plate-name-gold')))
+  const christophNameGradient = await christophName.evaluate(element => getComputedStyle(element).backgroundImage)
+  expectTruthy('Christoph Blecker keeps a gold name', christophNameGradient.includes('rgb(250, 204, 21)'))
+  expectEqual('Christoph Blecker gold name has no blur filter', await christophName.evaluate(element => getComputedStyle(element).filter), 'none')
   if (christophBox && alamoBox) {
     expectTruthy('Alamo shares Christoph Blecker\'s lower baseline', Math.abs((alamoBox.y + alamoBox.height) - (christophBox.y + christophBox.height)) < 8)
   }

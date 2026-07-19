@@ -242,6 +242,42 @@ describe('wolvesIntroOverlay video segments', () => {
   it('spreads the comic hero shot rotation so no character repeats back-to-back', () => {
     const ids = wolvesComicHeroShots.map(shot => shot.id)
 
+    expect(new Set(ids)).toEqual(new Set([
+      'youre-holding-it-wrong-post1',
+      'chonky-achillibator-pose1-post',
+      'bluefin-original',
+      'chonky-dakosaurus-bluefinskin',
+      'jorge-custom-chonks-kentrosaurus-post1',
+      'chonky-dromaeosaurus-bluefin',
+      'dolly',
+      'custom-chonk-jorge-concavenator-post1',
+      'chonky-utahraptor-bluefinskin',
+      'chonky-achillibator-pose2-post',
+      'deinonychus-antirrhopus-and-achillobator-giganticus',
+      'achillobator',
+      'angry',
+      'dakota',
+      'devs',
+      'intrigued',
+      'leaping',
+      'nest',
+      'pride',
+      'roaring',
+      'utah',
+      'jorge-custom-chonks-pivotraptor-post1',
+      'youre-holding-it-wrong2-post2',
+    ]))
+
+    expect(ids).not.toEqual(expect.arrayContaining([
+      'bob-torosaurus',
+      'kaslin-torosaurus',
+      'karl',
+      'chonky-alamo-blue',
+      'chonky-alamo-vector',
+      'alamosaurus',
+      'torosaurus',
+    ]))
+
     // The Jorge hero shots bookend the rotation.
     expect(ids[0]).toBe('youre-holding-it-wrong-post1')
     expect(ids[ids.length - 1]).toBe('youre-holding-it-wrong2-post2')
@@ -774,6 +810,7 @@ describe('wolvesIntroOverlay guardian plate', () => {
     expect(wrapper.text()).toContain('Natali Vlatko')
     expect(wrapper.find('.wolves-companion-plate-name').text()).toBe('Alamo')
     expect(wrapper.find('.wolves-companion-plate-art').attributes('src')).toContain('alamosaurus.webp')
+    expect(wrapper.find('.wolves-companion-plate-art').classes()).toContain('wolves-companion-plate-art-alamo')
     expect(wrapper.find('.wolves-guardian-plate-row').classes()).not.toContain('wolves-guardian-plate-row-companion-below')
   })
 
@@ -801,6 +838,17 @@ describe('wolvesIntroOverlay guardian plate', () => {
     expect(nameRule).not.toContain('font-family:')
     // The compact in-name icon is fully replaced by the companion plate.
     expect(overlay).not.toContain('wolves-guardian-plate-dinosaur-icon')
+  })
+
+  it('keeps Christoph Blecker\'s gold trustee name sharp', () => {
+    const overlay = readFileSync(resolve(process.cwd(), 'src/components/wolves/WolvesIntroOverlay.vue'), 'utf8')
+    const goldNameRule = overlay.match(/\.wolves-guardian-plate-name\.wolves-guardian-plate-name-gold \{([\s\S]*?)\n\}/)?.[1]
+
+    expect(goldNameRule).toContain('animation: none')
+    expect(goldNameRule).toContain('filter: none')
+    expect(goldNameRule).toContain('text-shadow: none')
+    expect(goldNameRule).toContain('-webkit-background-clip: text')
+    expect(goldNameRule).toContain('background-clip: text')
     expect(overlay).toContain('wolves-companion-plate-art')
     // The artwork breaks out of the chamfered card: the card carries the
     // clip-path while the art rides above it with a negative overlap.

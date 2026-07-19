@@ -104,18 +104,16 @@ export interface IntroOverlayTextCue {
   /** Highlights multiple exact substrings inside this cue's text, disabling default B/F highlighting. */
   readonly highlightSubstrings?: readonly string[]
   /**
-   * Gilds a Guardian trailer callout with a gold treatment instead of the default silver/blue
-   * plate, signifying leadership. Reserved for Christoph Blecker's "First Among Equals" cue
-   * per explicit user request (2026-07-15) — do not apply broadly, it should read as singular.
-   */
-  readonly leader?: boolean
-  /**
    * Renders the plate in a burnished silver treatment with a TRUSTEE // GUARDIAN
-   * label, marking Universal Blue trustees (Bob Killen here, Jorge Castro's
-   * Ghosts In The Mist plate mirrors it in WolvesComicReader.vue). Distinct from
-   * both the default blue plate and Christoph Blecker's singular gold leader plate.
+   * label, marking Universal Blue trustees. Christoph Blecker keeps his name in
+   * gold on this plate; Jorge Castro's Ghosts In The Mist plate mirrors the
+   * standard trustee treatment in WolvesComicReader.vue.
    */
   readonly trustee?: boolean
+  /** Marks a Guardian leader without overriding a trustee plate's classification. */
+  readonly leader?: boolean
+  /** Keeps a trustee Guardian's displayed name gold without changing the plate treatment. */
+  readonly goldName?: boolean
   /**
    * A single exact substring of this cue's title line to render with a distinctive gold
    * shimmer/"bling" effect (`wolves-guardian-plate-bling` in `WolvesIntroOverlay.vue`), calling
@@ -345,7 +343,7 @@ export function buildDestinyCaptionCues(): readonly IntroOverlayTextCue[] {
   const cues = parseDestinyCaptionFile(destinyCaptions)
   return [
     ...cues,
-    { text: 'Comic Hero Shots of YOU', start: 24, end: 38, comicHeroTitleCard: true },
+    { text: 'COMIC HERO SHOTS OF OPEN SOURCE MAINTAINERS SHREDDING A BUNCH OF CLANKERS', start: 24, end: 38, comicHeroTitleCard: true },
   ]
 }
 
@@ -433,8 +431,9 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
       //   (matching Natali's own end) at explicit user request, confirmed 2026-07-15 — his green
       //   Strand arm is still clearly visible reaching into frame through 94-96s (re-verified via
       //   frame capture), so this also corrects the plate disappearing while he's still on
-      //   screen, not just a stylistic hold. His plate carries `trustee: true`, using the
-      //   burnished silver Universal Blue trustee treatment. His title line carries two segments joined the same way
+      //   screen, not just a stylistic hold. His name stays gold inside the trustee treatment,
+      //   pairing with his existing "First Among Equals" title line — reserved for him alone,
+      //   do not apply broadly. His title line carries two segments joined the same way
       //   ("First Among Equals — The North Star"), rendered on one `wolves-guardian-plate-title`
       //   line with identical styling so both read with equal visual weight. "Uncompromising
       //   Purity" and "Platinum Member" (added 2026-07-15, the latter with a `blingTitle`
@@ -468,13 +467,13 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
         { text: 'Voidwalker Warlock — Bob Killen — Reconciler of the Plane', start: 5, end: 14.5, trustee: true },
         { text: 'Sentinel Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 },
         { text: 'Stormcaller Warlock — Kaslin Fields — Rage of the Paradox', start: 38, end: 48 },
-        // #nova4ever easter egg: the default "Fighting for something greater" status briefly
+        // #nova4ever easter egg: the default "fighting for something greater than themselves" status briefly
         // glitches out to the hashtag a few times during the 48-70.5 montage, then snaps back.
         { text: '#nova4ever', start: 52, end: 52.45, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
         { text: '#nova4ever', start: 60.6, end: 61.05, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
         { text: '#nova4ever', start: 68.1, end: 68.55, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
         { text: 'Gunslinger Hunter — Laura Santamaria — The Order of Seven', start: 70.5, end: 77 },
-        { text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 83, end: 96, position: 'left', trustee: true },
+        { text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 83, end: 96, position: 'left', trustee: true, leader: true, goldName: true },
         { text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 87.5, end: 96, position: 'right', raised: true },
         { text: 'Follow the path, we\'ve got your back', start: 106.5, end: 121.5, nameplateDetail: 'Legends Sought', nameplateTitle: 'Follow the path, we\'ve got your back', statusOnly: true },
       ],
