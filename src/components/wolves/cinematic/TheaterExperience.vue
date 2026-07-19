@@ -276,11 +276,15 @@ onBeforeUnmount(() => {
   }
 
   :deep(.comic-viewport) {
-    flex: 1;
+    // Hold the 3:2 portal ratio inside the flex column: the width cap keeps
+    // the derived height within the stage, and auto margins center the box.
+    flex: 0 1 auto;
+    margin: auto;
     min-height: 0 !important;
-    max-height: calc(100vh - 22rem);
-    width: 100%;
+    aspect-ratio: 3 / 2;
+    width: min(100%, calc((100vh - 22rem) * 1.5));
     max-width: 100%;
+    max-height: calc(100vh - 22rem);
   }
 }
 

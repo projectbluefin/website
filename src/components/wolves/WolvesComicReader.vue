@@ -1217,12 +1217,18 @@ onBeforeUnmount(() => {
 .comic-viewport {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 10;
+  // 3:2 matches the dominant slide aspect (165 of 240 wallpapers), so most
+  // slides fill the portal edge to edge instead of letterboxing.
+  aspect-ratio: 3 / 2;
   min-height: 220px;
   max-width: 760px;
   max-height: min(74dvh, 760px);
   margin: 0 auto;
-  background-color: #10151f;
+  // Translucent surface: when a slide still letterboxes, the bars reveal the
+  // blurred wallpaper behind the portal instead of solid black.
+  background-color: rgba(16, 21, 31, 0.55);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(var(--color-blue-rgb), 0.3);
   border-radius: 16px;
   overflow: hidden;
