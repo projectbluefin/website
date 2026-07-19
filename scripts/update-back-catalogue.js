@@ -117,9 +117,12 @@ function normalizeIdentity(value) {
   return value.normalize('NFKD').toLowerCase().replace(/[^a-z0-9]+/g, '')
 }
 
-export function buildSegments(entries) {
+export function buildSegments(entries, chapter) {
   if (!Array.isArray(entries)) {
     throw new TypeError('Malformed yt-dlp output: expected an entries array')
+  }
+  if (typeof chapter !== 'string' || chapter.trim().length === 0) {
+    throw new TypeError('Malformed playlist metadata: expected a title')
   }
   const seenVideoIds = new Set()
   const seenSongs = new Set()
@@ -154,7 +157,7 @@ export function buildSegments(entries) {
       id: entry.id,
       kind: 'youtube',
       youtubeId: entry.id,
-      chapter: `TRACK ${segments.length + 1}`,
+      chapter,
       title,
       artist,
       artwork: bestThumbnail(entry),
@@ -170,10 +173,7 @@ export function buildExperience(album, entries) {
     title: album.title,
     subtitle: album.description,
     artwork: `experiences/${album.id}.jpg`,
-    segments: buildSegments(entries).map(segment => ({
-      ...segment,
-      chapter: album.title,
-    })),
+    segments: buildSegments(entries, album.title),
   }
 }
 

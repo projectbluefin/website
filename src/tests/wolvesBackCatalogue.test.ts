@@ -76,16 +76,17 @@ describe('back catalogue experiences', () => {
     const segments = buildSegments([
       { id: 'abc', title: 'Nightwish - Storytime', duration: 323.4, thumbnails: [{ url: 'https://i.ytimg.com/vi/abc/maxresdefault.jpg?sqp=1' }] },
       { id: 'def', title: 'Untitled', uploader: 'Channel', duration: null },
-    ])
+    ], 'Playlist Title')
     expect(segments[0]).toEqual(expect.objectContaining({
       youtubeId: 'abc',
-      chapter: 'TRACK 1',
+      chapter: 'Playlist Title',
       title: 'Storytime',
       artist: 'Nightwish',
       artwork: 'https://i.ytimg.com/vi/abc/maxresdefault.jpg',
       durationSeconds: 323,
     }))
     expect(segments[1].artist).toBe('Channel')
+    expect(segments.map((segment: { chapter: string }) => segment.chapter)).toEqual(['Playlist Title', 'Playlist Title'])
 
     const experience = buildExperience(
       { id: 'PL123', title: 'Album', description: 'Sub', playlistUrl: 'u' },
@@ -104,9 +105,9 @@ describe('back catalogue experiences', () => {
       { id: 'v3', title: '[Private video]', duration: null },
       { id: 'v4', title: '[Deleted video]', duration: null },
       { id: 'v5', title: 'Rammstein - Mein Herz brennt (Piano Instrumental)', duration: 260 },
-    ])
+    ], 'Playlist Title')
     expect(segments.map((s: { youtubeId: string }) => s.youtubeId)).toEqual(['v1', 'v5'])
-    expect(segments.map((s: { chapter: string }) => s.chapter)).toEqual(['TRACK 1', 'TRACK 2'])
+    expect(segments.map((s: { chapter: string }) => s.chapter)).toEqual(['Playlist Title', 'Playlist Title'])
     expect(segments[0].title).toBe('All Shall Burn')
     expect(segments[1].title).toBe('Mein Herz brennt (Piano Instrumental)')
   })
@@ -135,7 +136,7 @@ describe('back catalogue experiences', () => {
       { id: 'SRXH9AbT280', title: 'The Emptiness Machine (Official Music Video) - Linkin Park', uploader: 'Linkin Park', duration: 190 },
       { id: 'Ma440BTErHw', title: 'Tori Amos I Don\'t Like Mondays', uploader: 'levani vanishvili', duration: 240 },
       { id: 'Z6VpX-feA2M', title: 'Quake 2- Sonic Mayhem - Quad Machine', uploader: 'Ishykawa', duration: 220 },
-    ])
+    ], 'Playlist Title')
     expect(segments.map(({ title, artist }: { title: string, artist: string }) => ({ title, artist }))).toEqual([
       { title: 'The Emptiness Machine', artist: 'Linkin Park' },
       { title: 'I Don\'t Like Mondays', artist: 'Tori Amos' },
