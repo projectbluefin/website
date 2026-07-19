@@ -108,8 +108,8 @@ describe('wolves thesis sequence', () => {
     expect(getWolvesHudLabel(196.36)).toBe('Hikari Protocol: Initialized')
     expect(getWolvesHudLabel(228.999)).toBe('pod/thriving-community created')
     expect(getWolvesHudLabel(229)).toBe('Warning: ImagePullBackOff')
-    expect(getWolvesHudLabel(276.999)).toBe('"humans/collaboration:latest" is currently experimental.')
-    expect(getWolvesHudLabel(277)).toBe('Falling back to "humans/trying-their-best:v1" slowly')
+    expect(getWolvesHudLabel(276.943)).toBe('"humans/collaboration:latest" is currently experimental.')
+    expect(getWolvesHudLabel(276.944)).toBe('Falling back to "humans/trying-their-best:v1" slowly')
     expect(getWolvesHudLabel(357.632)).toBe('We are Universal Blue.')
   })
 

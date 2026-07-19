@@ -121,6 +121,19 @@ describe('wolvesComicReader', () => {
     expect(srcs.some(src => src.includes('kubecon-55168460993.webp'))).toBe(true)
   })
 
+  it('locks DN 013 to the Howl accent opening the build-up at 276.944s', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        trackIndex: 0,
+        playlistCurrentTime: 277, // Just past the buildStart beat (the "Howl!")
+      },
+    })
+    await wrapper.vm.$nextTick()
+
+    const srcs = wrapper.findAll('.flickr-img').map(el => el.attributes('src') || '')
+    expect(srcs.some(src => src.includes('kubecon-55177109118.webp'))).toBe(true)
+  })
+
   it('holds the Maintainer Summit finale image from Become Legend through Track 0 completion', async () => {
     const wrapper = mount(WolvesComicReader, {
       props: {

@@ -314,6 +314,16 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     heartPhoto = localPeople.splice(heartTargetIndex, 1)[0]
   }
 
+  // Howl lock: DN 013 opens the build-up right on the "Howl!" accent
+  // (buildStart, beat 681), locked with the "Falling back to
+  // humans/trying-their-best:v1 slowly" status flip at the same beat.
+  const howlTarget = 'wolves/people/kubecon-55177109118.webp'
+  const howlTargetIndex = localPeople.findIndex(wp => wp.id === howlTarget)
+  let howlPhoto: any = null
+  if (howlTargetIndex !== -1) {
+    howlPhoto = localPeople.splice(howlTargetIndex, 1)[0]
+  }
+
   const finaleTarget = 'wolves/people/kubecon-55164466314.webp'
   const finaleTargetIndex = localPeople.findIndex(wp => wp.id === finaleTarget)
   let finalePhoto: any = null
@@ -485,7 +495,15 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
 
   // 5. Heavy Build-Up [~277, ~345] -> people wallpapers; 8-beat phrase holds
   // as the tempo returns to 152 BPM, tightening to 4-beat toward the climax.
-  const peoplePool3 = shuffledPeople.slice(39, 73)
+  // The howl lock adds one slide up front, so the build pool takes one fewer
+  // from the shuffle to keep the measured cut grid (and the 321s heart
+  // window at index 19) unchanged; the traded slide rejoins in the barrage.
+  const buildPoolEnd = howlPhoto ? 72 : 73
+  const peoplePool3 = shuffledPeople.slice(39, buildPoolEnd)
+  if (howlPhoto) {
+    // Index 0 starts DN 013 exactly on the buildStart beat -- the "Howl!".
+    peoplePool3.splice(0, 0, howlPhoto)
+  }
   if (heartPhoto) {
     // Index 19 places the heart photo on the slide window covering the
     // 321s owner anchor under the measured 4-beat cuts.
@@ -535,7 +553,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   // covers each shot exactly once, so remaining beats top up with reserved
   // remote CNCF feed photos rather than repeating a slide.
   const barrageBase = [
-    ...shuffledPeople.slice(73),
+    ...shuffledPeople.slice(buildPoolEnd),
     ...finaleSlides,
   ]
   const barrageTarget = Math.max(

@@ -98,7 +98,9 @@ export function getWolvesHudLabel(time: number): string {
   if (time < 253) {
     return 'Warning: ImagePullBackOff'
   }
-  if (time < 277) {
+  // Beat 681 (buildStart, 276.944): the "Howl!" accent. The status flip locks
+  // to the same beat as the DN 013 slide opening the build-up section.
+  if (time < 276.944) {
     return '"humans/collaboration:latest" is currently experimental.'
   }
   if (time < 345) {
