@@ -23,14 +23,14 @@ describe('wolves organization ad pairs', () => {
     expect(getWolvesOrgAdBlend(64).opacities).toEqual([1, 0])
   })
 
-  it('pairs GNOME with KubeCon and Bazaar with two creator Ko-fi links', () => {
+  it('pairs GNOME with KubeCon and keeps Bazaar in one card with two creator QR codes', () => {
     expect(WOLVES_ORG_AD_PAIRS.map(pair => pair.map(ad => ad.id))).toEqual([
       ['gnome', 'kubecon'],
-      ['bazaar-kolunmi', 'bazaar-alexandervanhee'],
+      ['bazaar'],
     ])
-    expect(WOLVES_ORG_AD_PAIRS[1].map(ad => ad.href)).toEqual([
-      'https://ko-fi.com/kolunmi',
-      'https://ko-fi.com/alexandervanhee',
+    expect(WOLVES_ORG_AD_PAIRS[1][0].qrOptions?.map(option => [option.maintainer, option.qrAlt])).toEqual([
+      ['Kolunmi', 'QR code for Kolunmi on Ko-fi'],
+      ['Alexander van Hee', 'QR code for Alexander van Hee on Ko-fi'],
     ])
   })
 })
@@ -50,7 +50,8 @@ describe('wolvesOrgAds component', () => {
 
     expect(wrapper.findAll('.wc-org-ad-pair')).toHaveLength(2)
     expect(wrapper.get('.wc-org-ad-pair[data-pair="0"]').findAll('.wc-org-ad')).toHaveLength(2)
-    expect(wrapper.get('.wc-org-ad-pair[data-pair="1"]').findAll('.wc-org-ad')).toHaveLength(2)
+    expect(wrapper.get('.wc-org-ad-pair[data-pair="1"]').findAll('.wc-org-ad')).toHaveLength(1)
+    expect(wrapper.get('.wc-org-ad-pair[data-pair="1"]').findAll('.wc-org-ad-qr-maintainer').map(node => node.text())).toEqual(['Kolunmi', 'Alexander van Hee'])
     expect(wrapper.get('.wc-org-ad-pair[data-pair="0"]').attributes('data-opacity')).toBe('1')
     expect(wrapper.get('.wc-org-ad-pair[data-pair="1"]').attributes('data-opacity')).toBe('0')
   })

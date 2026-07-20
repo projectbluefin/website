@@ -7,14 +7,21 @@ import kubeconImage from '@/assets/wolves/org-ads/kubecon-japan-2026.png'
 
 const bazaarImage = `${import.meta.env.BASE_URL}img/bazaar.svg`
 
+export interface WolvesOrgAdQr {
+  qr: string
+  qrAlt: string
+  maintainer: string
+}
+
 export interface WolvesOrgAd {
-  id: 'gnome' | 'kubecon' | 'bazaar-kolunmi' | 'bazaar-alexandervanhee'
+  id: 'gnome' | 'kubecon' | 'bazaar'
   name: string
   href: string
   image: string
   imageAlt: string
   qr: string
   qrAlt: string
+  qrOptions?: readonly WolvesOrgAdQr[]
 }
 
 export const WOLVES_AD_ROTATION_SECONDS = 30
@@ -30,6 +37,7 @@ export const WOLVES_ORG_AD_PAIRS = [
       imageAlt: 'GNOME',
       qr: gnomeQr,
       qrAlt: 'QR code for GNOME donations',
+      qrOptions: undefined,
     },
     {
       id: 'kubecon',
@@ -39,32 +47,25 @@ export const WOLVES_ORG_AD_PAIRS = [
       imageAlt: 'KubeCon CloudNativeCon Japan 2026',
       qr: kubeconQr,
       qrAlt: 'QR code for KubeCon CloudNativeCon Japan 2026',
+      qrOptions: undefined,
     },
   ],
   [
     {
-      id: 'bazaar-kolunmi',
-      name: 'Bazaar // Kolunmi',
-      href: 'https://ko-fi.com/kolunmi',
+      id: 'bazaar',
+      name: 'Bazaar',
+      href: 'https://usebazaar.com',
       image: bazaarImage,
       imageAlt: 'Bazaar app store',
       qr: qrKofiKolunmi,
       qrAlt: 'QR code for Kolunmi on Ko-fi',
-    },
-    {
-      id: 'bazaar-alexandervanhee',
-      name: 'Bazaar // Alexander van Hee',
-      href: 'https://ko-fi.com/alexandervanhee',
-      image: bazaarImage,
-      imageAlt: 'Bazaar app store',
-      qr: qrKofiAlexanderVanHee,
-      qrAlt: 'QR code for Alexander van Hee on Ko-fi',
+      qrOptions: [
+        { qr: qrKofiKolunmi, qrAlt: 'QR code for Kolunmi on Ko-fi', maintainer: 'Kolunmi' },
+        { qr: qrKofiAlexanderVanHee, qrAlt: 'QR code for Alexander van Hee on Ko-fi', maintainer: 'Alexander van Hee' },
+      ],
     },
   ],
-] as const satisfies readonly [
-  readonly [WolvesOrgAd, WolvesOrgAd],
-  readonly [WolvesOrgAd, WolvesOrgAd],
-]
+] as const satisfies readonly (readonly WolvesOrgAd[])[]
 
 export function getWolvesOrgAdBlend(elapsedSeconds: number) {
   const safeElapsed = Number.isFinite(elapsedSeconds) ? Math.max(0, elapsedSeconds) : 0
