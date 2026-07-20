@@ -17,6 +17,8 @@ const qrTargets = [
   ['https://donate.gnome.org/', 'qr-gnome-donate.svg'],
   ['https://flathub.org/en/donate', 'qr-flathub-donate.svg'],
   ['https://kde.org/donate/', 'qr-kde-donate.svg'],
+  ['https://ko-fi.com/kolunmi', 'qr-kofi-kolunmi.svg'],
+  ['https://ko-fi.com/alexandervanhee', 'qr-kofi-alexandervanhee.svg'],
   [
     'https://events.linuxfoundation.org/kubecon-cloudnativecon-japan/?utm_source=artifacthub&utm_campaign=KubeCon-Japan-2026',
     'qr-kubecon-japan-2026.svg',

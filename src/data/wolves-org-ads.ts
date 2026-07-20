@@ -1,14 +1,14 @@
-import flathubQr from '@/assets/svg/qr-flathub-donate.svg'
 import gnomeQr from '@/assets/svg/qr-gnome-donate.svg'
-import kdeQr from '@/assets/svg/qr-kde-donate.svg'
+import qrKofiAlexanderVanHee from '@/assets/svg/qr-kofi-alexandervanhee.svg'
+import qrKofiKolunmi from '@/assets/svg/qr-kofi-kolunmi.svg'
 import kubeconQr from '@/assets/svg/qr-kubecon-japan-2026.svg'
-import flathubImage from '@/assets/wolves/org-ads/flathub.svg'
 import gnomeImage from '@/assets/wolves/org-ads/gnome.svg'
-import kdeImage from '@/assets/wolves/org-ads/kde.svg'
 import kubeconImage from '@/assets/wolves/org-ads/kubecon-japan-2026.png'
 
+const bazaarImage = `${import.meta.env.BASE_URL}img/bazaar.svg`
+
 export interface WolvesOrgAd {
-  id: 'gnome' | 'flathub' | 'kubecon' | 'kde'
+  id: 'gnome' | 'kubecon' | 'bazaar-kolunmi' | 'bazaar-alexandervanhee'
   name: string
   href: string
   image: string
@@ -43,22 +43,22 @@ export const WOLVES_ORG_AD_PAIRS = [
   ],
   [
     {
-      id: 'flathub',
-      name: 'Flathub',
-      href: 'https://flathub.org/en/donate',
-      image: flathubImage,
-      imageAlt: 'Flathub',
-      qr: flathubQr,
-      qrAlt: 'QR code for Flathub donations',
+      id: 'bazaar-kolunmi',
+      name: 'Bazaar // Kolunmi',
+      href: 'https://ko-fi.com/kolunmi',
+      image: bazaarImage,
+      imageAlt: 'Bazaar app store',
+      qr: qrKofiKolunmi,
+      qrAlt: 'QR code for Kolunmi on Ko-fi',
     },
     {
-      id: 'kde',
-      name: 'KDE',
-      href: 'https://kde.org/donate/',
-      image: kdeImage,
-      imageAlt: 'KDE',
-      qr: kdeQr,
-      qrAlt: 'QR code for KDE donations',
+      id: 'bazaar-alexandervanhee',
+      name: 'Bazaar // Alexander van Hee',
+      href: 'https://ko-fi.com/alexandervanhee',
+      image: bazaarImage,
+      imageAlt: 'Bazaar app store',
+      qr: qrKofiAlexanderVanHee,
+      qrAlt: 'QR code for Alexander van Hee on Ko-fi',
     },
   ],
 ] as const satisfies readonly [

@@ -23,10 +23,14 @@ describe('wolves organization ad pairs', () => {
     expect(getWolvesOrgAdBlend(64).opacities).toEqual([1, 0])
   })
 
-  it('pairs GNOME with KubeCon and Flathub with KDE', () => {
+  it('pairs GNOME with KubeCon and Bazaar with two creator Ko-fi links', () => {
     expect(WOLVES_ORG_AD_PAIRS.map(pair => pair.map(ad => ad.id))).toEqual([
       ['gnome', 'kubecon'],
-      ['flathub', 'kde'],
+      ['bazaar-kolunmi', 'bazaar-alexandervanhee'],
+    ])
+    expect(WOLVES_ORG_AD_PAIRS[1].map(ad => ad.href)).toEqual([
+      'https://ko-fi.com/kolunmi',
+      'https://ko-fi.com/alexandervanhee',
     ])
   })
 })
