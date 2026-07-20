@@ -22,7 +22,7 @@ describe('wolves cinematic stage status plate', () => {
     setActivePinia(createPinia())
   })
 
-  it('keeps Wolves-only theater overlays out of back-catalogue albums', async () => {
+  it('keeps the generic theater and ads while hiding Wolves-only presentation', async () => {
     const store = useCinematicStore()
     store.loadExperience({
       id: 'album-test',
@@ -37,8 +37,19 @@ describe('wolves cinematic stage status plate', () => {
         artist: 'Artist',
         artwork: 'track.jpg',
         durationSeconds: 120,
+      }, {
+        id: 'album-track-2',
+        kind: 'youtube',
+        youtubeId: 'album-track-2',
+        chapter: 'ALBUM',
+        title: 'Track Two',
+        artist: 'Artist',
+        artwork: 'track-2.jpg',
+        durationSeconds: 120,
       }],
     })
+    store.enterCinematic()
+    store.segmentIndex = 1
 
     const wrapper = mount(CinematicStage, {
       global: {
@@ -52,8 +63,8 @@ describe('wolves cinematic stage status plate', () => {
       },
     })
 
-    expect(wrapper.find('.theater-experience-stub').exists()).toBe(false)
-    expect(wrapper.find('.org-ads-stub').exists()).toBe(false)
+    expect(wrapper.find('.theater-experience-stub').exists()).toBe(true)
+    expect(wrapper.find('.org-ads-stub').exists()).toBe(true)
     expect(wrapper.findAll('.wc-layer').every(layer => !layer.classes().includes('wc-layer--audio-only'))).toBe(true)
   })
 

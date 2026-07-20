@@ -68,9 +68,9 @@ defineExpose({
 
     <!-- Authored theater layer over the audio-source video: the 7 Days grid
          (slideshow + lore + thesis) and the later-part CNCF galleries. -->
-    <TheaterExperience v-if="isWolvesExperience" />
+    <TheaterExperience />
 
-    <WolvesOrgAds v-if="isWolvesExperience" />
+    <WolvesOrgAds />
 
     <div class="wc-stage-nameplate">
       <Nameplate :detail="plateDetail" :label="plateLabel" :slow-fade="isTrackZero" />

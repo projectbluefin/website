@@ -362,14 +362,23 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     started.value = true
     const player = activePlayer()
     applyVolume(player, 100)
+    const segment = store.segments[store.segmentIndex]
     const playVideo = player?.playVideo
-    if (!playVideo) {
+    if (!player || !playVideo) {
       started.value = false
       return
     }
     await new Promise<void>((resolve) => {
       resolveStart = resolve
-      playVideo.call(player)
+      // Re-load the active side explicitly at startup. A cue followed immediately
+      // by play can race YouTube's async cue processing and begin on the already
+      // prewarmed next segment; the explicit load makes album entry deterministic.
+      if (player.loadVideoById && segment) {
+        player.loadVideoById({ videoId: segment.youtubeId, startSeconds: segment.startSeconds })
+      }
+      else {
+        playVideo.call(player)
+      }
     })
   }
 
