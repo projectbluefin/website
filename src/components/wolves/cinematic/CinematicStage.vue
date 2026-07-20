@@ -43,18 +43,24 @@ defineExpose({
 
 <template>
   <div class="wc-stage">
-    <!-- Both mounted instances are compact, invisible audio transports. `activeSide`
-         still drives the audio handoff; the theater layer owns all visible content. -->
+    <!-- Wolves uses the YouTube instances as compact audio transports beneath its
+         authored theater; back-catalogue albums keep the active video visible. -->
     <div
       class="wc-layer"
-      :class="{ 'wc-layer--active': player.activeSide.value === 'a' }"
+      :class="{
+        'wc-layer--active': player.activeSide.value === 'a',
+        'wc-layer--audio-only': isWolvesExperience,
+      }"
       :style="{ transitionDuration: `${store.crossfadeMsAt(store.segmentIndex)}ms` }"
     >
       <div ref="hostA" class="wc-iframe-host" />
     </div>
     <div
       class="wc-layer"
-      :class="{ 'wc-layer--active': player.activeSide.value === 'b' }"
+      :class="{
+        'wc-layer--active': player.activeSide.value === 'b',
+        'wc-layer--audio-only': isWolvesExperience,
+      }"
       :style="{ transitionDuration: `${store.crossfadeMsAt(store.segmentIndex)}ms` }"
     >
       <div ref="hostB" class="wc-iframe-host" />
@@ -86,26 +92,41 @@ defineExpose({
 }
 
 .wc-layer {
-  // Cinematic content owns the visible theater; these YouTube instances are
-  // audio transports only. Keep them mounted and playing, but out of the
-  // viewport so native chrome can never expand into the composition.
   position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition-property: opacity;
+  transition-timing-function: ease;
+}
+
+.wc-layer--active {
+  opacity: 1;
+}
+
+.wc-layer--audio-only {
   top: 0;
   left: 0;
   width: 2px;
   height: 2px;
   overflow: hidden;
   opacity: 0;
-  pointer-events: none;
+  transition: none;
 }
 
 .wc-iframe-host,
 .wc-iframe-host :deep(iframe) {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.wc-layer--audio-only .wc-iframe-host,
+.wc-layer--audio-only .wc-iframe-host :deep(iframe) {
   width: 2px;
   height: 2px;
-  border: 0;
 }
 
 .wc-stage-nameplate {

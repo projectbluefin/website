@@ -54,6 +54,7 @@ describe('wolves cinematic stage status plate', () => {
 
     expect(wrapper.find('.theater-experience-stub').exists()).toBe(false)
     expect(wrapper.find('.org-ads-stub').exists()).toBe(false)
+    expect(wrapper.findAll('.wc-layer').every(layer => !layer.classes().includes('wc-layer--audio-only'))).toBe(true)
   })
 
   it('keeps Track 0 communications when the slide deck reports a people title', async () => {
