@@ -141,7 +141,7 @@ function parseGuardianCue(text: string): { guardianClass: string, name: string, 
 
 /**
  * Splits a title line into plain/"bling" segments around one exact substring (`cue.blingTitle`),
- * so the template can wrap just that piece in a shimmering gold span instead of the whole title.
+ * so the template can wrap just that piece in a shimmering blue span instead of the whole title.
  * Falls back to a single plain segment if `blingTitle` is unset or isn't found verbatim.
  */
 function titleSegments(title: string, blingTitle: string | undefined): { text: string, bling: boolean }[] {
@@ -1208,7 +1208,7 @@ defineExpose({
   max-width: 72rem;
   padding: 1rem 2.2rem;
   background: rgb(8 9 12 / 78%);
-  /* Standard dialogue rides the plate blue; gold stays reserved for power moments. */
+  /* Standard dialogue rides the plate blue; blue stays reserved for power moments. */
   border: 1px solid rgb(147 197 253 / 30%);
   border-left: 2px solid #93c5fd;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 0.9rem), calc(100% - 0.9rem) 100%, 0 100%);
@@ -1278,7 +1278,7 @@ defineExpose({
   font-weight: 900;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #fff4c8;
+  color: #dbeafe;
   text-shadow:
     -3px -3px 0 #000,
     3px -3px 0 #000,
@@ -1416,7 +1416,7 @@ defineExpose({
     /* Above the taller mobile footer widget dock. */
     bottom: 19rem;
     z-index: 1;
-    color: #fff4c8;
+    color: #dbeafe;
     width: max-content;
     max-width: 94vw;
     padding: 0.4em 0.5em;
@@ -1767,41 +1767,41 @@ defineExpose({
   color: #94a3b8;
 }
 
-/* Gilds the complete plate to signify leadership. Reserved for Christoph Blecker's
-   "First Among Equals" cue; it takes precedence over the trustee chrome. */
+/* Bluefin-blue treatment for the complete plate to signify leadership. Reserved for
+   Christoph Blecker's "First Among Equals" cue; it takes precedence over trustee chrome. */
 .wolves-guardian-plate.wolves-guardian-plate-leader {
-  border-color: rgb(250 204 21 / 55%);
-  box-shadow: 0 0 24px rgb(250 204 21 / 20%);
+  border-color: rgb(56 189 248 / 55%);
+  box-shadow: 0 0 24px rgb(56 189 248 / 20%);
 }
 
 .wolves-guardian-plate-leader .wolves-guardian-plate-burst {
-  background: radial-gradient(circle, #fff 0%, #facc15 45%, transparent 70%);
+  background: radial-gradient(circle, #fff 0%, #38bdf8 45%, transparent 70%);
 }
 
 .wolves-guardian-plate-leader .wolves-guardian-plate-horizon {
-  background: linear-gradient(to right, transparent, #facc15 60%, #fff 100%);
-  box-shadow: 0 0 8px rgb(250 204 21 / 55%);
+  background: linear-gradient(to right, transparent, #38bdf8 60%, #fff 100%);
+  box-shadow: 0 0 8px rgb(56 189 248 / 55%);
 }
 
 .wolves-guardian-plate-leader .wolves-guardian-plate-horizon-right {
-  background: linear-gradient(to left, transparent, #facc15 60%, #fff 100%);
+  background: linear-gradient(to left, transparent, #38bdf8 60%, #fff 100%);
 }
 
 .wolves-guardian-plate-leader .wolves-guardian-plate-crest {
-  filter: drop-shadow(0 0 8px rgb(250 204 21 / 70%));
+  filter: drop-shadow(0 0 8px rgb(56 189 248 / 70%));
 }
 
 .wolves-guardian-plate-leader .wolves-guardian-plate-crest-outer,
 .wolves-guardian-plate-leader .wolves-guardian-plate-crest-chevron {
-  stroke: #facc15;
+  stroke: #38bdf8;
 }
 
 .wolves-guardian-plate-leader .wolves-guardian-plate-label {
-  color: #facc15;
+  color: #38bdf8;
 }
 
 .wolves-guardian-plate-leader .wolves-guardian-plate-title {
-  color: #fde68a;
+  color: #bae6fd;
   font-weight: 600;
 }
 
@@ -1957,21 +1957,21 @@ defineExpose({
   opacity: 0.85;
 }
 
-/* Distinctive gold "bling" treatment for a single called-out title segment (e.g. Christoph
+/* Distinctive blue "bling" treatment for a single called-out title segment (e.g. Christoph
    Blecker's "Platinum Member"), separate from the plain title text around it. A shimmer sweeps
-   across the gold gradient text on a loop, with a soft pulsing glow, so it reads as a
+   across the blue gradient text on a loop, with a soft pulsing glow, so it reads as a
    deliberately flashy inline award rather than a plain title word. */
 .wolves-guardian-plate-bling {
   position: relative;
   font-weight: 700;
   letter-spacing: 0.03em;
-  background: linear-gradient(100deg, #92700f 20%, #fff6d0 40%, #fde68a 50%, #fff6d0 60%, #92700f 80%);
+  background: linear-gradient(100deg, #1d4ed8 20%, #dbeafe 40%, #60a5fa 50%, #dbeafe 60%, #1d4ed8 80%);
   background-size: 250% 100%;
   background-position: 0% 0%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 6px rgb(250 204 21 / 55%));
+  filter: drop-shadow(0 0 6px rgb(96 165 250 / 55%));
   animation:
     wolves-guardian-plate-bling-shimmer 2.6s linear infinite,
     wolves-guardian-plate-bling-pulse 1.8s ease-in-out infinite;
@@ -2042,10 +2042,10 @@ defineExpose({
 @keyframes wolves-guardian-plate-bling-pulse {
   0%,
   100% {
-    filter: drop-shadow(0 0 4px rgb(250 204 21 / 45%));
+    filter: drop-shadow(0 0 4px rgb(56 189 248 / 45%));
   }
   50% {
-    filter: drop-shadow(0 0 10px rgb(250 204 21 / 85%));
+    filter: drop-shadow(0 0 10px rgb(56 189 248 / 85%));
   }
 }
 
