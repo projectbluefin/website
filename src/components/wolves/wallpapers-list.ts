@@ -1054,6 +1054,16 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/people/sri_guadec_speaking.jpg',
+    title: 'Sri Guadec Speaking',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/sri_talking_guadec_1.jpg',
+    title: 'Sri Talking Guadec 1',
+  },
+  {
+    type: 'single',
     name: 'wolves/people/stormy.faces23764.web_.webp',
     title: 'Bluefin Advisor Stormy Peters',
   },
