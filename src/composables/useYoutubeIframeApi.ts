@@ -54,6 +54,38 @@ const IFRAME_API_SRC = 'https://www.youtube.com/iframe_api'
 
 let apiPromise: Promise<void> | null = null
 
+const CHROME_FREE_YOUTUBE_PLAYER_VARS = {
+  controls: 0,
+  rel: 0,
+  iv_load_policy: 3,
+  disablekb: 1,
+  fs: 0,
+  playsinline: 1,
+  modestbranding: 1,
+  showinfo: 0,
+  autohide: 1,
+} as const
+
+export function getChromeFreeYoutubePlayerVars(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  const origin = typeof window !== 'undefined' ? window.location.origin : undefined
+  return {
+    ...CHROME_FREE_YOUTUBE_PLAYER_VARS,
+    ...(origin ? { origin } : {}),
+    ...overrides,
+  }
+}
+
+export function getChromeFreeYoutubeEmbedParams(overrides: Record<string, unknown> = {}): URLSearchParams {
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries({ ...CHROME_FREE_YOUTUBE_PLAYER_VARS, ...overrides })) {
+    if (value == null) {
+      continue
+    }
+    params.set(key, String(value))
+  }
+  return params
+}
+
 export function loadYoutubeIframeApi(): Promise<void> {
   const youtubeWindow = window as YoutubeIframeWindow
 
