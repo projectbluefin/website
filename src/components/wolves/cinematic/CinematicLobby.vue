@@ -5,7 +5,7 @@ import WolvesQrCodes from '@/components/wolves/WolvesQrCodes.vue'
 
 const emit = defineEmits<{ enter: [], launchExperience: [manifest: ExperienceManifest] }>()
 
-const lobbyBackground = `${import.meta.env.BASE_URL}evening/night-sky.webp`
+const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.webp`
 </script>
 
 <template>
@@ -104,13 +104,13 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/night-sky.webp`
 }
 
 .wc-lobby-brand {
-  font-size: clamp(1.8rem, 1.8vw, 2.8rem);
+  font-size: clamp(1.2rem, 1.2vw, 1.8rem);
   letter-spacing: 0.44em;
-  margin-bottom: -0.8rem;
+  margin-bottom: -1.2rem;
 }
 
 .wc-lobby-title {
-  font-size: clamp(2.4rem, 4vw, 4rem);
+  font-size: clamp(3rem, 5vw, 5rem);
   font-weight: 800;
   letter-spacing: 0.22em;
   margin-right: -0.22em; // optically recenters tracked uppercase
@@ -203,13 +203,13 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/night-sky.webp`
   }
 
   .wc-lobby-brand {
-    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    font-size: clamp(1.2rem, 3vw, 1.6rem);
     letter-spacing: 0.34em;
-    margin-bottom: -0.6rem;
+    margin-bottom: -0.9rem;
   }
 
   .wc-lobby-title {
-    font-size: clamp(2.2rem, 8vw, 3.2rem);
+    font-size: clamp(2.8rem, 10vw, 4rem);
     letter-spacing: 0.18em;
     margin-right: -0.18em;
   }
