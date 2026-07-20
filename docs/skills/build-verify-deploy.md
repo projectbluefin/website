@@ -49,6 +49,7 @@ Use the smallest relevant checks. Documentation-only changes need path/link chec
 - Never stage, restore, or commit unrelated user changes.
 - `npm run test:run` may modify `public/dakota-versions.json`; leave it unstaged unless intentionally changed.
 - Stage explicit paths. Never use `git add .` or `git add -A`.
+- A modified-but-unstaged file can satisfy imports during local `typecheck`/`build`. Before pushing, confirm the staged version also compiles and passes tests; CI only sees what is committed.
 
 ## Visual and Wolves Verification
 
