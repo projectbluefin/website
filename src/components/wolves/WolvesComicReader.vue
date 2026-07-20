@@ -27,8 +27,10 @@ import { wallpapers } from './wallpapers-list'
 const props = withDefaults(defineProps<{
   trackIndex?: number
   playlistCurrentTime?: number
+  experienceId?: string
   wolvesExperience?: boolean
 }>(), {
+  experienceId: 'seven-days-to-the-wolves',
   wolvesExperience: true,
 })
 
@@ -108,6 +110,9 @@ const currentBeat = computed(() => {
 void currentBeat.value
 
 const mixedPhotos = computed(() => {
+  // Rebuild the per-experience shuffle when the lobby launches another album.
+  void props.experienceId
+
   // 1. Local Showcase and Story wallpapers (isPeople = false)
   const localShowcase = wallpapers.filter((wp) => {
     const isPeople = wp.name?.includes('/people/') || wp.dayName?.includes('/people/') || wp.nightName?.includes('/people/')
@@ -691,7 +696,7 @@ const activeFlickrIndex = computed(() => {
 })
 
 const activeDisplayIndex = computed(() => {
-  if (props.trackIndex === 0 && isExperimental.value) {
+  if (isWolvesExperience.value && props.trackIndex === 0 && isExperimental.value) {
     return activeTimelineSlideIndex.value
   }
   return activeFlickrIndex.value
@@ -707,7 +712,7 @@ const featuredOpeningQuotePart = computed(() => {
 })
 
 const mixedPhotosToUse = computed(() => {
-  if (props.trackIndex === 0 && isExperimental.value) {
+  if (isWolvesExperience.value && props.trackIndex === 0 && isExperimental.value) {
     return timelineSlides.value
   }
   return mixedPhotos.value
@@ -784,6 +789,21 @@ watch([activeDisplayIndex, mixedPhotosToUse], ([newVal]) => {
     opacityB.value = 0
   }
 }, { immediate: true })
+
+watch(() => props.experienceId, () => {
+  laterTrackPhotos.value = []
+  shuffledLaterTrackPhotos.value = []
+  shownLaterTrackPhotoIds.clear()
+  photoA.value = null
+  photoB.value = null
+  slideAIndex.value = -1
+  slideBIndex.value = -1
+  activeBuffer.value = 'A'
+  crossfadeActive.value = false
+  if (props.trackIndex !== undefined && props.trackIndex > 0) {
+    snapshotLaterTrackPhotos()
+  }
+})
 
 watch(() => props.trackIndex, (trackIndex, previousTrackIndex) => {
   if (trackIndex !== undefined && trackIndex > 0) {

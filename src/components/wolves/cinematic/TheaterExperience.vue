@@ -225,6 +225,7 @@ onBeforeUnmount(() => {
         <WolvesComicReader
           :track-index="store.segmentIndex"
           :playlist-current-time="time"
+          :experience-id="store.experienceId"
           :wolves-experience="store.experienceId === WOLVES_EXPERIENCE.id"
         />
 

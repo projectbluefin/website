@@ -175,9 +175,19 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     store.beginCrossfade()
 
     const segment = store.segments[target]
+    const targetIsPreloaded = sides[toSide].segmentIndex === target
     sides[toSide].segmentIndex = target
     applyVolume(incoming, 0)
-    incoming.loadVideoById?.({ videoId: segment.youtubeId, startSeconds: segment.startSeconds })
+    // Forward skips normally target the already-playing muted buffer. Reloading
+    // that same video here causes YouTube to restart its decoder and produces an
+    // audible pop; only hard-load when the target is not preloaded (backward or
+    // multi-segment jumps).
+    if (targetIsPreloaded) {
+      incoming.playVideo?.()
+    }
+    else {
+      incoming.loadVideoById?.({ videoId: segment.youtubeId, startSeconds: segment.startSeconds })
+    }
     activeSide.value = toSide
 
     rampVolumes(outgoing, incoming, store.crossfadeMsAt(store.segmentIndex), () => {
