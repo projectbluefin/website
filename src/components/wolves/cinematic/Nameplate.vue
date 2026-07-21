@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { dinosaurSpecies } from '@/data/wolves-dinosaur-species'
 
 withDefaults(defineProps<{
@@ -38,6 +38,7 @@ const avatarUrls = dinosaurSpecies.map(
   species => `${import.meta.env.BASE_URL}${species.artwork.slice(2)}`,
 )
 const avatarIndex = ref(0)
+const activeAvatar = computed(() => dinosaurSpecies[avatarIndex.value])
 let avatarTimer: number | undefined
 
 /**
@@ -77,8 +78,9 @@ onBeforeUnmount(() => window.clearInterval(avatarTimer))
     <span class="wc-nameplate-badge" aria-hidden="true">
       <Transition name="wc-nameplate-avatar">
         <img
-          :key="avatarUrls[avatarIndex]"
+          :key="activeAvatar.id"
           class="wc-nameplate-avatar"
+          :class="`wc-nameplate-avatar--${activeAvatar.id}`"
           :src="avatarUrls[avatarIndex]"
           alt=""
         >
@@ -143,11 +145,33 @@ onBeforeUnmount(() => window.clearInterval(avatarTimer))
   object-fit: contain;
   padding: 0.4rem;
   box-sizing: border-box;
+  will-change: opacity, transform;
+}
+
+/* The roster art has intentionally different transparent margins. Normalize the
+   visible silhouettes in the badge rather than forcing every source canvas into
+   the same apparent size or letting the artwork drift off-center. */
+.wc-nameplate-avatar--bob-torosaurus {
+  transform: scale(1.08);
+}
+
+.wc-nameplate-avatar--karl {
+  transform: scale(1.18) translateX(-2%);
+}
+
+.wc-nameplate-avatar--kentrosaurus {
+  transform: scale(1.04) translateY(2%);
+}
+
+.wc-nameplate-avatar--alamosaurus {
+  transform: scale(1.22) translateX(4%);
 }
 
 .wc-nameplate-avatar-enter-active,
 .wc-nameplate-avatar-leave-active {
-  transition: opacity 1.5s ease;
+  transition:
+    opacity 1.5s ease,
+    transform 1.5s ease;
 }
 
 .wc-nameplate-avatar-enter-from,

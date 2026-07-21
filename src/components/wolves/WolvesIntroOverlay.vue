@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { YoutubePlayer } from '@/composables/useYoutubeIframeApi'
+import type { WolvesComicHeroShot } from '@/data/wolves-comic-hero-shots'
 import type { IntroOverlayTextCue, IntroStatusPayload, IntroVideoSpec } from '@/data/wolves-intro-sequence'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue'
 import qrMakeMeAComic from '@/assets/svg/qr-makemeacomic.svg'
 import { getChromeFreeYoutubePlayerVars, getYoutubePlayerConstructor, getYoutubePlayerState, loadYoutubeIframeApi } from '@/composables/useYoutubeIframeApi'
-import { getActiveComicHeroShot } from '@/data/wolves-comic-hero-shots'
+import { getActiveComicHeroShot, wolvesComicHeroShots } from '@/data/wolves-comic-hero-shots'
 import { dinosaurSpecies } from '@/data/wolves-dinosaur-species'
 import { wolvesGuardianDinosaurBonds } from '@/data/wolves-guardian-dinosaur-bonds'
 import {
@@ -85,6 +86,7 @@ const activeComicTitleCardCue = computed<IntroOverlayTextCue | undefined>(() => 
 const activeComicHeroShot = computed(() => activeComicTitleCardCue.value
   ? getActiveComicHeroShot(currentTime.value, activeComicTitleCardCue.value)
   : undefined)
+const comicHeroLeftOffsets = ref<Record<string, number>>({})
 const overlayCueForDisplay = computed<IntroOverlayTextCue | undefined>(() => activeComicTitleCardCue.value?.comicHeroTitleCard ? activeComicTitleCardCue.value : activeCue.value)
 const overlayText = computed(() => overlayCueForDisplay.value?.text)
 const activeBurnedInCaptions = computed<readonly IntroOverlayTextCue[]>(() =>
@@ -189,6 +191,72 @@ function guardianDinosaurCompanion(guardianName: string): GuardianDinosaurCompan
   }
 }
 
+let comicHeroArtworkPredecoded = false
+function predecodeComicHeroArtwork() {
+  if (comicHeroArtworkPredecoded) {
+    return
+  }
+  comicHeroArtworkPredecoded = true
+  for (const shot of wolvesComicHeroShots) {
+    const image = new Image()
+    image.src = `${baseUrl}${shot.src}`
+    void image.decode().catch(() => {
+      // The image still loads normally when decode is unavailable or fails.
+    })
+  }
+}
+
+function centerComicHeroShot(event: Event, shot: WolvesComicHeroShot) {
+  const image = event.currentTarget as HTMLImageElement
+  if (!image.naturalWidth || !image.naturalHeight) {
+    return
+  }
+
+  const canvas = document.createElement('canvas')
+  canvas.width = image.naturalWidth
+  canvas.height = image.naturalHeight
+  const context = canvas.getContext('2d')
+  if (!context) {
+    return
+  }
+
+  try {
+    context.drawImage(image, 0, 0)
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data
+    let minX = canvas.width
+    let maxX = -1
+    // A four-pixel sample is enough for layout centering and avoids making
+    // a large hero image block the title-card transition on decode.
+    for (let x = 0; x < canvas.width; x += 4) {
+      for (let y = 0; y < canvas.height; y += 4) {
+        if (pixels[(y * canvas.width + x) * 4 + 3] > 8) {
+          minX = Math.min(minX, x)
+          maxX = Math.max(maxX, x)
+          break
+        }
+      }
+    }
+    if (maxX < minX) {
+      return
+    }
+
+    const visibleCenter = (minX + maxX) / 2 / canvas.width
+    const left = 50 - visibleCenter * shot.contentFrame.width
+    comicHeroLeftOffsets.value = { ...comicHeroLeftOffsets.value, [shot.id]: left }
+  }
+  catch {
+    // Cross-origin artwork cannot be sampled; retain the authored fallback frame.
+  }
+}
+
+function comicHeroShotStyle(shot: WolvesComicHeroShot) {
+  return {
+    width: `${shot.contentFrame.width}%`,
+    left: `${comicHeroLeftOffsets.value[shot.id] ?? shot.contentFrame.left}%`,
+    top: `${shot.contentFrame.top}%`,
+  }
+}
+
 function predecodeGuardianCompanionArtwork() {
   const preloadedArtwork = new Set<string>()
 
@@ -209,6 +277,12 @@ function predecodeGuardianCompanionArtwork() {
 
 onMounted(() => {
   predecodeGuardianCompanionArtwork()
+})
+
+watch(activeComicTitleCardCue, (cue) => {
+  if (cue) {
+    predecodeComicHeroArtwork()
+  }
 })
 
 /**
@@ -764,18 +838,15 @@ defineExpose({
                 {{ activeComicTitleCardCue.text }}
               </p>
               <div v-if="activeComicHeroShot" class="wolves-intro-overlay-title-card-art-frame">
-                <Transition name="comic-hero-shot-fade" mode="out-in">
+                <Transition name="comic-hero-shot-fade">
                   <img
                     :key="activeComicHeroShot.id"
                     :src="`${baseUrl}${activeComicHeroShot.src}`"
                     :alt="activeComicHeroShot.label"
                     :data-comic-hero-shot="activeComicHeroShot.id"
-                    :style="{
-                      width: `${activeComicHeroShot.contentFrame.width}%`,
-                      left: `${activeComicHeroShot.contentFrame.left}%`,
-                      top: `${activeComicHeroShot.contentFrame.top}%`,
-                    }"
+                    :style="comicHeroShotStyle(activeComicHeroShot)"
                     class="wolves-intro-overlay-title-card-art"
+                    @load="centerComicHeroShot($event, activeComicHeroShot)"
                   >
                 </Transition>
               </div>
