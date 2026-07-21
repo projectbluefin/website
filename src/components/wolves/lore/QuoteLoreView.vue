@@ -47,6 +47,9 @@ function runTypewriter() {
   typewriterTimer = setInterval(() => {
     index++
     typedQuoteText.value = targetText.slice(0, index)
+    // Keep the newest line visible continuously; punctuation-only scrolling
+    // leaves long authored sentences stranded below the viewport.
+    scrollViewport()
 
     const currentChar = targetText[index - 1]
     if (currentChar === '.' || currentChar === '?' || currentChar === '!' || currentChar === '…') {
@@ -159,6 +162,7 @@ onBeforeUnmount(clearTypewriter)
   padding-right: 8px;
   scrollbar-width: thin;
   scrollbar-color: rgba(102, 179, 255, 0.3) transparent;
+  scroll-behavior: auto;
 
   &::-webkit-scrollbar {
     width: 6px;

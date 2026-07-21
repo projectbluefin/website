@@ -123,6 +123,9 @@ function runTypewriter() {
 
     if (currentLength <= targetText.length) {
       typedMessagesText.value[activeMessageIndex.value] = targetText.slice(0, currentLength)
+      // Scroll on every character so long messages never outrun the viewport
+      // between punctuation marks.
+      scrollViewport()
 
       if (isClimaxMessage && currentLength === climaxOpeningEnd) {
         climaxStage = 'holding'
@@ -377,6 +380,7 @@ onBeforeUnmount(clearTypewriter)
   padding-right: 8px;
   scrollbar-width: thin;
   scrollbar-color: rgba(102, 179, 255, 0.3) transparent;
+  scroll-behavior: auto;
 
   &::-webkit-scrollbar {
     width: 6px;
