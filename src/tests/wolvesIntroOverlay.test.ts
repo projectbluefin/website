@@ -936,7 +936,7 @@ describe('wolvesIntroOverlay guardian plate', () => {
     expect(overlay).not.toContain('wolves-guardian-plate-dinosaur-icon')
   })
 
-  it('renders Christoph Blecker with the complete blue leader plate treatment', () => {
+  it('locks Christoph Blecker\'s leader label to gold while the plate chrome stays blue', () => {
     const overlay = readFileSync(resolve(process.cwd(), 'src/components/wolves/WolvesIntroOverlay.vue'), 'utf8')
     const leaderRule = overlay.match(/\.wolves-guardian-plate\.wolves-guardian-plate-leader \{([\s\S]*?)\n\}/)?.[1]
     const leaderSelectors = [
@@ -955,7 +955,8 @@ describe('wolvesIntroOverlay guardian plate', () => {
       expect(overlay).toContain(`.wolves-guardian-plate-leader ${selector}`)
     }
     expect(overlay).toContain('stroke: #38bdf8')
-    expect(overlay).toContain('color: #38bdf8')
+    const leaderLabelRule = overlay.match(/\.wolves-guardian-plate-leader \.wolves-guardian-plate-label \{([\s\S]*?)\n\}/)?.[1]
+    expect(leaderLabelRule).toContain('color: #facc15')
     expect(overlay).toContain('color: #bae6fd')
     expect(overlay).not.toContain('wolves-guardian-plate-name-gold')
     expect(overlay).toContain('wolves-companion-plate-art')

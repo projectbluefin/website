@@ -270,9 +270,9 @@ try {
     'rgb(56, 189, 248)',
   )
   expectEqual(
-    'Christoph Blecker leader plate has blue label',
+    'Christoph Blecker leader plate has gold label',
     await christophPlate.locator('.wolves-guardian-plate-label').evaluate(element => getComputedStyle(element).color),
-    'rgb(56, 189, 248)',
+    'rgb(250, 204, 21)',
   )
   if (christophBox && alamoBox) {
     expectTruthy('Alamo shares Christoph Blecker\'s lower baseline', Math.abs((alamoBox.y + alamoBox.height) - (christophBox.y + christophBox.height)) < 8)

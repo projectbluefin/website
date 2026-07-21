@@ -1734,7 +1734,7 @@ defineExpose({
 }
 
 .wolves-guardian-plate-leader .wolves-guardian-plate-label {
-  color: #38bdf8;
+  color: #facc15;
 }
 
 .wolves-guardian-plate-leader .wolves-guardian-plate-title {
