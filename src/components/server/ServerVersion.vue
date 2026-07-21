@@ -13,7 +13,7 @@ interface StreamData {
   etcd: string
 }
 
-interface KnuckleVersions {
+interface ServerVersions {
   streams: Record<string, StreamData>
 }
 
@@ -28,12 +28,12 @@ const componentFields: { key: keyof StreamData, label: string }[] = [
   { key: 'etcd', label: 'etcd' },
 ]
 
-const versions = ref<KnuckleVersions | null>(null)
+const versions = ref<ServerVersions | null>(null)
 const stableBuild = computed(() => versions.value?.streams.stable ?? null)
 
 onMounted(async () => {
   try {
-    const response = await fetch(`${import.meta.env.BASE_URL}knuckle-versions.json`)
+    const response = await fetch(`${import.meta.env.BASE_URL}server-versions.json`)
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`)
     }
@@ -41,7 +41,7 @@ onMounted(async () => {
   }
   catch (error) {
     if (import.meta.env.DEV) {
-      console.warn('[KnuckleVersionChips] failed to load versions', error)
+      console.warn('[ServerVersion] failed to load versions', error)
     }
   }
 })

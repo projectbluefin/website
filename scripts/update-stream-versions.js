@@ -39,13 +39,16 @@ export function latestPv(streams, name) {
     return {}
   }
   const releases = stream.releases ?? {}
-  const keys = Object.keys(releases)
-  if (!keys.length) {
+  const key = Object.keys(releases).find((releaseKey) => {
+    const packageVersions = releases[releaseKey]?.packageVersions
+    return packageVersions && Object.keys(packageVersions).length > 0
+  })
+  if (!key) {
     console.warn(`[stream-versions] no releases for stream "${name}"`)
     return {}
   }
-  console.info(`[stream-versions] ${name}: using release ${keys[0]}`)
-  return releases[keys[0]]?.packageVersions ?? {}
+  console.info(`[stream-versions] ${name}: using release ${key}`)
+  return releases[key]?.packageVersions ?? {}
 }
 
 export function buildStreamVersionData(streams) {

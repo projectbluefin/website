@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Script to update knuckle-versions.json with live data from:
+ * Script to update server-versions.json with live data from:
  *   1. Flatcar Container Linux release server — version.txt + SPDX SBOM JSON
  *      for each stream (stable, beta, alpha, lts)
- *   2. GitHub Releases API — castrojo/knuckle latest tag
+ *   2. GitHub Releases API — projectbluefin/server latest tag
  *
  * Flatcar SBOM URL pattern:
  *   https://{channel}.release.flatcar-linux.net/amd64-usr/current/flatcar_production_image_sbom.json
@@ -19,10 +19,10 @@ import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const OUT = path.join(__dirname, '../public/knuckle-versions.json')
+const OUT = path.join(__dirname, '../public/server-versions.json')
 
 const CHANNELS = ['stable', 'beta', 'alpha', 'lts']
-const KNUCKLE_RELEASES_URL = 'https://api.github.com/repos/projectbluefin/knuckle/releases/latest'
+const SERVER_RELEASES_URL = 'https://api.github.com/repos/projectbluefin/server/releases/latest'
 
 const headers = {
   'User-Agent': 'bluefin-website-updater',
@@ -224,16 +224,16 @@ async function main() {
     current.nvidiaDrivers = nvidiaDrivers
   }
 
-  // Latest knuckle release tag
+  // Latest Server release tag
   try {
-    const release = await fetchJSON(KNUCKLE_RELEASES_URL)
+    const release = await fetchJSON(SERVER_RELEASES_URL)
     if (release.tag_name) {
-      current.knuckleVersion = release.tag_name
-      console.info(`[knuckle] release → ${release.tag_name}`)
+      current.serverVersion = release.tag_name
+      console.info(`[server] release → ${release.tag_name}`)
     }
   }
   catch (e) {
-    console.warn('[knuckle] release fetch failed:', e.message)
+    console.warn('[server] release fetch failed:', e.message)
   }
 
   current.generatedAt = new Date().toISOString()
@@ -241,12 +241,12 @@ async function main() {
   delete current.flatcar
 
   fs.writeFileSync(OUT, `${JSON.stringify(current, null, 2)}\n`)
-  console.info('[knuckle-versions] wrote', OUT)
+  console.info('[server-versions] wrote', OUT)
 }
 
 if (isMainModule()) {
   main().catch((e) => {
-    console.error('[knuckle-versions] fatal:', e.message)
+    console.error('[server-versions] fatal:', e.message)
     process.exit(1)
   })
 }

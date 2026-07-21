@@ -5,7 +5,7 @@ const { isLoaded } = useFadeInUp()
 </script>
 
 <template>
-  <div class="knuckle-title" :class="{ 'is-loaded': isLoaded }">
+  <div class="server-title" :class="{ 'is-loaded': isLoaded }">
     <div class="title-inner">
       <div class="title-col-left">
         <div class="hero-tag">
@@ -29,7 +29,7 @@ const { isLoaded } = useFadeInUp()
 <style scoped lang="scss">
 @use '../../style/setup/mixins';
 
-.knuckle-title {
+.server-title {
   width: 100%;
   @include mixins.fade-in-up;
 }

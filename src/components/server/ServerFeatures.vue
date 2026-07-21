@@ -82,7 +82,7 @@ const clients: ClientCard[] = [
 </script>
 
 <template>
-  <section class="knuckle-features">
+  <section class="server-features">
     <div class="container">
       <div class="features-header">
         <div class="icon-wrap">
@@ -195,7 +195,7 @@ const clients: ClientCard[] = [
 <style scoped lang="scss">
 @use '../../style/setup/mixins';
 
-.knuckle-features {
+.server-features {
   min-height: auto;
   padding: 0;
 
@@ -433,7 +433,7 @@ const clients: ClientCard[] = [
 }
 
 @media (max-width: 640px) {
-  .knuckle-features {
+  .server-features {
     .app-grid {
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     }

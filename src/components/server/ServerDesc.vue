@@ -10,12 +10,12 @@ const { isLoaded } = useFadeInUp()
 <!-- 4. This is the primary mission of bluespeed - not just a personal lab, but a reference implementation of "CNCF lifestyle homelab" -->
 
 <template>
-  <div class="knuckle-desc" :class="{ 'is-loaded': isLoaded }">
+  <div class="server-desc" :class="{ 'is-loaded': isLoaded }">
     <p class="hero-desc">
       Bluefin's `freedesktop-sdk` server image. <strong>One management suite</strong> for every service and container in your home. K8s conquers the home.
     </p>
     <p class="hero-desc">
-      Image-based, auto-update, zero maintenance, for servers in your closet. 
+      Image-based, auto-update, zero maintenance, for servers in your closet.
     </p>
     <p class="hero-desc">
       Fully API and MCP driven, the ultimate <i>invisible</i> appliance for the home.
@@ -26,7 +26,7 @@ const { isLoaded } = useFadeInUp()
 <style scoped lang="scss">
 @use '../../style/setup/mixins';
 
-.knuckle-desc {
+.server-desc {
   width: 100%;
   @include mixins.fade-in-up;
   text-align: center;

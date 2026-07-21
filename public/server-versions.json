@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-05-20T20:01:30.388Z",
-  "knuckleVersion": "v0.5.1",
+  "serverVersion": "v0.5.1",
   "nvidiaDrivers": [
     { "label": "Production", "version": "570.195.03" },
     { "label": "Production", "version": "550.163.01" },

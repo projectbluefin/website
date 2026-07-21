@@ -11,7 +11,7 @@ const nvidiaDrivers = ref<NvidiaDriver[] | null>(null)
 
 onMounted(async () => {
   try {
-    const res = await fetch(`${import.meta.env.BASE_URL}knuckle-versions.json`)
+    const res = await fetch(`${import.meta.env.BASE_URL}server-versions.json`)
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}`)
     }
@@ -22,14 +22,14 @@ onMounted(async () => {
   }
   catch (e) {
     if (import.meta.env.DEV) {
-      console.warn('[KnuckleHighlights] failed to load versions', e)
+      console.warn('[ServerHighlights] failed to load versions', e)
     }
   }
 })
 </script>
 
 <template>
-  <section class="section-wrap knuckle-highlights">
+  <section class="section-wrap server-highlights">
     <div class="container">
       <div class="brand-grid">
         <!-- Row 1: freedesktop-sdk | NVIDIA -->
@@ -87,7 +87,7 @@ onMounted(async () => {
             <a class="brand-title" href="https://kubestellar.io" target="_blank" rel="noopener noreferrer">KubeStellar Console UI</a>
           </div>
           <p>Your command center. Unified visibility and control across every node you own. Deploy workloads, investigate with AI, monitor everything — from one dashboard.</p>
-                  </div>
+        </div>
 
         <div class="brand-item brand-nvidia">
           <div>
@@ -109,7 +109,7 @@ onMounted(async () => {
 <style scoped lang="scss">
 @use '../../style/setup/mixins';
 
-.knuckle-highlights {
+.server-highlights {
   min-height: auto;
   padding: 0;
 
@@ -325,7 +325,7 @@ onMounted(async () => {
 }
 
 @media (max-width: 640px) {
-  .knuckle-highlights {
+  .server-highlights {
     :deep(.brand-grid) {
       grid-template-columns: 1fr !important;
     }

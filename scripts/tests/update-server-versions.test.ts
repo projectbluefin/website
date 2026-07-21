@@ -5,9 +5,9 @@ import {
   parseSBOM,
   parseSysext,
   parseVersionTxt,
-} from '../update-knuckle-versions.js'
+} from '../update-server-versions.js'
 
-describe('update-knuckle-versions helpers', () => {
+describe('update-server-versions helpers', () => {
   it('parses version.txt content into version metadata', () => {
     expect(parseVersionTxt('FLATCAR_VERSION="4152.2.1"\nFLATCAR_BUILD_ID="2025-02-14-1234"\n')).toEqual({
       version: '4152.2.1',

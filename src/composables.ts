@@ -39,7 +39,7 @@ export async function getDakotaVersions(): Promise<DakotaVersions> {
 }
 
 /**
- * Fades in + slides up 150ms after mount. Used by KnuckleTitle and KnuckleDesc.
+ * Fades in + slides up 150ms after mount. Used by ServerTitle and ServerDesc.
  */
 export function useFadeInUp() {
   const isLoaded = ref(false)

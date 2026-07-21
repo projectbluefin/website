@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { MessageSchema } from '../../locales/schema'
 import { IconGithub, IconHeartCircle } from '@iconify-prerendered/vue-mdi'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n<MessageSchema>({
@@ -9,7 +10,42 @@ const { t } = useI18n<MessageSchema>({
 
 const bluefinRepoUrl = 'https://github.com/ublue-os/bluefin'
 const bluefinPulseUrl = 'https://github.com/ublue-os/bluefin/pulse'
-const repoBeatsEmbedUrl = 'https://repobeats.axiom.co/api/embed/40b85b252bf6ea25eb90539d1adcea013ccae69a.svg'
+
+interface Contributor {
+  login: string
+  avatar_url: string
+  html_url: string
+  contributions: number
+}
+
+const contributors = ref<Contributor[]>([])
+const contributorsLoading = ref(true)
+const contributorsError = ref(false)
+const highestContributionCount = computed(() => Math.max(...contributors.value.map(contributor => contributor.contributions), 1))
+
+onMounted(async () => {
+  try {
+    const response = await fetch('https://api.github.com/repos/ublue-os/bluefin/contributors?per_page=8', {
+      headers: { Accept: 'application/vnd.github+json' },
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+    const contributorData: Contributor[] = await response.json()
+    contributors.value = contributorData
+      .filter(contributor => !contributor.login.endsWith('[bot]'))
+      .slice(0, 8)
+  }
+  catch (error) {
+    contributorsError.value = true
+    if (import.meta.env.DEV) {
+      console.warn('[SectionContributors] failed to load contributors', error)
+    }
+  }
+  finally {
+    contributorsLoading.value = false
+  }
+})
 </script>
 
 <template>
@@ -39,9 +75,38 @@ const repoBeatsEmbedUrl = 'https://repobeats.axiom.co/api/embed/40b85b252bf6ea25
           </div>
         </div>
 
-        <a class="contributors-embed" :href="bluefinPulseUrl" target="_blank" rel="noopener noreferrer" title="View Bluefin repository activity on GitHub">
-          <img :src="repoBeatsEmbedUrl" alt="RepoBeats activity for the Bluefin repository" loading="lazy">
-        </a>
+        <div class="contributors-chart" aria-live="polite">
+          <div v-if="contributorsLoading" class="chart-state">
+            Loading contributor activity...
+          </div>
+          <div v-else-if="contributorsError" class="chart-state">
+            <span>Contributor activity is unavailable right now.</span>
+            <a :href="bluefinPulseUrl" target="_blank" rel="noopener noreferrer">View activity on GitHub</a>
+          </div>
+          <div v-else class="chart-list">
+            <a
+              v-for="contributor in contributors"
+              :key="contributor.login"
+              class="contributor-row"
+              :href="contributor.html_url"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img :src="contributor.avatar_url" :alt="`${contributor.login} avatar`" loading="lazy">
+              <span class="contributor-name">{{ contributor.login }}</span>
+              <span class="contribution-track">
+                <span
+                  class="contribution-bar"
+                  :style="{ width: `${(contributor.contributions / highestContributionCount) * 100}%` }"
+                />
+              </span>
+              <span class="contribution-count">{{ contributor.contributions }}</span>
+            </a>
+            <a class="chart-footer" :href="bluefinPulseUrl" target="_blank" rel="noopener noreferrer">
+              View full repository activity on GitHub →
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -97,15 +162,111 @@ const repoBeatsEmbedUrl = 'https://repobeats.axiom.co/api/embed/40b85b252bf6ea25
     }
   }
 
-  .contributors-embed {
-    display: block;
+  .contributors-chart {
+    min-height: 276px;
+    padding: 20px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .chart-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .contributor-row {
+    display: grid;
+    grid-template-columns: 28px minmax(100px, 150px) minmax(80px, 1fr) 48px;
+    align-items: center;
+    gap: 10px;
+    min-height: 28px;
+    color: var(--color-text-light);
+    text-decoration: none;
+
+    &:hover {
+      .contributor-name {
+        color: var(--color-blue-light);
+      }
+
+      .contribution-bar {
+        background: var(--color-blue-light);
+      }
+    }
 
     img {
-      width: 100%;
-      height: auto;
-      display: block;
-      border-radius: 8px;
-      background: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid var(--color-border);
+    }
+  }
+
+  .contributor-name {
+    overflow: hidden;
+    color: var(--color-text-light);
+    font-size: 1.3rem;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color 0.15s ease;
+  }
+
+  .contribution-track {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .contribution-bar {
+    display: block;
+    height: 100%;
+    min-width: 3px;
+    border-radius: inherit;
+    background: var(--color-blue);
+    transition:
+      width 0.3s ease,
+      background 0.15s ease;
+  }
+
+  .contribution-count {
+    color: var(--color-text);
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    text-align: right;
+  }
+
+  .chart-footer {
+    align-self: flex-start;
+    margin-top: 8px;
+    color: var(--color-blue-light);
+    font-size: 1.2rem;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .chart-state {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 236px;
+    gap: 12px;
+    color: var(--color-text-light);
+    font-size: 1.4rem;
+
+    a {
+      color: var(--color-blue-light);
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
     }
   }
 
@@ -150,6 +311,14 @@ const repoBeatsEmbedUrl = 'https://repobeats.axiom.co/api/embed/40b85b252bf6ea25
     .contributors-card {
       grid-template-columns: 1fr;
       padding: 24px;
+    }
+
+    .contributors-chart {
+      padding: 16px;
+    }
+
+    .contributor-row {
+      grid-template-columns: 28px minmax(80px, 1fr) 84px 42px;
     }
 
     .card-buttons {

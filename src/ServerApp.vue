@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { onBeforeMount, provide, ref } from 'vue'
-import KnuckleDemos from './components/knuckle/KnuckleDemos.vue'
-import KnuckleDesc from './components/knuckle/KnuckleDesc.vue'
-import KnuckleTitle from './components/knuckle/KnuckleTitle.vue'
-import KnuckleVersionChips from './components/knuckle/KnuckleVersionChips.vue'
 import PageLoading from './components/PageLoading.vue'
+import ServerDemos from './components/server/ServerDemos.vue'
+import ServerDesc from './components/server/ServerDesc.vue'
+import ServerTitle from './components/server/ServerTitle.vue'
+import ServerVersion from './components/server/ServerVersion.vue'
 import TopNavbar from './components/TopNavbar.vue'
 import { setLocale } from './composables/useLocale'
 import { i18n } from './locales/schema'
@@ -41,11 +41,11 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
 </script>
 
 <template>
-  <main class="knuckle-page">
+  <main class="server-page">
     <PageLoading v-if="isLoading" />
     <TopNavbar v-show="!isLoading" />
 
-    <div v-show="!isLoading" class="knuckle-layout">
+    <div v-show="!isLoading" class="server-layout">
       <!-- Single column: glass boxes stacked vertically -->
       <div class="col-left-stack">
         <div class="coming-soon-widget">
@@ -57,8 +57,8 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
         </div>
 
         <div class="col-left">
-          <KnuckleTitle />
-          <KnuckleDesc />
+          <ServerTitle />
+          <ServerDesc />
         </div>
         <div class="col-demos-wrap">
           <img
@@ -69,7 +69,7 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
             aria-hidden="true"
           >
           <div class="col-demos">
-            <KnuckleDemos />
+            <ServerDemos />
           </div>
           <img
             class="karl"
@@ -85,7 +85,7 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
           </div>
         </div>
         <div>
-          <KnuckleVersionChips />
+          <ServerVersion />
         </div>
         <div class="why-box">
           <h2 class="why-title" @click="whyBox1Open = !whyBox1Open">
@@ -135,7 +135,7 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
 
         <blockquote class="little-bluefin">
           <p>Little Bluefin has brought many of you to the world of cloud native. Now meet the real giant. <strong>Infrastructure</strong>. How would cloud native people run their own homelabs? As customizable as you want where it matters, and a fully automated, well tuned machine. Bluefin's natural companion. The building block to your perfect computing setup, all controlled by you. Help us build it!</p>
-          <a class="github-star-btn" href="https://github.com/projectbluefin/knuckle" target="_blank" rel="noopener noreferrer">
+          <a class="github-star-btn" href="https://github.com/projectbluefin/server" target="_blank" rel="noopener noreferrer">
             <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.167 6.839 9.49.5.09.682-.217.682-.482 0-.237-.009-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.577.688.48C19.138 20.161 22 16.418 22 12c0-5.523-4.477-10-10-10z" /></svg>
             Star &amp; contribute on GitHub
           </a>
@@ -146,7 +146,7 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
 </template>
 
 <style scoped lang="scss">
-.knuckle-page {
+.server-page {
   min-height: 100vh;
   background: none;
 
@@ -175,7 +175,7 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
   }
 }
 
-.knuckle-layout {
+.server-layout {
   position: relative;
   z-index: 1;
   display: flex;

@@ -45,7 +45,7 @@
 }
 
 /// Shared `:deep()` overrides for `.brand-*` classes used by both
-/// KnuckleHighlights and KnuckleFeatures. These fight upstream global styles
+/// ServerHighlights and ServerFeatures. These fight upstream global styles
 /// from the main site and must use `!important`.
 @mixin brand-deep-overrides {
   :deep(.brand-item) {

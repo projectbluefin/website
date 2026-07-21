@@ -77,6 +77,7 @@ describe('update-stream-versions helpers', () => {
         base: 'Fedora 42',
         kernel: '6.13.0',
         gnome: '48.1',
+
         mesa: '25.0.1',
         nvidia: '570.124.06',
       },
@@ -88,6 +89,27 @@ describe('update-stream-versions helpers', () => {
         hwe: '6.14.0',
         nvidia: '550.90.07',
       },
+    })
+  })
+
+  it('skips a newest release record with no package versions', () => {
+    expect(latestPv({
+      'bluefin-stable': {
+        releases: {
+          'stable-20260606': {},
+          'stable-20260531': {
+            packageVersions: {
+              kernel: '7.0.8-200.fc44',
+              gnome: '50.1',
+              mesa: '26.0.8',
+            },
+          },
+        },
+      },
+    }, 'bluefin-stable')).toEqual({
+      kernel: '7.0.8-200.fc44',
+      gnome: '50.1',
+      mesa: '26.0.8',
     })
   })
 

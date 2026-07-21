@@ -9,11 +9,11 @@
 | `/` | `index.html` | `src/main.ts` -> `src/App.vue` |
 | `/wolves/` | `wolves/index.html` | `src/wolves-main.ts` -> `src/WolvesApp.vue` |
 | `/dakota/` | `dakota/index.html` | `src/dakota-main.ts` |
-| `/knuckle/` | `knuckle/index.html` | `src/knuckle-main.ts` |
-| `/bluespeed/` | `bluespeed/index.html` | current entry script in `bluespeed/index.html` |
-| `/server/` | `server/index.html` | current entry script in `server/index.html` |
+| `/knuckle/` | `knuckle/index.html` | `src/server-main.ts` |
+| `/bluespeed/` | `bluespeed/index.html` | `src/server-main.ts` |
+| `/server/` | `server/index.html` | `src/server-main.ts` |
 
-Dakota, Knuckle, and Bluespeed are unlisted. Do not promote them through
+Dakota, Server, and Bluespeed are unlisted. Do not promote them through
 navigation, metadata, or sitemaps.
 
 ## Main page areas

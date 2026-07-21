@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
-import KnuckleFeatures from './KnuckleFeatures.vue'
-import KnuckleHighlights from './KnuckleHighlights.vue'
+import ServerFeatures from './ServerFeatures.vue'
+import ServerHighlights from './ServerHighlights.vue'
 
 const phases: Phase[] = ['cluster', 'cpu', 'storage', 'highlights', 'features']
 
@@ -111,7 +111,7 @@ const urlMap: Record<Phase, string> = {
 </script>
 
 <template>
-  <section class="knuckle-demos">
+  <section class="server-demos">
     <div class="demo-window">
       <div class="browser-bar">
         <div class="browser-spacer" />
@@ -176,8 +176,8 @@ const urlMap: Record<Phase, string> = {
               @mousedown="onDragStart"
             >
               <div style="padding: 8px">
-                <KnuckleHighlights v-if="phase === 'highlights'" />
-                <KnuckleFeatures v-else-if="phase === 'features'" />
+                <ServerHighlights v-if="phase === 'highlights'" />
+                <ServerFeatures v-else-if="phase === 'features'" />
               </div>
             </div>
           </template>
@@ -188,7 +188,7 @@ const urlMap: Record<Phase, string> = {
 </template>
 
 <style scoped lang="scss">
-.knuckle-demos {
+.server-demos {
   width: 100%;
 }
 
