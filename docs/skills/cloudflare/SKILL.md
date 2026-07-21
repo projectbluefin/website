@@ -28,6 +28,13 @@ Use for domain, DNS, Workers, Pages, route, redirect, or Wrangler work.
 
 - **DNS/subdomain request:** create or update the zone record/custom-domain
   configuration only.
+- **Existing redirect-subdomain pattern:** before changing DNS, inspect the
+  account's existing routes. Project subdomains backed by GitHub Pages may use
+  a dedicated redirect Worker route (`host.example/*`) because GitHub Pages
+  accepts the apex custom domain but does not map arbitrary subdomains to a
+  path such as `/wolves/`. Mirror that established route pattern when the
+  requested destination is an existing path on the same site; do not invent a
+  new routing architecture.
 - **Path rewrite/proxy request:** requires explicit approval for a Worker or
   redirect rule because it changes runtime behavior.
 - **Pages deployment:** verify the Pages project and custom domain in the
