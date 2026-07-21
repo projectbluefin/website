@@ -47,7 +47,6 @@ export const wolvesNarrativeTimeline: readonly WolvesNarrativeSlot[] = [
   { artifactId: 'glorious-eggroll', startTime: 279.943353, endTime: 289.203231 },
   { artifactId: 'project-neptune', startTime: 289.203231, endTime: 293.502459 },
   { artifactId: 'john-seager', startTime: 293.502459, endTime: 304.455899 },
-  { artifactId: 'insertion-approved', startTime: 304.455899, endTime: 310.306754 },
   { artifactId: 'laura-sherman-robert', startTime: 310.306754, endTime: 320.150583 },
   { artifactId: 'natali-kat-mario', startTime: 320.150583, endTime: 327.327826 },
   { artifactId: 'fyra-fyre-redactions', startTime: 327.327826, endTime: 331.098499 },

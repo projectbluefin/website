@@ -390,7 +390,6 @@ const loreManifest = [
   { id: 'subjectprofile/kaslin-fields', chapterId: 'awakening', relativePath: './lore/kaslin-fields.md' },
   { id: 'subjectprofile/laura-santamaria', chapterId: 'awakening', relativePath: './lore/laura-santamaria.md' },
   { id: 'subjectprofile/christopher-blecker', chapterId: 'awakening', relativePath: './lore/christopher-blecker.md' },
-  { id: 'insertion-approved', chapterId: 'awakening', relativePath: './lore/insertion-approved.md' },
   { id: 'laura-sherman-robert', chapterId: 'awakening', relativePath: './lore/laura-sherman-robert.md' },
   { id: 'natali-kat-mario', chapterId: 'awakening', relativePath: './lore/natali-kat-mario.md' },
   { id: 'fyra-fyre-redactions', chapterId: 'awakening', relativePath: './lore/fyra-fyre-redactions.md' },
@@ -401,7 +400,6 @@ const loreManifest = [
   { id: 'ambers-garage-cloud-native-series', chapterId: 'awakening', relativePath: './lore/ambers-garage-cloud-native-series.md' },
   { id: 'katie-neomuna', chapterId: 'awakening', relativePath: './lore/katie-neomuna.md' },
   { id: 'rafael-bluefin', chapterId: 'awakening', relativePath: './lore/rafael-bluefin.md' },
-  { id: 'toddmore-vanguards-anchor', chapterId: 'awakening', relativePath: './lore/toddmore-vanguards-anchor.md' },
   { id: 'subjectprofile/chris-aniszczyk', chapterId: 'awakening', relativePath: './lore/chris-aniszczyk.md' },
 ] as const satisfies readonly LoreManifestEntry[]
 
