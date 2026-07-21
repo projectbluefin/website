@@ -10,7 +10,12 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ghostsInTheMistOpeningSlide } from '@/data/wolves-gallery-featured'
 import { shuffleWolvesGalleryPhotos } from '@/data/wolves-gallery-shuffle'
 import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
-import { TRACK_ZERO_SECTIONS, trackZeroBeatCuts, trackZeroBeatCutsWithPickup } from '@/data/wolves-track-zero-beats'
+import {
+  TRACK_ZERO_SECTIONS,
+  TRACK_ZERO_TEMPO_PICKUPS,
+  trackZeroBeatCuts,
+  trackZeroBeatCutsWithPickup,
+} from '@/data/wolves-track-zero-beats'
 import {
   bluefinGroupSlides,
   jonoBaconSlideId,
@@ -404,7 +409,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     // Chorus fill on 8-beat phrases; the final cut clamps to the Jono lock start.
     const beforeJonoCuts = trackZeroBeatCutsWithPickup(
       currentTime,
-      155,
+      TRACK_ZERO_TEMPO_PICKUPS.chorus,
       jonoBaconTrackZeroWindow.startTime,
       normalPool2.length,
       8,
@@ -476,7 +481,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   const peoplePool2 = shuffledPeople.slice(15, 39)
   const sec4Cuts = trackZeroBeatCutsWithPickup(
     currentTime,
-    244,
+    TRACK_ZERO_TEMPO_PICKUPS.bridge,
     TRACK_ZERO_SECTIONS.buildStart,
     peoplePool2.length,
     6,
@@ -558,7 +563,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   const peoplePool4 = deterministicShuffle(barrageBase, 404).slice(0, 30)
   const sec6Cuts = trackZeroBeatCutsWithPickup(
     currentTime,
-    360,
+    TRACK_ZERO_TEMPO_PICKUPS.finale,
     TRACK_ZERO_SECTIONS.finaleStart,
     peoplePool4.length,
     8,

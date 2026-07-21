@@ -246,7 +246,7 @@ describe('wolvesLoreColumn Logic', () => {
     expect(wrapper.get('[data-chatlog-project-panel]').text()).toContain('Continue using familiar Kubernetes APIs, tooling, and workflows.')
   })
 
-  it('smoothly advances long quotes at reading beats', async () => {
+  it('continuously pins long quotes to the latest readable text', async () => {
     vi.useFakeTimers()
     const scrollTo = vi.spyOn(HTMLElement.prototype, 'scrollTo')
     const wrapper = mount(WolvesLoreColumn, {
@@ -261,7 +261,7 @@ describe('wolvesLoreColumn Logic', () => {
 
     expect(scrollTo).toHaveBeenCalledWith({
       top: expect.any(Number),
-      behavior: 'smooth',
+      behavior: 'auto',
     })
   })
 

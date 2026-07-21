@@ -1071,6 +1071,15 @@ export const TRACK_ZERO_BEAT_TIMES: readonly number[] = [
  * cut allocator agree on indices. Hero lock windows (167.8-196.36) are
  * defined in wolves-track-zero-slides.ts and take precedence over the grid.
  */
+export const TRACK_ZERO_TEMPO_PICKUPS = {
+  /** Chorus pickup at 2:35. */
+  chorus: 155,
+  /** Chanting bridge pickup at 4:04. */
+  bridge: 244,
+  /** Finale barrage pickup at 6:00. */
+  finale: 360,
+} as const
+
 export const TRACK_ZERO_SECTIONS = {
   /** Ambient intro end / verse 1 start (beat 106). */
   verseStart: 41.982,
