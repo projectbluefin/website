@@ -13,7 +13,7 @@ if (!fs.existsSync(targetDir)) {
 
 const qrTargets = [
   ['https://store.projectbluefin.io', 'qr-store.svg'],
-  ['#', 'qr-donate.svg'],
+  ['https://github.com/sponsors/castrojo', 'qr-donate.svg'],
   ['https://donate.gnome.org/', 'qr-gnome-donate.svg'],
   ['https://flathub.org/en/donate', 'qr-flathub-donate.svg'],
   ['https://kde.org/donate/', 'qr-kde-donate.svg'],
