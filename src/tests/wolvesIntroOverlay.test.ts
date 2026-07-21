@@ -906,7 +906,7 @@ describe('wolvesIntroOverlay guardian plate', () => {
     expect(wrapper.text()).toContain('Natali Vlatko')
     expect(wrapper.find('.wolves-companion-plate-name').text()).toBe('Alamo')
     expect(wrapper.find('.wolves-companion-plate-art').attributes('src')).toContain('alamosaurus.webp')
-    expect(wrapper.find('.wolves-companion-plate-art').classes()).toContain('wolves-companion-plate-art-alamo')
+    expect(wrapper.find('.wolves-companion-plate-art').classes()).toContain('wolves-companion-plate-art--alamosaurus')
     expect(wrapper.find('.wolves-guardian-plate-row').classes()).not.toContain('wolves-guardian-plate-row-companion-below')
   })
 

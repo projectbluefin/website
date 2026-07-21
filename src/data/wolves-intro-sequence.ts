@@ -340,7 +340,7 @@ export function buildDestinyCaptionCues(): readonly IntroOverlayTextCue[] {
   const cues = parseDestinyCaptionFile(destinyCaptions)
   return [
     ...cues,
-    { text: 'COMIC HERO SHOTS OF OPEN SOURCE MAINTAINERS SHREDDING A BUNCH OF CLANKERS', start: 24, end: 38, comicHeroTitleCard: true },
+    { text: 'Comic Book OSS Maintainers Shredding Clankers', start: 24, end: 38, comicHeroTitleCard: true },
   ]
 }
 
@@ -437,10 +437,7 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
       //   verification (Playwright + `.wolves-intro-overlay-player` screenshots, 0.1s steps)
       //   showed its own authored black-frame outro beginning at ~119.0s: 118.8s still carries
       //   the previous bright frame, 119.0s is fully black and stays there through the end card.
-      //   This black-frame cutoff is a separate visual cutoff for the unvoiced source only,
-      //   retained unchanged as `maxDuration: 121.5` (2.5s past the black cut). The optional
-      //   Ikora voiced source is shorter overall (~120.2s), so its alternate cutoff clamps to
-      //   the video's own end via `alternateMaxDuration: 120.2`.
+      //   Cut both sources at 118.8s so YouTube's end-screen layer never becomes visible.
       id: 'wolves-intro',
       kind: 'video',
       youtubeVideoId: 'BV3BZKbpBns',
@@ -451,10 +448,10 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
       // Starting 2s in skips past it entirely without touching any of the cue windows below,
       // since those are keyed to the video's absolute/native timeline, not this offset.
       startOffset: 2,
-      // Applies the retained unvoiced-source visual cutoff described above. Destiny dialogue
-      // captions are intentionally disabled; the Comic Hero Shots title card remains timed.
-      maxDuration: 121.5,
-      alternateMaxDuration: 120.2,
+      // Stop before YouTube's end-screen layer appears over the final source frames.
+      // Destiny dialogue captions are intentionally disabled; the Comic Hero Shots title card remains timed.
+      maxDuration: 118.8,
+      alternateMaxDuration: 118.8,
       burnedInCaptions: buildDestinyCaptionCues(),
       overlays: [
         { text: 'Voidwalker Warlock — Bob Killen — Reconciler of the Plane', start: 5, end: 14.5, trustee: true },
@@ -468,7 +465,7 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
         { text: 'Gunslinger Hunter — Laura Santamaria — The Order of Seven', start: 70.5, end: 77 },
         { text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 83, end: 95, position: 'left', trustee: true, leader: true },
         { text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 87.5, end: 96, position: 'right', raised: true },
-        { text: 'Follow the path, we\'ve got your back', start: 106.5, end: 121.5, nameplateDetail: 'Legends Sought', nameplateTitle: 'Follow the path, we\'ve got your back', statusOnly: true },
+        { text: 'Follow the path, we\'ve got your back', start: 106.5, end: 118.8, nameplateDetail: 'Legends Sought', nameplateTitle: 'Follow the path, we\'ve got your back', statusOnly: true },
       ],
     },
   ] as const

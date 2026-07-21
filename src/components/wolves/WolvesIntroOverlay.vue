@@ -166,6 +166,7 @@ function titleTokens(title: string, blingTitle: string | undefined): TitleToken[
 interface GuardianDinosaurCompanion {
   name?: string
   scientificName: string
+  speciesId: string
   artwork: string
 }
 
@@ -183,6 +184,7 @@ function guardianDinosaurCompanion(guardianName: string): GuardianDinosaurCompan
   return {
     name: bond.dinosaurName,
     scientificName: species.scientificName,
+    speciesId: species.id,
     artwork: `${baseUrl}${species.artwork.slice(2)}`,
   }
 }
@@ -879,13 +881,16 @@ defineExpose({
               v-if="parseGuardianCue(cue.text) && guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)"
               class="wolves-companion-plate font-mono"
             >
-              <img
-                :src="guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)!.artwork"
-                alt=""
-                aria-hidden="true"
-                class="wolves-companion-plate-art"
-                :class="{ 'wolves-companion-plate-art-alamo': guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)!.name === 'Alamo' }"
-              >
+              <Transition name="wolves-companion-art-swap" mode="out-in">
+                <img
+                  :key="guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)!.speciesId"
+                  :src="guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)!.artwork"
+                  alt=""
+                  aria-hidden="true"
+                  class="wolves-companion-plate-art"
+                  :class="`wolves-companion-plate-art--${guardianDinosaurCompanion(parseGuardianCue(cue.text)!.name)!.speciesId}`"
+                >
+              </Transition>
               <div class="wolves-companion-plate-card">
                 <p class="wolves-companion-plate-label">
                   GUARDIAN BOND
@@ -1657,12 +1662,38 @@ defineExpose({
   width: 108%;
   max-width: none;
   margin: 0 -4% -3.4rem;
-  animation: wolves-guardian-plate-text-drift 1.4s cubic-bezier(0.1, 0.9, 0.2, 1) 0.25s backwards;
+  /* Keep dinosaur artwork opaque while the cue clock polls; replaying the entry animation made it blink. */
+  animation: none;
 }
 
-/* Alamo's source canvas has more transparent padding than Karl's, so normalize
-   the visible dinosaur height without moving the shared companion card. */
-.wolves-companion-plate-art-alamo {
+.wolves-companion-art-swap-enter-active,
+.wolves-companion-art-swap-leave-active {
+  transition: opacity 0.22s ease;
+}
+
+.wolves-companion-art-swap-enter-from,
+.wolves-companion-art-swap-leave-to {
+  opacity: 0;
+}
+
+/* Size each visible silhouette, not each source canvas. These corrections keep the
+   bonded animals visually intentional despite their different transparent margins. */
+.wolves-companion-plate-art--bob-torosaurus {
+  width: 108%;
+  margin-inline: -4%;
+}
+
+.wolves-companion-plate-art--karl {
+  width: 118%;
+  margin-inline: -9%;
+}
+
+.wolves-companion-plate-art--kentrosaurus {
+  width: 104%;
+  margin-inline: -2%;
+}
+
+.wolves-companion-plate-art--alamosaurus {
   width: 124.2%;
   margin: 0 -12.1% -3.9rem;
 }
