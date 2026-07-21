@@ -45,44 +45,43 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
     <PageLoading v-if="isLoading" />
     <TopNavbar v-show="!isLoading" />
 
-    <img
-      v-show="!isLoading"
-      class="alamo"
-      :src="`${baseUrl}characters/alamosaurus.webp`"
-      alt=""
-      fetchpriority="high"
-      aria-hidden="true"
-    >
-    <img
-      v-show="!isLoading"
-      class="karl"
-      :src="`${baseUrl}characters/karl.webp`"
-      alt=""
-      fetchpriority="high"
-      aria-hidden="true"
-    >
-
     <div v-show="!isLoading" class="knuckle-layout">
       <!-- Single column: glass boxes stacked vertically -->
       <div class="col-left-stack">
-        <div class="col-left">
-          <KnuckleTitle />
-          <KnuckleDesc />
-        </div>
-        <div class="col-demos">
-          <KnuckleDemos />
-        </div>
-        <div class="alpha-badge-row">
-          <div class="alpha-badge">
-            <strong>⚠️ Coming Soon.</strong> Take appropriate precautions.
-          </div>
-        </div>
-
         <div class="coming-soon-widget">
           <span class="coming-soon-icon">🚧</span>
           <div class="coming-soon-text">
             <strong>Coming Soon!</strong>
-            <span>We're working hard to bring you the full Bluefin Server experience. Stay tuned!</span>
+            <span>Alpha in October 2026 - Stay Tned!</span>
+          </div>
+        </div>
+
+        <div class="col-left">
+          <KnuckleTitle />
+          <KnuckleDesc />
+        </div>
+        <div class="col-demos-wrap">
+          <img
+            class="alamo"
+            :src="`${baseUrl}characters/alamosaurus.webp`"
+            alt=""
+            fetchpriority="high"
+            aria-hidden="true"
+          >
+          <div class="col-demos">
+            <KnuckleDemos />
+          </div>
+          <img
+            class="karl"
+            :src="`${baseUrl}characters/karl.webp`"
+            alt=""
+            fetchpriority="high"
+            aria-hidden="true"
+          >
+        </div>
+        <div class="alpha-badge-row">
+          <div class="alpha-badge">
+            <strong>⚠️ Coming Soon.</strong> Take appropriate precautions.
           </div>
         </div>
         <div>
@@ -207,10 +206,15 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
   }
 }
 
-// The server dinosaurs bookend the centered content column and face each other.
+.col-demos-wrap {
+  position: relative;
+}
+
+// The server dinosaurs bookend the screenshot block and face each other.
 .alamo,
 .karl {
-  position: fixed;
+  --dino-hug-offset: clamp(150px, 12vw, 220px);
+  position: absolute;
   bottom: -10px;
   height: 42vh;
   width: auto;
@@ -228,11 +232,15 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
 
 .alamo {
   left: 0;
+  bottom: -40px;
+  transform: translateX(calc(-100% + var(--dino-hug-offset)));
 }
 
 .karl {
+  --dino-hug-offset: clamp(132px, 10.5vw, 196px);
   right: 0;
   height: 36vh;
+  transform: translateX(calc(100% - var(--dino-hug-offset)));
 }
 
 %col-glass {

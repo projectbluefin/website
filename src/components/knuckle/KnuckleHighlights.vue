@@ -32,15 +32,15 @@ onMounted(async () => {
   <section class="section-wrap knuckle-highlights">
     <div class="container">
       <div class="brand-grid">
-        <!-- Row 1: Flatcar | NVIDIA -->
+        <!-- Row 1: freedesktop-sdk | NVIDIA -->
         <div class="brand-item">
           <div>
             <div class="icon-wrap">
               <IconServerNetwork />
             </div>
-            <a class="brand-title" href="https://flatcar.org" target="_blank" rel="noopener noreferrer">Flatcar Container Linux</a>
+            <a class="brand-title" href="https://freedesktop-sdk.io" target="_blank" rel="noopener noreferrer">freedesktop-sdk Server Linux</a>
           </div>
-          <p>Eight years of production use. Image-based — the OS never drifts. Knuckle installs the OS and disappears, leaving the OS to manage itself. Forever.</p>
+          <p>Image-based — the OS never drifts. The OS manages itself. Forever.</p>
         </div>
 
         <div class="brand-item brand-nvidia">
@@ -87,8 +87,7 @@ onMounted(async () => {
             <a class="brand-title" href="https://kubestellar.io" target="_blank" rel="noopener noreferrer">KubeStellar Console UI</a>
           </div>
           <p>Your command center. Unified visibility and control across every node you own. Deploy workloads, investigate with AI, monitor everything — from one dashboard.</p>
-          <br><p>Bring your VMs - <a href="https://kubevirt.io" target="_blank" rel="noopener noreferrer"><strong>KubeVirt</strong></a> manages virtual machines as Kubernetes workloads — same cluster, same dashboard, one management layer.</p>
-        </div>
+                  </div>
 
         <div class="brand-item brand-nvidia">
           <div>
@@ -98,9 +97,9 @@ onMounted(async () => {
                 <path fill="currentColor" d="M208.5 137.3h47.3L184.5 66h77.9V12.6H137.7v53.8l70.8 70.9zm18.4 160l-35.4-35.4h-47.2l59 59.1 12.2 12.2h-77.8v53.4h124.7v-53.8l-35.5-35.5zm106.7-106.6v24.4l-12.2-12.2-59-59v47.2l35.4 35.4 35.4 35.4H387V137.3h-53.4v53.4zm-267.1-6.6l71.2 71.2v-47.2l-70.8-70.8H13v124.6h53.5v-77.8z" />
               </svg>
             </div>
-            <span class="brand-title">Flatcar is a CNCF Incubating Project</span>
+            <a class="brand-title" href="https://freedesktop-sdk.io" target="_blank" rel="noopener noreferrer">freedesktop-sdk for server foundations</a>
           </div>
-          <p>Part of a diverse ecosystem of community-vetted, vendor-neutral software. The same tools running the world's largest infrastructure, available on the hardware in your closet.</p>
+          <p>Part of a community-vetted open source ecosystem for building reliable Linux foundations, available on the hardware in your closet.</p>
         </div>
       </div>
     </div>

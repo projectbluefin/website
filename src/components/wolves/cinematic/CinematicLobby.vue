@@ -37,19 +37,19 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.web
       <blockquote class="wc-lobby-quote wc-plate wc-plate--sheen">
         <p>
           I've watched AI change open source communities faster than
-          anything so far. And it's getting faster. No one is talking, everyone is
-          yelling past each other. I'm just as guilty as anyone.
-        </p>
-        <p>
+          anything so far, and it's getting faster. No one is talking, everyone is
+          yelling past each other.</p>
+        
           So I did what any good open source maintainer would do -- I turned to my
           friends. And together, we turned to metal. This project is designed to
-          prove the value of the human spirit of creation. This is a collection of
-          artists involved in Bluefin, who have been compensated for their work
-          thanks to your donations, we hope you enjoy the world they've created.
+          prove the value of the human spirit of creation. It features OSS maintainers immortalized in artwork and accompanying musical.</p> 
+        
+          <p>This is a collection of artwork involving Bluefin, including co-creaters Jacob Schnurr and Andy Frazer. We hope to continue to fund the growth of paleoart and open source! 
         </p>
         <div class="wc-lobby-quote-attribution">
           <span class="wc-lobby-quote-name">-- Jorge Castro //projectbluefin.io</span>
           <span class="wc-lobby-quote-detail">sabot-6 - Order of the Lost Saint - Die Vicesimo Primo mensis Iulii, Anno MMXXVI</span>
+          <br><br>
           <p>If you don't like the metal then that's your problem.</p>
         </div>
       </blockquote>

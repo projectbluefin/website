@@ -153,8 +153,23 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/showcase/bluespeed-cluster.png',
+    title: 'Bluespeed Cluster',
+  },
+  {
+    type: 'single',
+    name: 'wolves/showcase/bluespeed-cpu.png',
+    title: 'Bluespeed Cpu',
+  },
+  {
+    type: 'single',
     name: 'wolves/showcase/bluespeed-cpu.webp',
     title: 'Bluespeed Cpu',
+  },
+  {
+    type: 'single',
+    name: 'wolves/showcase/bluespeed-storage.png',
+    title: 'Bluespeed Storage',
   },
   {
     type: 'single',

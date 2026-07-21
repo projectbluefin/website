@@ -12,10 +12,10 @@ const { isLoaded } = useFadeInUp()
 <template>
   <div class="knuckle-desc" :class="{ 'is-loaded': isLoaded }">
     <p class="hero-desc">
-      Bluefin's <a href="https://www.flatcar.org/" target="_blank" rel="noopener noreferrer">Flatcar Linux</a> config. <strong>One management suite</strong> for every service and container in your home.
+      Bluefin's `freedesktop-sdk` server image. <strong>One management suite</strong> for every service and container in your home. K8s conquers the home.
     </p>
     <p class="hero-desc">
-      Image-based, auto-update, zero maintenance, for servers in your closet. <strong>Justfile-driven</strong>, just like Bluefin.
+      Image-based, auto-update, zero maintenance, for servers in your closet. 
     </p>
     <p class="hero-desc">
       Fully API and MCP driven, the ultimate <i>invisible</i> appliance for the home.
