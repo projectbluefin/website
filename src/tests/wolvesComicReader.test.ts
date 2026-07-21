@@ -7,7 +7,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import { wallpapers } from '../components/wolves/wallpapers-list'
 import WolvesComicReader from '../components/wolves/WolvesComicReader.vue'
-import { TRACK_ZERO_SECTIONS } from '../data/wolves-track-zero-beats'
+import {
+  TRACK_ZERO_BEAT_TIMES,
+  TRACK_ZERO_SECTIONS,
+  TRACK_ZERO_TEMPO_PICKUPS,
+} from '../data/wolves-track-zero-beats'
 import { trackZeroFastFinalePhotoIds } from '../data/wolves-track-zero-slides'
 
 const source = {
@@ -92,6 +96,26 @@ describe('wolvesComicReader', () => {
     await wrapper.setProps({ playlistCurrentTime: 128 })
 
     expect(activeTimelineImage(wrapper)).not.toBe(firstSlide)
+  })
+
+  it('cuts Track 0 on measured beats at each authored tempo pickup', async () => {
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        trackIndex: 0,
+        playlistCurrentTime: 0,
+      },
+    })
+    await flushPromises()
+
+    const slides = (wrapper.vm as any).timelineSlides as Array<{ startTime: number, endTime: number }>
+    for (const pickup of Object.values(TRACK_ZERO_TEMPO_PICKUPS)) {
+      const measuredCut = TRACK_ZERO_BEAT_TIMES.reduce((nearest, beat) =>
+        Math.abs(beat - pickup) < Math.abs(nearest - pickup) ? beat : nearest)
+      const cutIndex = slides.findIndex(slide => Math.abs(slide.endTime - measuredCut) < 0.001)
+
+      expect(cutIndex, `missing measured cut at ${pickup}s`).toBeGreaterThanOrEqual(0)
+      expect(slides[cutIndex + 1]?.startTime).toBe(slides[cutIndex].endTime)
+    }
   })
 
   it('does not render manual page navigation', () => {

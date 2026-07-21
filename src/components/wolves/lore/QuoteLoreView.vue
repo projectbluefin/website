@@ -27,10 +27,13 @@ function scrollViewport() {
   void nextTick(() => {
     const viewport = quoteViewportRef.value
     if (viewport) {
-      // Smooth scrolling queues animations faster than the typewriter can
-      // finish them, leaving the lore visibly behind. Set the scroll position
-      // after layout so every authored beat stays pinned to the latest text.
-      viewport.scrollTop = viewport.scrollHeight
+      // The typewriter advances faster than a smooth animation can settle.
+      // Use an immediate scroll after layout so the latest authored text stays
+      // readable instead of accumulating a scroll backlog.
+      viewport.scrollTo({
+        top: viewport.scrollHeight,
+        behavior: 'auto',
+      })
     }
     scrollPending = false
   })
@@ -67,11 +70,7 @@ function skipTypewriter() {
   clearTypewriter()
   typedQuoteText.value = quote.value.quote
 
-  setTimeout(() => {
-    if (quoteViewportRef.value) {
-      quoteViewportRef.value.scrollTop = quoteViewportRef.value.scrollHeight
-    }
-  }, 50)
+  scrollViewport()
 }
 
 watch(() => props.record, runTypewriter, { immediate: true })

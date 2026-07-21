@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   TRACK_ZERO_BEAT_TIMES,
   TRACK_ZERO_SECTIONS,
+  TRACK_ZERO_TEMPO_PICKUPS,
   trackZeroBeatCuts,
   trackZeroBeatCutsWithPickup,
 } from '@/data/wolves-track-zero-beats'
@@ -72,29 +73,29 @@ describe('track zero measured beat grid', () => {
   })
 
   it('picks up from eight-beat to four-beat cuts at 2:35', () => {
-    const cuts = trackZeroBeatCutsWithPickup(126.851, 155, 167.8, 17, 8, 4)
+    const cuts = trackZeroBeatCutsWithPickup(126.851, TRACK_ZERO_TEMPO_PICKUPS.chorus, 167.8, 17, 8, 4)
     const starts = [126.851, ...cuts.slice(0, -1)]
     const durations = cuts.map((cut, index) => cut - starts[index])
 
-    expect(cuts.some(cut => Math.abs(cut - 155) < 0.5)).toBe(true)
+    expect(cuts.some(cut => Math.abs(cut - TRACK_ZERO_TEMPO_PICKUPS.chorus) < 0.5)).toBe(true)
     expect(durations.slice(-2).every(duration => duration < durations[0])).toBe(true)
   })
 
   it('picks up from six-beat to four-beat cuts at 4:04', () => {
-    const cuts = trackZeroBeatCutsWithPickup(229.204, 244, 276.944, 24, 6, 4)
+    const cuts = trackZeroBeatCutsWithPickup(229.204, TRACK_ZERO_TEMPO_PICKUPS.bridge, 276.944, 24, 6, 4)
     const starts = [229.204, ...cuts.slice(0, -1)]
     const durations = cuts.map((cut, index) => cut - starts[index])
 
-    expect(cuts.some(cut => Math.abs(cut - 244) < 0.5)).toBe(true)
+    expect(cuts.some(cut => Math.abs(cut - TRACK_ZERO_TEMPO_PICKUPS.bridge) < 0.5)).toBe(true)
     expect(durations.slice(6, 10).every(duration => duration < durations[0])).toBe(true)
   })
 
   it('picks up from eight-beat to four-beat cuts at 6:00', () => {
-    const cuts = trackZeroBeatCutsWithPickup(359.166, 360, 408.137, 30, 8, 4)
+    const cuts = trackZeroBeatCutsWithPickup(359.166, TRACK_ZERO_TEMPO_PICKUPS.finale, 408.137, 30, 8, 4)
     const starts = [359.166, ...cuts.slice(0, -1)]
     const durations = cuts.map((cut, index) => cut - starts[index])
 
-    expect(cuts.some(cut => Math.abs(cut - 360) < 0.5)).toBe(true)
+    expect(cuts.some(cut => Math.abs(cut - TRACK_ZERO_TEMPO_PICKUPS.finale) < 0.5)).toBe(true)
     expect(durations.slice(1, 5).every(duration => duration < 2)).toBe(true)
   })
 
