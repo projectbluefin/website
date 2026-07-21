@@ -46,11 +46,10 @@ function formatTime(totalSeconds: number): string {
 const segmentTime = computed(() => `${formatTime(store.segmentElapsed)} / ${formatTime(store.segmentDuration)}`)
 const overallTime = computed(() => `${formatTime(store.overallElapsed)} / ${formatTime(store.overallDuration)}`)
 const deploymentPercent = computed(() => Math.round(store.overallProgress * 100))
-// Unix-style block progress readout in the old HUD's spirit.
 const PROGRESS_CELLS = 24
-const progressBlocks = computed(() => {
+const progressCells = computed(() => {
   const filled = Math.round(store.overallProgress * PROGRESS_CELLS)
-  return `[${'#'.repeat(filled)}${'-'.repeat(PROGRESS_CELLS - filled)}]`
+  return Array.from({ length: PROGRESS_CELLS }, (_, index) => index < filled)
 })
 
 const canPrevious = computed(() => store.widgetCanPrevious)
@@ -118,10 +117,15 @@ function handleCaptionChange(event: Event) {
         @click="handleSeek"
         @keydown="handleSeekKeydown"
       >
-        <div class="wc-widget-progress-fill" :style="{ width: `${store.overallProgress * 100}%` }" />
+        <span class="wc-widget-progress-ascii" aria-hidden="true">
+          <span class="wc-widget-progress-bracket">[</span><span
+            v-for="(filled, index) in progressCells"
+            :key="index"
+            :class="{ 'is-filled': filled }"
+          >{{ filled ? '#' : '-' }}</span><span class="wc-widget-progress-bracket">]</span>
+        </span>
       </div>
       <div class="wc-widget-meta">
-        <span class="wc-widget-time">{{ progressBlocks }}</span>
         <span class="wc-widget-time">{{ segmentTime }}</span>
         <span class="wc-widget-time">TOTAL {{ overallTime }}</span>
       </div>
@@ -145,16 +149,6 @@ function handleCaptionChange(event: Event) {
         >
         <span class="wc-widget-toggle-text">{{ props.captionLabel }}</span>
       </label>
-    </div>
-    <div class="wc-widget-telemetry">
-      <div class="wc-widget-telemetry-row">
-        <span>DEPLOYMENT: five-years-of-universal-blue</span>
-        <span class="wc-widget-telemetry-accent">{{ deploymentPercent }}%</span>
-      </div>
-      <div class="wc-widget-meter">
-        <div class="wc-widget-meter-fill" :style="{ width: `${store.overallProgress * 100}%` }" />
-      </div>
-      <span class="wc-widget-telemetry-row">CLUSTER: k3s-exo-1.production // HOST: ghost.local</span>
     </div>
     <div class="wc-widget-controls">
       <button
@@ -238,32 +232,33 @@ function handleCaptionChange(event: Event) {
 }
 
 .wc-widget-progress {
-  position: relative;
+  display: flex;
+  align-items: center;
   height: 32px;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    inset-inline: 0;
-    height: 0.2rem;
-    transform: translateY(-50%);
-    background: rgb(233 233 229 / 14%);
-  }
 }
 
-.wc-widget-progress-fill {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  height: 0.2rem;
-  transform: translateY(-50%);
-  background: var(--wc-gold);
-  transition: width 0.15s linear;
-  box-shadow: 0 0 6px rgb(200 180 137 / 55%);
+.wc-widget-progress-ascii {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  font-family: var(--wc-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  color: var(--wc-grey);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.wc-widget-progress-ascii .is-filled {
+  color: var(--wc-gold);
+}
+
+.wc-widget-progress-bracket {
+  color: var(--wc-grey);
 }
 
 .wc-widget-meta {
