@@ -69,7 +69,9 @@ gh run list --repo projectbluefin/website \
 ```
 
 Production is complete only when the run has the same SHA, status `completed`,
-and conclusion `success`.
+and conclusion `success`. For multi-entry builds, also smoke-test every path
+listed in `../../reference/production-entrypoints.md`; adding an HTML entry alone
+is insufficient unless the Vite Rollup input and directory redirect include it.
 
 ## References
 
