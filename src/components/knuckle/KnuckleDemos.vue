@@ -153,17 +153,17 @@ const urlMap: Record<Phase, string> = {
           <template v-if="phase === 'cluster' || phase === 'cpu' || phase === 'storage'">
             <img
               v-if="phase === 'cluster'"
-              :src="`${baseUrl}bluespeed-cluster.png`"
+              :src="`${baseUrl}img/wallpapers/wolves/showcase/bluespeed-cluster.png`"
               alt="Bluespeed cluster overview"
             >
             <img
               v-else-if="phase === 'cpu'"
-              :src="`${baseUrl}bluespeed-cpu.png`"
+              :src="`${baseUrl}img/wallpapers/wolves/showcase/bluespeed-cpu.png`"
               alt="Bluespeed node metrics"
             >
             <img
               v-else
-              :src="`${baseUrl}bluespeed-storage.png`"
+              :src="`${baseUrl}img/wallpapers/wolves/showcase/bluespeed-storage.png`"
               alt="Bluespeed storage"
             >
           </template>

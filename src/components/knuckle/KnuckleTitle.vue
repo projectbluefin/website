@@ -19,7 +19,7 @@ const { isLoaded } = useFadeInUp()
 
       <div class="title-col-right">
         <p class="title-subtitle">
-          Digital sovereignty is not just for nations
+          Digital Sovereignty Is Not Just for Nations
         </p>
       </div>
     </div>

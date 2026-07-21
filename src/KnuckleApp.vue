@@ -199,7 +199,7 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  width: 75%;
+  width: min(65%, 960px);
   min-width: 0;
 
   @media (max-width: 700px) {
@@ -212,7 +212,7 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
 .karl {
   position: fixed;
   bottom: -10px;
-  height: 50vh;
+  height: 42vh;
   width: auto;
   z-index: 3;
   pointer-events: none;
@@ -232,6 +232,7 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
 
 .karl {
   right: 0;
+  height: 36vh;
 }
 
 %col-glass {
