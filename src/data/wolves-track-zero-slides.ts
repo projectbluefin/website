@@ -114,34 +114,40 @@ export function pinTrackZeroPostHeroOpening<T extends { id: string }>(slides: re
 }
 
 /**
- * The Bluefin Microraptor showcase slide is locked to a fixed slot in the
- * Track 0 showcase rotation (owner request: "lock bluefin microraptor in
- * place"). Index 25 in the seeded showcase shuffle is where it played when the
- * lock landed -- the fourth slide of the Heavy Chorus 1 stretch -- so the pin
- * preserves that placement even as the wallpaper pool grows or shrinks.
+ * The Suncatcher showcase slide is locked to a fixed slot in the Track 0
+ * showcase rotation. Index 25 in the seeded showcase shuffle is the
+ * established fourth slide of the Heavy Chorus 1 stretch, so the pin preserves
+ * that placement as the wallpaper pool grows or shrinks.
  */
-export const bluefinMicroraptorSlideId = 'wolves/showcase/Bluefin Microraptor by Dr. Natalia Jagielska.webp'
-export const bluefinMicroraptorTrackZeroIndex = 25
+export const lockedShowcaseSlideId = 'wolves/showcase/suncatcher.png'
+export const lockedShowcaseTrackZeroIndex = 25
+/** @deprecated Use the locked showcase names above. */
+export const bluefinMicroraptorSlideId = lockedShowcaseSlideId
+/** @deprecated Use the locked showcase names above. */
+export const bluefinMicroraptorTrackZeroIndex = lockedShowcaseTrackZeroIndex
 
 /**
- * Moves the Bluefin Microraptor slide to its locked index in the shuffled
+ * Moves the locked showcase slide to its fixed index in the shuffled
  * showcase pool, keeping every other slide in the given order. A missing
  * slide is skipped so pool drift cannot break the schedule.
  */
-export function pinBluefinMicroraptorSlide<T extends { id: string }>(slides: readonly T[]): T[] {
-  const microraptorIndex = slides.findIndex(slide => slide.id === bluefinMicroraptorSlideId)
-  if (microraptorIndex === -1) {
+export function pinLockedShowcaseSlide<T extends { id: string }>(slides: readonly T[]): T[] {
+  const lockedIndex = slides.findIndex(slide => slide.id === lockedShowcaseSlideId)
+  if (lockedIndex === -1) {
     return [...slides]
   }
 
-  const rest = slides.filter((_, index) => index !== microraptorIndex)
-  const insertionIndex = Math.min(bluefinMicroraptorTrackZeroIndex, rest.length)
+  const rest = slides.filter((_, index) => index !== lockedIndex)
+  const insertionIndex = Math.min(lockedShowcaseTrackZeroIndex, rest.length)
   return [
     ...rest.slice(0, insertionIndex),
-    slides[microraptorIndex],
+    slides[lockedIndex],
     ...rest.slice(insertionIndex),
   ]
 }
+
+/** @deprecated Use pinLockedShowcaseSlide. */
+export const pinBluefinMicroraptorSlide = pinLockedShowcaseSlide
 
 // Explicit reservation of ten user-supplied People photos for the fast finale.
 export const trackZeroFastFinalePhotoIds: ReadonlySet<string> = new Set([

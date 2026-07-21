@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
 
-const directoryEntryPaths = new Set(['/bluespeed', '/dakota', '/knuckle', '/server', '/wolves'])
+const directoryEntryPaths = new Set(['/dakota', '/server', '/wolves'])
 
 function redirectDirectoryEntries(): Plugin {
   return {
@@ -64,8 +64,6 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         testing: resolve(__dirname, 'public/testing.html'),
         dakota: resolve(__dirname, 'dakota/index.html'),
-        knuckle: resolve(__dirname, 'knuckle/index.html'),
-        bluespeed: resolve(__dirname, 'bluespeed/index.html'),
         server: resolve(__dirname, 'server/index.html'),
         wolves: resolve(__dirname, 'wolves/index.html'),
       },

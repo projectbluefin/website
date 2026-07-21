@@ -33,8 +33,6 @@ approval if the requested result needs a design file or runtime behavior change.
 | `/` | `index.html` | Public main site |
 | `/wolves/` | `wolves/index.html` | Public experience |
 | `/dakota/` | `dakota/index.html` | Unlisted sub-application |
-| `/knuckle/` | `knuckle/index.html` | Unlisted sub-application |
-| `/bluespeed/` | `bluespeed/index.html` | Unlisted sub-application |
 | `/server/` | `server/index.html` | Separate production entry |
 
 Do not promote an unlisted path through navigation, metadata, or a sitemap.

@@ -52,11 +52,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update Knuckle versions from Flatcar SBOM
-        run: node scripts/update-knuckle-versions.js
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Update Flickr photos
         run: node scripts/update-flickr-photos.js
 
@@ -66,7 +61,6 @@ jobs:
           path: |
             public/stream-versions.yml
             public/dakota-versions.json
-            public/knuckle-versions.json
             public/flickr-photos.json
             src/assets/svg/growth_bluefins.svg
           key: website-live-data-${{ github.run_id }}

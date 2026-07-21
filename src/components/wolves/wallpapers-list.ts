@@ -73,11 +73,6 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/showcase/Bluefin Microraptor by Dr. Natalia Jagielska.webp',
-    title: 'Bluefin Microraptor by Dr',
-  },
-  {
-    type: 'single',
     name: 'wolves/showcase/Bluefin is Born.webp',
     title: 'Bluefin is Born',
   },
@@ -140,6 +135,11 @@ export const wallpapers: Wallpaper[] = [
     type: 'single',
     name: 'wolves/showcase/Pasted image.webp',
     title: 'Pasted image',
+  },
+  {
+    type: 'single',
+    name: 'wolves/showcase/Screenshot From 2026-01-23 09-32-12.webp',
+    title: 'Screenshot From 2026 01 23 09 32 12',
   },
   {
     type: 'single',
@@ -235,6 +235,11 @@ export const wallpapers: Wallpaper[] = [
     type: 'single',
     name: 'wolves/showcase/stellar.webp',
     title: 'Stellar',
+  },
+  {
+    type: 'single',
+    name: 'wolves/showcase/suncatcher.png',
+    title: 'Suncatcher',
   },
   {
     type: 'single',

@@ -40,7 +40,6 @@ jobs:
           path: |
             public/stream-versions.yml
             public/dakota-versions.json
-            public/knuckle-versions.json
             public/flickr-photos.json
             src/assets/svg/growth_bluefins.svg
           key: website-live-data-

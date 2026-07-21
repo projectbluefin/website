@@ -1806,33 +1806,33 @@ defineExpose({
   color: #94a3b8;
 }
 
-/* Bluefin-blue treatment for the complete plate to signify leadership. Reserved for
+/* Gold treatment for the complete plate to signify leadership. Reserved for
    Christoph Blecker's "First Among Equals" cue; it takes precedence over trustee chrome. */
 .wolves-guardian-plate.wolves-guardian-plate-leader {
-  border-color: rgb(56 189 248 / 55%);
-  box-shadow: 0 0 24px rgb(56 189 248 / 20%);
+  border-color: rgb(250 204 21 / 55%);
+  box-shadow: 0 0 24px rgb(250 204 21 / 20%);
 }
 
 .wolves-guardian-plate-leader .wolves-guardian-plate-burst {
-  background: radial-gradient(circle, #fff 0%, #38bdf8 45%, transparent 70%);
+  background: radial-gradient(circle, #fff 0%, #facc15 45%, transparent 70%);
 }
 
 .wolves-guardian-plate-leader .wolves-guardian-plate-horizon {
-  background: linear-gradient(to right, transparent, #38bdf8 60%, #fff 100%);
-  box-shadow: 0 0 8px rgb(56 189 248 / 55%);
+  background: linear-gradient(to right, transparent, #facc15 60%, #fff 100%);
+  box-shadow: 0 0 8px rgb(250 204 21 / 55%);
 }
 
 .wolves-guardian-plate-leader .wolves-guardian-plate-horizon-right {
-  background: linear-gradient(to left, transparent, #38bdf8 60%, #fff 100%);
+  background: linear-gradient(to left, transparent, #facc15 60%, #fff 100%);
 }
 
 .wolves-guardian-plate-leader .wolves-guardian-plate-crest {
-  filter: drop-shadow(0 0 8px rgb(56 189 248 / 70%));
+  filter: drop-shadow(0 0 8px rgb(250 204 21 / 70%));
 }
 
 .wolves-guardian-plate-leader .wolves-guardian-plate-crest-outer,
 .wolves-guardian-plate-leader .wolves-guardian-plate-crest-chevron {
-  stroke: #38bdf8;
+  stroke: #facc15;
 }
 
 .wolves-guardian-plate-leader .wolves-guardian-plate-label {
@@ -1840,7 +1840,7 @@ defineExpose({
 }
 
 .wolves-guardian-plate-leader .wolves-guardian-plate-title {
-  color: #bae6fd;
+  color: #fde68a;
   font-weight: 600;
 }
 

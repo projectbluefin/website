@@ -17,8 +17,6 @@ workflow needed for the task.
 | `/` | `index.html` | Public main site |
 | `/wolves/` | `wolves/index.html` | Public experience |
 | `/dakota/` | `dakota/index.html` | Unlisted |
-| `/knuckle/` | `knuckle/index.html` | Unlisted |
-| `/bluespeed/` | `bluespeed/index.html` | Unlisted |
 | `/server/` | `server/index.html` | Separate entry |
 
 ## Local development
