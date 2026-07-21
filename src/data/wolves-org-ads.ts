@@ -34,18 +34,6 @@ export const WOLVES_ORG_AD_PAIRS = [
       supportLabel: 'Support GNOME',
     },
     {
-      id: 'kde',
-      name: 'KDE',
-      href: 'https://kde.org/donate/',
-      image: kdeImage,
-      imageAlt: 'KDE',
-      qr: kdeQr,
-      qrAlt: 'QR code for KDE donations',
-      supportLabel: 'Support KDE',
-    },
-  ],
-  [
-    {
       id: 'bazaar-eva',
       name: 'Bazaar // Eva',
       href: 'https://ko-fi.com/kolunmi',
@@ -54,6 +42,18 @@ export const WOLVES_ORG_AD_PAIRS = [
       qr: qrKofiKolunmi,
       qrAlt: 'QR code for Eva on Ko-fi',
       supportLabel: 'Support Eva',
+    },
+  ],
+  [
+    {
+      id: 'kde',
+      name: 'KDE',
+      href: 'https://kde.org/donate/',
+      image: kdeImage,
+      imageAlt: 'KDE',
+      qr: kdeQr,
+      qrAlt: 'QR code for KDE donations',
+      supportLabel: 'Support KDE',
     },
     {
       id: 'bazaar-alex',

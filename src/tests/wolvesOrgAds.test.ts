@@ -23,13 +23,17 @@ describe('wolves organization ad pairs', () => {
     expect(getWolvesOrgAdBlend(64).opacities).toEqual([1, 0])
   })
 
-  it('pairs GNOME with KDE and keeps Bazaar support cards separate', () => {
+  it('pairs each Bazaar support card with a project card so Bazaar ads never share the screen', () => {
     expect(WOLVES_ORG_AD_PAIRS.map(pair => pair.map(ad => ad.id))).toEqual([
-      ['gnome', 'kde'],
-      ['bazaar-eva', 'bazaar-alex'],
+      ['gnome', 'bazaar-eva'],
+      ['kde', 'bazaar-alex'],
+    ])
+    expect(WOLVES_ORG_AD_PAIRS[0].map(ad => ad.supportLabel)).toEqual([
+      'Support GNOME',
+      'Support Eva',
     ])
     expect(WOLVES_ORG_AD_PAIRS[1].map(ad => ad.supportLabel)).toEqual([
-      'Support Eva',
+      'Support KDE',
       'Support Alex',
     ])
   })
@@ -51,9 +55,9 @@ describe('wolvesOrgAds component', () => {
     expect(wrapper.findAll('.wc-org-ad-pair')).toHaveLength(2)
     expect(wrapper.get('.wc-org-ad-pair[data-pair="0"]').findAll('.wc-org-ad')).toHaveLength(2)
     expect(wrapper.get('.wc-org-ad-pair[data-pair="1"]').findAll('.wc-org-ad')).toHaveLength(2)
-    expect(wrapper.get('.wc-org-ad-pair[data-pair="0"]').findAll('.wc-org-ad-qr-maintainer').map(node => node.text())).toEqual(['Support GNOME', 'Support KDE'])
-    expect(wrapper.get('.wc-org-ad-pair[data-pair="1"]').findAll('.wc-org-ad-qr-maintainer').map(node => node.text())).toEqual(['Support Eva', 'Support Alex'])
-    expect(wrapper.get('.wc-org-ad-pair[data-pair="1"]').findAll('.wc-org-ad').map(ad => ad.find('.wc-org-ad-qr-maintainer').text())).toEqual(['Support Eva', 'Support Alex'])
+    expect(wrapper.get('.wc-org-ad-pair[data-pair="0"]').findAll('.wc-org-ad-qr-maintainer').map(node => node.text())).toEqual(['Support GNOME', 'Support Eva'])
+    expect(wrapper.get('.wc-org-ad-pair[data-pair="1"]').findAll('.wc-org-ad-qr-maintainer').map(node => node.text())).toEqual(['Support KDE', 'Support Alex'])
+    expect(wrapper.get('.wc-org-ad-pair[data-pair="1"]').findAll('.wc-org-ad').map(ad => ad.find('.wc-org-ad-qr-maintainer').text())).toEqual(['Support KDE', 'Support Alex'])
     expect(wrapper.get('.wc-org-ad-pair[data-pair="0"]').attributes('data-opacity')).toBe('1')
     expect(wrapper.get('.wc-org-ad-pair[data-pair="1"]').attributes('data-opacity')).toBe('0')
   })
