@@ -196,19 +196,19 @@ describe('wolvesIntroOverlay video segments', () => {
     expect(images.every(image => image.decode.mock.calls.length === 1)).toBe(true)
   })
 
-  it('renders a pause veil over the iframe when the player is paused', async () => {
+  it('leaves the video unobscured when the player is paused', async () => {
     const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
 
-    expect(wrapper.find('.wolves-intro-overlay-top-left-mask').exists()).toBe(true)
+    expect(wrapper.find('.wolves-intro-overlay-top-left-mask').exists()).toBe(false)
     expect(wrapper.find('.wolves-intro-overlay-pause-veil').exists()).toBe(false)
 
     players[0].pauseVideo()
     await flushPromises()
 
-    expect(wrapper.find('.wolves-intro-overlay-pause-veil').exists()).toBe(true)
+    expect(wrapper.find('.wolves-intro-overlay-pause-veil').exists()).toBe(false)
     expect(wrapper.find('.wolves-intro-overlay').exists()).toBe(true)
   })
 
@@ -597,13 +597,13 @@ describe('wolvesIntroOverlay video segments', () => {
     resolveIframeApi()
     await flushPromises()
 
-    expect(wrapper.find('.wolves-intro-overlay-top-left-mask').exists()).toBe(true)
+    expect(wrapper.find('.wolves-intro-overlay-top-left-mask').exists()).toBe(false)
     expect(wrapper.find('.wolves-intro-overlay-pause-veil').exists()).toBe(false)
 
     wrapper.vm.toggle()
     await flushPromises()
 
-    expect(wrapper.find('.wolves-intro-overlay-pause-veil').exists()).toBe(true)
+    expect(wrapper.find('.wolves-intro-overlay-pause-veil').exists()).toBe(false)
   })
 
   it('completes immediately for an empty video list instead of hanging', async () => {

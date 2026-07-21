@@ -59,28 +59,6 @@ const segmentDurations = ref<number[]>(props.videos.map(video => (isTextSegment(
 const currentSegment = computed<IntroVideoSpec | undefined>(() => props.videos[sequenceState.value.index])
 const canGoToPrevious = computed(() => sequenceState.value.index > 0)
 
-/**
- * Opaque cover over the player while YouTube boots a video segment. The embed
- * paints its own centered play/pause state icon (and title chrome) inside the
- * iframe for the first seconds of playback, and semi-transparent masks cannot
- * hide the composited video layer. The cover lifts once playback has advanced
- * past the boot window; the opening frames it hides are effectively black.
- */
-const BOOT_COVER_LEAD_SECONDS = 4
-const bootCoverReleased = ref(false)
-watch(currentTime, (time) => {
-  if (bootCoverReleased.value) {
-    return
-  }
-  const segment = currentSegment.value
-  if (!segment || !isVideoSegment(segment)) {
-    return
-  }
-  if (time >= (segment.startOffset ?? 0) + BOOT_COVER_LEAD_SECONDS) {
-    bootCoverReleased.value = true
-  }
-})
-
 const activeCue = computed<IntroOverlayTextCue | undefined>(() => activeOverlayCue(currentSegment.value?.overlays, currentTime.value))
 const burnedInCaptionCues = computed<readonly IntroOverlayTextCue[] | undefined>(() => {
   if (!currentSegment.value || !isVideoSegment(currentSegment.value)) {
@@ -472,7 +450,6 @@ function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
 async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video' }> | undefined) {
   const token = ++loadToken
   currentTime.value = 0
-  bootCoverReleased.value = false
   destroyPlayer()
 
   if (!segment) {
@@ -735,24 +712,6 @@ defineExpose({
     >
       <template v-if="currentSegment.kind === 'video'">
         <div ref="mountHost" class="wolves-intro-overlay-player" />
-        <Transition name="wolves-intro-overlay-boot-cover-fade">
-          <div
-            v-if="!bootCoverReleased"
-            class="wolves-intro-overlay-boot-cover"
-            aria-hidden="true"
-          />
-        </Transition>
-        <div
-          class="wolves-intro-overlay-top-left-mask"
-          aria-hidden="true"
-        />
-        <Transition name="wolves-intro-overlay-pause-veil-fade">
-          <div
-            v-if="isPaused"
-            class="wolves-intro-overlay-pause-veil"
-            aria-hidden="true"
-          />
-        </Transition>
       </template>
       <template v-else>
         <div class="wolves-intro-overlay-blackscreen">
@@ -998,54 +957,6 @@ defineExpose({
   width: 100%;
   height: 100%;
   pointer-events: none;
-}
-
-/* Opaque boot cover over the whole player while YouTube's centered state icon
-   and title chrome paint during a video segment's first seconds. Must stay
-   fully opaque for the same compositing reason as the band above. */
-.wolves-intro-overlay-boot-cover {
-  position: absolute;
-  inset: 0;
-  background: #000;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.wolves-intro-overlay-boot-cover-fade-leave-active {
-  transition: opacity 0.6s ease-out;
-}
-
-.wolves-intro-overlay-boot-cover-fade-leave-to {
-  opacity: 0;
-}
-
-.wolves-intro-overlay-top-left-mask {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: clamp(7.2rem, 13vh, 10rem);
-  background: linear-gradient(180deg, #000 0%, #000 68%, transparent 100%);
-  pointer-events: none;
-  z-index: 2;
-}
-
-.wolves-intro-overlay-pause-veil {
-  position: absolute;
-  inset: 0;
-  background: rgb(0 0 0 / 80%);
-  pointer-events: none;
-  z-index: 3;
-}
-
-.wolves-intro-overlay-pause-veil-fade-enter-active,
-.wolves-intro-overlay-pause-veil-fade-leave-active {
-  transition: opacity 0.25s ease;
-}
-
-.wolves-intro-overlay-pause-veil-fade-enter-from,
-.wolves-intro-overlay-pause-veil-fade-leave-to {
-  opacity: 0;
 }
 
 .wolves-intro-overlay-blackscreen {
@@ -1571,10 +1482,6 @@ defineExpose({
   .wolves-intro-overlay-text-somber {
     animation: none;
     opacity: 1;
-  }
-
-  .wolves-intro-overlay-pause-veil {
-    transition: none;
   }
 
   .wolves-intro-overlay-background-day {
