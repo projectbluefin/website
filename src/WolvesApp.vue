@@ -60,8 +60,6 @@ const INTRO_HANDOFF_FADE_MS = 400
 const intro = ref<InstanceType<typeof WolvesIntroOverlay> | null>(null)
 const introShowVoiceOverToggle = ref(false)
 const introVoiceOverEnabled = ref(false)
-const introShowCaptionToggle = ref(false)
-const introCaptionsEnabled = ref(false)
 const introNameplateVisible = ref(true)
 const introNameplateGlitch = ref(false)
 const introSegmentIndexById = new Map(introVideos.map((segment, index) => [segment.id, index]))
@@ -84,8 +82,6 @@ async function enterIntro() {
   introTransparent.value = false
   store.enterIntro()
   introMediaTitle.value = INTRO_DISPLAY['wolves-intro'].mediaTitle
-  introShowCaptionToggle.value = false
-  introCaptionsEnabled.value = false
   await nextTick()
   if (unmounted || token !== handoffToken || store.phase !== 'intro') {
     return
@@ -144,8 +140,6 @@ function handleIntroStatus(payload: IntroStatusPayload) {
   introNameplateGlitch.value = payload.nameplateGlitch ?? false
   introShowVoiceOverToggle.value = payload.showVoiceOverToggle ?? false
   introVoiceOverEnabled.value = payload.voiceOverEnabled ?? false
-  introShowCaptionToggle.value = payload.showCaptionToggle ?? false
-  introCaptionsEnabled.value = payload.captionsEnabled ?? false
   store.syncIntroStatus(normalizeIntroStatus(payload))
   store.setPlaying(!payload.paused)
 }
@@ -154,8 +148,6 @@ function clearIntroUi() {
   store.setDisplayOverride(null)
   introShowVoiceOverToggle.value = false
   introVoiceOverEnabled.value = false
-  introShowCaptionToggle.value = false
-  introCaptionsEnabled.value = false
   introNameplateVisible.value = true
   introNameplateGlitch.value = false
 }
@@ -266,12 +258,8 @@ onBeforeUnmount(() => {
           :show-voice-over-toggle="introShowVoiceOverToggle"
           :voice-over-enabled="introVoiceOverEnabled"
           voice-over-label="Ikora voice over"
-          :show-caption-toggle="introShowCaptionToggle"
-          :captions-enabled="introCaptionsEnabled"
-          caption-label="CC"
           @toggle-play="intro?.toggle()"
           @toggle-voice-over="(enabled: boolean) => intro?.setVoiceOverEnabled(enabled)"
-          @toggle-captions="(enabled: boolean) => intro?.setCaptionsEnabled(enabled)"
           @skip="handleIntroSkip"
           @seek="handleSegmentSeek"
         />

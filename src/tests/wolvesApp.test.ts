@@ -325,7 +325,7 @@ describe('wolvesApp intro status handling', () => {
     expect(handoffCalls).toEqual(['start', 'destroy', 'prepare'])
   })
 
-  it('shows the Destiny CC switch off by default and forwards its state to the intro overlay', async () => {
+  it('does not render a CC switch in the Destiny media widget', async () => {
     const store = useCinematicStore()
     store.enterIntro()
 
@@ -336,8 +336,6 @@ describe('wolvesApp intro status handling', () => {
     })
 
     const intro = wrapper.getComponent(WolvesIntroOverlayStub)
-    const widget = () => wrapper.getComponent(MediaWidgetStub)
-
     intro.vm.$emit('status', {
       currentTime: 18,
       duration: 90,
@@ -351,11 +349,7 @@ describe('wolvesApp intro status handling', () => {
     })
     await wrapper.vm.$nextTick()
 
-    expect(widget().text()).toBe('true|true|Ikora voice over|true|false|CC')
-
-    widget().vm.$emit('toggleCaptions', true)
-
-    expect(setCaptionsEnabled).toHaveBeenCalledWith(true)
+    expect(wrapper.getComponent(MediaWidgetStub).text()).toBe('true|true|Ikora voice over|false|false|')
   })
 
   it('keeps the Nova tag in the top status while preserving the Destiny music-widget title', async () => {
