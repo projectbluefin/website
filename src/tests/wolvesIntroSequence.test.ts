@@ -239,7 +239,7 @@ describe('wolves intro overlay sequence', () => {
     expect(cues).toEqual([])
   })
 
-  it('reserves the final fifteen Destiny seconds for the Legends Sought top status', () => {
+  it('reserves the final 12.3 Destiny seconds for the Legends Sought top status', () => {
     const destiny = buildIntroVideoSequence().find(segment => segment.id === 'wolves-intro')
     if (!destiny || !isVideoSegment(destiny)) {
       throw new Error('Expected the Destiny segment to exist')
@@ -247,7 +247,7 @@ describe('wolves intro overlay sequence', () => {
 
     expect(activeOverlayCue(destiny.overlays, 106.5)).toEqual(expect.objectContaining({
       start: 106.5,
-      end: 121.5,
+      end: 118.8,
       nameplateDetail: 'Legends Sought',
       nameplateTitle: 'Follow the path, we\'ve got your back',
       statusOnly: true,
@@ -272,7 +272,7 @@ describe('wolves intro overlay sequence', () => {
     }
 
     expect(destiny.burnedInCaptions).toEqual([
-      { text: 'COMIC HERO SHOTS OF OPEN SOURCE MAINTAINERS SHREDDING A BUNCH OF CLANKERS', start: 24, end: 38, comicHeroTitleCard: true },
+      { text: 'Comic Book OSS Maintainers Shredding Clankers', start: 24, end: 38, comicHeroTitleCard: true },
     ])
   })
 })

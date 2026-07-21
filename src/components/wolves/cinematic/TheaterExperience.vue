@@ -439,13 +439,12 @@ onBeforeUnmount(() => {
 .wc-trackzero-video-row {
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 0.6rem;
   min-height: 0;
-  padding: 1.2rem;
-  border-radius: 12px;
-  border: 1px solid #272727;
-  background: #10151f;
-  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: visible;
 }
 
 .wc-trackzero-video-title {
@@ -457,13 +456,13 @@ onBeforeUnmount(() => {
 
 .wc-trackzero-video-frame {
   position: relative;
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   width: 100%;
   aspect-ratio: 16 / 9;
-  border-radius: 8px;
+  border-radius: 1rem;
   overflow: hidden;
-  background: #000;
+  background: transparent;
 }
 
 .wc-trackzero-video-frame iframe {
