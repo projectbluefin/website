@@ -260,19 +260,19 @@ try {
   expectTruthy('Christoph Blecker is classified as a leader', christophClasses?.includes('wolves-guardian-plate-leader'))
   const christophPlate = page.locator('.wolves-guardian-plate').filter({ hasText: 'Christoph Blecker' })
   expectEqual(
-    'Christoph Blecker leader plate has gold border',
+    'Christoph Blecker leader plate has blue border',
     await christophPlate.evaluate(element => getComputedStyle(element).borderTopColor),
-    'rgba(250, 204, 21, 0.55)',
+    'rgba(56, 189, 248, 0.55)',
   )
   expectEqual(
-    'Christoph Blecker leader badge has gold crest',
+    'Christoph Blecker leader badge has blue crest',
     await christophPlate.locator('.wolves-guardian-plate-crest-outer').evaluate(element => getComputedStyle(element).stroke),
-    'rgb(250, 204, 21)',
+    'rgb(56, 189, 248)',
   )
   expectEqual(
-    'Christoph Blecker leader plate has gold label',
+    'Christoph Blecker leader plate has blue label',
     await christophPlate.locator('.wolves-guardian-plate-label').evaluate(element => getComputedStyle(element).color),
-    'rgb(250, 204, 21)',
+    'rgb(56, 189, 248)',
   )
   if (christophBox && alamoBox) {
     expectTruthy('Alamo shares Christoph Blecker\'s lower baseline', Math.abs((alamoBox.y + alamoBox.height) - (christophBox.y + christophBox.height)) < 8)

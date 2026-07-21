@@ -422,13 +422,10 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
       //   40s, well before the footage itself ends).
       // - Laura Santamaria's Solar Hunter window (70.5-77s) was already correct.
       // - Christoph Blecker (Strand, green) and Natali Vlatko (Behemoth Titan, icy blue) share
-      //   the same shot from ~87.5-90s onward, so their windows now overlap (83-96s and
+      //   the same shot from ~87.5-90s onward, so their windows overlap (83-95s and
       //   87.5-96s) with `position` anchoring each to its own side of the frame instead of one
-      //   caption overwriting the other. Christoph's window was extended from 90s to 96s
-      //   (matching Natali's own end) at explicit user request, confirmed 2026-07-15 — his green
-      //   Strand arm is still clearly visible reaching into frame through 94-96s (re-verified via
-      //   frame capture), so this also corrects the plate disappearing while he's still on
-      //   screen, not just a stylistic hold. His complete leader plate is gold, while its
+      //   caption overwriting the other. Christoph's plate ends a second before Natali's so
+      //   the two nameplates do not linger together after his shot has settled. His complete leader plate is gold, while its
       //   trustee label remains authoritative. His title line carries two segments joined the same way
       //   ("First Among Equals — The North Star"), rendered on one `wolves-guardian-plate-title`
       //   line with identical styling so both read with equal visual weight. "Uncompromising
@@ -469,7 +466,7 @@ export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
         { text: '#nova4ever', start: 60.6, end: 61.05, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
         { text: '#nova4ever', start: 68.1, end: 68.55, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
         { text: 'Gunslinger Hunter — Laura Santamaria — The Order of Seven', start: 70.5, end: 77 },
-        { text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 83, end: 96, position: 'left', trustee: true, leader: true },
+        { text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 83, end: 95, position: 'left', trustee: true, leader: true },
         { text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 87.5, end: 96, position: 'right', raised: true },
         { text: 'Follow the path, we\'ve got your back', start: 106.5, end: 121.5, nameplateDetail: 'Legends Sought', nameplateTitle: 'Follow the path, we\'ve got your back', statusOnly: true },
       ],

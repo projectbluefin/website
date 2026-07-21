@@ -1,0 +1,3 @@
+name = "projectbluefin-subdomain-router"
+main = "subdomain-router.js"
+compatibility_date = "2026-07-21"

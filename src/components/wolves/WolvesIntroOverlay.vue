@@ -1478,6 +1478,16 @@ defineExpose({
   }
 }
 
+@media (max-width: 640px) {
+  .wolves-guardian-plate-row {
+    bottom: max(18%, 12rem);
+  }
+
+  .wolves-companion-plate {
+    bottom: max(18%, 12rem);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wolves-intro-overlay-text-somber {
     animation: none;
