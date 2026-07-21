@@ -762,17 +762,20 @@ defineExpose({
                 {{ activeComicTitleCardCue.text }}
               </p>
               <div v-if="activeComicHeroShot" class="wolves-intro-overlay-title-card-art-frame">
-                <img
-                  :src="`${baseUrl}${activeComicHeroShot.src}`"
-                  :alt="activeComicHeroShot.label"
-                  :data-comic-hero-shot="activeComicHeroShot.id"
-                  :style="{
-                    width: `${activeComicHeroShot.contentFrame.width}%`,
-                    left: `${activeComicHeroShot.contentFrame.left}%`,
-                    top: `${activeComicHeroShot.contentFrame.top}%`,
-                  }"
-                  class="wolves-intro-overlay-title-card-art"
-                >
+                <Transition name="comic-hero-shot-fade" mode="out-in">
+                  <img
+                    :key="activeComicHeroShot.id"
+                    :src="`${baseUrl}${activeComicHeroShot.src}`"
+                    :alt="activeComicHeroShot.label"
+                    :data-comic-hero-shot="activeComicHeroShot.id"
+                    :style="{
+                      width: `${activeComicHeroShot.contentFrame.width}%`,
+                      left: `${activeComicHeroShot.contentFrame.left}%`,
+                      top: `${activeComicHeroShot.contentFrame.top}%`,
+                    }"
+                    class="wolves-intro-overlay-title-card-art"
+                  >
+                </Transition>
               </div>
               <p
                 class="wolves-intro-overlay-title-card-line wolves-intro-overlay-title-card-line-small"
@@ -1177,6 +1180,16 @@ defineExpose({
   position: relative;
   width: min(72vw, 42vh, 60rem);
   aspect-ratio: 1;
+}
+
+.comic-hero-shot-fade-enter-active,
+.comic-hero-shot-fade-leave-active {
+  transition: opacity 0.35s ease;
+}
+
+.comic-hero-shot-fade-enter-from,
+.comic-hero-shot-fade-leave-to {
+  opacity: 0;
 }
 
 .wolves-intro-overlay-title-card-art {
