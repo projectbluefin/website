@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import type { ExperienceManifest } from '@/config/experience-manifest'
 import type { IntroStatusPayload } from '@/data/wolves-intro-sequence'
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
 import CinematicLobby from '@/components/wolves/cinematic/CinematicLobby.vue'
 import CinematicStage from '@/components/wolves/cinematic/CinematicStage.vue'
 import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import Nameplate from '@/components/wolves/cinematic/Nameplate.vue'
 import WolvesIntroOverlay from '@/components/wolves/WolvesIntroOverlay.vue'
 import { buildIntroVideoSequence, isTextSegment } from '@/data/wolves-intro-sequence'
-import { resolveOverallRatioTarget, useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
+import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
 const store = useCinematicStore()
 
@@ -225,130 +225,14 @@ async function handleIntroSkip(delta: number) {
   intro.value?.previous()
 }
 
-async function seekIntroTarget(ratio: number) {
-  const token = await restoreIntroForNavigation()
-  if (token === null) {
+async function handleSegmentSeek(ratio: number) {
+  if (showIntroOverlay.value) {
+    intro.value?.seekToRatio(ratio)
     return
   }
-  if (unmounted || token !== handoffToken) {
-    return
+  if (store.phase === 'cinematic') {
+    stage.value?.seekToRatio(ratio)
   }
-  const target = resolveOverallRatioTarget(ratio)
-  if (target.phase !== 'intro' || !intro.value) {
-    return
-  }
-
-  for (let index = store.segmentIndex; index < target.segmentIndex; index++) {
-    intro.value.next()
-    await nextTick()
-    if (unmounted || token !== handoffToken) {
-      return
-    }
-  }
-
-  for (let index = store.segmentIndex; index > target.segmentIndex; index--) {
-    intro.value.previous()
-    await nextTick()
-    if (unmounted || token !== handoffToken) {
-      return
-    }
-  }
-
-  await waitForIntroTarget(target.segmentIndex, target.segmentDuration)
-  if (unmounted || token !== handoffToken) {
-    return
-  }
-  intro.value.seekToRatio(target.seekRatio)
-}
-
-function waitForCinematicTarget(segmentIndex: number) {
-  return new Promise<void>((resolve, reject) => {
-    if (store.phase === 'cinematic' && store.segmentIndex === segmentIndex && !store.crossfading) {
-      resolve()
-      return
-    }
-
-    let stop: () => void = () => {}
-    const timeout = window.setTimeout(() => {
-      stop()
-      reject(new Error(`Timed out waiting for cinematic segment ${segmentIndex}`))
-    }, 8000)
-
-    stop = watch(
-      () => [store.phase, store.segmentIndex, store.crossfading] as const,
-      ([phase, currentIndex, crossfading]) => {
-        if (phase === 'cinematic' && currentIndex === segmentIndex && !crossfading) {
-          window.clearTimeout(timeout)
-          stop()
-          resolve()
-        }
-      },
-    )
-  })
-}
-
-function waitForIntroTarget(segmentIndex: number, segmentDuration: number) {
-  return new Promise<void>((resolve, reject) => {
-    if (store.phase === 'intro'
-      && store.segmentIndex === segmentIndex
-      && store.segmentDuration >= Math.max(0, segmentDuration - 0.01)) {
-      resolve()
-      return
-    }
-
-    let stop: () => void = () => {}
-    const timeout = window.setTimeout(() => {
-      stop()
-      reject(new Error(`Timed out waiting for intro segment ${segmentIndex}`))
-    }, 8000)
-
-    stop = watch(
-      () => [store.phase, store.segmentIndex, store.segmentDuration] as const,
-      ([phase, currentIndex, duration]) => {
-        if (phase === 'intro'
-          && currentIndex === segmentIndex
-          && duration >= Math.max(0, segmentDuration - 0.01)) {
-          window.clearTimeout(timeout)
-          stop()
-          resolve()
-        }
-      },
-    )
-  })
-}
-
-async function seekCinematicTarget(ratio: number) {
-  const target = resolveOverallRatioTarget(ratio)
-  if (target.phase !== 'cinematic') {
-    return
-  }
-
-  clearIntroUi()
-
-  if (store.phase !== 'cinematic') {
-    await enterCinematic()
-  }
-
-  if (!stage.value) {
-    return
-  }
-
-  const delta = target.segmentIndex - store.segmentIndex
-  if (delta !== 0) {
-    stage.value.skip(delta)
-    await waitForCinematicTarget(target.segmentIndex)
-  }
-
-  stage.value.seekToRatio(target.seekRatio)
-}
-
-async function handleOverallSeek(ratio: number) {
-  const target = resolveOverallRatioTarget(ratio)
-  if (target.phase === 'intro') {
-    await seekIntroTarget(ratio)
-    return
-  }
-  await seekCinematicTarget(ratio)
 }
 
 onBeforeUnmount(() => {
@@ -389,7 +273,7 @@ onBeforeUnmount(() => {
           @toggle-voice-over="(enabled: boolean) => intro?.setVoiceOverEnabled(enabled)"
           @toggle-captions="(enabled: boolean) => intro?.setCaptionsEnabled(enabled)"
           @skip="handleIntroSkip"
-          @seek="handleOverallSeek"
+          @seek="handleSegmentSeek"
         />
       </template>
 
@@ -397,7 +281,7 @@ onBeforeUnmount(() => {
         v-else
         @toggle-play="stage?.togglePlay()"
         @skip="(delta: number) => stage?.skip(delta)"
-        @seek="handleOverallSeek"
+        @seek="handleSegmentSeek"
       />
     </div>
   </div>

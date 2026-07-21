@@ -246,7 +246,7 @@ describe('wolvesApp intro status handling', () => {
     expect(wrapper.find('.wolves-intro-overlay-stub').exists()).toBe(false)
   })
 
-  it('destroys the cinematic stage before seeking back into the intro', async () => {
+  it('seeks within the active cinematic song without changing phase', async () => {
     const store = useCinematicStore()
     store.enterCinematic()
     const wrapper = shallowMount(WolvesApp, {
@@ -257,11 +257,12 @@ describe('wolvesApp intro status handling', () => {
     await flushPromises()
     await nextTick()
 
-    expect(handoffCalls).toEqual(['destroy', 'prepare'])
-    expect(store.phase).toBe('intro')
+    expect(handoffCalls).toEqual([])
+    expect(store.phase).toBe('cinematic')
+    expect((wrapper.getComponent(CinematicStageStub).vm as any).seekToRatio).toHaveBeenCalledWith(0)
   })
 
-  it('cancels a delayed handoff before remounting the intro for a seek', async () => {
+  it('seeks within the intro segment during a delayed handoff', async () => {
     let resolveStart: (() => void) | undefined
     startStage = () => {
       handoffCalls.push('start')
@@ -283,13 +284,14 @@ describe('wolvesApp intro status handling', () => {
     await flushPromises()
     await nextTick()
 
-    expect(store.phase).toBe('intro')
-    expect(introMounts).toBe(2)
+    expect(store.phase).toBe('cinematic')
+    expect(introMounts).toBe(1)
+    expect((wrapper.getComponent(WolvesIntroOverlayStub).vm as any).seekToRatio).toHaveBeenCalledWith(0)
 
     resolveStart?.()
     await flushPromises()
 
-    expect(handoffCalls).toEqual(['start', 'destroy', 'prepare'])
+    expect(handoffCalls).toEqual(['start', 'transparent'])
     expect(wrapper.find('.wolves-intro-overlay-stub').exists()).toBe(true)
   })
 

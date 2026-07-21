@@ -19,9 +19,9 @@ describe('media widget', () => {
     const wrapper = mount(MediaWidget)
     const asciiProgress = wrapper.get('.wc-widget-progress-ascii')
 
-    expect(asciiProgress.text()).toHaveLength(26)
-    expect(asciiProgress.findAll('.is-filled')).toHaveLength(Math.round(store.overallProgress * 24))
-    expect(wrapper.get('.wc-widget-progress').attributes('aria-valuenow')).toBe(String(Math.round(store.overallProgress * 100)))
+    expect(asciiProgress.findAll('.is-filled')).toHaveLength(Math.round(store.segmentProgress * 40))
+    expect(asciiProgress.findAll('.is-dino')).toHaveLength(Math.floor(Math.round(store.segmentProgress * 40) / 10))
+    expect(wrapper.get('.wc-widget-progress').attributes('aria-valuenow')).toBe(String(Math.round(store.segmentProgress * 100)))
     expect(wrapper.text()).not.toContain('DEPLOYMENT: five-years-of-universal-blue')
     expect(wrapper.text()).toContain('0:10 / 4:31')
     expect(wrapper.text()).toContain('TOTAL 28:48 / 32:32')

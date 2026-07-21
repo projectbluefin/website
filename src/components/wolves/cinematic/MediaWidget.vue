@@ -45,11 +45,14 @@ function formatTime(totalSeconds: number): string {
 
 const segmentTime = computed(() => `${formatTime(store.segmentElapsed)} / ${formatTime(store.segmentDuration)}`)
 const overallTime = computed(() => `${formatTime(store.overallElapsed)} / ${formatTime(store.overallDuration)}`)
-const deploymentPercent = computed(() => Math.round(store.overallProgress * 100))
-const PROGRESS_CELLS = 24
+const segmentPercent = computed(() => Math.round(store.segmentProgress * 100))
+const PROGRESS_CELLS = 40
 const progressCells = computed(() => {
-  const filled = Math.round(store.overallProgress * PROGRESS_CELLS)
-  return Array.from({ length: PROGRESS_CELLS }, (_, index) => index < filled)
+  const filled = Math.round(store.segmentProgress * PROGRESS_CELLS)
+  return Array.from({ length: PROGRESS_CELLS }, (_, index) => ({
+    filled: index < filled,
+    dino: index < filled && (index + 1) % 10 === 0,
+  }))
 })
 
 const canPrevious = computed(() => store.widgetCanPrevious)
@@ -67,7 +70,7 @@ function handleSeek(event: MouseEvent) {
 
 function handleSeekKeydown(event: KeyboardEvent) {
   const step = event.shiftKey ? 0.1 : 0.02
-  let ratio = store.overallProgress
+  let ratio = store.segmentProgress
   if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
     ratio += step
   }
@@ -110,7 +113,7 @@ function handleCaptionChange(event: Event) {
         class="wc-widget-progress"
         role="slider"
         aria-label="Seek through playback"
-        :aria-valuenow="deploymentPercent"
+        :aria-valuenow="segmentPercent"
         aria-valuemin="0"
         aria-valuemax="100"
         tabindex="0"
@@ -119,10 +122,10 @@ function handleCaptionChange(event: Event) {
       >
         <span class="wc-widget-progress-ascii" aria-hidden="true">
           <span class="wc-widget-progress-bracket">[</span><span
-            v-for="(filled, index) in progressCells"
+            v-for="(cell, index) in progressCells"
             :key="index"
-            :class="{ 'is-filled': filled }"
-          >{{ filled ? '#' : '-' }}</span><span class="wc-widget-progress-bracket">]</span>
+            :class="{ 'is-filled': cell.filled, 'is-dino': cell.dino }"
+          >{{ cell.dino ? '🦖' : cell.filled ? '#' : '-' }}</span><span class="wc-widget-progress-bracket">]</span>
         </span>
       </div>
       <div class="wc-widget-meta">
@@ -245,8 +248,8 @@ function handleCaptionChange(event: Event) {
   width: 100%;
   overflow: hidden;
   font-family: var(--wc-font-mono);
-  font-size: 12px;
-  letter-spacing: 0.08em;
+  font-size: 13px;
+  letter-spacing: 0.02em;
   line-height: 1;
   color: var(--wc-grey);
   white-space: nowrap;
@@ -255,6 +258,13 @@ function handleCaptionChange(event: Event) {
 
 .wc-widget-progress-ascii .is-filled {
   color: var(--wc-gold);
+}
+
+.wc-widget-progress-ascii .is-dino {
+  display: inline-block;
+  color: var(--wc-gold);
+  filter: hue-rotate(150deg) saturate(1.5);
+  transform: scale(1.05);
 }
 
 .wc-widget-progress-bracket {
