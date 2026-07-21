@@ -10,7 +10,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { ghostsInTheMistOpeningSlide } from '@/data/wolves-gallery-featured'
 import { shuffleWolvesGalleryPhotos } from '@/data/wolves-gallery-shuffle'
 import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
-import { TRACK_ZERO_SECTIONS, trackZeroBeatCuts } from '@/data/wolves-track-zero-beats'
+import { TRACK_ZERO_SECTIONS, trackZeroBeatCuts, trackZeroBeatCutsWithPickup } from '@/data/wolves-track-zero-beats'
 import {
   bluefinGroupSlides,
   jonoBaconSlideId,
@@ -402,7 +402,14 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   }
   else {
     // Chorus fill on 8-beat phrases; the final cut clamps to the Jono lock start.
-    const beforeJonoCuts = trackZeroBeatCuts(currentTime, jonoBaconTrackZeroWindow.startTime, normalPool2.length, [12, 8])
+    const beforeJonoCuts = trackZeroBeatCutsWithPickup(
+      currentTime,
+      155,
+      jonoBaconTrackZeroWindow.startTime,
+      normalPool2.length,
+      8,
+      4,
+    )
     normalPool2.forEach((item, index) => {
       const endTime = beforeJonoCuts[index]
       result.push({

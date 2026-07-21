@@ -3,6 +3,7 @@ import {
   TRACK_ZERO_BEAT_TIMES,
   TRACK_ZERO_SECTIONS,
   trackZeroBeatCuts,
+  trackZeroBeatCutsWithPickup,
 } from '@/data/wolves-track-zero-beats'
 
 describe('track zero measured beat grid', () => {
@@ -68,6 +69,15 @@ describe('track zero measured beat grid', () => {
     expect(cuts[0]).toBeGreaterThan(8.4)
     expect(cuts[0]).toBeLessThanOrEqual(14.99)
     expect(cuts[1]).toBeGreaterThan(19.99)
+  })
+
+  it('picks up from eight-beat to four-beat cuts at 2:35', () => {
+    const cuts = trackZeroBeatCutsWithPickup(126.851, 155, 167.8, 17, 8, 4)
+    const starts = [126.851, ...cuts.slice(0, -1)]
+    const durations = cuts.map((cut, index) => cut - starts[index])
+
+    expect(cuts.some(cut => Math.abs(cut - 155) < 0.5)).toBe(true)
+    expect(durations.slice(-2).every(duration => duration < durations[0])).toBe(true)
   })
 
   it('allocates a restrained barrage that resolves on the legend cue', () => {

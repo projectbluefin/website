@@ -1167,3 +1167,50 @@ export function trackZeroBeatCuts(
   cuts[count - 1] = endTime
   return cuts
 }
+
+/**
+ * Allocates measured cuts around an explicit tempo pickup. Slides before the
+ * pickup use the slower beat tier; slides after it use the faster tier, with a
+ * cut snapped exactly to the pickup beat when the schedule crosses it.
+ */
+export function trackZeroBeatCutsWithPickup(
+  startTime: number,
+  pickupTime: number,
+  endTime: number,
+  count: number,
+  beforeBeats: number,
+  afterBeats: number,
+): number[] {
+  if (count <= 0) {
+    return []
+  }
+
+  const startIndex = nearestBeatIndex(startTime)
+  const pickupIndex = nearestBeatIndex(pickupTime)
+  const endIndex = nearestBeatIndex(endTime)
+  const totalBeats = endIndex - startIndex
+  if (totalBeats < afterBeats * count) {
+    return Array.from({ length: count }, (_, index) =>
+      index === count - 1 ? endTime : startTime + ((endTime - startTime) * (index + 1)) / count)
+  }
+
+  const cuts: number[] = []
+  let index = startIndex
+  for (let slide = 0; slide < count; slide++) {
+    const remainingSlides = count - slide - 1
+    const targetBeats = index < pickupIndex ? beforeBeats : afterBeats
+    const maxStep = endIndex - index - (afterBeats * remainingSlides)
+    let step = Math.min(targetBeats, maxStep)
+    if (index < pickupIndex && index + step > pickupIndex) {
+      step = pickupIndex - index
+    }
+    if (step <= 0) {
+      step = Math.max(1, maxStep)
+    }
+    index += step
+    cuts.push(TRACK_ZERO_BEAT_TIMES[Math.min(index, endIndex)] ?? endTime)
+  }
+
+  cuts[cuts.length - 1] = endTime
+  return cuts
+}
