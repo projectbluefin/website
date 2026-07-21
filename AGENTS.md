@@ -70,6 +70,11 @@ git diff --check
 Use the smallest relevant check. See `docs/skills/validation/SKILL.md` before
 reporting completion.
 
+## Temporary artifacts
+
+Use `/var/tmp/website-agent/` for logs, screenshots, browser fixtures, and
+handoff artifacts. Do not write session artifacts to `/tmp`.
+
 ## Worktree safety
 
 - Do not modify unrelated dirty files.

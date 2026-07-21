@@ -38,10 +38,16 @@ npm run build
 Code or runtime changes require explicit design or engineering approval and the
 full relevant validation workflow.
 
-## Git
+## Git and production handoff
 
 Use a Conventional Commit. Stage explicit paths only. Do not use `git add .` or
 `git add -A`. Do not modify, restore, or commit unrelated dirty files.
 
+The production remote is `upstream` (`projectbluefin/website`). Check remotes
+before pushing; remove an accidental fork remote rather than pushing production
+work to it.
+
 Before reporting completion, follow `docs/skills/validation/SKILL.md`. A local
-build does not prove deployment; verify the exact pushed commit's deployment run.
+build does not prove deployment; verify the exact pushed commit's deployment run
+and then check the live URL. Use `/var/tmp/website-agent/` for temporary logs and
+screenshots; do not use `/tmp`.
