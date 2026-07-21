@@ -721,25 +721,25 @@ try {
   assert('Ghosts opener advances to Jorge quote part two', ghostsCaptionPartTwo, JORGE_GHOSTS_QUOTE_PART_TWO)
   await captureStage(page, 'ghosts-mn047-jorge-part-two')
 
-  await seekStage(30)
+  await seekStage(32.3)
   const ghostsCaptionPartThree = (await ghostsCaption.locator('.wallpaper-theater-caption-body').allTextContents())
     .map(paragraph => paragraph.replace(/\s+/g, ' ').trim())
     .join(' ')
   assert('Ghosts opener advances to Jorge quote part three', ghostsCaptionPartThree, JORGE_GHOSTS_QUOTE_PART_THREE)
 
-  await seekStage(38.399)
+  await seekStage(48.399)
   const ghostsBeforeHandoff = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
   })
-  assertTruthy('Jorge MN047 holds through 38.399 seconds', ghostsBeforeHandoff?.includes('55164222671_32d7ace307_c.jpg'))
+  assertTruthy('Jorge MN047 holds through 48.399 seconds', ghostsBeforeHandoff?.includes('55164222671_32d7ace307_c.jpg'))
 
-  await seekStage(38.4)
+  await seekStage(48.4)
   const ghostsAtHandoff = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
   })
-  assert('Jorge MN047 hands off at 38.4 seconds', ghostsAtHandoff?.includes('55164222671_32d7ace307_c.jpg'), false)
+  assert('Jorge MN047 hands off at 48.4 seconds', ghostsAtHandoff?.includes('55164222671_32d7ace307_c.jpg'), false)
 }
 catch (error) {
   console.error(`\nTest failed with error: ${error.message}`)

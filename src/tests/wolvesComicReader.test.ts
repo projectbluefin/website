@@ -455,14 +455,14 @@ describe('wolvesComicReader', () => {
     expect(activeTimelineImage(wrapper)).toContain('55164222671_32d7ace307_c.jpg')
     expect(wrapper.findAll('.wallpaper-theater-caption-body').map(paragraph => paragraph.text())).toEqual(jorgeQuotePartTwo)
 
-    await wrapper.setProps({ playlistCurrentTime: 30 })
+    await wrapper.setProps({ playlistCurrentTime: 32.3 })
     expect(activeTimelineImage(wrapper)).toContain('55164222671_32d7ace307_c.jpg')
     expect(wrapper.findAll('.wallpaper-theater-caption-body').map(paragraph => paragraph.text())).toEqual(jorgeQuotePartThree)
 
-    await wrapper.setProps({ playlistCurrentTime: 38.399 })
+    await wrapper.setProps({ playlistCurrentTime: 48.399 })
     expect(activeTimelineImage(wrapper)).toContain('55164222671_32d7ace307_c.jpg')
 
-    await wrapper.setProps({ playlistCurrentTime: 38.4 })
+    await wrapper.setProps({ playlistCurrentTime: 48.4 })
     expect(activeTimelineImage(wrapper)).not.toContain('55164222671_32d7ace307_c.jpg')
   })
 

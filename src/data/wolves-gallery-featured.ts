@@ -5,8 +5,8 @@ export const ghostsInTheMistOpeningSlide = {
   title: 'Jorge Castro',
   guardianClass: 'Harbinger Titan',
   guardianTitle: 'Upender of Antipatterns | The First Disciple',
-  holdSeconds: 38.4,
-  // The quote plays in two sequential parts across the hold so the plate
+  holdSeconds: 48.4,
+  // The quote plays in three equal sequential parts across the hold so the plate
   // stays compact instead of stacking all four paragraphs at once.
   descriptionParts: [
     'Not a Universal Blue or bootc ecosystem. A cloud native ecosystem. In one short weekend you\'ve proven to the world that enthusiasts matter.\n\nHappy Fifth Birthday Universal Blue!',
