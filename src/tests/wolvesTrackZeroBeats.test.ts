@@ -89,6 +89,15 @@ describe('track zero measured beat grid', () => {
     expect(durations.slice(6, 10).every(duration => duration < durations[0])).toBe(true)
   })
 
+  it('picks up from eight-beat to four-beat cuts at 6:00', () => {
+    const cuts = trackZeroBeatCutsWithPickup(359.166, 360, 408.137, 30, 8, 4)
+    const starts = [359.166, ...cuts.slice(0, -1)]
+    const durations = cuts.map((cut, index) => cut - starts[index])
+
+    expect(cuts.some(cut => Math.abs(cut - 360) < 0.5)).toBe(true)
+    expect(durations.slice(1, 5).every(duration => duration < 2)).toBe(true)
+  })
+
   it('allocates a restrained barrage that resolves on the legend cue', () => {
     const cuts = trackZeroBeatCuts(
       TRACK_ZERO_SECTIONS.bkEnd,

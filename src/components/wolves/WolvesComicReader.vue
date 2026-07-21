@@ -556,7 +556,14 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     ...finaleSlides,
   ]
   const peoplePool4 = deterministicShuffle(barrageBase, 404).slice(0, 30)
-  const sec6Cuts = trackZeroBeatCuts(currentTime, TRACK_ZERO_SECTIONS.finaleStart, peoplePool4.length, [8, 4, 2])
+  const sec6Cuts = trackZeroBeatCutsWithPickup(
+    currentTime,
+    360,
+    TRACK_ZERO_SECTIONS.finaleStart,
+    peoplePool4.length,
+    8,
+    4,
+  )
   peoplePool4.forEach((item, index) => {
     const endTime = sec6Cuts[index]
     result.push({
