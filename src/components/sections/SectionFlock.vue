@@ -2,6 +2,7 @@
 import type { MessageSchema } from '../../locales/schema'
 import { useI18n } from 'vue-i18n'
 import BluefinGrowthChartSvg from '@/assets/svg/growth_bluefins.svg'
+import SectionContributors from './SectionContributors.vue'
 
 const { t } = useI18n<MessageSchema>({
   useScope: 'global'
@@ -26,6 +27,8 @@ const countMeUrl = 'https://github.com/ublue-os/countme'
         {{ t("Flock.Attribution") }}
         <a :href="countMeUrl" target="_blank" rel="noopener noreferrer">DNF Count Me</a>
       </p>
+
+      <SectionContributors />
     </div>
   </section>
 </template>

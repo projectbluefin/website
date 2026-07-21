@@ -40,13 +40,11 @@ const lobbyBackground = `${import.meta.env.BASE_URL}evening/03-bluefin-night.web
           anything so far, and it's getting faster. No one is talking, everyone is
           yelling past each other.
         </p>
-
         <p>
           So I did what any good open source maintainer would do -- I turned to my
           friends. And together, we turned to metal. This project is designed to
           prove the value of the human spirit of creation. It features OSS maintainers immortalized in artwork and accompanying musical.
         </p>
-
         <p>
           This is a collection of artwork involving Bluefin, including co-creaters Jacob Schnurr and Andy Frazer. We hope to continue to fund the growth of paleoart and open source!
         </p>

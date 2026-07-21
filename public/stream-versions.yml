@@ -5,10 +5,14 @@
 
 stable:
   base: "Fedora 44"
-  kernel: "7.0.8-200.fc44"
-  gnome: "50.1"
-  mesa: "26.0.8"
-  nvidia: "610.43.02"
+  kernel: "7.0.12-201"
+  gnome: "50.3-1"
+  mesa: "26.1.4-4"
+  nvidia: "unknown"
+  systemd: "259.7-1"
+  podman: "5.8.4-1"
+  pipewire: "1.6.8-1"
+  flatpak: "1.18.0-1"
 lts:
   base: "CentOS Stream 10"
   kernel: "6.12.0-233.el10"

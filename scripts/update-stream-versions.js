@@ -23,7 +23,9 @@
  * via cosign-verified OCI SBOM attestations from ghcr.io/ublue-os/bluefin* images.
  */
 
+import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { dump as dumpYaml } from 'js-yaml'
@@ -31,6 +33,7 @@ import { dump as dumpYaml } from 'js-yaml'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const OUT = path.join(__dirname, '../public/stream-versions.yml')
 const SBOM_URL = 'https://docs.projectbluefin.io/data/sbom-attestations.json'
+const STABLE_IMAGE = 'ghcr.io/ublue-os/bluefin:stable'
 
 export function latestPv(streams, name) {
   const stream = streams[name]
@@ -51,9 +54,62 @@ export function latestPv(streams, name) {
   return releases[key]?.packageVersions ?? {}
 }
 
+function normalizeRpmVersion(version) {
+  return version.replace(/^[^:]+:/, '').replace(/\.fc\d+$/, '')
+}
+
+export function extractSbomPackageVersions(sbom) {
+  const artifacts = sbom.artifacts ?? []
+  const findVersion = (name, all = false) => {
+    const versions = artifacts
+      .filter(artifact => artifact.name === name && artifact.version)
+      .map(artifact => normalizeRpmVersion(artifact.version))
+    return all ? [...new Set(versions)].sort().at(-1) : versions[0]
+  }
+  const kernelRaw = artifacts.find(artifact => artifact.name === 'kernel-core')?.version
+  const fedora = kernelRaw?.match(/\.fc(\d+)$/)?.[1]
+  return {
+    ...(fedora ? { base: `Fedora ${fedora}` } : {}),
+    kernel: kernelRaw ? normalizeRpmVersion(kernelRaw) : undefined,
+    gnome: findVersion('gnome-shell'),
+    mesa: findVersion('mesa', true),
+    systemd: findVersion('systemd'),
+    podman: findVersion('podman'),
+    pipewire: findVersion('pipewire'),
+    flatpak: findVersion('flatpak'),
+  }
+}
+
+function pullStableSbom() {
+  const discovery = JSON.parse(execFileSync('oras', [
+    'discover',
+    '--artifact-type',
+    'application/vnd.spdx+json',
+    '--format',
+    'json',
+    STABLE_IMAGE,
+  ], { encoding: 'utf8' }))
+  const referrer = discovery.referrers?.find(item => item.artifactType === 'application/vnd.spdx+json')
+  if (!referrer?.digest) {
+    throw new Error('stable image has no attached SPDX SBOM')
+  }
+  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bluefin-stable-sbom-'))
+  try {
+    execFileSync('oras', [
+      'pull',
+      `ghcr.io/ublue-os/bluefin@${referrer.digest}`,
+      '--output',
+      outputDir,
+    ], { stdio: 'pipe' })
+    return JSON.parse(fs.readFileSync(path.join(outputDir, 'sbom.json'), 'utf8'))
+  }
+  finally {
+    fs.rmSync(outputDir, { recursive: true, force: true })
+  }
+}
+
 export function buildStreamVersionData(streams) {
   const stable = latestPv(streams, 'bluefin-stable')
-  const stableNvidia = latestPv(streams, 'bluefin-nvidia-open-stable')
   const lts = latestPv(streams, 'bluefin-lts')
   const ltsHwe = latestPv(streams, 'bluefin-lts-hwe')
   const ltsNvidia = latestPv(streams, 'bluefin-gdx-lts')
@@ -64,7 +120,7 @@ export function buildStreamVersionData(streams) {
       kernel: stable.kernel ?? 'unknown',
       gnome: stable.gnome ?? 'unknown',
       mesa: stable.mesa ?? 'unknown',
-      nvidia: stableNvidia.nvidia ?? 'unknown',
+      nvidia: 'unknown',
     },
     lts: {
       base: 'CentOS Stream 10',
@@ -100,6 +156,15 @@ async function main() {
 
   const sbom = await res.json()
   const data = buildStreamVersionData(sbom.streams ?? {})
+
+  try {
+    const sbomVersions = extractSbomPackageVersions(pullStableSbom())
+    data.stable = { ...data.stable, ...sbomVersions }
+    console.info('[stream-versions] stable OCI SBOM:', sbomVersions)
+  }
+  catch (error) {
+    throw new Error(`stable OCI SBOM unavailable: ${error.message}`)
+  }
 
   fs.writeFileSync(
     OUT,

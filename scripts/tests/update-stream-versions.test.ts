@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { buildStreamVersionData, createHeader, latestPv } from '../update-stream-versions.js'
+import { buildStreamVersionData, createHeader, extractSbomPackageVersions, latestPv } from '../update-stream-versions.js'
 
 describe('update-stream-versions helpers', () => {
   it('returns package versions for the latest release in a stream', () => {
@@ -79,7 +79,7 @@ describe('update-stream-versions helpers', () => {
         gnome: '48.1',
 
         mesa: '25.0.1',
-        nvidia: '570.124.06',
+        nvidia: 'unknown',
       },
       lts: {
         base: 'CentOS Stream 10',
@@ -110,6 +110,28 @@ describe('update-stream-versions helpers', () => {
       kernel: '7.0.8-200.fc44',
       gnome: '50.1',
       mesa: '26.0.8',
+    })
+  })
+
+  it('extracts package versions from the OCI SBOM artifact shape', () => {
+    expect(extractSbomPackageVersions({ artifacts: [
+      { name: 'kernel-core', version: '7.0.12-201.fc44' },
+      { name: 'gnome-shell', version: '50.3-1.fc44' },
+      { name: 'mesa', version: '26.1.4-1.fc44' },
+      { name: 'mesa', version: '26.1.4-4.fc44' },
+      { name: 'systemd', version: '259.7-1.fc44' },
+      { name: 'podman', version: '5:5.8.4-1.fc44' },
+      { name: 'pipewire', version: '1.6.8-1.fc44' },
+      { name: 'flatpak', version: '1.18.0-1.fc44' },
+    ] })).toEqual({
+      base: 'Fedora 44',
+      kernel: '7.0.12-201',
+      gnome: '50.3-1',
+      mesa: '26.1.4-4',
+      systemd: '259.7-1',
+      podman: '5.8.4-1',
+      pipewire: '1.6.8-1',
+      flatpak: '1.18.0-1',
     })
   })
 
