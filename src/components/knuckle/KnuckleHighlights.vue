@@ -87,7 +87,7 @@ onMounted(async () => {
             <a class="brand-title" href="https://kubestellar.io" target="_blank" rel="noopener noreferrer">KubeStellar Console UI</a>
           </div>
           <p>Your command center. Unified visibility and control across every node you own. Deploy workloads, investigate with AI, monitor everything — from one dashboard.</p>
-                  </div>
+        </div>
 
         <div class="brand-item brand-nvidia">
           <div>

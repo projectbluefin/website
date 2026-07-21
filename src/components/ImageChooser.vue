@@ -66,7 +66,8 @@ const releases = [
     description: t('TryBluefin.Lts.Description'),
     image: './characters/achillobator.webp',
     supportedArch: ['x86', 'arm'],
-    recommended: false
+    recommended: false,
+    disabled: true
   },
   {
     id: 'stable',
@@ -75,7 +76,8 @@ const releases = [
     description: t('TryBluefin.Stable.Description'),
     image: './characters/leaping.webp',
     supportedArch: ['x86'],
-    recommended: true
+    recommended: true,
+    disabled: false
   }
 ]
 
@@ -244,8 +246,9 @@ onMounted(() => {
             v-for="release in releases"
             :key="release.id"
             class="release-box"
-            :class="{ recommended: release.recommended }"
-            @click="selectRelease(release.id)"
+            :class="{ recommended: release.recommended, disabled: release.disabled }"
+            :aria-disabled="release.disabled"
+            @click="!release.disabled && selectRelease(release.id)"
           >
             <div
               class="release-image"
@@ -253,6 +256,7 @@ onMounted(() => {
             >
               <!-- Badges positioned in top right corner -->
               <span v-if="release.recommended" class="recommended-badge">{{ t('TryBluefin.Label.Recommended') }}</span>
+              <span v-if="release.disabled" class="unavailable-badge">Will return</span>
 
               <div class="release-overlay">
                 <div class="release-content">
@@ -592,6 +596,17 @@ onMounted(() => {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
 
+.release-box.disabled {
+  cursor: not-allowed;
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+
+.release-box.disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 .release-box.recommended {
   border-color: #4f9cf9;
   box-shadow: 0 0 20px rgba(79, 156, 249, 0.3);
@@ -656,6 +671,22 @@ onMounted(() => {
   font-weight: 700;
   text-transform: uppercase;
   z-index: 10;
+  backdrop-filter: blur(10px);
+}
+
+.unavailable-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  background: rgba(80, 80, 80, 0.9);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-transform: uppercase;
   backdrop-filter: blur(10px);
 }
 
