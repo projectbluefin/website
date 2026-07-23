@@ -9,8 +9,8 @@ export const ghostsInTheMistOpeningSlide = {
   // The quote plays in three equal sequential parts across the hold so the plate
   // stays compact instead of stacking all four paragraphs at once.
   descriptionParts: [
-    'Not a Universal Blue or bootc ecosystem. A cloud native ecosystem. In one short weekend you\'ve proven to the world that enthusiasts matter.\n\nHappy Fifth Birthday Universal Blue!',
-    'Thank you to Chainguard, Microsoft, Red Hat, and Edera for sourcing talent from Universal Blue! \n\nNeed talent? Cloud native projets like ours are focused on sustainability. Judge us by the quality of our people.',
+    'Not a Universal Blue or bootc ecosystem. A cloud native ecosystem. In one short weekend you\'ve proven to the professional world that enthusiasts matter.\n\nHappy Fifth Birthday Universal Blue!',
+    'Thank you to Chainguard, Microsoft, Red Hat, and Edera for sourcing talent from Universal Blue! \n\nJudge us by the quality of our people.',
 
     'If you\'re new to cloud native then I hope this small glimpse of the people will inspire to work in your own local communities. \n\nBe the one who moves, not the one who is moved. With you at our side, how can we fail?',
 

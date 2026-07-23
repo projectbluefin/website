@@ -285,6 +285,13 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   const daynightShowcase = localShowcase.filter(wp => wp.type === 'daynight')
   const normalShowcase = localShowcase.filter(wp => wp.type !== 'daynight')
 
+  const andyAdvisorTarget = 'wolves/people/Bluefin Advisor Andy Randall.jpg'
+  const andyAdvisorIndex = localPeople.findIndex(wp => wp.id === andyAdvisorTarget)
+  let andyAdvisorPhoto: any = null
+  if (andyAdvisorIndex !== -1) {
+    andyAdvisorPhoto = localPeople.splice(andyAdvisorIndex, 1)[0]
+  }
+
   const pivotalTarget = 'wolves/people/kubecon-54927705495.webp'
   const targetIndex = localPeople.findIndex(wp => wp.id === pivotalTarget)
   let pivotalPhoto: any = null
@@ -370,7 +377,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
 
   // 3. Heavy Chorus 1 / Verse 2 / Chorus 2 [~127, ~229] -> leftover showcase + people wallpapers
   const normalPool2 = shuffledNormalShowcase.slice(22, 39)
-  const peoplePool1 = shuffledPeople.slice(0, 15)
+  const peoplePool1 = andyAdvisorPhoto ? [andyAdvisorPhoto, ...shuffledPeople.slice(0, 14)] : shuffledPeople.slice(0, 15)
   const jonoPhoto = peoplePool1.find(item => item.id === jonoBaconSlideId)
   const marinaPhoto = peoplePool1.find(item => item.id === marinaMooreSlideId)
   // The Bluefin group (Sherman + m2 composite, kyle, hikari) locks as one back-to-back run;
@@ -755,6 +762,24 @@ function beginCrossfade(duration: number) {
   }, duration + 50)
 }
 
+// Keep the current buffer visible until the incoming image has loaded. Switching
+// buffers before decode briefly exposed the wallpaper behind the gallery.
+function preloadPhoto(photo: any): Promise<void> {
+  const urls = photo?.type === 'daynight'
+    ? [`${baseUrl}img/wallpapers/${photo.dayName}`, `${baseUrl}img/wallpapers/${photo.nightName}`]
+    : [getFlickrPhotoUrl(photo)]
+  return Promise.all(urls.map(url => new Promise<void>((resolve) => {
+    const image = new Image()
+    image.onload = () => {
+      void image.decode().catch(() => undefined).then(() => resolve())
+    }
+    image.onerror = () => resolve()
+    image.src = url
+  }))).then(() => undefined)
+}
+
+let slideChangeToken = 0
+
 watch([activeDisplayIndex, mixedPhotosToUse], ([newVal]) => {
   const activePhotoObj = mixedPhotosToUse.value[newVal]
   if (!activePhotoObj) {
@@ -774,49 +799,47 @@ watch([activeDisplayIndex, mixedPhotosToUse], ([newVal]) => {
     if (!nextPhoto) {
       continue
     }
-    if (nextPhoto.type === 'daynight') {
-      const imgDay = new Image()
-      imgDay.src = `${baseUrl}img/wallpapers/${nextPhoto.dayName}`
-      const imgNight = new Image()
-      imgNight.src = `${baseUrl}img/wallpapers/${nextPhoto.nightName}`
+    void preloadPhoto(nextPhoto)
+  }
+
+  const changeToken = ++slideChangeToken
+  void preloadPhoto(activePhotoObj).then(() => {
+    if (changeToken !== slideChangeToken) {
+      return
+    }
+
+    if (photoA.value === null && photoB.value === null) {
+      photoA.value = activePhotoObj
+      slideAIndex.value = newVal
+      activeBuffer.value = 'A'
+      opacityA.value = 1
+      opacityB.value = 0
+      crossfadeActive.value = false
+      return
+    }
+
+    // Swap only after the incoming image is decoded, so the wallpaper cannot
+    // flash through an empty buffer during the crossfade.
+    beginCrossfade(currentSlideTransitionDuration.value)
+    if (activeBuffer.value === 'A') {
+      photoB.value = activePhotoObj
+      slideBIndex.value = newVal
+      activeBuffer.value = 'B'
+      opacityB.value = 1
+      opacityA.value = 0
     }
     else {
-      const img = new Image()
-      img.src = getFlickrPhotoUrl(nextPhoto)
+      photoA.value = activePhotoObj
+      slideAIndex.value = newVal
+      activeBuffer.value = 'A'
+      opacityA.value = 1
+      opacityB.value = 0
     }
-  }
-
-  if (photoA.value === null && photoB.value === null) {
-    photoA.value = activePhotoObj
-    slideAIndex.value = newVal
-    activeBuffer.value = 'A'
-    opacityA.value = 1
-    opacityB.value = 0
-    crossfadeActive.value = false
-    return
-  }
-
-  // Keep one layer fully visible and the other preloaded. Start the transition
-  // before swapping the active layer so the incoming Jorge frame fades in instead
-  // of appearing as a second, misaligned image.
-  beginCrossfade(currentSlideTransitionDuration.value)
-  if (activeBuffer.value === 'A') {
-    photoB.value = activePhotoObj
-    slideBIndex.value = newVal
-    activeBuffer.value = 'B'
-    opacityB.value = 1
-    opacityA.value = 0
-  }
-  else {
-    photoA.value = activePhotoObj
-    slideAIndex.value = newVal
-    activeBuffer.value = 'A'
-    opacityA.value = 1
-    opacityB.value = 0
-  }
+  })
 }, { immediate: true })
 
 watch(() => props.experienceId, () => {
+  slideChangeToken++
   laterTrackPhotos.value = []
   shuffledLaterTrackPhotos.value = []
   shownLaterTrackPhotoIds.clear()
@@ -836,6 +859,7 @@ watch(() => props.trackIndex, (trackIndex, previousTrackIndex) => {
     snapshotLaterTrackPhotos()
   }
   if (previousTrackIndex !== undefined) {
+    slideChangeToken++
     photoA.value = null
     photoB.value = null
     opacityA.value = 1

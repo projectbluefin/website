@@ -48,6 +48,13 @@ const localPeople = wallpapers.filter((wp) => {
 const daynightShowcase = localShowcase.filter(wp => wp.type === 'daynight')
 const normalShowcase = localShowcase.filter(wp => wp.type !== 'daynight')
 
+const andyAdvisorTarget = 'wolves/people/Bluefin Advisor Andy Randall.jpg'
+const andyAdvisorIndex = localPeople.findIndex(wp => wp.id === andyAdvisorTarget)
+let andyAdvisorPhoto = null
+if (andyAdvisorIndex !== -1) {
+  andyAdvisorPhoto = localPeople.splice(andyAdvisorIndex, 1)[0]
+}
+
 const pivotalTarget = 'wolves/people/kubecon-54927705495.webp'
 const targetIndex = localPeople.findIndex(wp => wp.id === pivotalTarget)
 let pivotalPhoto = null
@@ -103,7 +110,7 @@ for (const item of normalPool1) {
 
 // 3. Heavy Chorus 1 [127, 229]
 const normalPool2 = shuffledNormalShowcase.slice(22, 39)
-const peoplePool1 = shuffledPeople.slice(0, 15)
+const peoplePool1 = andyAdvisorPhoto ? [andyAdvisorPhoto, ...shuffledPeople.slice(0, 14)] : shuffledPeople.slice(0, 15)
 const sec3Items = [...normalPool2, ...peoplePool1]
 const sec3BaseDuration = 102 / sec3Items.length
 for (const item of sec3Items) {

@@ -263,11 +263,6 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/people/44541983690_6e8f7d8e0f_k.jpg',
-    title: '44541983690 6e8f7d8e0f K',
-  },
-  {
-    type: 'single',
     name: 'wolves/people/53322730377_ca5b65a035_k.jpg',
     title: '53322730377 Ca5b65a035 K',
   },
@@ -338,8 +333,23 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/people/Bluefin Advisor Andy Randall.jpg',
+    title: 'Bluefin Advisor Andy Randall',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/Bluefin Advisor Ashley McNamara.webp',
+    title: 'Bluefin Advisor Ashley McNamara',
+  },
+  {
+    type: 'single',
     name: 'wolves/people/Bluefin Advisor Chris Aniszczyk.webp',
     title: 'Bluefin Advisor Chris Aniszczyk',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/Bluefin Advisor Christoph Blecker.webp',
+    title: 'Bluefin Advisor Christoph Blecker',
   },
   {
     type: 'single',
@@ -358,8 +368,23 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/people/Bluefin Advisor Stormy Peters.webp',
+    title: 'Bluefin Advisor Stormy Peters',
+  },
+  {
+    type: 'single',
     name: 'wolves/people/CNCF Executive Directory Jonathan Bryce.webp',
     title: 'CNCF Executive Directory Jonathan Bryce',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/CNCF Projects Team.webp',
+    title: 'CNCF Projects Team',
+  },
+  {
+    type: 'single',
+    name: 'wolves/people/Erin Boyd.jpg',
+    title: 'Erin Boyd',
   },
   {
     type: 'single',
@@ -388,13 +413,13 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/people/Ralph Squillace - High Administrator of the Final Shape.webp',
-    title: 'Ralph Squillace   High Administrator of the Final Shape',
+    name: 'wolves/people/NOT John Bazzite.jpg',
+    title: 'NOT John Bazzite',
   },
   {
     type: 'single',
-    name: 'wolves/people/These three idiots.webp',
-    title: 'These three idiots',
+    name: 'wolves/people/Ralph Squillace - High Administrator of the Final Shape.webp',
+    title: 'Ralph Squillace   High Administrator of the Final Shape',
   },
   {
     type: 'single',
@@ -418,13 +443,13 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/people/ashleymcnamara35365.webp',
-    title: 'Bluefin Advisor Ashley McNamara',
+    name: 'wolves/people/bketelsen.webp',
+    title: 'Bketelsen',
   },
   {
     type: 'single',
-    name: 'wolves/people/bketelsen.webp',
-    title: 'Bketelsen',
+    name: 'wolves/people/bootc creator Colin Walters.JPG',
+    title: 'Bootc creator Colin Walters',
   },
   {
     type: 'single',
@@ -570,11 +595,6 @@ export const wallpapers: Wallpaper[] = [
     type: 'single',
     name: 'wolves/people/flickr-54137782045.webp',
     title: 'KC+CNC_NA_241111_BF_KCS_012',
-  },
-  {
-    type: 'single',
-    name: 'wolves/people/flickr-54137782365.webp',
-    title: 'Christoph Blecker - First Amongst Equals - Platinum Member',
   },
   {
     type: 'single',
@@ -849,11 +869,6 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/people/kubecon-55164467009.webp',
-    title: 'Maintainer Summit Group Photo - LM 005',
-  },
-  {
-    type: 'single',
     name: 'wolves/people/kubecon-55164467034.webp',
     title: 'Maintainer Summit Group Photo - LM 002',
   },
@@ -1019,11 +1034,6 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/people/kyle.jpg',
-    title: 'NOT John Bazzite',
-  },
-  {
-    type: 'single',
     name: 'wolves/people/laura.webp',
     title: 'Laura',
   },
@@ -1034,8 +1044,8 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/people/meuiss.jpg',
-    title: 'Meuiss',
+    name: 'wolves/people/meiss.jpg',
+    title: 'Meiss',
   },
   {
     type: 'single',
@@ -1079,11 +1089,6 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
-    name: 'wolves/people/stormy.faces23764.web_.webp',
-    title: 'Bluefin Advisor Stormy Peters',
-  },
-  {
-    type: 'single',
     name: 'wolves/people/summit-03.webp',
     title: 'Summit 03',
   },
@@ -1106,10 +1111,5 @@ export const wallpapers: Wallpaper[] = [
     type: 'single',
     name: 'wolves/people/vmbrasseur.webp',
     title: 'Vmbrasseur',
-  },
-  {
-    type: 'single',
-    name: 'wolves/people/walters.JPG',
-    title: 'bootc creator Colin Walters',
   },
 ]
