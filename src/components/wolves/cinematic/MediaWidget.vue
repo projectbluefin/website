@@ -394,7 +394,7 @@ function handleVoiceOverChange(event: Event) {
   .wc-widget {
     width: calc(100vw - 24px);
     gap: 8px;
-    padding: 10px 12px;
+    padding: 10px 12px 4rem;
   }
 
   .wc-widget-info {
@@ -408,8 +408,7 @@ function handleVoiceOverChange(event: Event) {
   }
 
   .wc-widget-meta {
-    gap: 8px;
-    flex-wrap: wrap;
+    display: none;
   }
 
   .wc-widget-time {
@@ -436,9 +435,11 @@ function handleVoiceOverChange(event: Event) {
     gap: 8px;
   }
 
-  // The block readout wraps badly at phone widths; times remain.
-  .wc-widget-meta .wc-widget-time:first-child {
-    display: none;
+  .wc-widget-progress {
+    position: absolute;
+    right: 1.2rem;
+    bottom: 0.2rem;
+    left: 1.2rem;
   }
 }
 </style>

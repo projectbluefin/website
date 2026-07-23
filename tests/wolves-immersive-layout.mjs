@@ -2,31 +2,41 @@ import { chromium } from 'playwright'
 
 const baseUrl = process.env.WOLVES_BASE_URL ?? 'http://127.0.0.1:5173'
 
-async function verifyMobileLoreLayout() {
+async function verifyMobileSoundtrackProgress() {
   const browser = await chromium.launch({ headless: true })
 
   try {
     const page = await browser.newPage({ viewport: { width: 390, height: 1000 } })
+    const pageErrors = []
+    page.on('pageerror', error => pageErrors.push(error.message))
 
     await page.goto(`${baseUrl}/wolves/`, { waitUntil: 'networkidle', timeout: 60_000 })
-    await page.getByRole('button', { name: /join the evolution|begin transmission/i }).click()
-    await page.waitForTimeout(1_000)
+    await page.getByRole('button', { name: /meet your teammates/i }).click()
+    await page.waitForSelector('.wc-widget-progress')
 
     const bounds = await page.evaluate(() => {
-      const column = document.querySelector('.wolves-lore-column')
-      const region = document.querySelector('.immersive-col-right')
-      if (!column || !region) {
-        throw new Error('Expected immersive lore column and region')
+      const progress = document.querySelector('.wc-widget-progress')
+      const panel = document.querySelector('.wc-widget')
+      const controls = document.querySelector('.wc-widget-controls')
+      if (!progress || !panel || !controls) {
+        throw new Error('Expected media widget, progress bar, and controls')
       }
 
       return {
-        columnBottom: column.getBoundingClientRect().bottom,
-        regionBottom: region.getBoundingClientRect().bottom,
+        progress: progress.getBoundingClientRect().toJSON(),
+        panel: panel.getBoundingClientRect().toJSON(),
+        controls: controls.getBoundingClientRect().toJSON(),
       }
     })
 
-    if (bounds.columnBottom > bounds.regionBottom) {
-      throw new Error(`Lore column is clipped: ${JSON.stringify(bounds)}`)
+    if (bounds.progress.width < bounds.panel.width * 0.8 || bounds.progress.left < 0 || bounds.progress.right > 390) {
+      throw new Error(`Mobile soundtrack progress bar is not usable: ${JSON.stringify(bounds.progress)}`)
+    }
+    if (bounds.controls.left < 0 || bounds.controls.right > 390) {
+      throw new Error(`Mobile soundtrack controls are outside the viewport: ${JSON.stringify(bounds.controls)}`)
+    }
+    if (pageErrors.length > 0) {
+      throw new Error(`Mobile Wolves page errors: ${JSON.stringify(pageErrors)}`)
     }
   }
   finally {
@@ -112,7 +122,7 @@ async function verifyNewsBulletinLayout() {
   }
 }
 
-const checks = [verifyMobileLoreLayout()]
+const checks = [verifyMobileSoundtrackProgress()]
 if (process.env.WOLVES_SOURCE_CHECK === '1') {
   checks.push(verifySourceFragmentLayout())
   checks.push(verifyNewsBulletinLayout())
