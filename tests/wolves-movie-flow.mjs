@@ -260,7 +260,10 @@ try {
     window.__mockWolvesPlayers[index].seekTo(24.01, true)
   }, introPlayerIndex)
   await page.waitForTimeout(250)
-  const comicHeroShotStart = page.locator('[data-comic-hero-shot]')
+  // Exclude the outgoing image mid cross-fade: during a `comic-hero-shot-fade`
+  // transition both the leaving and entering <img> carry data-comic-hero-shot,
+  // which trips Playwright strict mode. Matches the guardian-plate pattern above.
+  const comicHeroShotStart = page.locator('[data-comic-hero-shot]:not(.comic-hero-shot-fade-leave-active)')
   assertTruthy('Comic Hero Shots title card starts on the Jorge hero shot', (await comicHeroShotStart.getAttribute('data-comic-hero-shot'))?.includes('youre-holding-it-wrong-post1'))
   await page.evaluate((index) => {
     window.__mockWolvesPlayers[index].seekTo(30.3, true)
