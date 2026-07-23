@@ -2,6 +2,7 @@
 import type { LoreViewProps } from '../lore'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { getChatlogLore } from '../lore'
+import { estimateLoreReadDuration } from '@/data/wolves-lore-timing'
 
 const props = defineProps<LoreViewProps>()
 
@@ -60,7 +61,12 @@ function runTypewriter() {
 
   let stepTime = 35
   {
-    const D = props.duration * 1000
+    const minimumReadSeconds = estimateLoreReadDuration({
+      kind: 'chatlog',
+      body: conversation.value.messages.map(message => message.text).join(' '),
+      attribution: conversation.value.channel,
+    })
+    const readableBudgetMs = Math.max(1, Math.min(props.duration, minimumReadSeconds) * 1000 * 0.7)
     const climaxCueDuration = props.record.id === CLIMAX_ARTIFACT_ID
       ? CLIMAX_HOLD_MS + CLIMAX_FADE_MS
       : 0
@@ -83,7 +89,7 @@ function runTypewriter() {
       }
       totalTicks += isSlow ? 50 : 20
     })
-    stepTime = Math.max(5, Math.min(50, Math.max(0, D * 0.7 - climaxCueDuration) / totalTicks))
+    stepTime = Math.max(5, Math.min(50, Math.max(0, readableBudgetMs - climaxCueDuration) / totalTicks))
   }
 
   let currentLength = 0

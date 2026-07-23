@@ -3,6 +3,9 @@ import { execSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { wallpapers } from './src/components/wolves/wallpapers-list.ts'
+import { TRACK_ZERO_PRESENTATION_SECTIONS } from './src/data/wolves-track-zero-manifest.ts'
+import { trackZeroBeatCuts, trackZeroBeatCutsWithPickup } from './src/data/wolves-track-zero-beats.ts'
+import { rezaContributorSlideId, rezaContributorTrackZeroWindow } from './src/data/wolves-track-zero-slides.ts'
 
 function deterministicShuffle(array, seed = 42) {
   const copy = [...array]
@@ -55,6 +58,27 @@ if (andyAdvisorIndex !== -1) {
   andyAdvisorPhoto = localPeople.splice(andyAdvisorIndex, 1)[0]
 }
 
+const bluefinGroupTargets = [
+  'wolves/people/sherman-m2.webp',
+  'wolves/people/NOT John Bazzite.jpg',
+  'wolves/people/hikari.JPG',
+  'wolves/people/hikari2.JPG',
+  'wolves/people/jorge-bluefin.webp',
+]
+const bluefinGroupPhotos = bluefinGroupTargets
+  .map(id => localPeople.find(wp => wp.id === id))
+  .filter(Boolean)
+for (const photo of bluefinGroupPhotos) {
+  const index = localPeople.indexOf(photo)
+  if (index !== -1) localPeople.splice(index, 1)
+}
+
+const rezaIndex = localPeople.findIndex(wp => wp.id === rezaContributorSlideId)
+let rezaPhoto = null
+if (rezaIndex !== -1) {
+  rezaPhoto = localPeople.splice(rezaIndex, 1)[0]
+}
+
 const pivotalTarget = 'wolves/people/kubecon-54927705495.webp'
 const targetIndex = localPeople.findIndex(wp => wp.id === pivotalTarget)
 let pivotalPhoto = null
@@ -92,40 +116,45 @@ let currentTime = 0
 
 // 1. Ambient Intro [0, 42]
 const dnPool = shuffledDaynight.slice(0, 5)
-const sec1BaseDuration = 42 / dnPool.length
-for (const item of dnPool) {
-  const duration = sec1BaseDuration
-  result.push({ ...item, startTime: currentTime, duration, endTime: currentTime + duration })
-  currentTime += duration
+const sec1Cuts = trackZeroBeatCuts(currentTime, TRACK_ZERO_PRESENTATION_SECTIONS.ambientIntro.endTime, dnPool.length, TRACK_ZERO_PRESENTATION_SECTIONS.ambientIntro.beatGroups)
+for (const [index, item] of dnPool.entries()) {
+  const endTime = sec1Cuts[index]
+  result.push({ ...item, startTime: currentTime, duration: endTime - currentTime, endTime })
+  currentTime = endTime
 }
 
 // 2. Heavy Driving Verse 1 [42, 127]
 const normalPool1 = shuffledNormalShowcase.slice(0, 22)
-const sec2BaseDuration = 85 / normalPool1.length
-for (const item of normalPool1) {
-  const duration = sec2BaseDuration
-  result.push({ ...item, startTime: currentTime, duration, endTime: currentTime + duration })
-  currentTime += duration
+const sec2Cuts = trackZeroBeatCuts(currentTime, TRACK_ZERO_PRESENTATION_SECTIONS.drivingVerse.endTime, normalPool1.length, TRACK_ZERO_PRESENTATION_SECTIONS.drivingVerse.beatGroups)
+for (const [index, item] of normalPool1.entries()) {
+  const endTime = sec2Cuts[index]
+  result.push({ ...item, startTime: currentTime, duration: endTime - currentTime, endTime })
+  currentTime = endTime
 }
 
 // 3. Heavy Chorus 1 [127, 229]
 const normalPool2 = shuffledNormalShowcase.slice(22, 39)
-const peoplePool1 = andyAdvisorPhoto ? [andyAdvisorPhoto, ...shuffledPeople.slice(0, 14)] : shuffledPeople.slice(0, 15)
+const peoplePool1 = [
+  ...bluefinGroupPhotos,
+  ...(rezaPhoto ? [rezaPhoto] : []),
+  ...(andyAdvisorPhoto ? [andyAdvisorPhoto] : []),
+  ...shuffledPeople.slice(0, 15 - bluefinGroupPhotos.length - (rezaPhoto ? 1 : 0) - (andyAdvisorPhoto ? 1 : 0)),
+]
 const sec3Items = [...normalPool2, ...peoplePool1]
-const sec3BaseDuration = 102 / sec3Items.length
-for (const item of sec3Items) {
-  const duration = sec3BaseDuration
-  result.push({ ...item, startTime: currentTime, duration, endTime: currentTime + duration })
-  currentTime += duration
+const sec3Cuts = trackZeroBeatCuts(currentTime, TRACK_ZERO_PRESENTATION_SECTIONS.contributorChorus.endTime, sec3Items.length, TRACK_ZERO_PRESENTATION_SECTIONS.contributorChorus.beatGroups)
+for (const [index, item] of sec3Items.entries()) {
+  const endTime = sec3Cuts[index]
+  result.push({ ...item, startTime: currentTime, duration: endTime - currentTime, endTime })
+  currentTime = endTime
 }
 
 // 4. Chanting Bridge [229, 277]
 const peoplePool2 = shuffledPeople.slice(15, 39)
-const sec4BaseDuration = 48 / peoplePool2.length
-for (const item of peoplePool2) {
-  const duration = sec4BaseDuration
-  result.push({ ...item, startTime: currentTime, duration, endTime: currentTime + duration })
-  currentTime += duration
+const sec4Cuts = trackZeroBeatCutsWithPickup(currentTime, TRACK_ZERO_PRESENTATION_SECTIONS.chantingBridge.pickupTime, TRACK_ZERO_PRESENTATION_SECTIONS.chantingBridge.endTime, peoplePool2.length, ...TRACK_ZERO_PRESENTATION_SECTIONS.chantingBridge.beatGroups)
+for (const [index, item] of peoplePool2.entries()) {
+  const endTime = sec4Cuts[index]
+  result.push({ ...item, startTime: currentTime, duration: endTime - currentTime, endTime })
+  currentTime = endTime
 }
 
 // 5. Heavy Build-Up [277, 345]
@@ -133,11 +162,11 @@ const peoplePool3 = shuffledPeople.slice(39, 73)
 if (heartPhoto) {
   peoplePool3.splice(21, 0, heartPhoto)
 }
-const sec5BaseDuration = 68 / peoplePool3.length
-for (const item of peoplePool3) {
-  const duration = sec5BaseDuration
-  result.push({ ...item, startTime: currentTime, duration, endTime: currentTime + duration })
-  currentTime += duration
+const sec5Cuts = trackZeroBeatCuts(currentTime, TRACK_ZERO_PRESENTATION_SECTIONS.heavyBuild.endTime, peoplePool3.length, TRACK_ZERO_PRESENTATION_SECTIONS.heavyBuild.beatGroups)
+for (const [index, item] of peoplePool3.entries()) {
+  const endTime = sec5Cuts[index]
+  result.push({ ...item, startTime: currentTime, duration: endTime - currentTime, endTime })
+  currentTime = endTime
 }
 
 // 6. Fast Solo Climax & Outro [345, 423]
@@ -154,7 +183,7 @@ if (bkPhoto) {
 }
 
 const peoplePool4 = shuffledPeople.slice(73)
-const finaleStartTime = 408
+const finaleStartTime = TRACK_ZERO_PRESENTATION_SECTIONS.finaleBarrage.endTime
 const sec6BaseDuration = (finaleStartTime - currentTime) / peoplePool4.length
 for (const item of peoplePool4) {
   const duration = sec6BaseDuration

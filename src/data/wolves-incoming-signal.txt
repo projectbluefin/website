@@ -4,15 +4,17 @@ KDE Plasma Couplings: ENGAGED
 Mechaphippy Deployment: [UNAUTHORIZED]
 M2 Status: [ Unknown ]
 Field Medical Exoskeleton: [ Missing ]
----
-
 TARGET ACQUIRED: GOSPO, KYLE
 TARGET ACQUIRED: EGGROLL, GLORIOUS
+TARGET ACQUIRED: FYRA LABS [ REDACTED ]
 TARGET ACQUIRED: People who read documentation
-PREVENT OPEN GAMING COLLECTIVE AT ALL COSTS
+IDKFA: Open Gaming Collective Talent: [ LOCKED IN ]
 Kube of Destiny location: Earth
 Projected Joining: Salt Lake City, Utah
 Longhorn Long Range Ballistic Mech Package: Deployed (Sponsored by SUSE)
+
+---
+
 k8s Buildstream Cluster: ENABLED
 k8s Buildbarn Control Plane: OPTIMAL
 Buildstream Dakota[GNOMEOS] Prototype: DEADLY

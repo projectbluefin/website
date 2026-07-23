@@ -373,6 +373,11 @@ export const wallpapers: Wallpaper[] = [
   },
   {
     type: 'single',
+    name: 'wolves/people/Bluefin Contributor Reza Jelveh.jpg',
+    title: 'Bluefin Contributor Reza Jelveh',
+  },
+  {
+    type: 'single',
     name: 'wolves/people/CNCF Executive Directory Jonathan Bryce.webp',
     title: 'CNCF Executive Directory Jonathan Bryce',
   },
@@ -1061,11 +1066,6 @@ export const wallpapers: Wallpaper[] = [
     type: 'single',
     name: 'wolves/people/r2.png',
     title: 'R2',
-  },
-  {
-    type: 'single',
-    name: 'wolves/people/reza.jpg',
-    title: 'Reza',
   },
   {
     type: 'single',

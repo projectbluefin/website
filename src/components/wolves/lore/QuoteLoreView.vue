@@ -2,6 +2,7 @@
 import type { LoreViewProps } from '../lore'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { getQuoteLore } from '../lore'
+import { estimateLoreReadDuration } from '@/data/wolves-lore-timing'
 
 const props = defineProps<LoreViewProps>()
 
@@ -44,7 +45,9 @@ function runTypewriter() {
   typedQuoteText.value = ''
 
   const targetText = quote.value.quote
-  const stepTime = Math.max(5, Math.min(50, (props.duration * 700) / targetText.length))
+  const minimumReadSeconds = estimateLoreReadDuration({ kind: 'quote', body: targetText, attribution: quote.value.attribution })
+  const readableBudgetMs = Math.max(1, Math.min(props.duration, minimumReadSeconds) * 1000 * 0.7)
+  const stepTime = Math.max(5, Math.min(50, readableBudgetMs / Math.max(1, targetText.length)))
   let index = 0
 
   typewriterTimer = setInterval(() => {
@@ -85,7 +88,7 @@ onBeforeUnmount(clearTypewriter)
     data-lore-view-kind="quote"
   >
     <div class="dispatch-quote-card">
-      <div ref="quoteViewportRef" class="quote-viewport" @click="skipTypewriter">
+      <div ref="quoteViewportRef" class="quote-viewport" :aria-label="quote.quote + ' — ' + quote.attribution" role="article" @click="skipTypewriter">
         <p v-if="warning" class="thesis-warning">
           {{ warning }}
         </p>

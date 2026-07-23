@@ -29,3 +29,7 @@ generator, then regenerate:
 - generated album artwork under `public/experiences/`
 
 The owning reference in `docs/reference/` names the generator and validation.
+
+## Lore timing and accessibility
+
+The narrative timeline selects records from the active player clock. Unlocked lore intervals are allocated by content cost; locked anchors retain their authored windows. Quote and conversation renderers use the same readability estimator as the scheduler. The visual typewriter is presentation-only, while the active article exposes complete authored text for assistive technology. Never add a second clock or compensate for an undersized slot only by changing renderer speed.

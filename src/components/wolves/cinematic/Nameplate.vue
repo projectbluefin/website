@@ -246,4 +246,9 @@ onBeforeUnmount(() => window.clearInterval(avatarTimer))
 .wc-nameplate-label-leave-to {
   opacity: 0;
 }
+
+.wc-nameplate-label-enter-to,
+.wc-nameplate-label-leave-from {
+  opacity: 1;
+}
 </style>

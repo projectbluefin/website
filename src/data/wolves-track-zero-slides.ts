@@ -16,7 +16,7 @@ export const shermanM2CompositeTrackZeroWindow = {
   endTime: 184.12,
 } as const
 
-export const kyleSlideId = 'wolves/people/kyle.jpg'
+export const kyleSlideId = 'wolves/people/NOT John Bazzite.jpg'
 export const kyleTrackZeroWindow = {
   startTime: shermanM2CompositeTrackZeroWindow.endTime,
   endTime: 188.2,
@@ -42,7 +42,7 @@ export const jorgeBluefinTrackZeroWindow = {
 
 /**
  * The Bluefin group: the locked run of Bluefin community photos that plays
- * back-to-back after Marina's window (Sherman + m2 composite -> kyle -> Hikari -> Hikari2 -> Jorge).
+ * back-to-back after Marina's window (Sherman + m2 composite -> NOT John Bazzite -> Hikari -> Hikari2 -> Jorge).
  */
 export const bluefinGroupSlides = [
   { id: shermanM2CompositeSlideId, window: shermanM2CompositeTrackZeroWindow },
@@ -53,6 +53,13 @@ export const bluefinGroupSlides = [
 ] as const
 
 export const bluefinGroupSlideIds = bluefinGroupSlides.map(slide => slide.id)
+
+const REZA_HOLD_SECONDS = 3.08
+export const rezaContributorSlideId = 'wolves/people/Bluefin Contributor Reza Jelveh.jpg'
+export const rezaContributorTrackZeroWindow = {
+  startTime: jorgeBluefinTrackZeroWindow.endTime,
+  endTime: jorgeBluefinTrackZeroWindow.endTime + REZA_HOLD_SECONDS,
+} as const
 
 /**
  * The first People slot is Jono's fixed 167.8s–171.88s Track 0 window.

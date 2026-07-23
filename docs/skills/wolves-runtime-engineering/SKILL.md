@@ -50,3 +50,11 @@ Do not introduce a second transport or wall-clock synchronization.
 - `../../reference/wolves-runtime.md`
 - `../../architecture/runtime-data-flow.md`
 - `../design-gate/SKILL.md`
+
+## Timing lessons
+
+- Keep scheduler and renderer on one content-cost timing model.
+- Preserve locked anchors and recompute only unlocked intervals.
+- Prefer invariant tests over stale exact timestamps for recomputed intervals.
+- A build is not runtime proof; verify the real Wolves route in Chromium at short/long records and locked anchors.
+- Never describe a discarded experiment as restored or complete.

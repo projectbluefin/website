@@ -85,3 +85,7 @@ body and zero `pageerror` events.
 
 - `../../reference/production-entrypoints.md`
 - `../../architecture/runtime-data-flow.md`
+
+## Wolves timing validation
+
+For lore timing work, run typecheck, focused lore/timing/timeline tests, build, diff check, and a Chromium smoke of /wolves/. Report focused results separately from full-suite baseline failures. Assert a non-empty rendered body, zero page errors, no failed module requests, preserved locked anchors, contiguous unlocked slots, and readable representative short/long records.

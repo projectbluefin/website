@@ -48,3 +48,7 @@ translations presented as authored copy.
 
 - `../../reference/content-map.md`
 - `../../reference/wolves-runtime.md`
+
+## Timing authored content
+
+Changing when authored prose appears still requires exact wording, attribution, and order. Preserve locked anchors; distribute unlocked records by content cost rather than shortening, summarizing, or repeating authored prose. Verify that the available interval can display the complete record.

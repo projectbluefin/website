@@ -65,3 +65,13 @@ Wolves browser flow and real player. For lore deletions, open `/wolves/` in
 Chromium and assert the page has rendered text with no `pageerror` events; a
 successful build does not prove eager lore loading succeeds. Finish with
 `docs/skills/validation/SKILL.md` before any production claim.
+
+## Timing and readability lessons
+
+- The active media-player clock remains the only synchronization clock.
+- A typewriter cannot repair a timeline slot that is too short; the scheduler and renderer must share one content-cost estimator.
+- Preserve locked narrative anchors exactly and allocate only unlocked intervals.
+- Use invariant tests for recomputed intervals: completeness, uniqueness, ordering, contiguity, anchor preservation, and readability minimums.
+- Do not call an abandoned experiment restored. State which source is active and what was actually changed.
+- For accessibility, expose complete active lore text at the article level; do not announce every typed character through a live region.
+- Verify short and long records in Chromium, not only with unit tests or a build.

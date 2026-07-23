@@ -106,3 +106,10 @@ an API token scoped to the target zone. Do not compensate by deploying a Worker.
 
 - Cloudflare Workers SDK: `/cloudflare/workers-sdk`
 - Cloudflare Wrangler deploy route configuration (`custom_domain = true`)
+
+## Lessons learned
+
+- Always state exactly which source is active; “restored” is ambiguous after a failed experiment.
+- Preserve dirty user edits and classify every path before staging.
+- For timing changes, document anchors, estimator rules, tests, generated output, and browser observations.
+- Never call focused green tests a full-suite pass.

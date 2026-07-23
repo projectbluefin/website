@@ -12,7 +12,7 @@ export const ghostsInTheMistOpeningSlide = {
     'Not a Universal Blue or bootc ecosystem. A cloud native ecosystem. In one short weekend you\'ve proven to the professional world that enthusiasts matter.\n\nHappy Fifth Birthday Universal Blue!',
     'Thank you to Chainguard, Microsoft, Red Hat, and Edera for sourcing talent from Universal Blue! \n\nJudge us by the quality of our people.',
 
-    'If you\'re new to cloud native then I hope this small glimpse of the people will inspire to work in your own local communities. \n\nBe the one who moves, not the one who is moved. With you at our side, how can we fail?',
+    'If you\'re new to cloud native then I hope this small glimpse of our people will inspire your own local communities. \n\nBe the one who moves, not the one who is moved. With you at our side, how can we fail?',
 
   ],
 } as const

@@ -16,12 +16,15 @@ import {
   trackZeroBeatCuts,
   trackZeroBeatCutsWithPickup,
 } from '@/data/wolves-track-zero-beats'
+import { TRACK_ZERO_PRESENTATION_SECTIONS } from '@/data/wolves-track-zero-manifest'
 import {
   bluefinGroupSlides,
   jonoBaconSlideId,
   jonoBaconTrackZeroWindow,
   marinaMooreSlideId,
   marinaMooreTrackZeroWindow,
+  rezaContributorSlideId,
+  rezaContributorTrackZeroWindow,
   pinBluefinMicroraptorSlide,
   pinTrackZeroHeroSlides,
   pinTrackZeroPostHeroOpening,
@@ -292,6 +295,13 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     andyAdvisorPhoto = localPeople.splice(andyAdvisorIndex, 1)[0]
   }
 
+  const rezaTarget = rezaContributorSlideId
+  const rezaIndex = localPeople.findIndex(wp => wp.id === rezaTarget)
+  let rezaPhoto: any = null
+  if (rezaIndex !== -1) {
+    rezaPhoto = localPeople.splice(rezaIndex, 1)[0]
+  }
+
   const pivotalTarget = 'wolves/people/kubecon-54927705495.webp'
   const targetIndex = localPeople.findIndex(wp => wp.id === pivotalTarget)
   let pivotalPhoto: any = null
@@ -346,7 +356,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   // 1. Ambient Intro [0, ~42] -> Day/Night wallpapers on long measured holds
   // (32-beat opening hold, 24-beat holds after; cuts land on measured beats).
   const dnPool = shuffledDaynight.slice(0, 5)
-  const sec1Cuts = trackZeroBeatCuts(currentTime, TRACK_ZERO_SECTIONS.verseStart, dnPool.length, [32, 24])
+  const sec1Cuts = trackZeroBeatCuts(currentTime, TRACK_ZERO_PRESENTATION_SECTIONS.ambientIntro.endTime, dnPool.length, TRACK_ZERO_PRESENTATION_SECTIONS.ambientIntro.beatGroups)
   dnPool.forEach((item, index) => {
     const endTime = sec1Cuts[index]
     result.push({
@@ -362,7 +372,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   // 2. Heavy Driving Verse 1 [~42, ~127] -> 22 normal showcase wallpapers;
   // 16-beat holds while the verse settles in, tightening to 8-beat phrases.
   const normalPool1 = shuffledNormalShowcase.slice(0, 22)
-  const sec2Cuts = trackZeroBeatCuts(currentTime, TRACK_ZERO_SECTIONS.chorusStart, normalPool1.length, [16, 8])
+  const sec2Cuts = trackZeroBeatCuts(currentTime, TRACK_ZERO_PRESENTATION_SECTIONS.drivingVerse.endTime, normalPool1.length, TRACK_ZERO_PRESENTATION_SECTIONS.drivingVerse.beatGroups)
   normalPool1.forEach((item, index) => {
     const endTime = sec2Cuts[index]
     result.push({
@@ -377,10 +387,12 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
 
   // 3. Heavy Chorus 1 / Verse 2 / Chorus 2 [~127, ~229] -> leftover showcase + people wallpapers
   const normalPool2 = shuffledNormalShowcase.slice(22, 39)
-  const peoplePool1 = andyAdvisorPhoto ? [andyAdvisorPhoto, ...shuffledPeople.slice(0, 14)] : shuffledPeople.slice(0, 15)
+  const peoplePool1 = andyAdvisorPhoto
+    ? [...shuffledPeople.slice(0, 7), andyAdvisorPhoto, ...shuffledPeople.slice(7, 14)]
+    : shuffledPeople.slice(0, 15)
   const jonoPhoto = peoplePool1.find(item => item.id === jonoBaconSlideId)
   const marinaPhoto = peoplePool1.find(item => item.id === marinaMooreSlideId)
-  // The Bluefin group (Sherman + m2 composite, kyle, hikari) locks as one back-to-back run;
+  // The Bluefin group (Sherman + m2 composite, NOT John Bazzite, hikari) locks as one back-to-back run;
   // it only engages when every member survived into the Track 0 people pool.
   const bluefinGroupPhotos = bluefinGroupSlides.map(slide => ({
     slide,
@@ -399,7 +411,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
 
   if (!jonoPhoto) {
     const sec3Items = [...normalPool2, ...peoplePool1]
-    const sec3Cuts = trackZeroBeatCuts(currentTime, TRACK_ZERO_SECTIONS.bridgeStart, sec3Items.length, [8, 4])
+    const sec3Cuts = trackZeroBeatCuts(currentTime, TRACK_ZERO_PRESENTATION_SECTIONS.contributorChorus.endTime, sec3Items.length, TRACK_ZERO_PRESENTATION_SECTIONS.contributorChorus.beatGroups)
     sec3Items.forEach((item, index) => {
       const endTime = sec3Cuts[index]
       result.push({
@@ -467,9 +479,20 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
       }
     }
 
+    if (rezaPhoto) {
+      result.push({
+        ...rezaPhoto,
+        path: rezaPhoto.path || '',
+        startTime: currentTime,
+        duration: rezaContributorTrackZeroWindow.endTime - rezaContributorTrackZeroWindow.startTime,
+        endTime: rezaContributorTrackZeroWindow.endTime,
+      })
+      currentTime = rezaContributorTrackZeroWindow.endTime
+    }
+
     // Post-hero people ride the measured 136 BPM region on 10-beat holds,
     // tightening to 8-beat as the second chorus closes into the bridge.
-    const afterJonoCuts = trackZeroBeatCuts(currentTime, TRACK_ZERO_SECTIONS.bridgeStart, remainingPeoplePool1.length, [10, 8])
+    const afterJonoCuts = trackZeroBeatCuts(currentTime, TRACK_ZERO_PRESENTATION_SECTIONS.contributorChorus.endTime, remainingPeoplePool1.length, TRACK_ZERO_PRESENTATION_SECTIONS.contributorChorus.beatGroups)
     remainingPeoplePool1.forEach((item, index) => {
       const endTime = afterJonoCuts[index]
       result.push({
@@ -488,11 +511,10 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   const peoplePool2 = shuffledPeople.slice(15, 39)
   const sec4Cuts = trackZeroBeatCutsWithPickup(
     currentTime,
-    TRACK_ZERO_TEMPO_PICKUPS.bridge,
-    TRACK_ZERO_SECTIONS.buildStart,
+    TRACK_ZERO_PRESENTATION_SECTIONS.chantingBridge.pickupTime,
+    TRACK_ZERO_PRESENTATION_SECTIONS.chantingBridge.endTime,
     peoplePool2.length,
-    6,
-    4,
+    ...TRACK_ZERO_PRESENTATION_SECTIONS.chantingBridge.beatGroups,
   )
   peoplePool2.forEach((item, index) => {
     const endTime = sec4Cuts[index]
@@ -522,7 +544,7 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     // 321s owner anchor under the measured 4-beat cuts.
     peoplePool3.splice(19, 0, heartPhoto)
   }
-  const sec5Cuts = trackZeroBeatCuts(currentTime, TRACK_ZERO_SECTIONS.pivotalStart, peoplePool3.length, [8, 4])
+  const sec5Cuts = trackZeroBeatCuts(currentTime, TRACK_ZERO_PRESENTATION_SECTIONS.heavyBuild.endTime, peoplePool3.length, TRACK_ZERO_PRESENTATION_SECTIONS.heavyBuild.beatGroups)
   peoplePool3.forEach((item, index) => {
     const endTime = sec5Cuts[index]
     result.push({
@@ -570,11 +592,10 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   const peoplePool4 = deterministicShuffle(barrageBase, 404).slice(0, 30)
   const sec6Cuts = trackZeroBeatCutsWithPickup(
     currentTime,
-    TRACK_ZERO_TEMPO_PICKUPS.finale,
-    TRACK_ZERO_SECTIONS.finaleStart,
+    TRACK_ZERO_PRESENTATION_SECTIONS.finaleBarrage.pickupTime,
+    TRACK_ZERO_PRESENTATION_SECTIONS.finaleBarrage.endTime,
     peoplePool4.length,
-    8,
-    4,
+    ...TRACK_ZERO_PRESENTATION_SECTIONS.finaleBarrage.beatGroups,
   )
   peoplePool4.forEach((item, index) => {
     const endTime = sec6Cuts[index]
