@@ -10,6 +10,7 @@ import {
 import {
   PRE_END_THRESHOLD_S,
   TIME_POLL_MS,
+  VOLUME_STEP_MS,
 } from '@/config/wolves-cinematic'
 import { useCinematicStore } from '@/stores/cinematic'
 
@@ -24,6 +25,11 @@ interface SideState {
   player: YoutubePlayer | null
   /** Segment index currently loaded (or cued) on this side. */
   segmentIndex: number
+  /**
+   * This side was told to play only to force YouTube to fetch media, and must be
+   * parked back on its opening frame as soon as it reports PLAYING.
+   */
+  prewarming: boolean
 }
 
 /**
@@ -42,8 +48,8 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
   const started = ref(false)
 
   const sides: Record<PlayerSide, SideState> = {
-    a: { player: null, segmentIndex: -1 },
-    b: { player: null, segmentIndex: -1 },
+    a: { player: null, segmentIndex: -1, prewarming: false },
+    b: { player: null, segmentIndex: -1, prewarming: false },
   }
 
   let pollTimer: ReturnType<typeof setInterval> | null = null
@@ -64,6 +70,13 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     sides.b.player = null
     sides.a.segmentIndex = -1
     sides.b.segmentIndex = -1
+    sides.a.prewarming = false
+    sides.b.prewarming = false
+  }
+
+  /** Native timeline position a segment must be sitting on before it goes to air. */
+  function openingFrame(segmentIndex: number): number {
+    return store.segments[segmentIndex]?.startSeconds ?? 0
   }
 
   function rejectPendingReadiness(reason: Error) {
@@ -80,6 +93,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     const state = sides[side]
     if (!state.player || segmentIndex >= store.segments.length) {
       state.segmentIndex = -1
+      state.prewarming = false
       return
     }
     state.segmentIndex = segmentIndex
@@ -87,14 +101,51 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     state.player.cueVideoById?.({ videoId: segment.youtubeId, startSeconds: segment.startSeconds })
     applyVolume(state.player, 0)
 
-    // Prewarm the inactive buffer in the background so the next segment is
-    // already buffered and ready to take over without a visible hitch.
+    // Prewarm the inactive buffer so the next segment has real media buffered
+    // before the handoff. `playVideo` is the only reliable way to make YouTube
+    // fetch media, so it is started and then parked again the instant it reports
+    // PLAYING (see `parkPrewarmedSide`). Leaving it running was a show-breaking
+    // defect: its clock advanced for the whole outgoing segment, so the handoff
+    // joined the next track wherever that clock had reached — the back half of
+    // the cinematic opened mid-song and ran minutes short.
     if (side !== activeSide.value) {
+      state.prewarming = true
       state.player.playVideo?.()
     }
   }
 
-  /** rAF volume ramp between the two players over the segment's crossfade window. */
+  /** Park a buffer that has finished prewarming back on its authored opening frame. */
+  function parkPrewarmedSide(side: PlayerSide) {
+    const state = sides[side]
+    state.prewarming = false
+    state.player?.pauseVideo?.()
+    state.player?.seekTo?.(openingFrame(state.segmentIndex), true)
+    applyVolume(state.player, 0)
+  }
+
+  /**
+   * Promote a buffer to air. The seek is the guarantee: whatever the buffer did
+   * while it was prewarming, a segment always begins on its authored opening frame.
+   */
+  function startIncoming(side: PlayerSide) {
+    const state = sides[side]
+    state.prewarming = false
+    state.player?.seekTo?.(openingFrame(state.segmentIndex), true)
+    state.player?.playVideo?.()
+  }
+
+  /**
+   * rAF volume ramp between the two players over the segment's crossfade window.
+   *
+   * Equal-power (sin/cos), not linear: two uncorrelated tracks summed on a linear
+   * ramp lose about 3 dB at the midpoint, which the room hears as the music sagging
+   * exactly where the fade should be seamless.
+   *
+   * Volume is pushed at `VOLUME_STEP_MS`, not every frame. Each `setVolume` is a
+   * cross-origin postMessage into the iframe; at 60fps across two players a long
+   * fade posts hundreds of them during the same moments the transition overlay is
+   * animating. The audible resolution of a 0-100 volume ramp does not need 60Hz.
+   */
   function rampVolumes(outgoing: YoutubePlayer | null, incoming: YoutubePlayer | null, durationMs: number, onDone: () => void) {
     cancelAnimationFrame(rampFrame)
     if (durationMs <= 0) {
@@ -105,10 +156,14 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     }
 
     const startedAt = performance.now()
+    let lastPushedAt = -Infinity
     const tick = (now: number) => {
       const progress = Math.min(1, (now - startedAt) / durationMs)
-      applyVolume(incoming, progress * 100)
-      applyVolume(outgoing, (1 - progress) * 100)
+      if (progress >= 1 || now - lastPushedAt >= VOLUME_STEP_MS) {
+        lastPushedAt = now
+        applyVolume(incoming, Math.sin((progress * Math.PI) / 2) * 100)
+        applyVolume(outgoing, Math.cos((progress * Math.PI) / 2) * 100)
+      }
       if (progress < 1) {
         rampFrame = requestAnimationFrame(tick)
       }
@@ -139,10 +194,10 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
 
     swapping = true
     const crossfadeMs = store.crossfadeMsAt(store.segmentIndex)
-    store.beginCrossfade()
+    store.beginCrossfade(store.segmentIndex + 1)
 
     applyVolume(incoming, 0)
-    incoming.playVideo?.()
+    startIncoming(toSide)
     activeSide.value = toSide // component CSS crossfades opacity on this change
 
     rampVolumes(outgoing, incoming, crossfadeMs, () => {
@@ -172,20 +227,21 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     }
 
     swapping = true
-    store.beginCrossfade()
+    store.beginCrossfade(target)
 
     const segment = store.segments[target]
     const targetIsPreloaded = sides[toSide].segmentIndex === target
     sides[toSide].segmentIndex = target
     applyVolume(incoming, 0)
-    // Forward skips normally target the already-playing muted buffer. Reloading
-    // that same video here causes YouTube to restart its decoder and produces an
-    // audible pop; only hard-load when the target is not preloaded (backward or
-    // multi-segment jumps).
+    // Forward skips normally target the already-prewarmed buffer, which is parked
+    // on its opening frame; promoting it avoids the decoder restart (and audible
+    // pop) that a redundant load would cause. Only hard-load when the target is
+    // not preloaded (backward or multi-segment jumps).
     if (targetIsPreloaded) {
-      incoming.playVideo?.()
+      startIncoming(toSide)
     }
     else {
+      sides[toSide].prewarming = false
       incoming.loadVideoById?.({ videoId: segment.youtubeId, startSeconds: segment.startSeconds })
     }
     activeSide.value = toSide
@@ -213,9 +269,18 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     if (!swapping) {
       store.updateTime(Math.max(0, time - startAt), Math.max(0, endAt - startAt), time)
     }
-    // Swap slightly before the end to hide YouTube's trailing black frame (or, for
-    // trimmed segments, right at the authored cutoff).
-    if (!swapping && endAt > 0 && time >= endAt - PRE_END_THRESHOLD_S) {
+    // A crossfade has to BEGIN one crossfade-length before the end, not finish there.
+    // Leading by PRE_END_THRESHOLD_S alone meant the outgoing track reached its real
+    // end 0.3s into a fade lasting up to 2.5s: the room heard the song stop dead and
+    // the next one rise out of silence, with a hole in the music between them. Leading
+    // by the full window lets the outgoing decay across its own final seconds while the
+    // incoming comes up underneath it, which is what "one song becomes the next" means.
+    // The last segment has nothing to fade into, so it keeps the short trailing lead
+    // that only hides YouTube's black frame.
+    const swapLeadSeconds = store.isLastSegment
+      ? PRE_END_THRESHOLD_S
+      : PRE_END_THRESHOLD_S + store.crossfadeMsAt(store.segmentIndex) / 1000
+    if (!swapping && endAt > 0 && time >= endAt - swapLeadSeconds) {
       beginSwap()
     }
   }
@@ -235,6 +300,11 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
 
   function handleStateChange(side: PlayerSide, playerState: number) {
     const states = getYoutubePlayerState()
+    if (sides[side].prewarming && playerState === states.PLAYING) {
+      // It has media; that is all the prewarm was for. Put it back on its mark.
+      parkPrewarmedSide(side)
+      return
+    }
     if (side !== activeSide.value) {
       return
     }

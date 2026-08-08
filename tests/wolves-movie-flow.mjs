@@ -18,16 +18,19 @@
  */
 
 import { chromium } from 'playwright'
-import { readFileSync } from 'node:fs'
 
 const BASE_URL = process.env.WOLVES_BASE_URL ?? 'http://127.0.0.1:5173'
 const WOLVES_URL = `${BASE_URL}/wolves/`
 const [width, height] = (process.env.WOLVES_VIEWPORT ?? '1440x900').split('x').map(Number)
 const VIEWPORT = { width, height }
 const SCREENSHOT_DIR = process.env.WOLVES_SCREENSHOT_DIR
-const JORGE_GHOSTS_QUOTE_PART_ONE = 'Not a Universal Blue ecosystem or a bootc ecosystem. A cloud native ecosystem. In one short weekend you\'ve proven to the world that enthusiasts matter. Happy Fifth Birthday Universal Blue!'
-const JORGE_GHOSTS_QUOTE_PART_TWO = 'Thank you to Chainguard, Microsoft, Red Hat, Edera, for sourcing talent from Universal Blue! Need talent? Cloud native projets like ours are focused on sustainability. Judge us by the quality of our people.'
-const JORGE_GHOSTS_QUOTE_PART_THREE = 'If you\'re new to cloud native then I hope this small glimpse of the people will inspire to work in your own local communities. Trust me we have work to do! Be the one who moves, not the one who is moved. With you at our side, how can we fail? -- July 21, Ann Arbor, USA'
+// Authored copy from ghostsInTheMistOpeningSlide.descriptionParts in
+// src/data/wolves-gallery-featured.ts, normalized to single-space text the way
+// the caption assertions read it back. Kept verbatim so an unauthorized edit
+// to the authored quote fails the harness.
+const JORGE_GHOSTS_QUOTE_PART_ONE = 'Not a Universal Blue or bootc ecosystem. A cloud native ecosystem. In one short weekend you\'ve proven to the professional world that enthusiasts matter. Happy Fifth Birthday Universal Blue!'
+const JORGE_GHOSTS_QUOTE_PART_TWO = 'Thank you to Chainguard, Microsoft, Red Hat, and Edera for sourcing talent from Universal Blue! Judge us by the quality of our people.'
+const JORGE_GHOSTS_QUOTE_PART_THREE = 'If you\'re new to cloud native then I hope this small glimpse of our people will inspire your own local communities. Be the one who moves, not the one who is moved. With you at our side, how can we fail?'
 
 let passed = 0
 let failed = 0
@@ -181,10 +184,22 @@ try {
 
         loadVideoById(id) {
           this.videoId = id.videoId ?? id
+          this.currentTime = id.startSeconds ?? 0
+          // The real IFrame API buffers and then autoplays after loadVideoById.
+          // useDualBufferPlayer.start() awaits that PLAYING transition before the
+          // intro handoff can dissolve, so the mock must emit the same lifecycle.
+          Promise.resolve().then(() => {
+            this.state = window.YT.PlayerState.BUFFERING
+            this.config.events?.onStateChange?.({ data: this.state, target: this })
+            this.playVideo()
+          })
         }
 
         cueVideoById(id) {
           this.videoId = id.videoId ?? id
+          this.currentTime = id.startSeconds ?? 0
+          this.state = window.YT.PlayerState.CUED
+          this.config.events?.onStateChange?.({ data: this.state, target: this })
         }
 
         destroy() {}
@@ -307,8 +322,12 @@ try {
   await page.evaluate((index) => {
     window.__mockWolvesPlayers[index].seekTo(30.3, true)
   }, introPlayerIndex)
-  await page.waitForTimeout(250)
-  const comicHeroShotMid = await comicHeroShotStart.getAttribute('data-comic-hero-shot')
+  // The cross-dissolve takes its own time after the seek; poll for the swap
+  // instead of sampling after a fixed delay that intermittently races it.
+  const comicHeroShotMid = await page.waitForFunction(() => {
+    const shot = document.querySelector('[data-comic-hero-shot]:not(.comic-hero-shot-fade-leave-active)')?.getAttribute('data-comic-hero-shot')
+    return shot && !shot.includes('youre-holding-it-wrong-post1') ? shot : null
+  }, null, { timeout: 5_000 }).then(handle => handle.jsonValue()).catch(() => null)
   assertTruthy('Comic Hero Shots title card advances to a later slide without repeating', comicHeroShotMid && comicHeroShotMid !== 'youre-holding-it-wrong-post1')
   await page.evaluate((index) => {
     window.__mockWolvesPlayers[index].seekTo(48.01, true)
@@ -366,19 +385,29 @@ try {
   // the class after the fact is a race the test loses more often than it wins. Arm an observer
   // first, let it snapshot the fade in progress, then read the result back.
   // Complete the remaining intro stages before exercising the playlist handoff.
-  await page.getByLabel('Next').click()
+  // Two Next controls share the label (overlay + transport widget); a raw
+  // getByLabel().click() intermittently resolves to the off-viewport one, so
+  // use the visibility-aware helper.
+  await clickControl(page, 'Next')
 
   await page.waitForSelector('.wolves-intro-overlay--transparent-handoff', { state: 'visible', timeout: 10_000 })
-  await page.waitForTimeout(250)
-  const handoffPresentation = await page.evaluate(() => {
-    const overlay = document.querySelector('.wolves-intro-overlay')
+  // The handoff class lives for one 400ms fade and then the overlay unmounts,
+  // so a fixed sleep before sampling loses the race whenever the click and
+  // waitForSelector round-trips eat into the fade. Poll inside the page and
+  // snapshot atomically the first frame the dissolve is provably in progress.
+  const handoffPresentation = await page.waitForFunction(() => {
+    const overlay = document.querySelector('.wolves-intro-overlay--transparent-handoff')
+    if (!overlay) {
+      return null
+    }
     const stage = document.querySelector('.wc-stage')
-    return {
-      opacity: overlay ? getComputedStyle(overlay).opacity : '',
-      transitionDuration: overlay ? getComputedStyle(overlay).transitionDuration : '',
+    const snapshot = {
+      opacity: getComputedStyle(overlay).opacity,
+      transitionDuration: getComputedStyle(overlay).transitionDuration,
       stageVisible: Boolean(stage && getComputedStyle(stage).visibility !== 'hidden'),
     }
-  })
+    return Number(snapshot.opacity) < 0.2 ? snapshot : null
+  }, null, { timeout: 5_000, polling: 'raf' }).then(handle => handle.jsonValue())
   assertTruthy('Intro handoff fades the complete Destiny overlay', Number(handoffPresentation.opacity) < 0.2, handoffPresentation)
   assert('Intro handoff uses the fast presentation dissolve', handoffPresentation.transitionDuration, '0.4s')
   assert('Track 0 stage is present before the intro overlay unmounts', handoffPresentation.stageVisible, true)
@@ -398,23 +427,33 @@ try {
     await page.waitForTimeout(250)
   }
 
-  await seekStage(247.592)
-  assert('4:08 holds the prior lore record until the slide cut', await page.locator('.conversation-title').textContent(), 'The Artifact')
-  const slideBeforeFourOhEight = await page.locator('.flickr-photo-layer').evaluateAll((layers) =>
-    layers.find(layer => getComputedStyle(layer).zIndex === '2')?.querySelector('img')?.getAttribute('src'),
-  )
-  assertTruthy('4:08 has a slide before the synchronized handoff', slideBeforeFourOhEight)
-  await seekStage(247.596)
-  assert('4:08 switches lore on the slide cut', await page.locator('.conversation-title').last().textContent(), 'The Children')
+  // The lore column follows the allocator-derived narrative timeline
+  // (wolves-narrative-timeline.ts). Slot boundaries are computed from reading
+  // cost, so a hard-coded epoch drifts the moment a record is re-edited or
+  // hidden. Read the live timeline through the dev server's module transform
+  // and straddle a real mid-show boundary instead.
+  const loreBoundary = await page.evaluate(async () => {
+    const { wolvesNarrativeTimeline } = await import('/src/data/wolves-narrative-timeline.ts')
+    const { loadAllLoreRecords } = await import('/src/data/wolves-lore-records.ts')
+    const titles = new Map(loadAllLoreRecords().map(record => [record.id, record.metadata?.title]))
+    const index = wolvesNarrativeTimeline.findIndex(slot => slot.startTime > 240)
+    return {
+      time: wolvesNarrativeTimeline[index].startTime,
+      before: titles.get(wolvesNarrativeTimeline[index - 1].artifactId),
+      after: titles.get(wolvesNarrativeTimeline[index].artifactId),
+    }
+  })
+  await seekStage(loreBoundary.time - 0.002)
+  assert('Lore column holds the prior record until its authored boundary', await page.locator('.lore-dossier-title').textContent(), loreBoundary.before)
   assertTruthy(
-    '4:08 switches the slideshow with the lore handoff',
-    await page.locator('.flickr-photo-layer').evaluateAll(
-      (layers, previousSlide) =>
-        layers.find(layer => getComputedStyle(layer).zIndex === '2')?.querySelector('img')?.getAttribute('src') !== previousSlide,
-      slideBeforeFourOhEight,
+    'Slideshow has an active slide at the lore boundary',
+    await page.locator('.flickr-photo-layer').evaluateAll((layers) =>
+      layers.find(layer => getComputedStyle(layer).zIndex === '2')?.querySelector('img')?.getAttribute('src'),
     ),
   )
-  await captureStage(page, 'track-zero-408-handoff')
+  await seekStage(loreBoundary.time + 0.002)
+  assert('Lore column switches records on the authored boundary', await page.locator('.lore-dossier-title').last().textContent(), loreBoundary.after)
+  await captureStage(page, 'track-zero-lore-boundary')
 
   await seekStage(365.05)
   const statusbarBounds = await page.evaluate(() => {
@@ -444,10 +483,14 @@ try {
     true,
   )
 
-  const incomingSignals = readFileSync('src/data/wolves-incoming-signal.txt', 'utf8')
-    .split(/\r?\n/)
-    .map(line => line.trim())
-    .filter(line => line && line !== '---')
+  // The 365-408 window paces the thesis/finale plan section across the status
+  // bar (getTrackZeroHudLabel -> pacedPlanMessage(4, ...)). The old
+  // wolves-incoming-signal.txt is no longer the runtime source; read the same
+  // section list the runtime schedules so the authored order cannot drift.
+  const incomingSignals = await page.evaluate(async () => {
+    const { getTrackZeroSectionMessages } = await import('/src/data/wolves-track-zero-manifest.ts')
+    return [...getTrackZeroSectionMessages(4)]
+  })
   const signalSlotSeconds = (408 - 365) / incomingSignals.length
   for (const [index, expected] of incomingSignals.entries()) {
     await seekStage(365 + index * signalSlotSeconds + 0.05)
@@ -460,9 +503,18 @@ try {
   }
   await captureStage(page, 'finale-interleaved-statuses')
 
-  await seekStage(310.4)
+  // The layout metrics below need a chatlog record on screen; find one from
+  // the live timeline instead of hard-coding a slot that reallocation moves.
+  const chatlogSlot = await page.evaluate(async () => {
+    const { wolvesNarrativeTimeline } = await import('/src/data/wolves-narrative-timeline.ts')
+    const { loadAllLoreRecords } = await import('/src/data/wolves-lore-records.ts')
+    const chatlogIds = new Set(loadAllLoreRecords().filter(record => record.kind === 'chatlog').map(record => record.id))
+    const slot = wolvesNarrativeTimeline.find(candidate => chatlogIds.has(candidate.artifactId))
+    return { time: (slot.startTime + slot.endTime) / 2 }
+  })
+  await seekStage(chatlogSlot.time)
   await page.waitForFunction(() =>
-    document.querySelector('[data-lore-view-kind="chatlog"]')?.textContent?.includes('Sherman'),
+    document.querySelector('[data-lore-view-kind="chatlog"]'),
   )
   const unifiedLoreMetrics = await page.evaluate(() => {
     const column = document.querySelector('.immersive-col-right')
@@ -498,7 +550,10 @@ try {
   assert('Unified lore feed uses flex layout', unifiedLoreMetrics.feedDisplay, 'flex')
   assert('Unified lore feed fills available height', unifiedLoreMetrics.feedFlexGrow, '1')
   assert('Unified lore feed permits shrinking', unifiedLoreMetrics.feedMinHeight, '0px')
-  assertTruthy('Unified lore record retains vertical scrolling', ['auto', 'scroll'].includes(unifiedLoreMetrics.recordOverflowY))
+  // The page model keeps content inside the single held page; the audience
+  // never operates this surface, so the viewport clips rather than scrolls
+  // (see lore-dossier.scss).
+  assert('Unified lore record clips its held page instead of scrolling', unifiedLoreMetrics.recordOverflowY, 'hidden')
   assert('Unified dossier directory stays removed from the selected-record view', unifiedLoreMetrics.directoryDisplay, '')
   assert('Unified lore feed stays inside the lore column', unifiedLoreMetrics.withinColumn, true)
   assert('Legacy split lore tabs are removed', unifiedLoreMetrics.oldTabsPresent, false)
@@ -506,6 +561,31 @@ try {
   await seekStage(167.8)
   const trackZeroNameplateLabel = page.locator('.wc-stage-nameplate .wc-nameplate-label')
   const trackZeroSignal = page.locator('.wc-stage-nameplate .wc-nameplate-detail')
+  // The contributor hero run boundaries are authored in
+  // wolves-track-zero-slides.ts and have been re-measured before (a 0.001s
+  // shift broke every hard-coded straddle here). Read the live windows and
+  // straddle each boundary by a small epsilon instead.
+  const slideWindows = await page.evaluate(async () => {
+    const slides = await import('/src/data/wolves-track-zero-slides.ts')
+    return {
+      jono: slides.jonoBaconTrackZeroWindow,
+      marina: slides.marinaMooreTrackZeroWindow,
+      sherman: slides.shermanM2CompositeTrackZeroWindow,
+      kyle: slides.kyleTrackZeroWindow,
+      hikari: slides.hikariTrackZeroWindow,
+      hikari2: slides.hikari2TrackZeroWindow,
+      jorge: slides.jorgeBluefinTrackZeroWindow,
+    }
+  })
+  const BOUNDARY_EPSILON = 0.005
+  // The rotating front signals are paced across the whole pre-thesis window by
+  // the runtime scheduler, so the exact line on screen at any instant is
+  // derived, not authored to a clock time. Ask the scheduler which line owns
+  // a moment and assert the stage renders it.
+  const hudLabelAt = time => page.evaluate(async (t) => {
+    const { getTrackZeroHudLabel } = await import('/src/data/wolves-track-zero-manifest.ts')
+    return getTrackZeroHudLabel(t)
+  }, time)
   // The plate label slow-fades (1.5s out-in) between authored signal lines, so signal
   // assertions wait for the expected authored text instead of sampling mid-fade.
   const assertSignal = async (label, expected) => {
@@ -517,10 +597,16 @@ try {
     assert(label, ok ? expected : await trackZeroNameplateLabel.textContent(), expected)
   }
   assert('Track 0 nameplate enables slow signal fades', await page.locator('.wc-stage-nameplate .wc-nameplate').evaluate(node => node.classList.contains('wc-nameplate--slow-fade')), true)
-  await assertSignal('Track 0 holds the opening signal line before the hero run', 'Welcome to Indie Cloud Native')
+  await assertSignal('Signal rotation owns the status bar before the hero run', await hudLabelAt(167.8))
   assert('Track 0 spells the theater title differently from the sound widget', await trackZeroSignal.textContent(), 'Seven Days to the Wolves')
-  await seekStage(44.211)
-  await assertSignal('Opening line holds through the early stretch without spoilers', 'Welcome to Indie Cloud Native')
+  // The locked welcome status holds only until the verse starts
+  // (TRACK_ZERO_SECTIONS.verseStart); read that boundary live too.
+  const verseStart = await page.evaluate(async () => {
+    const { TRACK_ZERO_SECTIONS } = await import('/src/data/wolves-track-zero-beats.ts')
+    return TRACK_ZERO_SECTIONS.verseStart
+  })
+  await seekStage(verseStart - 0.1)
+  await assertSignal('Opening line holds through the ambient intro without spoilers', 'Welcome to Indie Cloud Native')
   await seekStage(167.8)
   const jonoAtStart = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
@@ -553,41 +639,47 @@ try {
   assert('Track 0 stage nameplate remains visible during Jono', await page.locator('.wc-stage-nameplate .wc-nameplate').isVisible(), true)
   assert('Track 0 lower thesis overlay remains inactive during Jono', await page.locator('.wc-thesis').count(), 0)
 
-  await seekStage(171.878)
-  assert('Jono Cult Psychology banner persists through 2:51.878', await jonoBanner.isVisible(), true)
+  await seekStage(slideWindows.jono.endTime - BOUNDARY_EPSILON)
+  assert('Jono Cult Psychology banner persists to the end of its window', await jonoBanner.isVisible(), true)
 
-  await seekStage(171.879)
+  await seekStage(slideWindows.marina.startTime + BOUNDARY_EPSILON)
   const marinaAtStart = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
   })
-  assertTruthy('Marina Moore slide starts at 2:51.879', marinaAtStart?.includes('kubecon-55168684055.webp'))
-  assert('Jono Cult Psychology banner hands off at 2:51.879', await jonoBanner.count(), 0)
+  assertTruthy('Marina Moore slide starts on its authored window', marinaAtStart?.includes('kubecon-55168684055.webp'))
+  assert('Jono Cult Psychology banner hands off on the window boundary', await jonoBanner.count(), 0)
   const marinaCaption = await page.locator('.flickr-caption').textContent()
   assertTruthy('Marina Moore caption is visible', marinaCaption?.includes('Marina Moore'))
   assert('Track 0 stage nameplate remains visible during Marina Moore', await page.locator('.wc-stage-nameplate .wc-nameplate').isVisible(), true)
   assert('Track 0 lower thesis overlay remains inactive during Marina Moore', await page.locator('.wc-thesis').count(), 0)
 
-  await seekStage(175.958)
-  await assertSignal('Opening line holds until the Bluefin group', 'Welcome to Indie Cloud Native')
+  await seekStage(slideWindows.marina.endTime - BOUNDARY_EPSILON)
+  // The rotating front signals own this stretch now (the locked welcome line
+  // ends at verseStart); the Bluefin status must not fire early.
+  assert(
+    'Bluefin locked signal has not started before its window',
+    (await trackZeroNameplateLabel.textContent()) === 'The Blue Delivers',
+    false,
+  )
   const marinaBeforeComposite = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
   })
   assertTruthy('Marina Moore still holds immediately before the Sherman + m2 composite', marinaBeforeComposite?.includes('kubecon-55168684055.webp'))
 
-  await seekStage(175.959)
+  await seekStage(slideWindows.sherman.startTime + BOUNDARY_EPSILON)
   const shermanAtStart = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
   })
-  assertTruthy('Sherman + m2 composite starts at 2:55.959', shermanAtStart?.includes('sherman-m2.webp'))
+  assertTruthy('Sherman + m2 composite starts on its authored window', shermanAtStart?.includes('sherman-m2.webp'))
 
-  await seekStage(175.97)
+  await seekStage(slideWindows.sherman.startTime + 0.01)
   await assertSignal('Bluefin group receives its authored signal', 'The Blue Delivers')
   await captureStage(page, 'track-zero-bluefin-signal')
 
-  await seekStage(184.118)
+  await seekStage(slideWindows.sherman.endTime - BOUNDARY_EPSILON)
   const compositeBeforeHandoff = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
@@ -596,65 +688,78 @@ try {
   assert('Track 0 stage nameplate remains visible during Sherman + m2', await page.locator('.wc-stage-nameplate .wc-nameplate').isVisible(), true)
   assert('Track 0 lower thesis overlay remains inactive during Sherman + m2', await page.locator('.wc-thesis').count(), 0)
 
-  await seekStage(184.119)
+  await seekStage(slideWindows.sherman.endTime + BOUNDARY_EPSILON)
   const compositeAtHandoff = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
   })
-  assert('Sherman + m2 composite hands off at 3:04.119', compositeAtHandoff?.includes('sherman-m2.webp'), false)
+  assert('Sherman + m2 composite hands off on its window boundary', compositeAtHandoff?.includes('sherman-m2.webp'), false)
 
-  await seekStage(188.198)
+  await seekStage(slideWindows.kyle.endTime - BOUNDARY_EPSILON)
   const kyleBeforeHikari = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
   })
-  assertTruthy('Kyle still holds immediately before the first Hikari slide', kyleBeforeHikari?.includes('kyle.jpg'))
+  assertTruthy('Kyle still holds immediately before the first Hikari slide', kyleBeforeHikari?.includes('NOT%20John%20Bazzite.jpg') || kyleBeforeHikari?.includes('NOT John Bazzite.jpg'))
 
-  await seekStage(188.199)
+  await seekStage(slideWindows.hikari.startTime + BOUNDARY_EPSILON)
   const hikariAtStart = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
   })
-  assertTruthy('First Hikari slide starts at 3:08.199', hikariAtStart?.includes('hikari.JPG'))
+  assertTruthy('First Hikari slide starts on its authored window', hikariAtStart?.includes('hikari.JPG'))
 
-  await seekStage(190.238)
+  await seekStage(slideWindows.hikari.endTime - BOUNDARY_EPSILON)
   const hikariBeforeSecond = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
   })
   assertTruthy('First Hikari slide remains active immediately before its handoff', hikariBeforeSecond?.includes('hikari.JPG'))
 
-  await seekStage(190.239)
+  await seekStage(slideWindows.hikari2.startTime + BOUNDARY_EPSILON)
   const hikariSecondAtStart = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
   })
-  assertTruthy('Second Hikari slide starts at 3:10.239', hikariSecondAtStart?.includes('hikari2.JPG'))
+  assertTruthy('Second Hikari slide starts on its authored window', hikariSecondAtStart?.includes('hikari2.JPG'))
 
-  await seekStage(192.278)
+  await seekStage(slideWindows.hikari2.endTime - BOUNDARY_EPSILON)
   const hikariBeforeHandoff = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
   })
   assertTruthy('Second Hikari slide remains active immediately before its handoff', hikariBeforeHandoff?.includes('hikari2.JPG'))
 
-  await seekStage(192.279)
+  await seekStage(slideWindows.hikari2.endTime + BOUNDARY_EPSILON)
   const hikariAtHandoff = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
   })
-  assert('Second Hikari slide hands off at 3:12.279', hikariAtHandoff?.includes('hikari2.JPG'), false)
+  assert('Second Hikari slide hands off on its window boundary', hikariAtHandoff?.includes('hikari2.JPG'), false)
 
-  await seekStage(196.36)
-  await assertSignal('Ambient signals begin after the Jorge hero window', 'Hikari Protocol: Initialized')
+  await seekStage(slideWindows.jorge.endTime + BOUNDARY_EPSILON)
+  const postHeroLabel = await hudLabelAt(slideWindows.jorge.endTime + BOUNDARY_EPSILON)
+  assertTruthy('Rotating signals resume after the Jorge hero window', postHeroLabel && postHeroLabel !== 'The Blue Delivers')
+  await assertSignal('Ambient signals begin after the Jorge hero window', postHeroLabel)
   assert('Lower thesis remains separate after the Bluefin group', await page.locator('.wc-thesis').count(), 0)
 
-  await seekStage(228.9)
-  await assertSignal('Post-hero signal run closes on the thriving-community pod', 'pod/thriving-community created')
+  // Find when the scheduler airs a specific rotating line instead of guessing
+  // a clock time that drifts whenever the plan is re-edited.
+  const rotationAirTime = text => page.evaluate(async (expected) => {
+    const { getTrackZeroHudLabel } = await import('/src/data/wolves-track-zero-manifest.ts')
+    for (let time = 42; time < 345; time += 0.25) {
+      if (getTrackZeroHudLabel(time) === expected) {
+        return time + 0.1
+      }
+    }
+    return null
+  }, text)
 
-  await seekStage(229)
+  const warningTime = await rotationAirTime('Warning: ImagePullBackOff')
+  assertTruthy('ImagePullBackOff warning is scheduled in the signal rotation', warningTime !== null)
+  await seekStage(warningTime)
   await assertSignal(
-    'Chanting bridge reports the ImagePullBackOff warning',
+    'Signal rotation reports the ImagePullBackOff warning',
     'Warning: ImagePullBackOff',
   )
   const warningNameplateBounds = await page.locator('.wc-stage-nameplate .wc-nameplate').evaluate((nameplate) => {
@@ -675,11 +780,13 @@ try {
   assert('Lower thesis remains separate during the warning', await page.locator('.wc-thesis').count(), 0)
   await captureStage(page, 'track-zero-community-warning')
 
-  await seekStage(277)
+  const fallbackTime = await rotationAirTime('Falling back to "humans/trying-their-best:v1"')
+  assertTruthy('Human fallback line is scheduled in the signal rotation', fallbackTime !== null)
+  await seekStage(fallbackTime)
   await assertSignal(
-    'Heavy build-up reports the human fallback',
+    'Signal rotation reports the human fallback',
     // The quoted token renders in monospace with the quotes stripped.
-    'Falling back to humans/trying-their-best:v1 slowly',
+    'Falling back to humans/trying-their-best:v1',
   )
   assertTruthy(
     'Fallback image token renders in the terminal monospace',
@@ -690,28 +797,31 @@ try {
 
   await seekStage(345)
   await page.waitForTimeout(250)
-  await assertSignal('Thesis opening leads the top statuses', 'We\'ve got your back.')
+  await assertSignal('Thesis opening leads the top statuses', 'We\'ve got your back')
   assert('Center overlay stays clear while the thesis lines run in the statuses', await page.locator('.wc-thesis').count(), 0)
 
   await seekStage(350.5)
   await page.waitForTimeout(250)
-  await assertSignal('Universal Blue line follows in the top statuses', 'We are Universal Blue.')
+  await assertSignal('Universal Blue line follows in the top statuses', 'We are Universal Blue')
   await captureStage(page, 'track-zero-thesis-status')
 
   await seekStage(365)
   await page.waitForTimeout(250)
-  await assertSignal('Signal messages restart after the thesis lines', 'Welcome to Indie Cloud Native')
+  await assertSignal('Signal messages restart after the thesis lines', incomingSignals[0])
 
   await seekStage(407.5)
   await page.waitForTimeout(250)
-  await assertSignal('Compressed signal cycle reaches its final message before Titanfall', 'Software is Supposed to Die')
+  await assertSignal('Compressed signal cycle reaches its final message before Titanfall', incomingSignals[incomingSignals.length - 1])
 
   await seekStage(408)
   await assertSignal('Titanfall signal remains the locked finale handoff', 'Bazzite Mk6 Units: Prepare for Titanfall')
-  assertTruthy('Lower thesis keeps its authored finale text', (await page.locator('.wc-thesis').textContent())?.includes('Become Legend'))
+  // The lower thesis reads "You have ascended ..." until the measured
+  // finaleStart beat (408.137) flips it to Become Legend.
+  assertTruthy('Lower thesis carries the ascension text before the finale beat', (await page.locator('.wc-thesis').textContent())?.includes('You have ascended'))
   await captureStage(page, 'track-zero-composites')
 
   await seekStage(408.137)
+  assertTruthy('Lower thesis keeps its authored finale text', (await page.locator('.wc-thesis').textContent())?.includes('Become Legend'))
   const finaleImage = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
@@ -725,7 +835,7 @@ try {
   assertTruthy('Maintainer Summit finale image holds through the Track 0 handoff', heldFinaleImage?.includes('kubecon-55164466314.webp'))
   await captureStage(page, 'track-zero-paced-finale')
 
-  await page.getByLabel('Next').click()
+  await clickControl(page, 'Next')
   await page.waitForFunction(() =>
     document.querySelector('.wc-stage-nameplate')?.textContent?.includes('Ghosts In The Mist'),
   )

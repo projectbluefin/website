@@ -138,8 +138,17 @@ Before adding or lengthening any record, compare the total authored cost of its
 range against that range's real duration. Adding words to a full window removes
 other words from the show.
 
-Known standing overflow: the 220–398 s range holds 178 s of music against
-roughly 487 s of authored pages, so about 309 s of authored lore currently never
-displays. Resolving that means cutting records, and which records to cut is an
-owner decision, not an agent decision. Do not "fix" it by shrinking type,
-speeding the typewriter, or lowering the readability minimum.
+That overflow has been resolved by cutting records, not by rescheduling. Eleven
+artifacts are held in `hiddenFromWolvesVideoArtifactIds`
+(`src/data/wolves-narrative-timeline.ts`) under "Oversubscribed: cut to let the
+surviving records play in full." With those hidden, every remaining slot is at
+or above its `estimateLoreReadDuration()` ideal and nothing is truncated; the
+schedule currently carries a small surplus rather than a shortfall.
+
+That surplus is the entire safety margin. Restoring any hidden record, or
+lengthening a surviving one, pushes `allocateLoreSlots()` out of its
+proportional-bonus branch and into silent compression — and the caller
+(`allocateRange()`) discards the `minimumDuration` the allocator reports, so
+nothing downstream can detect it. Which records play is an owner decision, not
+an agent decision. Do not "fix" a shortfall by shrinking type, speeding the
+typewriter, or lowering the readability minimum.

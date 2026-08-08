@@ -1,4 +1,3 @@
-src/tests/wolvesApp.test.ts :: wolvesApp intro status handling normalizes intro native time into canonical segment/sequence progress and preserves overall continuity on handoff
 src/tests/wolvesCinematicStores.test.ts :: cinematic store computes canonical overall elapsed/progress from intro status and keeps the intro-to-cinematic handoff continuous
 src/tests/wolvesCinematicStores.test.ts :: cinematic store maps an overall ratio to the correct intro or cinematic segment and native time
 src/tests/wolvesComicReader.test.ts :: wolvesComicReader advances the generic album slideshow by playback time
@@ -18,9 +17,7 @@ src/tests/wolvesComicReader.test.ts :: wolvesComicReader keeps the first 20 seco
 src/tests/wolvesComicReader.test.ts :: wolvesComicReader renders title-only theater captions only for explicitly flagged wallpapers
 src/tests/wolvesComicReader.test.ts :: wolvesComicReader switches an active later track to Flickr when the cache finishes loading
 src/tests/wolvesComicReader.test.ts :: wolvesComicReader uses the same permitted fallback cadence across equivalent mounts and subsequent slides without BPM metadata
-src/tests/wolvesDualBufferPlayer.test.ts :: useDualBufferPlayer skips forward and backward on manual command
 src/tests/wolvesIntroOverlay.test.ts :: wolvesIntroOverlay guardian plate locks Christoph Blecker's leader label to gold while the plate chrome stays blue
 src/tests/wolvesIntroOverlay.test.ts :: wolvesIntroOverlay video segments force-advances at maxDuration instead of waiting for the natural end
-src/tests/wolvesIntroSequence.test.ts :: wolves intro overlay sequence wires the Comic Hero card and status-only Nova cue into the Destiny segment
 src/tests/wolvesLore.test.ts :: wolves Lore Parser parses speaker-only knocks and linked project tabs on the authored deployment chat
 src/tests/wolvesLoreRecords.test.ts :: wolves lore records loads every migrated record with complete authored identity and no diagnostics

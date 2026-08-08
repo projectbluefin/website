@@ -107,7 +107,11 @@ function resolveIframeApi() {
 
 beforeEach(() => {
   players = []
-  vi.useFakeTimers()
+  // Silent text cards measure real elapsed time via performance.now(), so it has to
+  // advance with the fake clock (same config the dual-buffer suite uses).
+  vi.useFakeTimers({
+    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'requestAnimationFrame', 'cancelAnimationFrame', 'Date', 'performance'],
+  })
   ;(window as any).happyDOM.settings.handleDisabledFileLoadingAsSuccess = true
   document.head.querySelectorAll(`script[src="${iframeApiSrc}"]`).forEach(script => script.remove())
   delete (window as any).YT
@@ -820,6 +824,101 @@ surrounded by predators`)
     await flushPromises()
 
     expect(wrapper.emitted('complete')).toHaveLength(1)
+  })
+
+  it('holds a silent card for its full authored duration', async () => {
+    const textSequence = [
+      { id: 'wolves-title-card', kind: 'text' as const, duration: 59 },
+    ]
+    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    await flushPromises()
+
+    // Half way through the authored window the card must still be on screen. It used
+    // not to be: a silent card advanced its own clock at double speed, so the 59s
+    // presenter welcome slide left the screen at 29.5s and each paragraph got half
+    // the reading time it was written for.
+    await vi.advanceTimersByTimeAsync(30_000)
+    await flushPromises()
+    expect(wrapper.emitted('complete')).toBeUndefined()
+
+    await vi.advanceTimersByTimeAsync(29_500)
+    await flushPromises()
+    expect(wrapper.emitted('complete')).toHaveLength(1)
+  })
+
+  // The welcome card is spoken live, so the presenter needs to move a line on when they have
+  // finished saying it. This is an operator affordance only: the card must still advance
+  // itself on its own clock, because an unattended theater run has nobody to click it.
+  describe('presenter can click the welcome card along', () => {
+    const cardSequence = () => [{
+      id: 'wolves-title-card',
+      kind: 'text' as const,
+      duration: 30,
+      overlays: [
+        { text: 'First line.', start: 0, end: 10 },
+        { text: 'Second line.', start: 10, end: 20 },
+        { text: 'Third line.', start: 20, end: 30 },
+      ],
+    }]
+
+    function visibleText(wrapper: any) {
+      return wrapper.find('.wolves-intro-overlay-text').text()
+    }
+
+    it('advances to the next authored cue instead of skipping the card', async () => {
+      const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: cardSequence() } })
+      await flushPromises()
+      expect(visibleText(wrapper)).toContain('First line')
+
+      await wrapper.find('.wolves-intro-overlay').trigger('click')
+      await flushPromises()
+
+      expect(visibleText(wrapper)).toContain('Second line')
+      expect(wrapper.emitted('complete')).toBeUndefined()
+    })
+
+    it('leaves the card once the last cue has been clicked past', async () => {
+      const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: cardSequence() } })
+      await flushPromises()
+
+      for (let click = 0; click < 3; click++) {
+        await wrapper.find('.wolves-intro-overlay').trigger('click')
+        await flushPromises()
+      }
+
+      expect(wrapper.emitted('complete')).toHaveLength(1)
+    })
+
+    it('ignores clicks on a scored card so the text cannot outrun its music bed', async () => {
+      // The Director's Cut prologue is written against the Gayane Ballet Suite. Moving its
+      // text by hand without moving the track would desync the segment for the rest of its
+      // run, so a card with a music bed is left entirely to its own clock.
+      const scored = cardSequence().map(segment => ({ ...segment, audioYoutubeVideoId: 'EB3IokHelRk' }))
+      const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: scored } })
+      await flushPromises()
+      resolveIframeApi()
+      await flushPromises()
+      const before = visibleText(wrapper)
+
+      await wrapper.find('.wolves-intro-overlay').trigger('click')
+      await flushPromises()
+
+      expect(visibleText(wrapper)).toBe(before)
+      expect(wrapper.emitted('complete')).toBeUndefined()
+    })
+
+    it('still advances itself with no click at all', async () => {
+      const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: cardSequence() } })
+      await flushPromises()
+
+      await vi.advanceTimersByTimeAsync(29_000)
+      await flushPromises()
+      expect(wrapper.emitted('complete')).toBeUndefined()
+
+      await vi.advanceTimersByTimeAsync(1_500)
+      await flushPromises()
+      expect(wrapper.emitted('complete')).toHaveLength(1)
+    })
   })
 
   it('mounts a background-only audio embed when audioYoutubeVideoId is set', async () => {

@@ -62,7 +62,7 @@ describe('cinematic store', () => {
     store.enterCinematic()
     store.jumpToSegment(CINEMATIC_SEGMENTS.length - 1)
     store.setPlaying(true)
-    store.beginCrossfade()
+    store.beginCrossfade(CINEMATIC_SEGMENTS.length - 1)
     store.finish()
     expect(store.phase).toBe('cinematic')
     expect(store.segmentIndex).toBe(CINEMATIC_SEGMENTS.length - 1)

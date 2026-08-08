@@ -214,6 +214,14 @@ export const PRE_END_THRESHOLD_S = 0.3
  */
 export const TIME_POLL_MS = 100
 
+/**
+ * How often the crossfade pushes a new volume into each player. Every setVolume is a
+ * cross-origin postMessage into the iframe, so ramping at full frame rate floods both
+ * players with hundreds of messages during the exact moments the transition overlay is
+ * animating. 40ms (25Hz) is inaudible as steps and cuts that traffic by ~60%.
+ */
+export const VOLUME_STEP_MS = 40
+
 export const CINEMATIC_SEGMENTS: CinematicSegment[] = [
   {
     id: 'seven-days-to-the-wolves',

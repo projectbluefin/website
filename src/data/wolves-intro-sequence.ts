@@ -13,6 +13,7 @@
  *   YouTube embed for audio (`audioYoutubeVideoId`) and per-cue background artwork.
  */
 
+import { estimatePageSeconds } from '../components/wolves/lore/lore-pages'
 import destinyCaptions from './wolves-destiny-captions.txt?raw'
 
 export interface IntroBackgroundCrossfade {
@@ -452,10 +453,17 @@ function buildOpeningTitleCardSegment(): IntroTextSegment {
     'Modern Linux is unified. Don\'t believe me? Meet your new teammates.',
     'The people in these slides were once just like you. Ask them. The Linux you want exists ... suit up.',
   ]
-  // One window per paragraph, weighted by how much there is to read rather than split
-  // evenly: the third beat is a short punch ("Don't believe me?") and the closer is the
-  // longest line, so it holds longest and is still on screen as the Destiny video takes over.
-  const windows = [14, 16, 12, 17]
+  // Each paragraph holds for exactly what it costs to read from the back row, using the same
+  // theater reading model every other Wolves text surface uses (`estimatePageSeconds`: a fixed
+  // beat for putting a page up and taking it down, plus its word count at theater pace). That
+  // keeps the weighting the card was authored for -- the long CNCF beat holds longest, the
+  // "Don't believe me?" punch holds shortest -- without hand-picking any of the numbers.
+  //
+  // These windows used to be a hand-written [14, 16, 12, 17]. That ran 59 seconds against
+  // 34 seconds of actual reading cost: roughly six seconds of dead air on every paragraph,
+  // before a single frame of the show. A welcome slide that outstays its own content is the
+  // one thing an audience is guaranteed to notice, because nothing has started yet.
+  const windows = parts.map(text => Math.ceil(estimatePageSeconds(text)))
   const titlePlate = {
     name: 'Jorge Castro',
     subtitle: 'Project Bluefin // Universal Blue // Kubernetes',

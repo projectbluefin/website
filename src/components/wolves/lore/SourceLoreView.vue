@@ -2,7 +2,7 @@
 import type { LoreViewProps } from '../lore'
 import type { LoreSpecEntry } from './LoreRecordHeader.vue'
 import { computed } from 'vue'
-import { getSourceProvenance, parseLoreSpeakerParagraphs } from '../lore'
+import { getSourceProvenance, parseLoreSpeakerParagraphs, rebuildLoreSpeakerParagraph } from '../lore'
 import { pickBlockPage } from './lore-pages'
 import LoreRecordHeader from './LoreRecordHeader.vue'
 
@@ -15,7 +15,13 @@ const spec = computed<LoreSpecEntry[]>(() => [
 ])
 
 const paragraphs = computed(() => parseLoreSpeakerParagraphs(props.record.body))
-const page = computed(() => pickBlockPage(paragraphs.value, block => block.text, props.elapsed, props.duration))
+const page = computed(() => pickBlockPage(
+  paragraphs.value,
+  block => block.source,
+  props.elapsed,
+  props.duration,
+  rebuildLoreSpeakerParagraph,
+))
 </script>
 
 <template>

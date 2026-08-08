@@ -2,7 +2,7 @@ import { TRACK_ZERO_SECTIONS } from './wolves-track-zero-beats.ts'
 import { rezaContributorTrackZeroWindow } from './wolves-track-zero-slides.ts'
 
 type TrackZeroPlanLine = { readonly text: string, readonly locked?: boolean } | { readonly lore: string }
-type TrackZeroPlanSection = { readonly section: string, readonly comment: string, readonly entries: readonly TrackZeroPlanLine[] }
+interface TrackZeroPlanSection { readonly section: string, readonly comment: string, readonly entries: readonly TrackZeroPlanLine[] }
 
 /*
  * TRACK 0 LORE PLAN
@@ -78,17 +78,17 @@ export const TRACK_ZERO_LORE_PLAN = [
       { text: 'AN4-ChK-12: Consider a Blue Universal Unobtanium Sponsorship Today!' },
       { text: 'Ecosystem: KDE Linux / GNOME OS / Ubuntu Core / Dakotaraptor' },
       { text: 'VERDICT: All previous desktops rendered OBSOLETE - with prejudice' },
-      { text: 'Ecosystem: KDE Linux / GNOME OS / Ubuntu Core / Dakotaraptor' },    
-      { text: '"humans/collaboration:latest" is currently experimental'  },
-      { text: 'Falling back to "humans/trying-their-best:v1"'  },
+      { text: 'Ecosystem: KDE Linux / GNOME OS / Ubuntu Core / Dakotaraptor' },
+      { text: '"humans/collaboration:latest" is currently experimental' },
+      { text: 'Falling back to "humans/trying-their-best:v1"' },
     ],
   },
   {
     section: 'LORE SECTION — thesis / finale',
     comment: 'Do not move the locked thesis and ending lines. Add lore around them.',
     entries: [
-      { text: "We've got your back", locked: true },
-      { text: "You'll never walk alone ...", locked: true },
+      { text: 'We\'ve got your back', locked: true },
+      { text: 'You\'ll never walk alone ...', locked: true },
       { text: 'We are Universal Blue', locked: true },
       { text: 'Evolve or die ...', locked: true },
       { text: 'Why do they shackle themselves' },
@@ -135,8 +135,8 @@ const CONTROL_TEXTS = new Set([
   'The Blue Delivers',
   'HAMI brings Bazzite to the KubeCon stage, Amsterdam, 2026',
   'Bazzite proximity to Kube of Destiny: Critical',
-  "We've got your back",
-  "You'll never walk alone ...",
+  'We\'ve got your back',
+  'You\'ll never walk alone ...',
   'We are Universal Blue',
   'Evolve or die ...',
   'You have ascended ...',
@@ -174,8 +174,10 @@ function planTextAt(sectionIndex: number, entryIndex: number): string {
   return entry.text
 }
 
-/** Runtime timing for the locked status lines in the plan above. Every locked
- * status appears once; all other plan text is scheduled by its own section. */
+/**
+ * Runtime timing for the locked status lines in the plan above. Every locked
+ * status appears once; all other plan text is scheduled by its own section.
+ */
 export const TRACK_ZERO_LOCKED_STATUSES = [
   status(planTextAt(0, 0), 0, TRACK_ZERO_SECTIONS.verseStart),
   status(planTextAt(1, 0), 175.96, 196.36),
@@ -187,7 +189,6 @@ export const TRACK_ZERO_LOCKED_STATUSES = [
   status(planTextAt(4, 3), 359, 365),
   status(planTextAt(4, 22), 408),
 ] as const
-
 
 const LOCKED_STATUS_TEXTS = new Set(TRACK_ZERO_LOCKED_STATUSES.map(entry => entry.text))
 const TRACK_ZERO_FRONT_ROTATION_START = TRACK_ZERO_SECTIONS.verseStart

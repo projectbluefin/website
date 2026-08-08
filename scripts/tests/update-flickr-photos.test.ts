@@ -13,8 +13,8 @@ import {
   loadCurationConfig,
   loadExistingPhotos,
   normalizePhoto,
-  selectFreshPhotos,
   scrapeAlbum,
+  selectFreshPhotos,
   selectSpreadPages,
   shuffleArray,
 } from '../update-flickr-photos.js'
@@ -48,7 +48,6 @@ describe('update-flickr-photos helpers', () => {
       secret: 'abc',
       title: 'Photo',
     })
-
   })
 
   it('builds a fresh, deduplicated cache without retaining stale entries', () => {

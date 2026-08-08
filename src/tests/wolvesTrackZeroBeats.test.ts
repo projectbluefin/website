@@ -4,8 +4,8 @@ import {
   TRACK_ZERO_SECTIONS,
   TRACK_ZERO_TEMPO_PICKUPS,
   trackZeroBeatCuts,
-  trackZeroEvenBeatCuts,
   trackZeroBeatCutsWithPickup,
+  trackZeroEvenBeatCuts,
 } from '@/data/wolves-track-zero-beats'
 
 describe('track zero measured beat grid', () => {

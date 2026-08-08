@@ -79,8 +79,22 @@ the commit message:
 npm run test:gate:update
 ```
 
-Never re-record to silence a failure you caused. Never delete an entry by hand.
+Never re-record to silence a failure you caused. Never delete an entry by hand
+to hide a still-failing test.
 A shrinking `tests/known-failures.txt` is good; a growing one needs a reason.
+
+### Baseline entry format and shrinking it deliberately
+
+Each baseline line is `<test file path> :: <full concatenated describe + test
+name>`, one test per line, sorted (see `scripts/test-baseline.mjs`). When you
+repair a stale test (the test was wrong, the code was right), the correct
+shrink is: fix the test, delete exactly its line from
+`tests/known-failures.txt` in the same change, and prove it with
+`npm run test:gate` — the gate must report `no new failures (N known,
+baseline N)` with the count reduced. Prefer deriving repaired expectations
+from the owning source data (e.g. import `buildIntroVideoSequence` /
+`INTRO_SEQUENCE_DURATION`) over fresh hardcoded literals, so authored-timing
+changes don't re-stale the test. Issue #705 tracks the remaining baseline.
 
 ## Red Flags
 

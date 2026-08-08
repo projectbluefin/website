@@ -3,9 +3,9 @@ import { execSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { wallpapers } from './src/components/wolves/wallpapers-list.ts'
-import { TRACK_ZERO_PRESENTATION_SECTIONS } from './src/data/wolves-track-zero-manifest.ts'
 import { trackZeroBeatCuts, trackZeroBeatCutsWithPickup } from './src/data/wolves-track-zero-beats.ts'
-import { rezaContributorSlideId, rezaContributorTrackZeroWindow } from './src/data/wolves-track-zero-slides.ts'
+import { TRACK_ZERO_PRESENTATION_SECTIONS } from './src/data/wolves-track-zero-manifest.ts'
+import { rezaContributorSlideId } from './src/data/wolves-track-zero-slides.ts'
 
 function deterministicShuffle(array, seed = 42) {
   const copy = [...array]
@@ -70,7 +70,9 @@ const bluefinGroupPhotos = bluefinGroupTargets
   .filter(Boolean)
 for (const photo of bluefinGroupPhotos) {
   const index = localPeople.indexOf(photo)
-  if (index !== -1) localPeople.splice(index, 1)
+  if (index !== -1) {
+    localPeople.splice(index, 1)
+  }
 }
 
 const rezaIndex = localPeople.findIndex(wp => wp.id === rezaContributorSlideId)

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { estimatePageSeconds } from '../components/wolves/lore/lore-pages'
 import {
   activeOverlayCue,
   activeOverlayText,
@@ -185,7 +186,14 @@ describe('wolves intro overlay sequence', () => {
     expect(card.audioYoutubeVideoId).toBeUndefined()
     expect(card.overlays).toBeDefined()
     expect(card.overlays!.length).toBe(4)
-    expect(card.duration).toBe(59)
+
+    // The card holds for exactly what its paragraphs cost to read, so its duration is
+    // derived here too rather than re-recorded as a literal that rots on the next edit.
+    const readingCost = card.overlays!.reduce(
+      (total, cue) => total + Math.ceil(estimatePageSeconds(cue.text)),
+      0,
+    )
+    expect(card.duration).toBe(readingCost)
 
     for (const cue of card.overlays!) {
       expect(cue.backgroundImage).toBe('img/wallpapers/wolves/people/Yikes!.webp')
@@ -198,8 +206,15 @@ describe('wolves intro overlay sequence', () => {
       })
     }
 
-    // The cues tile the segment without gaps or overlaps, so no paragraph is skipped.
-    expect(card.overlays!.map(cue => [cue.start, cue.end])).toEqual([[0, 14], [14, 30], [30, 42], [42, 59]])
+    // The cues tile the segment without gaps or overlaps, so no paragraph is skipped, and
+    // each window is its own paragraph's reading cost rather than a padded constant.
+    let cursor = 0
+    for (const cue of card.overlays!) {
+      expect(cue.start).toBe(cursor)
+      expect(cue.end - cue.start).toBe(Math.ceil(estimatePageSeconds(cue.text)))
+      cursor = cue.end
+    }
+    expect(cursor).toBe(card.duration)
   })
 
   it('keeps the opening title card quote verbatim', () => {
@@ -313,8 +328,11 @@ describe('wolves intro overlay sequence', () => {
       throw new Error('Expected the Destiny segment to exist')
     }
 
+    // The comic title card renders its own artwork; its text was deliberately
+    // blanked in 6edf7f7d ("remove duplicate Destiny title") — the cue only
+    // carries the timing window and the comicHeroTitleCard flag.
     expect(destiny.burnedInCaptions).toEqual([
-      { text: 'Comic Book OSS Maintainers Shredding Clankers', start: 24, end: 38, comicHeroTitleCard: true },
+      { text: '', start: 24, end: 38, comicHeroTitleCard: true },
     ])
   })
 })

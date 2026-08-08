@@ -398,6 +398,15 @@ let player: YoutubePlayer | null = null
 let audioPlayer: YoutubePlayer | null = null
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let textTimer: ReturnType<typeof setInterval> | null = null
+/** performance.now() corresponding to elapsed 0 on a silent text card. */
+let textClockOriginMs = 0
+
+/**
+ * Guard against a click landing a hair before the active cue's own start and "advancing" to
+ * the cue already on screen, which reads to the presenter as a dead click.
+ */
+const CUE_ADVANCE_EPSILON_SECONDS = 0.05
+
 let loadToken = 0
 let pendingPausedSourceSwitchTime: number | null = null
 /** Whether the one-shot `startAtNativeTime` deep-link opening has already been applied. */
@@ -413,7 +422,9 @@ function seekToSeconds(targetSeconds: number) {
   }
   else {
     // Text segments follow the background audio's clock, so the audio must move too.
+    // A silent card has no audio player, so rebase its own clock origin instead.
     audioPlayer?.seekTo?.(clamped, true)
+    textClockOriginMs = performance.now() - clamped * 1000
   }
 }
 
@@ -502,21 +513,30 @@ function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
   stopTextTimer()
   currentTime.value = 0
   activeSegmentDuration.value = segment.duration
+  textClockOriginMs = performance.now()
   void loadAudioTrack(segment.audioYoutubeVideoId)
 
   textTimer = setInterval(() => {
+    const now = performance.now()
     if (isPaused.value) {
+      // Hold the clock by trailing the origin, so resuming continues where it stopped.
+      textClockOriginMs = now - currentTime.value * 1000
       return
     }
     // Ad resilience: when a background audio embed exists, cues key off the
     // audio's real getCurrentTime(). Pre-roll ads hold it at 0 and mid-roll ads
     // freeze it, so the cold open waits for the music instead of desyncing.
-    // Without an audio embed there is nothing to sync to, so wall-clock ticks.
     if (audioPlayer && typeof audioPlayer.getCurrentTime === 'function') {
       currentTime.value = audioPlayer.getCurrentTime() ?? 0
     }
     else {
-      currentTime.value += 0.2
+      // A silent card (the presenter's welcome slide) has no player to read, so it
+      // derives elapsed time from a fixed origin. Two rules this encodes the hard
+      // way: never assume the interval fired on schedule — a hardcoded `+= 0.2` on
+      // a 100ms tick ran every silent card at double speed, so the 59s opening slide
+      // played in 29.5s and nobody in the back row finished a paragraph — and never
+      // accumulate deltas, which drifts over a card this long.
+      currentTime.value = (now - textClockOriginMs) / 1000
     }
     // Authored musical fade: ramp the audio down across the excerpt's final
     // seconds so it ends on the phrase's own decay instead of a hard cut. The
@@ -692,6 +712,49 @@ function handleNext() {
   sequenceState.value = advanceIntroSequence(sequenceState.value, props.videos.length)
 }
 
+/**
+ * Presenter pacing for a silent text card: jump to the next authored cue, or into the next
+ * segment once the last cue is up.
+ *
+ * This is an operator affordance, not a narrative dependency. The card still advances itself
+ * on its own clock, so an unattended run behaves exactly as before and never waits for input.
+ * It exists because the welcome card is spoken live: the presenter finishes a line and wants
+ * the next one, rather than standing in silence until the authored window expires.
+ *
+ * Scored cards are deliberately excluded. A card with a music bed has its cues written against
+ * that track, so moving the text without moving the music desyncs the segment for the rest of
+ * its run. Only a silent card, where the presenter's own voice is the soundtrack, is safe to
+ * pace by hand.
+ */
+function advanceTextCue() {
+  const segment = currentSegment.value
+  if (!segment || !isTextSegment(segment) || segment.audioYoutubeVideoId || isPaused.value) {
+    return
+  }
+
+  const nextCue = segment.overlays
+    ?.filter(cue => cue.start > currentTime.value + CUE_ADVANCE_EPSILON_SECONDS)
+    .sort((a, b) => a.start - b.start)[0]
+
+  if (!nextCue) {
+    handleNext()
+    return
+  }
+
+  seekToSeconds(nextCue.start)
+}
+
+/**
+ * Advance the welcome card when the presenter clicks it. Clicks on the transport chrome are
+ * left alone so Play/Pause/Next keep their own meaning, and video and scored segments are
+ * untouched: only a silent, presenter-spoken text card is click-advanced.
+ */
+function handleOverlayClick(event: MouseEvent) {
+  if ((event.target as HTMLElement | null)?.closest('button, a, input, [role="button"]')) {
+    return
+  }
+  advanceTextCue()
+}
 function handlePrevious() {
   sequenceState.value = previousIntroSequence(sequenceState.value)
 }
@@ -809,6 +872,7 @@ defineExpose({
       v-if="currentSegment && (!sequenceState.done || handoffPending)"
       class="wolves-intro-overlay"
       :class="{ 'wolves-intro-overlay--transparent-handoff': props.transparentHandoff }"
+      @click="handleOverlayClick"
     >
       <template v-if="currentSegment.kind === 'video'">
         <div ref="mountHost" class="wolves-intro-overlay-player" />

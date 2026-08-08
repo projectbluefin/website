@@ -172,6 +172,8 @@ export function pickBlockPage<T>(
   toText: (block: T) => string,
   elapsed: number | undefined,
   duration?: number,
+  rebuild: (block: T, part: string) => T = (block, part) =>
+    (typeof block === 'string' ? part as T : { ...block, text: part }),
 ): { index: number, pageCount: number, blocks: T[] } {
   const expanded = blocks.flatMap((block) => {
     const text = toText(block)
@@ -179,7 +181,7 @@ export function pickBlockPage<T>(
       return [block]
     }
     return splitReadableBeats(text, PROSE_PAGE_CHARACTERS - BLOCK_OVERHEAD_CHARACTERS)
-      .map(part => (typeof block === 'string' ? part as T : { ...block, text: part }))
+      .map(part => rebuild(block, part))
   })
   const groups = groupBlockPages(expanded.map(toText))
   const pages = groups.map(group => group.map(index => toText(expanded[index]!)).join('\n\n'))

@@ -18,9 +18,10 @@ const TERMINAL_LINES = [
   '// Deploy CNCF Projects Team, scramble all Guardians.',
 ]
 
-// Every segment handoff (natural or manual skip) raises the overlay for
-// eleven seconds — it doubles as cover for the brief buffering gap on manual
-// skips and gives the status terminal time to read without any flicker.
+// The overlay is raised at the start of a handoff and held long enough for the
+// status terminal to be read from the back row, which outlasts the audio
+// crossfade underneath it. It doubles as cover for the brief buffering gap on
+// manual skips.
 const HOLD_MS = 11000
 let hideTimer: ReturnType<typeof setTimeout> | null = null
 let motionMedia: MediaQueryList | null = null
@@ -29,8 +30,11 @@ let transitionRuns = 0
 const sfxPlayer = createTransitionSfxPlayer()
 sfxPlayer.armFromUserGestures()
 
-const segment = computed(() => store.segments[store.segmentIndex])
-const loreLines = computed(() => segment.value?.transitionLore ?? [])
+// A crossfade in flight is already headed somewhere; `segmentIndex` still names
+// the outgoing segment until it lands, so the overlay reads the pending target.
+const incomingSegment = computed(() =>
+  store.segments[store.pendingSegmentIndex ?? store.segmentIndex])
+const loreLines = computed(() => incomingSegment.value?.transitionLore ?? [])
 // The authored lore conversations stay in the config (and still drive the
 // transition sound effects) but are hidden from the overlay; every handoff
 // renders the terminal block instead.
@@ -52,13 +56,16 @@ if (typeof window !== 'undefined' && 'matchMedia' in window) {
   motionMedia.addListener?.(syncReducedMotion)
 }
 
-// Every segment handoff (natural or manual skip) raises the overlay.
-// Ghosts In The Mist opens on the Jorge guardian plate, so its handoff skips
-// the title slide instead of covering the plate.
+// The overlay rises when the crossfade *starts*, so it covers the seam between
+// two songs. Watching `segmentIndex` instead put it up after the fade had already
+// finished, which meant the opaque terminal sat over the first eleven seconds of
+// every new song and the handoff itself played uncovered.
+// Ghosts In The Mist opens on the Jorge guardian plate, so its handoff skips the
+// title slide instead of covering the plate.
 watch(
-  () => [store.segmentIndex, store.phase, store.showTransitionOverlay] as const,
-  () => {
-    if (store.phase !== 'cinematic' || !store.showTransitionOverlay) {
+  () => [store.crossfading, store.phase, store.showTransitionOverlay] as const,
+  ([crossfading, phase, enabled]) => {
+    if (phase !== 'cinematic' || !enabled) {
       active.value = false
       if (hideTimer) {
         clearTimeout(hideTimer)
@@ -66,12 +73,19 @@ watch(
       }
       return
     }
-    if (store.segmentIndex === 0 || segment.value?.id === 'ghosts-in-the-mist') {
+    if (!crossfading || active.value) {
+      return
+    }
+    const targetIndex = store.pendingSegmentIndex ?? store.segmentIndex
+    if (targetIndex === 0 || incomingSegment.value?.id === 'ghosts-in-the-mist') {
       return
     }
     active.value = true
     transitionRuns++
-    void sfxPlayer.playTransition(`transition:${store.segmentIndex}:${transitionRuns}`, loreLines.value)
+    void sfxPlayer.playTransition(
+      `transition:${targetIndex}:${transitionRuns}`,
+      loreLines.value,
+    )
     if (hideTimer) {
       clearTimeout(hideTimer)
     }
@@ -143,12 +157,12 @@ onBeforeUnmount(() => {
           </template>
         </div>
         <div class="wc-hairline" />
-        <span class="wc-label">{{ segment.chapter }}</span>
+        <span class="wc-label">{{ incomingSegment?.chapter }}</span>
         <h2 class="wc-transition-title">
-          {{ segment.title }}
+          {{ incomingSegment?.title }}
         </h2>
         <p class="wc-transition-artist">
-          {{ segment.artist }}
+          {{ incomingSegment?.artist }}
         </p>
       </div>
     </div>

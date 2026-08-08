@@ -327,6 +327,7 @@ onBeforeUnmount(() => {
 
       <MediaWidget
         v-else
+        auto-hide
         @toggle-play="stage?.togglePlay()"
         @skip="(delta: number) => stage?.skip(delta)"
         @seek="handleSegmentSeek"

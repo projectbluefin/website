@@ -20,6 +20,12 @@ interface FakePlayerOptions {
   }
 }
 
+/**
+ * A media player's defining behaviour is that time passes while it plays. This double
+ * used to hold `currentTime` at 0 forever, which is why a prewarmed buffer that ran
+ * away for an entire segment — truncating the back half of the show — sat green in CI
+ * for as long as it did. Model the clock, or the suite cannot see clock defects.
+ */
 class FakePlayer {
   static instances: FakePlayer[] = []
   static emitPlayingOnPlay = true
@@ -45,9 +51,30 @@ class FakePlayer {
   }
 
   playVideo() {
+    // YouTube replays from the start when a finished video is played again.
+    if (this.duration > 0 && this.currentTime >= this.duration) {
+      this.currentTime = 0
+    }
     this.playing = true
     if (FakePlayer.emitPlayingOnPlay) {
       this.events.onStateChange?.({ data: 1 })
+    }
+  }
+
+  seekTo(seconds: number) {
+    this.currentTime = seconds
+  }
+
+  /** Advance this player's clock as playback would, firing ENDED at the boundary. */
+  tickClock(seconds: number) {
+    if (!this.playing || this.destroyed) {
+      return
+    }
+    this.currentTime += seconds
+    if (this.duration > 0 && this.currentTime >= this.duration) {
+      this.currentTime = this.duration
+      this.playing = false
+      this.events.onStateChange?.({ data: 0 })
     }
   }
 
@@ -113,6 +140,23 @@ async function startPlayer() {
   return player
 }
 
+/**
+ * Advance the fake timers and every playing player's clock together, in poll-sized
+ * slices, so the composable sees the same interleaving of clock and timer it sees in a
+ * browser. Tests that only advance timers cannot observe playback drift.
+ */
+function advancePlayback(ms: number, step = TIME_POLL_MS) {
+  let remaining = ms
+  while (remaining > 0) {
+    const slice = Math.min(step, remaining)
+    for (const instance of FakePlayer.instances) {
+      instance.tickClock(slice / 1000)
+    }
+    vi.advanceTimersByTime(slice)
+    remaining -= slice
+  }
+}
+
 describe('useDualBufferPlayer', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -139,8 +183,54 @@ describe('useDualBufferPlayer', () => {
     expect(playerA.cuedId).toBe(CINEMATIC_SEGMENTS[0].youtubeId)
     expect(playerB.cuedId).toBe(CINEMATIC_SEGMENTS[1].youtubeId)
     expect(playerA.playing).toBe(true)
-    expect(playerB.playing).toBe(true)
+    // Side B is prewarmed then parked: it has fetched media but its clock is held at
+    // the opening frame, so the handoff can start Part II at its first bar.
+    expect(playerB.playing).toBe(false)
+    expect(playerB.currentTime).toBe(0)
     expect(playerB.volume).toBe(0)
+  })
+
+  it('parks a prewarmed buffer on its opening frame instead of letting it run away', async () => {
+    await startPlayer()
+    const [, playerB] = FakePlayer.instances
+    playerB.duration = 347
+
+    advancePlayback(120_000)
+
+    // Before the fix this read 120: the next segment had been playing the whole time,
+    // so the handoff joined it two minutes in. Parts IV-VI opened mid-song and the
+    // cinematic ran roughly seven minutes short.
+    expect(playerB.currentTime).toBe(0)
+    expect(playerB.playing).toBe(false)
+  })
+
+  it('opens the next segment on its first frame after a longer outgoing segment', async () => {
+    const store = useCinematicStore()
+    const player = await startPlayer()
+    const [playerA, playerB] = FakePlayer.instances
+    playerA.duration = 424
+    playerB.duration = 347
+
+    advancePlayback(424_000)
+
+    expect(player.activeSide.value).toBe('b')
+    expect(store.segmentIndex).toBe(1)
+    expect(playerB.currentTime).toBeLessThan(3)
+  })
+
+  it('begins the crossfade a full crossfade window before the segment ends', async () => {
+    const store = useCinematicStore()
+    await startPlayer()
+    const [playerA] = FakePlayer.instances
+    playerA.duration = 424
+
+    // One second of content left. With an 800ms fade plus the trailing lead the swap
+    // must already be running, so the outgoing track decays into the incoming rather
+    // than stopping dead partway through the fade and leaving a hole in the music.
+    advancePlayback(423_000)
+
+    expect(store.crossfading).toBe(true)
+    expect(playerA.playing).toBe(true)
   })
 
   it('identifies the current origin to YouTube for both buffers', async () => {
@@ -331,7 +421,11 @@ describe('useDualBufferPlayer', () => {
     store.updateTime(10, 300)
     player.skip(1)
     expect(player.activeSide.value).toBe('b')
-    expect(playerB.loadedId).toBe(CINEMATIC_SEGMENTS[1].youtubeId)
+    // Part II is already prewarmed on side B, so it is promoted, not reloaded: a
+    // redundant loadVideoById restarts YouTube's decoder and pops.
+    expect(playerB.cuedId).toBe(CINEMATIC_SEGMENTS[1].youtubeId)
+    expect(playerB.loadedId).toBe('')
+    expect(playerB.playing).toBe(true)
 
     vi.advanceTimersByTime(2000)
     expect(store.segmentIndex).toBe(1)

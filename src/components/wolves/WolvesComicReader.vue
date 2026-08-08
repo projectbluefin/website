@@ -23,8 +23,8 @@ import {
   TRACK_ZERO_SECTIONS,
   TRACK_ZERO_TEMPO_PICKUPS,
   trackZeroBeatCuts,
-  trackZeroEvenBeatCuts,
   trackZeroBeatCutsWithPickup,
+  trackZeroEvenBeatCuts,
 } from '@/data/wolves-track-zero-beats'
 import { TRACK_ZERO_PRESENTATION_SECTIONS } from '@/data/wolves-track-zero-manifest'
 import {
@@ -35,19 +35,15 @@ import {
   lauraTrackZeroWindow,
   marinaMooreSlideId,
   marinaMooreTrackZeroWindow,
-  rezaContributorSlideId,
-  rezaContributorTrackZeroWindow,
-  topheeSlideId,
-  topheeTrackZeroWindow,
   pinBluefinMicroraptorSlide,
   pinTrackZeroHeroSlides,
   pinTrackZeroPostHeroOpening,
+  rezaContributorSlideId,
+  rezaContributorTrackZeroWindow,
   splitTrackZeroFastFinaleSlides,
+  topheeSlideId,
+  topheeTrackZeroWindow,
 } from '@/data/wolves-track-zero-slides'
-
-const trackZeroReservedForLaterIds = new Set([
-  'wolves/people/interview-clyde-seepersad-linux-foundation.webp',
-])
 import { wallpapers } from './wallpapers-list'
 
 const props = withDefaults(defineProps<{
@@ -59,6 +55,10 @@ const props = withDefaults(defineProps<{
   experienceId: 'seven-days-to-the-wolves',
   wolvesExperience: true,
 })
+
+const trackZeroReservedForLaterIds = new Set([
+  'wolves/people/interview-clyde-seepersad-linux-foundation.webp',
+])
 
 const isWolvesExperience = computed(() => props.wolvesExperience)
 
@@ -852,21 +852,37 @@ function beginCrossfade(duration: number) {
 
 // Keep the current buffer visible until the incoming image has loaded. Switching
 // buffers before decode briefly exposed the wallpaper behind the gallery.
-function preloadPhoto(photo: any): Promise<void> {
-  const urls = photo?.type === 'daynight'
-    ? [`${baseUrl}img/wallpapers/${photo.dayName}`, `${baseUrl}img/wallpapers/${photo.nightName}`]
-    : [getFlickrPhotoUrl(photo)]
-  return Promise.all(urls.map(url => new Promise<void>((resolve) => {
+//
+// Repeat preloads of the same URL are left to the browser's HTTP cache rather
+// than a retained decoded-image map: holding decoded bitmaps for a gallery this
+// size costs real memory across a thirty-minute unattended run, and measuring it
+// against the movie-flow harness showed no improvement that could be told apart
+// from run-to-run noise.
+function preloadUrl(url: string, priority: 'high' | 'low'): Promise<void> {
+  return new Promise<void>((resolve) => {
     const image = new Image()
+    image.fetchPriority = priority
     image.onload = () => {
       void image.decode().catch(() => undefined).then(() => resolve())
     }
     image.onerror = () => resolve()
     image.src = url
-  }))).then(() => undefined)
+  })
+}
+
+function preloadPhoto(photo: any, priority: 'high' | 'low' = 'low'): Promise<void> {
+  const urls = photo?.type === 'daynight'
+    ? [`${baseUrl}img/wallpapers/${photo.dayName}`, `${baseUrl}img/wallpapers/${photo.nightName}`]
+    : [getFlickrPhotoUrl(photo)]
+  return Promise.all(urls.map(url => preloadUrl(url, priority))).then(() => undefined)
 }
 
 let slideChangeToken = 0
+
+/** Seconds of upcoming slides to keep fetched and decoded ahead of the cue. */
+const PRELOAD_WINDOW_SECONDS = 8
+/** Ceiling so a run of very short slides cannot fetch the whole gallery at once. */
+const MAX_LOOKAHEAD_SLIDES = 12
 
 watch([activeDisplayIndex, mixedPhotosToUse], ([newVal]) => {
   const activePhotoObj = mixedPhotosToUse.value[newVal]
@@ -876,17 +892,34 @@ watch([activeDisplayIndex, mixedPhotosToUse], ([newVal]) => {
   if ((props.trackIndex ?? 0) > 0) {
     shownLaterTrackPhotoIds.add(activePhotoObj.id)
   }
-  // Preload upcoming images to prevent decode/network stutter during exact
-  // beat crossfades; sub-second barrage slides need a deeper lookahead.
-  const activeDuration = (activePhotoObj as { duration?: number }).duration
-  const lookahead = activeDuration !== undefined && activeDuration < 1 ? 3 : 1
-  for (let ahead = 1; ahead <= lookahead; ahead++) {
-    const nextIndex = (newVal + ahead) % mixedPhotosToUse.value.length
-    const nextPhoto = mixedPhotosToUse.value[nextIndex]
-    if (!nextPhoto) {
-      continue
+  // Preload far enough ahead to cover a fetch and decode before the cue lands.
+  // The depth is measured in seconds of upcoming slides, not in slides: the old
+  // rule preloaded three slides only when the current one was under a second and
+  // one otherwise, so the finale barrage at roughly 1.76s per slide got a single
+  // slide of warning for a multi-megabyte photo. On a cold cache that is not
+  // enough time, and the swap below waits for decode, so the previous slide
+  // holds past its beat and the whole sequence walks off the music.
+  //
+  // This runs only after the slide that is going on screen *now* has been
+  // fetched. A browser opens about six connections per host, so starting a dozen
+  // lookahead fetches first puts the visible slide at the back of the queue and
+  // makes the very stall the lookahead exists to prevent.
+  function preloadUpcoming() {
+    let coveredSeconds = 0
+    for (let ahead = 1; ahead <= MAX_LOOKAHEAD_SLIDES; ahead++) {
+      const nextIndex = (newVal + ahead) % mixedPhotosToUse.value.length
+      const nextPhoto = mixedPhotosToUse.value[nextIndex]
+      if (!nextPhoto) {
+        continue
+      }
+      void preloadPhoto(nextPhoto)
+      // Assume a short slide when a duration is not authored, so the window
+      // over-covers rather than under-covers.
+      coveredSeconds += (nextPhoto as { duration?: number }).duration ?? 2
+      if (coveredSeconds >= PRELOAD_WINDOW_SECONDS) {
+        break
+      }
     }
-    void preloadPhoto(nextPhoto)
   }
 
   const changeToken = ++slideChangeToken
@@ -897,13 +930,15 @@ watch([activeDisplayIndex, mixedPhotosToUse], ([newVal]) => {
     opacityA.value = 1
     opacityB.value = 0
     crossfadeActive.value = false
+    preloadUpcoming()
     return
   }
 
-  void preloadPhoto(activePhotoObj).then(() => {
+  void preloadPhoto(activePhotoObj, 'high').then(() => {
     if (changeToken !== slideChangeToken) {
       return
     }
+    preloadUpcoming()
 
     // Swap only after the incoming image is decoded, so the wallpaper cannot
     // flash through an empty buffer during the crossfade.

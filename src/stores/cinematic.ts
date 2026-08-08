@@ -230,6 +230,12 @@ export const useCinematicStore = defineStore('cinematic', {
     completedElapsed: 0,
     playing: false,
     crossfading: false,
+    /**
+     * Where a crossfade in flight is headed. The overlay has to decide on the
+     * incoming segment, and `segmentIndex` still names the outgoing one until
+     * the fade completes. Null whenever no crossfade is in flight.
+     */
+    pendingSegmentIndex: null as number | null,
     /** Whether the authored segment-transition overlay should appear for this experience. */
     showTransitionOverlay: true,
     /**
@@ -336,6 +342,7 @@ export const useCinematicStore = defineStore('cinematic', {
       this.completedElapsed = 0
       this.playing = false
       this.crossfading = false
+      this.pendingSegmentIndex = null
       this.showTransitionOverlay = manifest.id === WOLVES_EXPERIENCE.id
       this.displayOverride = null
     },
@@ -373,8 +380,9 @@ export const useCinematicStore = defineStore('cinematic', {
     setPlaying(playing: boolean) {
       this.playing = playing
     },
-    beginCrossfade() {
+    beginCrossfade(targetIndex: number) {
       this.crossfading = true
+      this.pendingSegmentIndex = Math.min(Math.max(targetIndex, 0), this.segments.length - 1)
     },
     advanceSegment() {
       this.completedElapsed += this.segmentDuration || this.segmentElapsed
@@ -383,6 +391,7 @@ export const useCinematicStore = defineStore('cinematic', {
       this.nativeTime = 0
       this.segmentDuration = CINEMATIC_TIMELINE[this.segmentIndex]?.segmentDuration ?? 0
       this.crossfading = false
+      this.pendingSegmentIndex = null
     },
     /** Manual skip to an arbitrary segment (prev/next); only watched time accrues. */
     jumpToSegment(index: number) {
@@ -392,6 +401,7 @@ export const useCinematicStore = defineStore('cinematic', {
       this.nativeTime = 0
       this.segmentDuration = CINEMATIC_TIMELINE[this.segmentIndex]?.segmentDuration ?? 0
       this.crossfading = false
+      this.pendingSegmentIndex = null
     },
     finish() {
       this.segmentIndex = this.segments.length - 1
@@ -400,6 +410,7 @@ export const useCinematicStore = defineStore('cinematic', {
       this.nativeTime = cinematicNativeStart(this.segmentIndex) + this.segmentDuration
       this.playing = false
       this.crossfading = false
+      this.pendingSegmentIndex = null
     },
     setDisplayOverride(override: typeof this.displayOverride) {
       this.displayOverride = override

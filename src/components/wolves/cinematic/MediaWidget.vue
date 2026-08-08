@@ -42,8 +42,13 @@ const segmentTime = computed(() => `${formatTime(store.segmentElapsed)} / ${form
 const overallTime = computed(() => `${formatTime(store.overallElapsed)} / ${formatTime(store.overallDuration)}`)
 const segmentPercent = computed(() => Math.round(store.segmentProgress * 100))
 const PROGRESS_CELLS = 40
+// Split so the cell array only rebuilds when a cell actually changes. The clock
+// polls ten times a second, but at 40 cells across a segment of several minutes
+// roughly one cell changes every ten seconds; keying the array off the filled
+// count instead of the raw progress lets Vue's computed cache absorb the rest.
+const filledProgressCells = computed(() => Math.round(store.segmentProgress * PROGRESS_CELLS))
 const progressCells = computed(() => {
-  const filled = Math.round(store.segmentProgress * PROGRESS_CELLS)
+  const filled = filledProgressCells.value
   return Array.from({ length: PROGRESS_CELLS }, (_, index) => ({
     filled: index < filled,
     dino: index < filled && (index + 1) % 10 === 0,
@@ -60,10 +65,15 @@ const NOVA_GLITCH_RANGES = [
 const NOVA_GLITCH_DURATION_SECONDS = 0.45
 const novaGlitchWindows = ref<readonly [number, number][]>([])
 
+// Placed at the midpoint of each authored range. This used to be
+// `start + (end - start) * Math.random()`, which meant no two runs of the show
+// were the same and a glitch seen in rehearsal could not be reproduced or ruled
+// out as a defect. Nothing in a single unattended performance benefits from the
+// variation, and the ranges are already authored to differ from one another.
 function scheduleNovaGlitches() {
   const duration = store.segments[0]?.durationSeconds ?? 424
   novaGlitchWindows.value = NOVA_GLITCH_RANGES.map(([start, end]) => {
-    const time = duration * (start + (end - start) * Math.random())
+    const time = duration * ((start + end) / 2)
     return [time, time + NOVA_GLITCH_DURATION_SECONDS]
   })
 }

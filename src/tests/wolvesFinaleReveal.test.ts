@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { loreChatPages, loreProsePages, pickPageIndexForElapsed } from '../components/wolves/lore/lore-pages'
+import { parseLoreSpeakerParagraphs, rebuildLoreSpeakerParagraph } from '../components/wolves/lore'
+import { loreChatPages, loreProsePages, pickBlockPage, pickPageIndexForElapsed } from '../components/wolves/lore/lore-pages'
 import { loadAllLoreRecords } from '../data/wolves-lore-records'
 import { wolvesNarrativeTimeline } from '../data/wolves-narrative-timeline'
 import { getWolvesThesisState } from '../data/wolves-thesis-sequence'
@@ -20,6 +21,24 @@ function pageAt(time: number) {
   const pages = loreProsePages(record.body)
   const index = pickPageIndexForElapsed(pages, time - slot.startTime, slot.endTime - slot.startTime)
   return pages[index]!
+}
+
+/**
+ * Page the closing bulletin the way its own view does: parse speaker
+ * paragraphs, then hand them to `pickBlockPage`. This is the audience's view,
+ * as opposed to `pageAt`, which is the scheduler's. The two must agree.
+ */
+function renderedPageAt(time: number) {
+  const slot = finalSlot()
+  const record = loadAllLoreRecords().find(entry => entry.id === FINAL_ID)!
+  const page = pickBlockPage(
+    parseLoreSpeakerParagraphs(record.body),
+    block => block.source,
+    time - slot.startTime,
+    slot.endTime - slot.startTime,
+    rebuildLoreSpeakerParagraph,
+  )
+  return page.blocks.map(block => block.source).join('\n\n')
 }
 
 // The finale is the one moment in the show where music and text must agree:
@@ -73,5 +92,61 @@ describe('finale reveal', () => {
 
     expect(last).toContain('truly a great loss for humanity')
     expect(last).toBe(pages[pages.length - 1])
+  })
+
+  // The scheduler derives the bulletin's start time from what it thinks the
+  // pages cost, but the audience only ever sees what the view pages. When the
+  // two models disagree the show still "works" and every count-based test
+  // still passes -- the reveal simply arrives on the wrong beat. It once ran
+  // 8.3 seconds ahead of Become Legend, and split "Dr. Andy Anderson" from
+  // "and his team" across a page turn, because the view measured escaped HTML
+  // with the "**MICHAEL**:" prefix stripped while the scheduler measured the
+  // authored block. Both sides now measure the authored block.
+  describe('the audience sees what the scheduler timed', () => {
+    it('shows the reveal on the beat when paged the way the view pages it', () => {
+      expect(renderedPageAt(BEAT)).toContain('Dr. Andy Anderson')
+      expect(renderedPageAt(BEAT - 0.25)).not.toContain('Dr. Andy Anderson')
+    })
+
+    it('agrees with the scheduler on every page of the bulletin', () => {
+      const slot = finalSlot()
+      for (let time = slot.startTime; time < slot.endTime; time += 0.25) {
+        expect(renderedPageAt(time), `bulletin disagrees at ${time.toFixed(2)}s`).toBe(pageAt(time))
+      }
+    })
+
+    it('pages every speaker transcript the way the scheduler costs it', () => {
+      for (const record of loadAllLoreRecords()) {
+        if (record.kind !== 'news' && record.kind !== 'source') {
+          continue
+        }
+        const rendered = pickBlockPage(
+          parseLoreSpeakerParagraphs(record.body),
+          block => block.source,
+          0,
+          undefined,
+          rebuildLoreSpeakerParagraph,
+        )
+        expect(rendered.pageCount, `${record.id} pages differently than it is costed`)
+          .toBe(loreProsePages(record.body).length)
+      }
+    })
+
+    it('keeps the speaker on every page of a turn that spans pages', () => {
+      const record = loadAllLoreRecords().find(entry => entry.id === FINAL_ID)!
+      const blocks = parseLoreSpeakerParagraphs(record.body)
+      const slot = finalSlot()
+      const duration = slot.endTime - slot.startTime
+
+      for (let elapsed = 0; elapsed < duration; elapsed += 0.5) {
+        const page = pickBlockPage(blocks, b => b.source, elapsed, duration, rebuildLoreSpeakerParagraph)
+        for (const block of page.blocks) {
+          expect(block.speaker, `a page at +${elapsed.toFixed(1)}s has no speaker`).not.toBe('')
+          expect(block.text, 'a rendered page still carries its authored speaker prefix')
+            .not
+            .toMatch(/^\*\*/)
+        }
+      }
+    })
   })
 })

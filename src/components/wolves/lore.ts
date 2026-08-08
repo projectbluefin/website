@@ -4,6 +4,7 @@ import type { WolvesChapter } from '../../data/wolves-story'
 import { loadAllLoreRecords } from '../../data/wolves-lore-records'
 import { loadLoreProjectIndex } from '../../data/wolves-projects'
 import { wolvesRelease } from '../../data/wolves-story'
+import { splitLoreBlocks } from './lore/lore-pages'
 
 export interface BazziteQuote {
   quote: string
@@ -172,33 +173,54 @@ export function renderLoreParagraphs(body: string): string[] {
 export interface LoreSpeakerParagraph {
   isSpeaker: boolean
   speaker: string
+  /** Rendered, escaped HTML for display, without the speaker prefix. */
   text: string
+  /**
+   * The authored block this paragraph came from, speaker prefix included.
+   *
+   * Pagination measures this, never `text`. The scheduler costs the same
+   * authored blocks (`loreProsePages`), so measuring anything else lets the
+   * two disagree about where a long turn breaks — and every page after that
+   * break then lands off the beat it was timed to. Escaping and `**bold**`
+   * expansion also inflate `text` by an amount the scheduler cannot see.
+   */
+  source: string
 }
+
+/** Escape and convert authored inline markup to display HTML. */
+function renderLoreInline(text: string): string {
+  return escapeLoreHtml(text).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+}
+
+const LORE_SPEAKER_PATTERN = /^(?:\*\*([^*]+)\*\*|([A-Z0-9\s\-/]+)):\s*(\S[\s\S]*)$/i
 
 /**
  * Parse a lore record body into speaker-attributed paragraphs (safe HTML),
  * for transcript-style views (news bulletins, source fragments).
  */
 export function parseLoreSpeakerParagraphs(body: string): LoreSpeakerParagraph[] {
-  const cleanBody = body.replace(/\r\n/g, '\n')
-  const normalizedBody = cleanBody.replace(/\n(?=(?:\*\*[^*]+\*\*|[A-Z0-9\-/]+(?:\s+[A-Z0-9\-/]+)*)(?:\s+\[[^\]]+\])?:|<[^>]+>)/gi, '\n\n')
-  return normalizedBody
-    .split(/\n{2,}/)
-    .map(para => para.trim())
-    .filter(Boolean)
-    .map((para) => {
-      const match = para.match(/^(?:\*\*([^*]+)\*\*|([A-Z0-9\s\-/]+)):\s*(\S[\s\S]*)$/i)
-      if (match) {
-        return {
-          isSpeaker: true,
-          speaker: (match[1] || match[2]).trim(),
-          text: escapeLoreHtml(match[3].trim()).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
-        }
-      }
-      return {
-        isSpeaker: false,
-        speaker: '',
-        text: escapeLoreHtml(para).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
-      }
-    })
+  return splitLoreBlocks(body).map((para) => {
+    const match = para.match(LORE_SPEAKER_PATTERN)
+    return {
+      isSpeaker: Boolean(match),
+      speaker: match ? (match[1] || match[2]).trim() : '',
+      text: renderLoreInline(match ? match[3].trim() : para),
+      source: para,
+    }
+  })
+}
+
+/**
+ * Re-render one split fragment of a speaker paragraph for display. The
+ * fragment is a slice of the authored block, so a continuation fragment has no
+ * speaker prefix to strip while the first one does. `speaker` is carried
+ * through either way: on a projected page every fragment has to say who is
+ * talking, or the audience loses the thread of the conversation.
+ */
+export function rebuildLoreSpeakerParagraph(
+  block: LoreSpeakerParagraph,
+  part: string,
+): LoreSpeakerParagraph {
+  const match = part.match(LORE_SPEAKER_PATTERN)
+  return { ...block, text: renderLoreInline(match ? match[3].trim() : part), source: part }
 }

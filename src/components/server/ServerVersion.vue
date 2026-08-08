@@ -69,7 +69,9 @@ onMounted(async () => {
       </div>
 
       <div class="release-action">
-        <div class="action-label">Install freedesktop-sdk Server Linux</div>
+        <div class="action-label">
+          Install freedesktop-sdk Server Linux
+        </div>
         <p>Choose the release asset for your hardware and follow the installation notes on GitHub.</p>
         <a class="release-link" :href="GITHUB_RELEASES_PAGE" target="_blank" rel="noopener noreferrer">
           <IconGithubCircle />
