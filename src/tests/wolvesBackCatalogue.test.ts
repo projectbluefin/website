@@ -47,6 +47,7 @@ describe('back catalogue experiences', () => {
     expect(store.experienceId).toBe(ALBUM.id)
     expect(store.segmentCount).toBe(2)
     expect(store.segment.youtubeId).toBe('v1')
+    expect(store.display.title).toBe('One by A')
 
     store.enterCinematic()
     expect(store.segmentDuration).toBe(100)
@@ -69,6 +70,7 @@ describe('back catalogue experiences', () => {
     store.loadExperience(ALBUM)
     store.loadExperience(WOLVES_EXPERIENCE)
     expect(store.segmentCount).toBe(WOLVES_EXPERIENCE.segments.length)
+    expect(store.display.title).toBe(WOLVES_EXPERIENCE.segments[0].title)
     expect(resolveOverallRatioTarget(0).phase).toBe('intro')
   })
 

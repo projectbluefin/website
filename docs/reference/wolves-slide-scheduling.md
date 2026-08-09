@@ -135,6 +135,25 @@ for deletion; deleting it would have broken eleven experiences while leaving
 whether the non-Wolves experiences reach a symbol before removing it. Likewise
 `isExperimental` is a permanently-true flag, not a licence to delete its branch.
 
+Gallery image crossfades must not run inside a `backdrop-filter` surface.
+Profiling the “Mein Herz brennt” 3:27-3:35 window isolated 66-83 ms frames when
+the slide opacity transition repainted the blurred viewport; removing blur held
+the same window to compositor-paced frames. Those slides use static translucent
+backgrounds instead.
+
+The same hitch was reported across the Wolves album from “Ghosts In The Mist”
+onward, which runs the same rapid gallery crossfade, so the treatment covers
+every segment except Track 0. Track 0 is excluded deliberately: its blur is
+authored, its look is locked, and it does not drive the gallery the same way.
+The switch is `usesFastCrossfade` in `WolvesComicReader.vue`, pinned by tests in
+`src/tests/wolvesComicReader.test.ts`.
+
+The month wallpaper dissolve underneath is a second, smaller contributor. It is
+pinned for the back catalogue only; on Wolves it carries authored meaning
+(progress across the seven parts) and is left running. If the hitch persists on
+the later tracks after the blur change, that is the next lever — not a silent
+one to pull.
+
 ## Nulling both slide buffers is a hard cut
 
 `WolvesComicReader`'s slide watcher has a cold-start branch, taken when

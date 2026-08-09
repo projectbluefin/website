@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useCinematicStore } from '@/stores/cinematic'
+import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
+import TrackCredit from './TrackCredit.vue'
 
 const props = withDefaults(defineProps<{
   title?: string
@@ -27,6 +28,9 @@ const emit = defineEmits<{
 const store = useCinematicStore()
 const base = import.meta.env.BASE_URL
 const mediaTitle = computed(() => props.title ?? store.display.title)
+const showCatalogueCredit = computed(() =>
+  !props.title && store.experienceId !== WOLVES_EXPERIENCE.id,
+)
 const artworkSrc = computed(() =>
   store.display.artwork.startsWith('http') ? store.display.artwork : `${base}${store.display.artwork}`,
 )
@@ -189,7 +193,14 @@ function handleVoiceOverChange(event: Event) {
       alt=""
     >
     <div class="wc-widget-info">
-      <span class="wc-widget-title">{{ mediaTitle }}</span>
+      <span class="wc-widget-title">
+        <TrackCredit
+          v-if="showCatalogueCredit"
+          :title="store.segment.title"
+          :artist="store.segment.artist"
+        />
+        <template v-else>{{ mediaTitle }}</template>
+      </span>
       <div
         ref="progressEl"
         class="wc-widget-progress"

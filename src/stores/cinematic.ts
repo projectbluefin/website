@@ -371,9 +371,12 @@ export const useCinematicStore = defineStore('cinematic', {
         return { ...state.displayOverride, counter: state.displayOverride.chapter }
       }
       const segment = this.segment
+      const title = state.experienceId === WOLVES_EXPERIENCE.id
+        ? segment.title
+        : `${segment.title} by ${segment.artist}`
       return {
         chapter: segment.chapter,
-        title: segment.title,
+        title,
         artist: segment.artist,
         artwork: segment.artwork,
         counter: `${segment.chapter} · ${state.segmentIndex + 1}/${state.segments.length}`,

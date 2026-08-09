@@ -31,7 +31,11 @@ describe('wolves cinematic stage status plate', () => {
         stubs: {
           TheaterExperience: { template: '<div class="theater-experience-stub" />' },
           WolvesOrgAds: { template: '<div class="org-ads-stub" />' },
-          Nameplate: true,
+          Nameplate: {
+            name: 'NameplateStub',
+            props: ['creditArtist', 'detail', 'label'],
+            template: '<div class="nameplate-stub">{{ detail }}|{{ label }}|{{ creditArtist }}</div>',
+          },
           CinematicCaptions: true,
           CinematicTransition: true,
         },
@@ -85,6 +89,11 @@ describe('wolves cinematic stage status plate', () => {
     expect(wrapper.find('.theater-experience-stub').exists()).toBe(true)
     expect(wrapper.find('.org-ads-stub').exists()).toBe(true)
     expect(wrapper.findAll('.wc-layer').every(layer => !layer.classes().includes('wc-layer--audio-only'))).toBe(true)
+    expect(wrapper.get('nameplate-stub').attributes()).toMatchObject({
+      creditartist: 'Artist',
+      detail: 'ALBUM',
+      label: 'Track Two',
+    })
   })
 
   it('keeps Track 0 communications when the slide deck reports a people title', async () => {

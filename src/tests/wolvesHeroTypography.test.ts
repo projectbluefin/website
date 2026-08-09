@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import TheaterExperience from '@/components/wolves/cinematic/TheaterExperience.vue'
 import { TRACK_ZERO_SECTIONS } from '@/data/wolves-track-zero-beats'
-import { useCinematicStore } from '@/stores/cinematic'
+import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
 describe('wolves hero typography timeline', () => {
   beforeEach(() => {
@@ -201,5 +201,78 @@ describe('wolves track zero video sidecar', () => {
     wrapper.unmount()
 
     expect(mediaQueryList.removeEventListener).toHaveBeenCalledWith('change', expect.any(Function))
+  })
+})
+
+describe('cinematic wallpaper transitions', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  function mountTheater() {
+    return mount(TheaterExperience, {
+      global: {
+        stubs: {
+          WolvesComicReader: true,
+          WolvesLoreColumn: true,
+        },
+      },
+    })
+  }
+
+  it('keeps the decorative wallpaper static for back-catalogue albums', async () => {
+    const store = useCinematicStore()
+    store.loadExperience({
+      id: 'album-test',
+      title: 'Album Test',
+      artwork: 'album.jpg',
+      segments: [
+        {
+          id: 'track-one',
+          kind: 'youtube',
+          youtubeId: 'track-one',
+          chapter: 'Album Test',
+          title: 'Track One',
+          artist: 'Artist',
+          artwork: 'track-one.jpg',
+          durationSeconds: 323,
+        },
+        {
+          id: 'track-two',
+          kind: 'youtube',
+          youtubeId: 'track-two',
+          chapter: 'Album Test',
+          title: 'Track Two',
+          artist: 'Artist',
+          artwork: 'track-two.jpg',
+          durationSeconds: 280,
+        },
+      ],
+    })
+    store.enterCinematic()
+    store.jumpToSegment(1)
+    store.updateTime(207, 280, 207)
+    const wrapper = mountTheater()
+
+    store.updateTime(213, 280, 213)
+    await nextTick()
+
+    expect(wrapper.find('.wc-wallpaper-buffer.fading-out').exists()).toBe(false)
+    expect(wrapper.find('.wc-wallpaper-buffer.is-transitioning').exists()).toBe(false)
+  })
+
+  it('preserves authored wallpaper transitions for Wolves', async () => {
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_EXPERIENCE)
+    store.enterCinematic()
+    store.jumpToSegment(1)
+    store.updateTime(258, 347, 258)
+    const wrapper = mountTheater()
+
+    store.updateTime(262, 347, 262)
+    await nextTick()
+
+    expect(wrapper.find('.wc-wallpaper-buffer.fading-out').exists()).toBe(true)
+    expect(wrapper.find('.wc-wallpaper-buffer.is-transitioning').exists()).toBe(true)
   })
 })

@@ -40,6 +40,9 @@ const plateLabel = computed(() =>
 const plateDetail = computed(() =>
   isTrackZero.value ? 'Seven Days to the Wolves' : store.segment.chapter,
 )
+const plateCreditArtist = computed(() =>
+  isWolvesExperience.value ? undefined : store.segment.artist,
+)
 
 onBeforeUnmount(() => player.destroy())
 
@@ -90,7 +93,12 @@ defineExpose({
     <WolvesOrgAds />
 
     <div class="wc-stage-nameplate">
-      <Nameplate :detail="plateDetail" :label="plateLabel" :slow-fade="isTrackZero" />
+      <Nameplate
+        :credit-artist="plateCreditArtist"
+        :detail="plateDetail"
+        :label="plateLabel"
+        :slow-fade="isTrackZero"
+      />
     </div>
 
     <CinematicCaptions />

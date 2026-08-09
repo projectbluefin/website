@@ -83,6 +83,18 @@ const trackZeroReservedForLaterIds = new Set([
 
 const isWolvesExperience = computed(() => props.wolvesExperience)
 
+/**
+ * Slide crossfades run without backdrop blur everywhere except the primary
+ * song. Blurring a surface that is repainting a full-size image on every slide
+ * change is what produced the hitch: profiling the 3:27-3:35 window measured
+ * 66-83 ms frames with the blur and compositor-paced frames without it.
+ *
+ * Track 0 of the Wolves show is deliberately excluded. Its blur is authored
+ * treatment, it is the one segment whose look is locked, and it does not run
+ * the same rapid gallery crossfade the later tracks and the catalogue do.
+ */
+const usesFastCrossfade = computed(() => !isWolvesExperience.value || props.trackIndex !== 0)
+
 // PDF source ───────────────────────────────────────────────────────────────
 const pdfUrl = `${import.meta.env.BASE_URL}color-with-bluefin.pdf`
 
@@ -1291,7 +1303,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section id="comic-reader" class="comic-reader-section">
+  <section
+    id="comic-reader"
+    class="comic-reader-section"
+    :class="{ 'comic-reader-section--fast-crossfade': usesFastCrossfade }"
+  >
     <div class="page-flip-comic-layout">
       <div ref="flipViewport" class="comic-viewport">
         <div class="comic-content-area">
@@ -2096,6 +2112,19 @@ onBeforeUnmount(() => {
   height: 100%;
   object-fit: contain;
   object-position: center;
+}
+
+// Gallery slides crossfade full-size images. Backdrop filtering those surfaces
+// forces a large repaint on every opacity transition and produces a visible
+// hitch; the static translucent backgrounds preserve contrast without putting
+// blur work on the slide-change path. Track 0 keeps its authored blur.
+.comic-reader-section--fast-crossfade {
+  .comic-viewport,
+  .flickr-caption,
+  .wallpaper-theater-caption {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .flickr-caption {

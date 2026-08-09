@@ -150,11 +150,20 @@ describe('wolvesComicReader', () => {
     })
     await flushPromises()
 
+    expect(wrapper.classes()).toContain('comic-reader-section--fast-crossfade')
     const firstSlide = activeTimelineImage(wrapper)
     await wrapper.setProps({ playlistCurrentTime: 128 })
     await flushPromises()
 
     expect(activeTimelineImage(wrapper)).not.toBe(firstSlide)
+  })
+
+  it('disables backdrop filters on catalogue slideshow surfaces', () => {
+    const source = readFileSync(resolve(process.cwd(), 'src/components/wolves/WolvesComicReader.vue'), 'utf8')
+
+    expect(source).toMatch(
+      /\.comic-reader-section--fast-crossfade[\s\S]*?\.comic-viewport[\s\S]*?backdrop-filter: none/,
+    )
   })
 
   it('cuts Track 0 on measured beats at each authored tempo pickup', async () => {
@@ -660,6 +669,35 @@ describe('wolvesComicReader', () => {
     await flushPromises()
 
     expect(wrapper.find('.flickr-caption').exists()).toBe(false)
+  })
+
+  // Blurring a surface that repaints a full-size image on every slide change is
+  // what produced the hitch on Ghosts In The Mist onward. Track 0 is the one
+  // segment whose look is locked, so it keeps its authored blur.
+  describe('slide crossfade blur', () => {
+    function crossfadeClass(trackIndex: number, wolvesExperience: boolean) {
+      mockGalleryData()
+      const wrapper = mount(WolvesComicReader, {
+        props: { trackIndex, trackId: '1', playlistCurrentTime: 1, wolvesExperience },
+      })
+      return wrapper.get('#comic-reader').classes()
+    }
+
+    it('keeps the authored blur on the primary song', () => {
+      expect(crossfadeClass(0, true)).not.toContain('comic-reader-section--fast-crossfade')
+    })
+
+    it('drops the blur from Ghosts In The Mist onward', () => {
+      for (const trackIndex of [1, 2, 3, 4, 5, 6]) {
+        expect(crossfadeClass(trackIndex, true)).toContain('comic-reader-section--fast-crossfade')
+      }
+    })
+
+    it('drops the blur across every back-catalogue segment', () => {
+      for (const trackIndex of [0, 1, 2]) {
+        expect(crossfadeClass(trackIndex, false)).toContain('comic-reader-section--fast-crossfade')
+      }
+    })
   })
 
   // The caption derivation withholds a caption for titles that encode nothing,

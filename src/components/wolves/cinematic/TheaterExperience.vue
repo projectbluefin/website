@@ -24,6 +24,7 @@ const slotElapsed = computed(() => Math.min(
   Math.max(0, time.value - displayedNarrativeSlot.value.startTime),
 ))
 const isTrackZero = computed(() => store.segment.trackZeroExperience === true)
+const isWolvesExperience = computed(() => store.experienceId === WOLVES_EXPERIENCE.id)
 const thesis = computed(() => (isTrackZero.value ? getWolvesThesisState(time.value) : getWolvesThesisState(0)))
 
 // Static ordered video-loop sidecar for Track 0's desktop right column, below
@@ -129,6 +130,9 @@ const totalProgress = computed(() => {
 })
 
 const wallpaperNightOpacity = computed(() => {
+  if (!isWolvesExperience.value) {
+    return 0
+  }
   if (thesis.value.dayPulse) {
     return 0
   }
@@ -137,6 +141,12 @@ const wallpaperNightOpacity = computed(() => {
 })
 
 const currentPairIndex = computed(() => {
+  // Back-catalogue albums already crossfade large slideshow images. Running the
+  // full-screen month wallpaper dissolve underneath at the same time compounds
+  // decode/compositor work into a visible hitch, so their backdrop stays fixed.
+  if (!isWolvesExperience.value) {
+    return 6
+  }
   const wallpaperIndexFloat = totalProgress.value * 12 + 6
   const pairIndex = Math.floor(wallpaperIndexFloat) % 12
   // December is intentionally out of rotation; November holds through its slot.

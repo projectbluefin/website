@@ -82,6 +82,10 @@ an unidentified player request.
 - Playlist metadata is indexed by `segmentIndex`/`trackIndex` instead of
   resolved by `id`/`youtubeVideoId`. (`trackIndex` still drives ordering and
   branching; the ban is on metadata lookup by position.)
+- Back-catalogue title credit is baked into generated `segment.title` data
+  instead of formatting the normalized `title` and `artist` fields at the
+  display boundary. The media widget and stage nameplate share
+  `TrackCredit.vue`; transition cards keep their separate artist line.
 - A hand-maintained array that parallels `CINEMATIC_SEGMENTS` (durations, BPM,
   chat keys) is not asserted against it by id.
 - An authored sequence has a gap (`TRANSITION_FIVE` with no `TRANSITION_FOUR`,

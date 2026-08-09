@@ -55,4 +55,29 @@ describe('media widget', () => {
     expect(wrapper.findAll('.wc-widget-slogan-bluefin')).toHaveLength(4)
     random.mockRestore()
   })
+
+  it('renders structured title and artist credit for catalogue tracks only', () => {
+    const store = useCinematicStore()
+    store.loadExperience({
+      id: 'album-test',
+      title: 'Album Test',
+      artwork: 'album.jpg',
+      segments: [{
+        id: 'track-one',
+        kind: 'youtube',
+        youtubeId: 'track-one',
+        chapter: 'Album Test',
+        title: 'Ava of Death',
+        artist: 'Eleine',
+        artwork: 'track.jpg',
+        durationSeconds: 247,
+      }],
+    })
+    store.enterCinematic()
+
+    const wrapper = mount(MediaWidget)
+
+    expect(wrapper.get('.wc-track-credit-title').text()).toBe('Ava of Death')
+    expect(wrapper.get('.wc-track-credit-byline').text()).toBe('By Eleine')
+  })
 })

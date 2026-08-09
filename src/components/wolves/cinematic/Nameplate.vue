@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { dinosaurSpecies } from '@/data/wolves-dinosaur-species'
+import TrackCredit from './TrackCredit.vue'
 
 withDefaults(defineProps<{
   /** Small secondary detail line (chapter / status). */
   detail: string
   /** Large primary label. */
   label: string
+  /** Catalogue artist rendered with the shared Bluefin credit treatment. */
+  creditArtist?: string
   /** Slowly fades label changes for the authored Track 0 communications. */
   slowFade?: boolean
   /** Split-second interference treatment while a glitch cue holds the label. */
@@ -90,16 +93,34 @@ onBeforeUnmount(() => window.clearInterval(avatarTimer))
       <span class="wc-nameplate-detail wc-label">{{ detail }}</span>
       <Transition v-if="slowFade" name="wc-nameplate-label" mode="out-in">
         <span :key="label" class="wc-nameplate-label">
-          <template v-for="(part, index) in labelParts(label)" :key="index">
-            <span v-if="part.mono" class="wc-nameplate-label-mono">{{ part.text }}</span>
-            <template v-else>{{ part.text }}</template>
+          <TrackCredit
+            v-if="creditArtist"
+            :title="label"
+            :artist="creditArtist"
+            :show-by="false"
+            wide
+          />
+          <template v-else>
+            <template v-for="(part, index) in labelParts(label)" :key="index">
+              <span v-if="part.mono" class="wc-nameplate-label-mono">{{ part.text }}</span>
+              <template v-else>{{ part.text }}</template>
+            </template>
           </template>
         </span>
       </Transition>
       <span v-else class="wc-nameplate-label">
-        <template v-for="(part, index) in labelParts(label)" :key="index">
-          <span v-if="part.mono" class="wc-nameplate-label-mono">{{ part.text }}</span>
-          <template v-else>{{ part.text }}</template>
+        <TrackCredit
+          v-if="creditArtist"
+          :title="label"
+          :artist="creditArtist"
+          :show-by="false"
+          wide
+        />
+        <template v-else>
+          <template v-for="(part, index) in labelParts(label)" :key="index">
+            <span v-if="part.mono" class="wc-nameplate-label-mono">{{ part.text }}</span>
+            <template v-else>{{ part.text }}</template>
+          </template>
         </template>
       </span>
     </span>

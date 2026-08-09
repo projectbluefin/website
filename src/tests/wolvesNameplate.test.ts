@@ -29,6 +29,21 @@ describe('wolves nameplate label rendering', () => {
     expect(wrapper.find('.wc-nameplate-label-mono').exists()).toBe(false)
   })
 
+  it('renders catalogue artist credit with the shared separator treatment', () => {
+    const wrapper = mount(Nameplate, {
+      props: {
+        detail: 'Bluefin and the Syrens of Metal',
+        label: 'Ava of Death',
+        creditArtist: 'Eleine',
+      },
+    })
+
+    expect(wrapper.get('.wc-track-credit-title').text()).toBe('Ava of Death')
+    expect(wrapper.find('.wc-track-credit-b').exists()).toBe(false)
+    expect(wrapper.get('.wc-track-credit-byline').text()).toBe('Eleine')
+    expect(wrapper.get('.wc-track-credit').classes()).toContain('wc-track-credit--wide')
+  })
+
   it('settles each Track 0 status label within its shortest authored finale slot', () => {
     const source = readFileSync(resolve(process.cwd(), 'src/components/wolves/cinematic/Nameplate.vue'), 'utf8')
 
