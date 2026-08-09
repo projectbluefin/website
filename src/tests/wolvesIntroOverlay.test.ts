@@ -362,7 +362,7 @@ describe('wolvesIntroOverlay video segments', () => {
     expect(new Set(ids)).toEqual(new Set([
       'youre-holding-it-wrong-post1',
       'chonky-achillibator-pose1-post',
-      'bluefin-original',
+      'bluefin',
       'chonky-dakosaurus-bluefinskin',
       'jorge-custom-chonks-kentrosaurus-post1',
       'chonky-dromaeosaurus-bluefin',
@@ -374,7 +374,7 @@ describe('wolvesIntroOverlay video segments', () => {
       'achillobator',
       'angry',
       'dakota',
-      'devs',
+      'karl',
       'intrigued',
       'leaping',
       'nest',

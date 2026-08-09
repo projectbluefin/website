@@ -10,7 +10,7 @@ export const dinosaurSpecies = [
     id: 'bluefin',
     scientificName: 'Deinonychus antirrhopus',
     documentationUrl: 'https://docs.projectbluefin.io/dinosaurs/#bluefin',
-    artwork: './characters/bluefin-small.webp',
+    artwork: './characters/bluefin.webp',
   },
   {
     id: 'achillobator',

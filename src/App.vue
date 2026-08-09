@@ -28,8 +28,8 @@ provide('visibleSection', visibleSection)
 // loaded by the CSS/parallax layer — do not block initial paint on them.
 const characterImages = [
   './characters/angry.webp',
-  './characters/bluefin-small.webp',
-  './characters/devs.webp',
+  './characters/bluefin.webp',
+  './characters/karl.webp',
   './characters/nest.webp'
 ]
 

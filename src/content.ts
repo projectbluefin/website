@@ -23,7 +23,7 @@ export const LangUsersTitle = 'You'
 export const LangUsersText
   = 'Bluefin is an operating system for your computer. The best of both worlds: the reliability and ease of use of a Chromebook, with the power of a GNOME desktop.'
 export const LangUsersListItems = ['Users.Box1', 'Users.Box2', 'Users.Box3']
-export const LangUsersBluefinImageURL = './characters/bluefin-small.webp'
+export const LangUsersBluefinImageURL = './characters/bluefin.webp'
 export const LangUsersAppendix = `
 Bluefin is designed to get out of your way. Get what you want without sacrificing system stability. The Linux client has evolved, a clean start for the next generation. Check the [announcement blog post](https://www.ypsidanger.com/announcing-project-bluefin/) and [introductory documentation](https://docs.projectbluefin.io) for more information.`
 
@@ -42,7 +42,7 @@ export const LangDevsBoxThree = 'Devpod for developer environments as code'
 export const LangDevsBoxFour = 'Homebrew on-tap'
 export const LangDevsBoxFive = 'Podman Desktop'
 export const LangDevsBoxSix = 'JetBrains IDEs'
-export const LangDevsTowerImageURL = './characters/devs.webp'
+export const LangDevsTowerImageURL = './characters/karl.webp'
 export const LangDevsAppendix = `The inclusion of a [container runtime](https://podman.io) unlocks your team\'s potential. Use the same tools that power modern internet infrastructure on your desktop. Bluefin knows how to ship to production.
 
 We target Linux operators who don't use Linux on the desktop because it has failed them. So we're taking the Linux desktop through its cloud-native journey and building it as a community.

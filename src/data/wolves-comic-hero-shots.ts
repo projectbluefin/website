@@ -26,9 +26,9 @@ export const wolvesComicHeroShots = [
     contentFrame: { width: 114.74, left: -5.59, top: -3.32 },
   },
   {
-    id: 'bluefin-original',
-    src: 'characters/bluefin_original.webp',
-    label: 'Bluefin Original',
+    id: 'bluefin',
+    src: 'characters/bluefin.webp',
+    label: 'Bluefin',
     contentFrame: { width: 93.28, left: 6.44, top: -2.2 },
   },
   {
@@ -98,9 +98,9 @@ export const wolvesComicHeroShots = [
     contentFrame: { width: 80.37, left: 9.82, top: 19.22 },
   },
   {
-    id: 'devs',
-    src: 'characters/devs.webp',
-    label: 'Devs',
+    id: 'karl',
+    src: 'characters/karl.webp',
+    label: 'Karl',
     contentFrame: { width: 106.67, left: -5, top: -0.42 },
   },
   {
