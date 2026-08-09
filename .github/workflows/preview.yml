@@ -31,9 +31,15 @@ jobs:
       - name: Restore live data from cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
+          # Must match the save step's path list in update-content.yml exactly,
+          # order included: actions/cache derives the cache version from the
+          # path list, so a mismatch restores nothing and the build silently
+          # falls back to the committed data.
           path: |
             public/stream-versions.yml
             public/dakota-versions.json
+            public/flickr-photos.json
+            public/experiences
             src/assets/svg/growth_bluefins.svg
           key: website-live-data-
           restore-keys: |

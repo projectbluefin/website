@@ -323,3 +323,27 @@ pass as proof that real audio is correct, and say so when reporting.
 Two intro harnesses, `tests/wolves-intro-segments.mjs` and
 `tests/wolves-intro-destiny-toggle.mjs`, **fail on `main`** in that environment.
 Baseline them with a worktree before treating either as a regression.
+
+
+## A cache path list is part of the cache key
+
+`actions/cache` derives the cache *version* from the `path` list, not just from
+`key`. A restore step whose path list differs from the save step's — in content
+**or in order** — can never match, and `restore-keys` is version-scoped too, so
+the fallback does not rescue it.
+
+With `fail-on-cache-miss: false` the miss is silent. The build proceeds with
+whatever is committed, and the producing job keeps reporting success while
+delivering nothing.
+
+Adding a single path to the save step in `update-content.yml` broke every
+live-data feed exactly this way, including two that had nothing to do with the
+change. Nothing in CI went red: the workflow that breaks is not the workflow
+that runs on the pull request.
+
+`website-live-data-` has one producer (`update-content.yml`) and two consumers
+(`deploy.yml`, `preview.yml`). All three lists must stay byte-identical;
+`scripts/tests/workflow-cache-parity.test.ts` enforces it.
+
+When touching any cached path, enumerate every workflow that restores that key
+before editing the one that saves it. Grep the key, not the filename.
