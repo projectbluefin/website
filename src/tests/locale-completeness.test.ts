@@ -1,9 +1,8 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
-const here = fileURLToPath(new URL('.', import.meta.url))
+const here = resolve(process.cwd(), 'src/tests')
 const localesDir = resolve(here, '../locales')
 
 function loadLocale(filename: string): Record<string, unknown> {
@@ -17,7 +16,8 @@ function flatKeys(obj: Record<string, unknown>, prefix = ''): string[] {
     const fullKey = prefix ? `${prefix}.${key}` : key
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       keys.push(...flatKeys(value as Record<string, unknown>, fullKey))
-    } else {
+    }
+    else {
       keys.push(fullKey)
     }
   }
@@ -34,7 +34,9 @@ describe('locale files', () => {
   })
 
   for (const file of localeFiles) {
-    if (file === 'en-US.json') continue
+    if (file === 'en-US.json') {
+      continue
+    }
 
     it(`${file} has all keys from en-US.json`, () => {
       const locale = loadLocale(file)

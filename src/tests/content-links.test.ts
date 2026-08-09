@@ -2,18 +2,18 @@ import { describe, expect, it } from 'vitest'
 import * as content from '../content'
 
 describe('content.ts — exported constants', () => {
-  it('LangLandingBluefinImageURLs contains valid paths', () => {
+  it('langLandingBluefinImageURLs contains valid paths', () => {
     expect(content.LangLandingBluefinImageURLs.length).toBeGreaterThan(0)
     for (const url of content.LangLandingBluefinImageURLs) {
       expect(url).toMatch(/^\.\/characters\/header\/.*\.webp$/)
     }
   })
 
-  it('LangUsersBluefinImageURL is a valid path', () => {
+  it('langUsersBluefinImageURL is a valid path', () => {
     expect(content.LangUsersBluefinImageURL).toMatch(/\.webp$/)
   })
 
-  it('LangMissionBluefinImageURL is a valid path', () => {
+  it('langMissionBluefinImageURL is a valid path', () => {
     expect(content.LangMissionBluefinImageURL).toMatch(/\.webp$/)
   })
 
