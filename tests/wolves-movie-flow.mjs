@@ -891,7 +891,20 @@ try {
   })
   assertTruthy('Jorge MN047 holds through 48.399 seconds', ghostsBeforeHandoff?.includes('55164222671_32d7ace307_c.jpg'))
 
+  // The slide swap is gated on the incoming image decoding, so at the 48.4s
+  // boundary the handoff is a race against `seekStage`'s fixed settle time.
+  // On a cold runner the decode loses and the assertion reports a regression
+  // that is really just a slow frame. Wait for the swap, then assert, so a
+  // genuine failure still fails — it just takes the timeout to get there.
   await seekStage(48.4)
+  await page
+    .waitForFunction(() => {
+      const layers = [...document.querySelectorAll('.flickr-photo-layer')]
+      const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
+      const src = activeLayer?.querySelector('img')?.getAttribute('src') ?? ''
+      return !src.includes('55164222671_32d7ace307_c.jpg')
+    }, null, { timeout: 5000 })
+    .catch(() => {})
   const ghostsAtHandoff = await page.locator('.flickr-photo-layer').evaluateAll((layers) => {
     const activeLayer = layers.find(layer => getComputedStyle(layer).zIndex === '2')
     return activeLayer?.querySelector('img')?.getAttribute('src')
