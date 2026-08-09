@@ -1,0 +1,33 @@
+{
+  "$schema": "https://raw.githubusercontent.com/devcontainers/spec/refs/heads/main/schemas/devContainer.schema.json",
+  "name": "bluefin-website",
+  "build": {
+    "dockerfile": "Containerfile",
+    "context": "."
+  },
+
+  "runArgs": [
+    "--userns=keep-id",
+    "--security-opt=label=disable"
+  ],
+  "containerUser": "vscode",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/bluefin-website,type=bind,Z",
+  "workspaceFolder": "/workspaces/bluefin-website",
+
+  "postCreateCommand": "npm install",
+  "forwardPorts": [5173],
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "astro-build.astro-vscode",
+        "bradlc.vscode-tailwindcss",
+        "github.vscode-github-actions",
+        "github.vscode-pull-request-github"
+      ],
+      "settings": {
+        "editor.formatOnSave": true
+      }
+    }
+  }
+}
