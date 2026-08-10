@@ -1,0 +1,47 @@
+{
+  "resolvedSelections": {
+    "europa-mars-prologue": [
+      { "id": "europa-mars-prologue-001", "start": 0, "end": 12.1, "label": "Warmind face-free shot 01" },
+      { "id": "europa-mars-prologue-002", "start": 14.1667, "end": 20.5, "label": "Warmind face-free shot 02" },
+      { "id": "europa-mars-prologue-003", "start": 28.5, "end": 31.6667, "label": "Warmind face-free shot 03" },
+      { "id": "europa-mars-prologue-004", "start": 35.1, "end": 38.2333, "label": "Warmind face-free shot 04" },
+      { "id": "europa-mars-prologue-005", "start": 50.4, "end": 52.7, "label": "Warmind face-free shot 05" },
+      { "id": "europa-mars-prologue-006", "start": 52.7, "end": 53.8667, "label": "Warmind face-free shot 06" },
+      { "id": "europa-mars-prologue-007", "start": 55.3667, "end": 56.2333, "label": "Warmind face-free shot 07" },
+      { "id": "europa-mars-prologue-008", "start": 57.4667, "end": 60.2667, "label": "Warmind face-free shot 08" },
+      { "id": "europa-mars-prologue-009", "start": 60.2667, "end": 61.3333, "label": "Warmind face-free shot 09" },
+      { "id": "europa-mars-prologue-010", "start": 65.9, "end": 67.2667, "label": "Warmind face-free shot 10" },
+      { "id": "europa-mars-prologue-011", "start": 67.2667, "end": 68.7, "label": "Warmind face-free shot 11" },
+      { "id": "europa-mars-prologue-012", "start": 68.7, "end": 72.2, "label": "Warmind face-free shot 12" },
+      { "id": "europa-mars-prologue-013", "start": 74.3667, "end": 76.5, "label": "Warmind face-free shot 13" },
+      { "id": "europa-mars-prologue-014", "start": 77.6667, "end": 79.1, "label": "Warmind face-free shot 14" },
+      { "id": "europa-mars-prologue-015", "start": 81.3333, "end": 84.6667, "label": "Warmind face-free shot 15" },
+      { "id": "europa-mars-prologue-016", "start": 84.6667, "end": 91.4333, "label": "Warmind face-free shot 16" },
+      { "id": "europa-mars-prologue-017", "start": 91.4333, "end": 93.9667, "label": "Warmind face-free shot 17" }
+    ],
+    "final-shape-launch": [
+      { "id": "final-shape-launch-001", "start": 0, "end": 23.056, "label": "Final Shape launch opening before Bungie card" }
+    ],
+    "beyond-the-infinite": [
+      { "id": "beyond-the-infinite-001", "start": 0, "end": 28.73, "label": "Planetary alignment" },
+      { "id": "beyond-the-infinite-002", "start": 55.2, "end": 78.3, "label": "Star gate magenta and red corridors" },
+      { "id": "beyond-the-infinite-003", "start": 78.8, "end": 101.63, "label": "Star gate green phase" },
+      { "id": "beyond-the-infinite-004", "start": 102.13, "end": 124.3, "label": "Star gate multicolor and cyan phase" },
+      { "id": "beyond-the-infinite-005", "start": 124.8, "end": 131.93, "label": "Star gate high-pulse phase" },
+      { "id": "beyond-the-infinite-006", "start": 132.43, "end": 155.2, "label": "Star gate purple and crimson starbursts" },
+      { "id": "beyond-the-infinite-007", "start": 162.27, "end": 182.07, "label": "Globular star field" },
+      { "id": "beyond-the-infinite-008", "start": 182.07, "end": 193.07, "label": "Spiral galaxy" },
+      { "id": "beyond-the-infinite-009", "start": 193.07, "end": 200.53, "label": "Blue star cross flare" },
+      { "id": "beyond-the-infinite-010", "start": 200.53, "end": 221.93, "label": "Red phoenix form" },
+      { "id": "beyond-the-infinite-011", "start": 221.93, "end": 231.6, "label": "Silk web nebula" },
+      { "id": "beyond-the-infinite-012", "start": 231.6, "end": 238.73, "label": "Yellow-green diamond glow" },
+      { "id": "beyond-the-infinite-013", "start": 238.73, "end": 254.93, "label": "Wavy white river" },
+      { "id": "beyond-the-infinite-014", "start": 254.93, "end": 268.03, "label": "Dark webbed terrain" },
+      { "id": "beyond-the-infinite-015", "start": 268.03, "end": "source-end", "label": "Red sphere with corona" }
+    ]
+  },
+  "overlayEnds": {
+    "destiny-final-shape-archive-002:62": 68.9667,
+    "destiny-final-shape-archive-002:89": 90
+  }
+}
