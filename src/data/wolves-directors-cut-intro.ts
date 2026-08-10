@@ -102,7 +102,18 @@ const HANDOFF_FIRST_MARK = 18
  */
 export const DIRECTORS_CUT_FINAL_CRESCENDO_SECOND = GAYANE_PROLOGUE_MARKS[19]
 
-const COLLAPSE_BACKGROUND = 'wolves-intro/bluefin-collapse-night.webp'
+/**
+ * The Collapse plate the prologue shows.
+ *
+ * This is the sunset side of the pair. It used to be spelled
+ * `bluefin-collapse-night.webp`, because the two files were named the wrong way
+ * round: the file called "night" was the warm sunset and the file called "day"
+ * was the grey moonlit scene. The finale cross-fades day into night off those
+ * names and was therefore fading *out of* night *into* a sunset. The files were
+ * swapped to match what they actually depict; this constant follows the image,
+ * not the old name, so the prologue shows exactly what it showed before.
+ */
+const COLLAPSE_BACKGROUND = 'wolves-intro/bluefin-collapse-day.webp'
 
 /**
  * Word ceiling for any cue projected in this prologue.

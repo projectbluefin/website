@@ -96,8 +96,18 @@ interface MockPlayerRecord {
   /** The volume the player was sitting at when `destroy()` landed, or null if still alive. */
   destroyedAtVolume: number | null
   currentSeconds: number
+  /** Every caption module name actually unloaded, in order. */
+  unloadedModules: string[]
+  unloadModule: MockPlayerMethod<(module: string) => void>
   setCurrentTime: (seconds: number) => void
   triggerReady: () => void
+  /**
+   * Fire `onApiChange`, which is how the caption module actually arrives: the
+   * player reports it after the stream's caption track resolves, well after
+   * `onReady`. A double without it cannot see a regression that only unloads
+   * captions once.
+   */
+  triggerApiChange: () => void
   triggerEnded: () => void
   triggerError: () => void
 }

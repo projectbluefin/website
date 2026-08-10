@@ -103,6 +103,12 @@ const BULLETIN_END_BEAT_INDEX = 969
 const BULLETIN_BEATS = 160
 
 /**
+ * The beat the finale has finished taking the frame on: one bar of four after
+ * the cover opens. See `DIRECTORS_CUT_COVER_FADE_SECONDS`.
+ */
+const COVER_FADE_END_BEAT_INDEX = 883
+
+/**
  * Every named show-clock anchor of the Director's Cut finale, in seconds on the
  * Track 0 timeline. Each one is an exact entry of `TRACK_ZERO_BEAT_TIMES`.
  *
@@ -297,6 +303,37 @@ export function directorsCutCollapseNightOpacity(time: number): number {
   return clampUnit((time - DIRECTORS_CUT_FINALE_ANCHORS.collapseDayStart) / span)
 }
 
+/**
+ * How long the finale takes to take the frame, in seconds.
+ *
+ * Four beats of the show's own grid rather than a round number of seconds, so
+ * the dissolve resolves on a beat instead of landing between two.
+ */
+export const DIRECTORS_CUT_COVER_FADE_SECONDS: number
+  = beat(COVER_FADE_END_BEAT_INDEX) - DIRECTORS_CUT_FINALE_ANCHORS.coverStart
+
+/**
+ * Opacity of the Collapse frame as the finale takes the stage: 0 on the cover
+ * beat, 1 four beats later, held for the rest of the show.
+ *
+ * This used to be a hard cut. On a projector it read as a fault rather than as
+ * a transition — the whole stage was replaced between two frames with nothing
+ * carrying across — which is most of what "the finale is jarring" was. The
+ * ordinary schedule does not vanish underneath it any more either; it shrinks
+ * into the corner over the same span, so the two motions are one gesture.
+ *
+ * Derived from the clock, like every other beat in this file, so a backward
+ * seek gives the stage back instead of stranding a finished animation on it.
+ */
+export function directorsCutCoverOpacity(time: number): number {
+  if (DIRECTORS_CUT_COVER_FADE_SECONDS <= 0) {
+    return time >= DIRECTORS_CUT_FINALE_ANCHORS.coverStart ? 1 : 0
+  }
+  return clampUnit(
+    (time - DIRECTORS_CUT_FINALE_ANCHORS.coverStart) / DIRECTORS_CUT_COVER_FADE_SECONDS,
+  )
+}
+
 /** Whether the first clause is on stage (including its own fade out). */
 export function directorsCutExtinctionVisible(time: number): boolean {
   return time >= DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart
@@ -351,8 +388,18 @@ export const DIRECTORS_CUT_TERMINAL_FADE_SECONDS
 
 /**
  * The Collapse plates. Upstream replaced Bluefin's eleventh monthly pair with
- * this artwork; the Director's Cut intro already opens on the night plate, and
- * the finale turns the same scene from day to night under the closing quote.
+ * this artwork, and the finale turns the scene from day to night under the
+ * closing quote.
+ *
+ * The two files were shipped named the wrong way round — the one called "night"
+ * was the warm sunset, the one called "day" was the grey moonlit scene — so
+ * this cross-fade ran backwards on stage: the Collapse *brightened* into the
+ * closing quote. The files were swapped to match what they depict rather than
+ * these constants being crossed, because a constant that deliberately reads
+ * from the wrong file is a trap for whoever touches this next.
+ *
+ * `wolves-directors-cut-finale.mjs` decodes both plates in a browser and fails
+ * if the day plate is ever the darker of the two again.
  */
 export const DIRECTORS_CUT_COLLAPSE_DAY_IMAGE = 'wolves-intro/bluefin-collapse-day.webp'
 export const DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE = 'wolves-intro/bluefin-collapse-night.webp'

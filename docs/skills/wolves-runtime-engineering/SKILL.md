@@ -466,6 +466,58 @@ already exists elsewhere, integrate that work rather than re-authoring it: the
 branch version carries measurement evidence that a fresh implementation cannot
 reconstruct from the rendered result.
 
+## A passing geometry harness is not a picture of the stage
+
+Every measurement can be right while the audience sees nothing. Three defects in
+one session all reported green from assertions that were themselves correct:
+
+- A panel was mounted, sized to the pixel, positioned in the right corner and
+  reported `opacity: 1` — and was invisible, because its ancestor
+  `.wc-trackzero` carries `z-index: 10` **and** `contain: layout paint`. Either
+  alone confines every descendant to a stacking context below the finale's
+  `z-index: 40`, so no `z-index` on the panel itself can lift it over the
+  Collapse plate. `getBoundingClientRect()` cannot see paint order.
+- The Collapse cross-fade ran *backwards* on stage while every clock assertion
+  passed, because the two plates shipped named the wrong way round:
+  `bluefin-collapse-night.webp` was the warm sunset and
+  `bluefin-collapse-day.webp` was the grey moonlit scene. "Night opacity is
+  1.000 at the Become Legend cue" was true and the scene still brightened into
+  the closing quote. `wolves-directors-cut-finale.mjs` now decodes both plates
+  in the browser and fails if the day plate is the darker one; correct the
+  *files* rather than crossing the constants, or the next reader inherits a
+  trap.
+- A full-stage overlay (`.wc-thesis`) rendered at panel scale and spilled out of
+  it, because it lives inside the viewer that was being resized.
+
+So: `WOLVES_SHOT_DIR=/var/tmp/website-agent/finale` writes a screenshot of every
+probed anchor from `tests/wolves-directors-cut-finale.mjs`. Look at them. The
+assertions answer "is it in the right place"; only the picture answers "can the
+back row see it at all".
+
+Two harness details this uncovered, worth keeping in mind whenever a finale
+surface animates:
+
+- CSS transitions run on wall-clock time from whenever the class landed, not on
+  the show clock. A performance never seeks, but a harness that jumps between
+  anchors every few hundred milliseconds re-enters the transition constantly and
+  samples mid-motion. Wait for the geometry to stop changing before measuring.
+- Never run two browser harnesses against one dev server at the same time; they
+  drive the same page and the loser reports phantom failures.
+
+## The finale owns the frame, and that is a composition decision
+
+The ordinary schedule is taken down at `DIRECTORS_CUT_FINALE_START`, not covered
+and not shrunk. Keeping it alive through the finale as a small bottom-left panel
+mirroring the companion video was built, measured and rejected on sight: beside
+the Collapse fade and the closing quote it is one moving picture too many, and a
+deck still cutting under the last line reads as something that failed to stop
+rather than something that ended.
+
+If that comes up again, the answer is the schedule ends on the finale beat and
+the finale carries the rest of the song alone. The reservation in
+`DIRECTORS_CUT_RESERVED_FINALE_INTERVAL` is what enforces it, and it is
+open-ended on purpose.
+
 ## Verification
 
 - [ ] Explicit approval exists.

@@ -8,7 +8,7 @@ import CinematicStage from '@/components/wolves/cinematic/CinematicStage.vue'
 import TheaterExperience from '@/components/wolves/cinematic/TheaterExperience.vue'
 import WolvesDirectorFinale from '@/components/wolves/cinematic/WolvesDirectorFinale.vue'
 import { loreProsePages, pickPageIndexForElapsed } from '@/components/wolves/lore/lore-pages'
-import { companionSourceTimeAt, DIRECTORS_CUT_COMPANION_DRIFT_INTERVAL_S, DIRECTORS_CUT_COMPANION_DRIFT_TOLERANCE_S, DIRECTORS_CUT_COMPANION_READINESS_DEADLINE_S, DIRECTORS_CUT_COMPANION_VIDEO_ID, DIRECTORS_CUT_EXTINCTION_FADE_SECONDS, DIRECTORS_CUT_FINALE_ANCHORS } from '@/data/wolves-directors-cut-finale'
+import { companionSourceTimeAt, DIRECTORS_CUT_COMPANION_DRIFT_INTERVAL_S, DIRECTORS_CUT_COMPANION_DRIFT_TOLERANCE_S, DIRECTORS_CUT_COMPANION_READINESS_DEADLINE_S, DIRECTORS_CUT_COMPANION_VIDEO_ID, DIRECTORS_CUT_COVER_FADE_SECONDS, DIRECTORS_CUT_EXTINCTION_FADE_SECONDS, DIRECTORS_CUT_FINALE_ANCHORS } from '@/data/wolves-directors-cut-finale'
 import { DIRECTORS_CUT_BULLETIN_ARTIFACT_ID, DIRECTORS_CUT_BULLETIN_END, DIRECTORS_CUT_BULLETIN_START, DIRECTORS_CUT_FINALE_START } from '@/data/wolves-directors-cut-timeline'
 import { loadAllLoreRecords } from '@/data/wolves-lore-records'
 import { useCinematicStore, WOLVES_DIRECTORS_CUT_EXPERIENCE, WOLVES_EXPERIENCE } from '@/stores/cinematic'
@@ -270,6 +270,42 @@ describe('director\'s cut finale composition', () => {
     expect(wrapper.attributes('data-covering')).toBe('true')
     expect(wrapper.find('[data-director-finale-frame]').attributes('style') ?? '').not.toContain('display: none')
     expect(wrapper.find('[data-director-finale-night]').attributes('data-night-opacity')).toBe('0.000')
+  })
+
+  it('dissolves the frame up over the cover beats instead of cutting to it', async () => {
+    // The hard cut here was most of "the finale is jarring": the entire stage
+    // was replaced between two frames, with nothing carrying across. The
+    // dissolve is clock-derived like every other beat, so a backward seek gives
+    // the stage back rather than stranding a finished animation on it.
+    const { store, wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_START)
+    const opacity = () => Number(wrapper.find('[data-director-finale-frame]').attributes('data-cover-opacity'))
+    expect(opacity()).toBe(0)
+
+    const half = DIRECTORS_CUT_FINALE_START + DIRECTORS_CUT_COVER_FADE_SECONDS / 2
+    store.updateTime(half, 424, half)
+    await nextTick()
+    expect(opacity()).toBeCloseTo(0.5, 2)
+
+    const done = DIRECTORS_CUT_FINALE_START + DIRECTORS_CUT_COVER_FADE_SECONDS
+    store.updateTime(done, 424, done)
+    await nextTick()
+    expect(opacity()).toBe(1)
+
+    // …and it is still 1 for the rest of the show, not a pulse.
+    store.updateTime(420, 424, 420)
+    await nextTick()
+    expect(opacity()).toBe(1)
+  })
+
+  it('carries the opaque backdrop on the dissolving frame, not on the cover class', () => {
+    // If the black lives on `.wc-dcf--covering` it arrives a frame ahead of the
+    // picture, which reads as a blackout rather than as a transition.
+    const source = readFileSync(
+      resolve(process.cwd(), 'src/components/wolves/cinematic/WolvesDirectorFinale.vue'),
+      'utf8',
+    )
+    expect(source).toMatch(/\.wc-dcf-frame\s*\{[^}]*background: var\(--wc-bg\)/)
+    expect(source).not.toMatch(/\.wc-dcf--covering\s*\{[^}]*background: var\(--wc-bg\)/)
   })
 
   it('turns the Collapse plate to night by the Become Legend cue', async () => {
@@ -1020,6 +1056,12 @@ describe('director\'s cut finale chrome suppression', () => {
     // full-size photographs, crossfading them, and paging a lore record behind
     // an opaque plate — all of it competing with the companion embed the
     // audience can actually see. The grid is taken down, not painted over.
+    //
+    // Running it on in a small bottom-left panel through the finale was tried
+    // and rejected: beside the Collapse fade and the closing quote it is one
+    // moving picture too many, and the deck reads as something that failed to
+    // stop rather than something that ended. The pictures finish on this beat
+    // and the finale carries the rest of the song by itself.
     expect(wrapper.find('[data-trackzero-grid]').exists()).toBe(false)
     expect(wrapper.find('.comic-reader-stub').exists()).toBe(false)
     expect(wrapper.find('.lore-stub').exists()).toBe(false)

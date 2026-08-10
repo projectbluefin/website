@@ -58,6 +58,12 @@ export interface DirectorsCutReservedInterval {
  * once the finale opens it owns the frame through the terminal fade to black,
  * and that fade's end is a finale anchor, not a slide boundary. Nothing
  * ordinary ever resumes, so there is no closing edge to state.
+ *
+ * Running the schedule on through the finale in a corner panel was tried and
+ * rejected: beside the Collapse fade and the closing quote, a second moving
+ * picture in the corner is one thing too many to look at, and the deck reads as
+ * something that failed to stop rather than something that ended. The pictures
+ * finish here and the finale carries the rest of the song by itself.
  */
 export const DIRECTORS_CUT_RESERVED_FINALE_INTERVAL: DirectorsCutReservedInterval = {
   startTime: DIRECTORS_CUT_FINALE_START,

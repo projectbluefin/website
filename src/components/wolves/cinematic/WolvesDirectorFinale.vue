@@ -54,6 +54,7 @@ import {
   directorsCutCompanionPlaying,
   directorsCutCompanionReadinessExpired,
   directorsCutCompanionVisible,
+  directorsCutCoverOpacity,
   directorsCutExtinctionFading,
   directorsCutExtinctionVisible,
   directorsCutSurvivalVisible,
@@ -75,6 +76,12 @@ const covering = computed(() => store.directorFinaleActive)
 const collapseDayUrl = `url('${base}${DIRECTORS_CUT_COLLAPSE_DAY_IMAGE}')`
 const collapseNightUrl = `url('${base}${DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE}')`
 const collapseNightOpacity = computed(() => directorsCutCollapseNightOpacity(time.value))
+/**
+ * How far the finale has taken the frame. Drives both the Collapse plate and
+ * the backdrop that hides the ordinary stage, so the two come up together
+ * rather than the black arriving first and the picture after it.
+ */
+const coverOpacity = computed(() => directorsCutCoverOpacity(time.value))
 
 const bulletinVisible = computed(() => covering.value && directorsCutBulletinVisible(time.value))
 /**
@@ -603,8 +610,19 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
     <!-- The Collapse plate takes the main frame: day on the finale beat, night
          on the Become Legend cue. Clock-derived rather than animated, so a
          backward seek restores the day plate instead of stranding a finished
-         animation on stage. -->
-    <div v-show="covering" class="wc-dcf-frame" data-director-finale-frame>
+         animation on stage.
+         The whole frame — its opaque backdrop included — dissolves up over
+         `DIRECTORS_CUT_COVER_FADE_SECONDS` rather than cutting in. The backdrop
+         lives on this element and not on `.wc-dcf--covering` precisely so it
+         fades *with* the picture: a black that arrives first is a blackout, not
+         a transition. -->
+    <div
+      v-show="covering"
+      class="wc-dcf-frame"
+      data-director-finale-frame
+      :data-cover-opacity="coverOpacity.toFixed(3)"
+      :style="{ opacity: coverOpacity }"
+    >
       <div class="wc-dcf-plate" :style="{ backgroundImage: collapseDayUrl }" />
       <div
         class="wc-dcf-plate wc-dcf-plate--night"
@@ -700,13 +718,19 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
 }
 
 .wc-dcf--covering {
-  background: var(--wc-bg);
+  // Nothing here. The opaque backdrop is on `.wc-dcf-frame` so it dissolves up
+  // with the Collapse plate instead of cutting in a frame ahead of it. The
+  // class is kept because `data-covering` and it are what the browser tests and
+  // the slide harness read the finale's state from.
+  background: transparent;
 }
 
 .wc-dcf-frame {
   position: absolute;
   inset: 0;
   overflow: hidden;
+  background: var(--wc-bg);
+  will-change: opacity;
 }
 
 .wc-dcf-plate {

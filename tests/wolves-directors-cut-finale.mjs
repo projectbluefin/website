@@ -52,6 +52,17 @@ const WOLVES_URL = `${BASE_URL}/wolves/`
 const [width, height] = (process.env.WOLVES_VIEWPORT ?? '1600x900').split('x').map(Number)
 const VIEWPORT = { width, height }
 const REAL_MEDIA = process.env.WOLVES_REAL_MEDIA === '1'
+/**
+ * Write a screenshot of every probed anchor to this directory.
+ *
+ * Off by default: the assertions are the test signal. It exists because the
+ * finale is a composition — panels, plates and type sharing a projected frame —
+ * and "the corner is 406px wide at the right coordinates" is not the same claim
+ * as "a person in the back row can read this".
+ *
+ *   WOLVES_SHOT_DIR=/var/tmp/website-agent/finale node tests/wolves-directors-cut-finale.mjs
+ */
+const SHOT_DIR = process.env.WOLVES_SHOT_DIR ?? null
 /** Attach to an already-running browser (a real Chrome) instead of spawning Chromium. */
 const CDP_ENDPOINT = process.env.WOLVES_CDP ?? null
 const NARROW = width < 1024
@@ -298,6 +309,7 @@ try {
         quoteSource: document.querySelector('[data-director-finale-clause] p')?.getAttribute('data-quote-source') ?? null,
         gridVisible: grid ? getComputedStyle(grid).display !== 'none' : false,
         slideLayers,
+        thesis: Boolean(document.querySelector('.wc-thesis')),
         nameplate: Boolean(document.querySelector('.wc-stage-nameplate')),
         orgAds: Boolean(document.querySelector('.wc-org-ads')),
         captions: Boolean(document.querySelector('.wc-caption')),
@@ -326,6 +338,12 @@ try {
     ).catch(() => {})
     await page.waitForTimeout(REAL_MEDIA ? 1200 : 450)
     const stage = await readStage()
+    // Optional visual evidence. The measurements above answer "is it in the
+    // right place"; only a picture answers "does it read from the back row",
+    // which is the standard this presentation is actually held to.
+    if (SHOT_DIR) {
+      await page.screenshot({ path: `${SHOT_DIR}/${label.replace(/[^a-z0-9]+/gi, '-')}.png` })
+    }
     stage.label = label
     stage.at = seconds
     stage.publishedTime = await page.evaluate(() => window.__wolvesProbeStoreTime?.() ?? null)
@@ -508,11 +526,18 @@ try {
     // asserted "the same image is still there" scored that freeze as success.
     // A covered slide has no rendered area at all, so this fails if the finale
     // ever stops covering it.
+    //
+    // Running the schedule on in a bottom-left corner panel through the finale
+    // was tried and rejected — beside the Collapse fade and the closing quote
+    // it is one moving picture too many — so this is the standing rule again.
     assert(
       `${label}: no ordinary slide is on stage`,
       stage.gridVisible === false && stage.slideLayers.length === 0,
       { gridVisible: stage.gridVisible, layers: stage.slideLayers },
     )
+    // The thesis plates are a full-stage beat that lives inside the theater
+    // grid, so they go with it.
+    assert(`${label}: no thesis plate is running`, stage.thesis === false, stage.thesis)
     // `WolvesOrgAds` and `CinematicCaptions` never render during Track 0 of
     // either cut (the ads are gated to segments after the first, and Track 0
     // ships no caption track), so their absence here is a weak negative and
@@ -523,6 +548,11 @@ try {
       !stage.nameplate && !stage.orgAds && !stage.captions && !stage.mediaWidget,
       { nameplate: stage.nameplate, orgAds: stage.orgAds, captions: stage.captions, mediaWidget: stage.mediaWidget })
     assert(`${label}: the standard Track 0 sidecar is gone`, stage.sidecar === false, stage.sidecar)
+    // The thesis plates are a full-stage beat living inside the viewer the
+    // finale insets. Left running they render at corner scale and spill out of
+    // the panel — "BECOME LEGEND" laid across a 400px box over the closing
+    // quote.
+    assert(`${label}: no thesis plate is running inside the corner`, stage.thesis === false, stage.thesis)
     assert(`${label}: the Collapse plate fills the frame`,
       stage.frame?.width === width && stage.frame?.height === height,
       { frame: stage.frame, viewport: VIEWPORT })
@@ -607,6 +637,37 @@ try {
   }
 
   // ---- the closing quote --------------------------------------------------
+  // The direction of the fade is only half the claim. The plates shipped named
+  // the wrong way round — the file called "night" was the warm sunset — so the
+  // Collapse *brightened* into the closing quote while every clock assertion
+  // below still passed. Decode both and compare, which is a question only a
+  // browser can answer.
+  const plateLuma = await page.evaluate(async ([dayUrl, nightUrl]) => {
+    const meanLuma = async (url) => {
+      const image = new Image()
+      image.crossOrigin = 'anonymous'
+      image.src = url
+      await image.decode()
+      const canvas = document.createElement('canvas')
+      canvas.width = 160
+      canvas.height = Math.max(1, Math.round((image.naturalHeight / image.naturalWidth) * 160))
+      const context = canvas.getContext('2d')
+      context.drawImage(image, 0, 0, canvas.width, canvas.height)
+      const { data } = context.getImageData(0, 0, canvas.width, canvas.height)
+      let total = 0
+      for (let index = 0; index < data.length; index += 4) {
+        total += 0.2126 * data[index] + 0.7152 * data[index + 1] + 0.0722 * data[index + 2]
+      }
+      return total / (data.length / 4)
+    }
+    return { day: await meanLuma(dayUrl), night: await meanLuma(nightUrl) }
+  }, [`${BASE_URL}/wolves-intro/bluefin-collapse-day.webp`, `${BASE_URL}/wolves-intro/bluefin-collapse-night.webp`])
+  assert(
+    'the Collapse day plate is genuinely brighter than its night plate',
+    plateLuma.day > plateLuma.night,
+    plateLuma,
+  )
+
   assert('the Collapse plate is on the day side when the finale opens', Number(byLabel.cover.nightOpacity) < 0.05, byLabel.cover.nightOpacity)
   assert('the Collapse plate has turned to night by the Become Legend cue', Number(byLabel['become legend cue'].nightOpacity) >= 0.999, byLabel['become legend cue'].nightOpacity)
 
