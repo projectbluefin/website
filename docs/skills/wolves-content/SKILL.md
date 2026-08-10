@@ -71,10 +71,13 @@ policy URL, and usage basis. The scheduling task consumes that registry later;
 until then, keep the standard intro free of those ids and local paths with a
 test.
 
-When an intro beat is image-led and must carry provenance without painting a
-new caption over the frame, use `IntroOverlayTextCue.backgroundFigure` to
-publish accessible figure metadata (`label` + `credit`) instead of adding new
-visible chrome.
+Registry entries, not ad-hoc cue literals, own accessible provenance for
+approved intro art. Store a `backgroundFigure` object on each registered
+artwork using the shared exact credit constant plus a per-artwork label, then
+have `IntroOverlayTextCue.backgroundFigure` consume that registry field instead
+of retyping it in the sequence. If an approved source does not name an
+individual artist, set `artist: null` and record an explicit uncredited state
+with the rights holder/source rather than inventing a name.
 
 ## Red Flags
 

@@ -2,6 +2,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
+  BUNGIE_RIGHTS_HOLDER,
   BUNGIE_FAN_CONTENT_POLICY_URL,
   DIRECTORS_CUT_DESTINY_CONCEPT_CREDIT,
   DIRECTORS_CUT_DESTINY_CONCEPT_RETRIEVAL_DATE,
@@ -81,13 +82,14 @@ describe('director\'s cut Destiny concept-art registry', () => {
     }
   })
 
-  it('carries the complete provenance ledger and approved Bungie credit', () => {
+  it('carries the complete provenance ledger, shared credit, and accessible figure metadata', () => {
     expect(DIRECTORS_CUT_DESTINY_CONCEPT_CREDIT)
       .toBe('Destiny 2 and related artwork © Bungie, Inc. Environment concept art by the credited artists.')
 
     for (const record of DIRECTORS_CUT_DESTINY_CONCEPTS) {
-      expect(record.artist.trim().length).toBeGreaterThan(0)
       expect(record.workTitle.trim().length).toBeGreaterThan(0)
+      expect(record.backgroundFigure.credit).toBe(DIRECTORS_CUT_DESTINY_CONCEPT_CREDIT)
+      expect(record.backgroundFigure.label).toContain(record.workTitle)
       expect(record.authoritativeSourceUrl).toMatch(/^https:\/\//)
       expect(record.upstreamAssetUrl).toMatch(/^https:\/\//)
       expect(new URL(record.upstreamAssetUrl).pathname).toMatch(/\.jpg$/)
@@ -95,6 +97,39 @@ describe('director\'s cut Destiny concept-art registry', () => {
       expect(record.policyUrl).toBe(BUNGIE_FAN_CONTENT_POLICY_URL)
       expect(record.usageBasis).toBe('non-commercial-fan-content')
     }
+  })
+
+  it('requires either an exact artist or an explicit documented uncredited state', () => {
+    for (const record of DIRECTORS_CUT_DESTINY_CONCEPTS) {
+      if (record.artistCreditState === 'exact') {
+        expect(record.artist.trim().length).toBeGreaterThan(0)
+        expect(record.backgroundFigure.label).toContain(record.artist)
+        continue
+      }
+
+      expect(record.artist).toBeNull()
+      expect(record.sourceName).toBe('Bungie Press Room')
+      expect(record.rightsHolder).toBe(BUNGIE_RIGHTS_HOLDER)
+      expect(record.artistCreditNote).toMatch(/do not attribute this exact press image to a single named artist/i)
+      expect(record.backgroundFigure.label).toContain('uncredited')
+    }
+  })
+
+  it('models E1 as an explicit uncredited Bungie press-room image', () => {
+    const europaPressImage = DIRECTORS_CUT_DESTINY_CONCEPTS.find(record => record.referenceId === 'E1')
+    if (!europaPressImage || europaPressImage.artistCreditState !== 'uncredited') {
+      throw new Error('Expected E1 to be modeled as an explicit uncredited record')
+    }
+
+    expect(europaPressImage).toEqual(expect.objectContaining({
+      artist: null,
+      sourceName: 'Bungie Press Room',
+      rightsHolder: BUNGIE_RIGHTS_HOLDER,
+      backgroundFigure: {
+        label: 'Europa environment concept art from Bungie Press Room, individual artist uncredited',
+        credit: DIRECTORS_CUT_DESTINY_CONCEPT_CREDIT,
+      },
+    }))
   })
 
   it('keeps gameplay and render picks out of the montage allowlist', () => {

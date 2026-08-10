@@ -4,6 +4,10 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetYoutubeIframeApiCacheForTests } from '../composables/useYoutubeIframeApi'
 import { wolvesComicHeroShots } from '../data/wolves-comic-hero-shots'
+import {
+  DIRECTORS_CUT_DESTINY_CONCEPT_CREDIT,
+  DIRECTORS_CUT_DESTINY_CONCEPTS,
+} from '../data/wolves-directors-cut-artwork'
 
 const { default: WolvesIntroOverlay } = await import('../components/wolves/WolvesIntroOverlay.vue')
 
@@ -937,6 +941,11 @@ AN4-ChK-12: Potential. Unlimited. Solution. Imagination. Probability? Most certa
   })
 
   it('publishes background figure metadata without painting a caption over the image', async () => {
+    const europaConcept = DIRECTORS_CUT_DESTINY_CONCEPTS.find(record => record.referenceId === 'E1')
+    if (!europaConcept) {
+      throw new Error('Expected the E1 concept-art registry record to exist')
+    }
+
     const textSequence = [
       {
         id: 'wolves-prologue',
@@ -946,11 +955,8 @@ AN4-ChK-12: Potential. Unlimited. Solution. Imagination. Probability? Most certa
           text: '',
           start: 0,
           end: 5,
-          backgroundImage: 'wolves-intro/destiny-concepts/Destiny_2_Beyond_Light_Europa_Environment_01.jpg',
-          backgroundFigure: {
-            label: 'Europa environment by Bungie',
-            credit: 'Destiny 2 and related artwork © Bungie, Inc. Environment concept art by the credited artists.',
-          },
+          backgroundImage: europaConcept.localPath,
+          backgroundFigure: europaConcept.backgroundFigure,
         }],
       },
     ]
@@ -959,8 +965,8 @@ AN4-ChK-12: Potential. Unlimited. Solution. Imagination. Probability? Most certa
 
     const scene = wrapper.get('.wolves-intro-overlay-scene')
     expect(scene.attributes('role')).toBe('figure')
-    expect(scene.attributes('aria-label')).toBe('Europa environment by Bungie')
-    expect(scene.attributes('aria-description')).toBe('Destiny 2 and related artwork © Bungie, Inc. Environment concept art by the credited artists.')
+    expect(scene.attributes('aria-label')).toBe(europaConcept.backgroundFigure.label)
+    expect(scene.attributes('aria-description')).toBe(DIRECTORS_CUT_DESTINY_CONCEPT_CREDIT)
     expect(scene.find('.wolves-intro-overlay-burned-caption').exists()).toBe(false)
   })
 
