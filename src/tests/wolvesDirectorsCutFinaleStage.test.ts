@@ -7,8 +7,10 @@ import { nextTick, ref } from 'vue'
 import CinematicStage from '@/components/wolves/cinematic/CinematicStage.vue'
 import TheaterExperience from '@/components/wolves/cinematic/TheaterExperience.vue'
 import WolvesDirectorFinale from '@/components/wolves/cinematic/WolvesDirectorFinale.vue'
-import { companionSourceTimeAt, DIRECTORS_CUT_COMPANION_DRIFT_INTERVAL_S, DIRECTORS_CUT_COMPANION_DRIFT_TOLERANCE_S, DIRECTORS_CUT_FINALE_ANCHORS } from '@/data/wolves-directors-cut-finale'
-import { DIRECTORS_CUT_BULLETIN_ARTIFACT_ID, DIRECTORS_CUT_FINALE_START } from '@/data/wolves-directors-cut-timeline'
+import { loreProsePages, pickPageIndexForElapsed } from '@/components/wolves/lore/lore-pages'
+import { companionSourceTimeAt, DIRECTORS_CUT_COMPANION_DRIFT_INTERVAL_S, DIRECTORS_CUT_COMPANION_DRIFT_TOLERANCE_S, DIRECTORS_CUT_COMPANION_READINESS_DEADLINE_S, DIRECTORS_CUT_COMPANION_VIDEO_ID, DIRECTORS_CUT_EXTINCTION_FADE_SECONDS, DIRECTORS_CUT_FINALE_ANCHORS } from '@/data/wolves-directors-cut-finale'
+import { DIRECTORS_CUT_BULLETIN_ARTIFACT_ID, DIRECTORS_CUT_BULLETIN_END, DIRECTORS_CUT_BULLETIN_START, DIRECTORS_CUT_FINALE_START } from '@/data/wolves-directors-cut-timeline'
+import { loadAllLoreRecords } from '@/data/wolves-lore-records'
 import { useCinematicStore, WOLVES_DIRECTORS_CUT_EXPERIENCE, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
 vi.mock('@/composables/useDualBufferPlayer', () => ({
@@ -47,6 +49,32 @@ let deferReady: (() => void) | null = null
  * it has to dispose of.
  */
 let playerFails: 'before-assignment' | 'after-ready' | null = null
+/** Make the fake report a different upload through the runtime's ground-truth API. */
+let reportedVideoId: string | null = null
+
+/**
+ * When the constructed player reports playback after `playVideo()`.
+ *
+ * A real embed does not become `PLAYING` the instant it is asked to: it
+ * rebuffers after every seek, which is exactly the window in which the corner
+ * must not be on stage. `immediate` is the convenient fake; `deferred` holds
+ * the report so a test can observe the buffering window; `never` is an embed
+ * that was asked to roll and simply never did.
+ */
+let playbackReports: 'immediate' | 'deferred' | 'never' = 'immediate'
+const pendingPlaybackReports: (() => void)[] = []
+
+/** Any plausible source length; only the probe hook reads it. */
+const COMPANION_FAKE_DURATION = 262
+
+/** Let every held `PLAYING` report through, the way a decoded embed finally does. */
+async function reportPlayback() {
+  const reports = pendingPlaybackReports.splice(0, pendingPlaybackReports.length)
+  for (const report of reports) {
+    report()
+  }
+  await nextTick()
+}
 
 /**
  * Per-instance view of every player the finale constructed. Aggregate call
@@ -106,7 +134,14 @@ vi.mock('@/composables/useYoutubeIframeApi', async (importOriginal) => {
       pauseVideo = record('pauseVideo')
       playVideo = (...args: unknown[]) => {
         companionCalls.push({ method: 'playVideo', args })
-        this.config.events?.onStateChange?.({ data: 1, target: this })
+        const report = () => this.config.events?.onStateChange?.({ data: 1, target: this })
+        if (playbackReports === 'immediate') {
+          report()
+          return
+        }
+        if (playbackReports === 'deferred') {
+          pendingPlaybackReports.push(report)
+        }
       }
 
       destroy = (...args: unknown[]) => {
@@ -124,6 +159,10 @@ vi.mock('@/composables/useYoutubeIframeApi', async (importOriginal) => {
       }
 
       getCurrentTime = () => this.currentTime
+      getDuration = () => COMPANION_FAKE_DURATION
+      getVolume = () => 0
+      isMuted = () => true
+      getVideoData = () => ({ video_id: reportedVideoId ?? this.config.videoId })
     },
   }
 })
@@ -191,6 +230,9 @@ describe('director\'s cut finale composition', () => {
     loaderFails = false
     deferReady = null
     playerFails = null
+    reportedVideoId = null
+    playbackReports = 'immediate'
+    pendingPlaybackReports.length = 0
     handledErrors.length = 0
   })
 
@@ -235,24 +277,59 @@ describe('director\'s cut finale composition', () => {
     expect(wrapper.find('[data-director-finale-night]').attributes('data-night-opacity')).toBe('1.000')
   })
 
-  it('carries the missing-scientist bulletin on its own authored window', async () => {
+  it('carries the missing-scientist bulletin on the lore column\'s own paging window', async () => {
     const { wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_START + 5)
     const bulletin = wrapper.find('[data-director-finale-bulletin] .lore-stub')
     expect(bulletin.exists()).toBe(true)
     expect(bulletin.attributes('data-artifact')).toBe(DIRECTORS_CUT_BULLETIN_ARTIFACT_ID)
+    // The paging window is the *lore slot's* window, not the finale's shorter
+    // display window. The theater's own column is showing this record with
+    // those numbers right up to the cover, so anything else re-paginates the
+    // record at the handover and jumps the page in front of the room.
     expect(Number(bulletin.attributes('data-duration'))).toBeCloseTo(
-      DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd - DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart,
+      DIRECTORS_CUT_BULLETIN_END - DIRECTORS_CUT_BULLETIN_START,
       3,
     )
     expect(Number(bulletin.attributes('data-elapsed'))).toBeCloseTo(
-      DIRECTORS_CUT_FINALE_START + 5 - DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart,
+      DIRECTORS_CUT_FINALE_START + 5 - DIRECTORS_CUT_BULLETIN_START,
       3,
     )
   })
 
-  it('clears the bulletin on the Become Legend cue', async () => {
-    const { wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
+  it('hands the bulletin over on the exact page the lore column was already showing', async () => {
+    const record = loadAllLoreRecords().find(entry => entry.id === DIRECTORS_CUT_BULLETIN_ARTIFACT_ID)!
+    const pages = loreProsePages(record.body)
+    const slotDuration = DIRECTORS_CUT_BULLETIN_END - DIRECTORS_CUT_BULLETIN_START
+    // The lore column paginates from `(duration, elapsed)` alone, so "no
+    // re-page" is the claim that the finale hands it the same pair the theater
+    // column had a tick earlier — checked at the handover beat itself.
+    const handover = DIRECTORS_CUT_FINALE_ANCHORS.coverStart
+    const { wrapper } = await mountFinaleAt(handover)
+    const bulletin = wrapper.find('[data-director-finale-bulletin] .lore-stub')
+    const finalePage = pickPageIndexForElapsed(
+      pages,
+      Number(bulletin.attributes('data-elapsed')),
+      Number(bulletin.attributes('data-duration')),
+    )
+    const theaterPage = pickPageIndexForElapsed(pages, handover - DIRECTORS_CUT_BULLETIN_START, slotDuration)
+    expect(finalePage).toBe(theaterPage)
+  })
+
+  it('clears the bulletin a bar before the quote, not in the same repaint', async () => {
+    const { store, wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd - 0.01)
+    expect(wrapper.find('[data-director-finale-bulletin]').exists()).toBe(true)
+
+    store.updateTime(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd, 424, DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
+    await nextTick()
     expect(wrapper.find('[data-director-finale-bulletin]').exists()).toBe(false)
+
+    // …and the frame is still empty when the first clause arrives, rather than
+    // the clause landing on top of a dossier that is still leaving.
+    const beforeClause = DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart - 0.01
+    store.updateTime(beforeClause, 424, beforeClause)
+    await nextTick()
+    expect(wrapper.find('[data-director-finale-bulletin]').exists()).toBe(false)
+    expect(wrapper.find('[data-director-finale-clause="extinction"]').exists()).toBe(false)
   })
 
   it('starts the companion rolling hidden, then reveals it on the impact beat', async () => {
@@ -282,6 +359,135 @@ describe('director\'s cut finale composition', () => {
       companionSourceTimeAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal),
       3,
     )
+  })
+
+  it('reveals only once the aligned player has reported playback, never on the seek alone', async () => {
+    // A built, cued player is not a playing one. The IFrame API documents that
+    // a cued video is not even requested until `playVideo()`/`seekTo()`, so
+    // "the clock is past the reveal beat and a player exists" is not evidence
+    // that there is a decoded frame to cut to — and the corner is a lit box.
+    playbackReports = 'deferred'
+    const { wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    expect(calls('seekTo').length).toBeGreaterThan(0)
+    expect(calls('playVideo').length).toBeGreaterThan(0)
+    expect(companionState(wrapper)).toBe('hidden')
+
+    await reportPlayback()
+    expect(companionState(wrapper)).toBe('revealed')
+  })
+
+  it('never shows the rebuffer a drift correction costs', async () => {
+    playbackReports = 'deferred'
+    const { store, wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    await reportPlayback()
+    expect(companionState(wrapper)).toBe('revealed')
+
+    // The fake's clock only moves when it is seeked, so this tick is material
+    // drift and must be corrected — and the correction costs a rebuffer. A
+    // corner left on stage across it shows the room a spinner on a black box.
+    const drifted = DIRECTORS_CUT_FINALE_ANCHORS.companionReveal + 6
+    store.updateTime(drifted, 424, drifted)
+    await nextTick()
+    expect(calls('seekTo').length).toBeGreaterThan(1)
+    expect(companionState(wrapper)).toBe('hidden')
+
+    await reportPlayback()
+    expect(companionState(wrapper)).toBe('revealed')
+  })
+
+  it('gives up on a companion that never reports playback, without lighting an empty corner', async () => {
+    playbackReports = 'never'
+    const { store, wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    expect(calls('playVideo').length).toBeGreaterThan(0)
+    expect(companionState(wrapper)).toBe('hidden')
+
+    // Still only hidden right up to the source's own last cut: a late start is
+    // worth showing, and the deadline is that measured frame.
+    const nearly = DIRECTORS_CUT_COMPANION_READINESS_DEADLINE_S - 0.05
+    store.updateTime(nearly, 424, nearly)
+    await nextTick()
+    expect(companionState(wrapper)).toBe('hidden')
+
+    // Past it there is nothing left of the edit to reveal, so the corner is
+    // removed rather than held as a transparent box that might still light up
+    // on a black frame halfway through the closing beat.
+    const past = DIRECTORS_CUT_COMPANION_READINESS_DEADLINE_S + 0.05
+    store.updateTime(past, 424, past)
+    await nextTick()
+    expect(companionState(wrapper)).toBe('absent')
+
+    companionCalls.length = 0
+    const later = DIRECTORS_CUT_FINALE_ANCHORS.companionEnd - 1
+    store.updateTime(later, 424, later)
+    await nextTick()
+    expect(calls('seekTo')).toHaveLength(0)
+    expect(calls('playVideo')).toHaveLength(0)
+    expect(handledErrors).toEqual([])
+  })
+
+  it('does not pop the corner in late after the readiness deadline', async () => {
+    deferReady = () => {}
+    const late = DIRECTORS_CUT_COMPANION_READINESS_DEADLINE_S + 0.05
+    const { wrapper } = await mountFinaleAt(late)
+    const release = deferReady
+
+    expect(companionState(wrapper)).toBe('hidden')
+    release?.()
+    await flushPromises()
+    await nextTick()
+
+    expect(companionState(wrapper)).toBe('absent')
+    expect(calls('playVideo')).toHaveLength(0)
+    expect(handledErrors).toEqual([])
+  })
+
+  it('re-arms a readiness-lost companion after a backward seek', async () => {
+    playbackReports = 'never'
+    const { store, wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    const late = DIRECTORS_CUT_COMPANION_READINESS_DEADLINE_S + 0.05
+    store.updateTime(late, 424, late)
+    await nextTick()
+    expect(companionState(wrapper)).toBe('absent')
+
+    playbackReports = 'immediate'
+    store.updateTime(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal, 424, DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    await nextTick()
+    await flushPromises()
+    await nextTick()
+
+    expect(companionState(wrapper)).toBe('revealed')
+    expect(constructedPlayers).toBe(2)
+    expect(calls('playVideo').length).toBeGreaterThan(0)
+    expect(handledErrors).toEqual([])
+  })
+
+  it('never reveals a player holding the wrong media id', async () => {
+    reportedVideoId = 'wrong-upload'
+    const { wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+
+    expect(companionState(wrapper)).toBe('absent')
+    expect(constructedInstances[0]?.destroyCalls).toBe(1)
+    expect(calls('playVideo')).toHaveLength(0)
+    expect(reportedVideoId).not.toBe(DIRECTORS_CUT_COMPANION_VIDEO_ID)
+    expect(handledErrors).toEqual([])
+  })
+
+  it('keeps a corner that has already played through a late rebuffer', async () => {
+    // The readiness deadline governs the *first* alignment only. Once the
+    // corner has genuinely played, a later stall is a hidden corner that can
+    // still come back — not a reason to delete a working embed mid-window.
+    playbackReports = 'deferred'
+    const { store, wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    await reportPlayback()
+    expect(companionState(wrapper)).toBe('revealed')
+
+    const late = DIRECTORS_CUT_COMPANION_READINESS_DEADLINE_S + 2
+    store.updateTime(late, 424, late)
+    await nextTick()
+    expect(companionState(wrapper)).toBe('hidden')
+
+    await reportPlayback()
+    expect(companionState(wrapper)).toBe('revealed')
   })
 
   // The hidden play lead is one measured beat — 0.395 s. `display: none` gives
@@ -327,6 +533,45 @@ describe('director\'s cut finale composition', () => {
     expect(calls('pauseVideo').length).toBeGreaterThan(0)
   })
 
+  it('publishes live companion evidence for the browser harness to read', async () => {
+    // The harness used to read the corner's source second out of its own mock's
+    // call log — bookkeeping, not evidence. Under real media there is no mock,
+    // so the one mode that exists to prove real playback proved nothing about
+    // it. The hook has to answer from the player itself, so that both modes
+    // interrogate the same surface and neither can pass on a stale record.
+    const { store } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    const probe = (window as any).__wolvesFinaleCompanion
+    expect(typeof probe).toBe('function')
+
+    const now = DIRECTORS_CUT_FINALE_ANCHORS.companionReveal
+    const reading = probe()
+    expect(reading.built).toBe(true)
+    expect(reading.rendered).toBe(true)
+    expect(reading.visible).toBe(true)
+    expect(reading.muted).toBe(true)
+    expect(reading.volume).toBe(0)
+    expect(reading.duration).toBe(COMPANION_FAKE_DURATION)
+    expect(reading.soundtrackTime).toBeCloseTo(now, 6)
+    expect(reading.sourceTime).toBeCloseTo(companionSourceTimeAt(now), 6)
+    expect(reading.expectedSourceTime).toBeCloseTo(companionSourceTimeAt(now), 6)
+
+    // Live, not a snapshot taken at mount: advancing the show clock has to move
+    // what the hook reports, or the harness is asserting against a fossil.
+    const later = DIRECTORS_CUT_FINALE_ANCHORS.companionReveal + 4
+    store.updateTime(later, 424, later)
+    await nextTick()
+    expect(probe().expectedSourceTime).toBeCloseTo(companionSourceTimeAt(later), 6)
+    expect(probe().soundtrackTime).toBeCloseTo(later, 6)
+  })
+
+  it('takes its evidence hook down with the finale', async () => {
+    const { wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    expect((window as any).__wolvesFinaleCompanion).toBeTypeOf('function')
+    wrapper.unmount()
+    await flushPromises()
+    expect((window as any).__wolvesFinaleCompanion).toBeUndefined()
+  })
+
   it('corrects material drift in both directions, and only material drift', async () => {
     const { store } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
     const lastSeek = () => {
@@ -356,6 +601,33 @@ describe('director\'s cut finale composition', () => {
     store.updateTime(nudge, 424, nudge)
     await nextTick()
     expect(calls('seekTo').length).toBe(seeksBefore)
+  })
+
+  it('corrects a backward transport seek immediately, inside the suppression interval', async () => {
+    const { store } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    const lastSeek = () => {
+      const seeks = calls('seekTo')
+      return seeks[seeks.length - 1]?.args[0] as number | undefined
+    }
+
+    const forward = DIRECTORS_CUT_FINALE_ANCHORS.companionReveal + 6
+    store.updateTime(forward, 424, forward)
+    await nextTick()
+    const seeksAfterForward = calls('seekTo').length
+
+    // Half a suppression interval later on the *show* clock, but backwards:
+    // the operator seeked. A limiter written on the magnitude of the gap reads
+    // this as "we corrected a moment ago" and refuses, which strands the
+    // corner ahead of the music for the rest of the interval — and the corner
+    // is the one surface whose whole point is landing on a measured beat.
+    const backward = forward - DIRECTORS_CUT_COMPANION_DRIFT_INTERVAL_S / 2
+    expect(Math.abs(backward - forward)).toBeLessThan(DIRECTORS_CUT_COMPANION_DRIFT_INTERVAL_S)
+    expect(Math.abs(companionSourceTimeAt(backward) - companionSourceTimeAt(forward)))
+      .toBeGreaterThan(DIRECTORS_CUT_COMPANION_DRIFT_TOLERANCE_S)
+    store.updateTime(backward, 424, backward)
+    await nextTick()
+    expect(calls('seekTo').length).toBe(seeksAfterForward + 1)
+    expect(lastSeek()).toBeCloseTo(companionSourceTimeAt(backward), 3)
   })
 
   it('rate limits drift corrections to one per suppression interval', async () => {
@@ -412,12 +684,28 @@ describe('director\'s cut finale composition', () => {
     expect(handledErrors).toEqual([])
   })
 
+  it('removes the closing clause when terminal black is complete', async () => {
+    const { store, wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeEnd - 0.01)
+    expect(wrapper.find('[data-director-finale-clause="survival"]').exists()).toBe(true)
+
+    store.updateTime(DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeEnd, 424, DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeEnd)
+    await nextTick()
+    expect(wrapper.find('[data-director-finale-clause="survival"]').exists()).toBe(false)
+  })
+
   it('publishes the book citation with each clause and never claims Cosmos', async () => {
     const { wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.survivalStart)
     const source = wrapper.find('[data-director-finale-clause="survival"] p').attributes('data-quote-source') ?? ''
     expect(source).toContain('The Varieties of Scientific Experience')
     expect(source).toContain('ch. 3, p. 66')
     expect(source).not.toMatch(/cosmos/i)
+  })
+
+  it('runs the clause fade on the derived duration, not a hand-typed CSS time', async () => {
+    const { wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart)
+    const style = wrapper.find('[data-director-finale-clause="extinction"] p').attributes('style') ?? ''
+    expect(style).toContain('--wc-dcf-clause-fade')
+    expect(style).toContain(`${DIRECTORS_CUT_EXTINCTION_FADE_SECONDS}s`)
   })
 
   it('latches the terminal fade once instead of animating from the clock', async () => {
@@ -614,6 +902,7 @@ describe('director\'s cut finale companion styling', () => {
   const hiddenRule = source.match(/\.wc-dcf-companion--hidden\s*\{[^}]*\}/)?.[0] ?? ''
   const narrowBlock = source.slice(source.indexOf('@media (max-width: 1023px)'))
   const narrowCompanionRule = narrowBlock.match(/\.wc-dcf-companion\s*\{[^}]*\}/)?.[0] ?? ''
+  const narrowBulletinRule = narrowBlock.match(/\.wc-dcf-bulletin\s*\{[^}]*\}/)?.[0] ?? ''
 
   it('hides the warming corner without taking it out of the render tree', () => {
     expect(hiddenRule).toContain('opacity: 0')
@@ -629,9 +918,24 @@ describe('director\'s cut finale companion styling', () => {
   it('still re-places the corner on a narrow viewport instead of dropping it', () => {
     expect(narrowCompanionRule).toContain('translateX(-50%)')
     expect(narrowCompanionRule).not.toContain('display: none')
-    // The bulletin is the surface that stands down here; the companion is a
-    // scored beat and is re-placed as a centred band.
-    expect(narrowBlock).toMatch(/\.wc-dcf-bulletin\s*\{[^}]*display: none/)
+  })
+
+  it('composes the bulletin for a narrow viewport instead of hiding it', () => {
+    // Hiding was the easy answer and it silently dropped an authored beat —
+    // seven pages of the record the whole finale is about — from every
+    // viewport below the theater breakpoint. It gets an explicit composition
+    // instead: a full-width band stacked above the companion, sized off the
+    // same custom properties the companion band uses so the two can never
+    // overlap however the viewport is shaped.
+    expect(narrowBulletinRule).not.toContain('display: none')
+    expect(narrowBulletinRule).toContain('--wc-dcf-band-height')
+    expect(narrowBlock).toMatch(/--wc-dcf-band-height:/)
+    expect(narrowCompanionRule).toContain('var(--wc-dcf-band-width)')
+  })
+
+  it('derives the clause fade from the anchors rather than hard-coding it', () => {
+    const clauseRule = source.match(/\.wc-dcf-clause-text\s*\{[^}]*\}/)?.[0] ?? ''
+    expect(clauseRule).toContain('var(--wc-dcf-clause-fade')
   })
 })
 
@@ -699,7 +1003,7 @@ describe('director\'s cut finale chrome suppression', () => {
     expect(wrapper.find('.director-finale-stub').exists()).toBe(false)
   })
 
-  it('hides the ordinary theater grid and its sidecar for the finale only', async () => {
+  it('stops the ordinary grid and its sidecar for the finale, rather than covering a running one', async () => {
     const store = useCinematicStore()
     store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
     store.enterCinematic()
@@ -712,13 +1016,36 @@ describe('director\'s cut finale chrome suppression', () => {
         },
       },
     })
-    const grid = wrapper.find('[data-trackzero-grid]')
-    expect(grid.exists()).toBe(true)
-    expect(grid.attributes('style')).toContain('display: none')
+    // Covering a still-running slideshow leaves it fetching and decoding
+    // full-size photographs, crossfading them, and paging a lore record behind
+    // an opaque plate — all of it competing with the companion embed the
+    // audience can actually see. The grid is taken down, not painted over.
+    expect(wrapper.find('[data-trackzero-grid]').exists()).toBe(false)
+    expect(wrapper.find('.comic-reader-stub').exists()).toBe(false)
+    expect(wrapper.find('.lore-stub').exists()).toBe(false)
     expect(wrapper.find('[data-trackzero-video-sidecar]').exists()).toBe(false)
 
     store.updateTime(100, 424, 100)
     await nextTick()
-    expect(wrapper.find('[data-trackzero-grid]').attributes('style') ?? '').not.toContain('display: none')
+    expect(wrapper.find('[data-trackzero-grid]').exists()).toBe(true)
+    expect(wrapper.find('.comic-reader-stub').exists()).toBe(true)
+    expect(wrapper.find('.lore-stub').exists()).toBe(true)
+  })
+
+  it('leaves the standard show\'s grid mounted at the same clock', async () => {
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_EXPERIENCE)
+    store.enterCinematic()
+    store.updateTime(DIRECTORS_CUT_FINALE_START, 424, DIRECTORS_CUT_FINALE_START)
+    const wrapper = mount(TheaterExperience, {
+      global: {
+        stubs: {
+          WolvesComicReader: { template: '<div class="comic-reader-stub" />' },
+          WolvesLoreColumn: { template: '<div class="lore-stub" />' },
+        },
+      },
+    })
+    expect(wrapper.find('[data-trackzero-grid]').exists()).toBe(true)
+    expect(wrapper.find('.comic-reader-stub').exists()).toBe(true)
   })
 })

@@ -166,5 +166,7 @@ as `data-quote-source` rather than painted over the frame, and
 The missing-scientist bulletin (`blue-universal-acquires-wayland-yutani`) owns
 327.587-390.745: 63.158 s for seven authored pages whose measured reading cost
 is 59.5 s. It starts before the finale pre-arm and is carried into the finale
-with the same elapsed clock, then clears on `companionPlayStart`; the impact and
-the closing quote therefore never inherit a stale news panel.
+with the same `(duration, elapsed)` clock, so the handoff cannot re-page the
+record. The full page window ends on `companionPlayStart`; the last page has
+already been read, and clearing there leaves the impact and closing quote free
+of a stale news panel.

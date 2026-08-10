@@ -147,7 +147,16 @@ an unidentified player request.
 - A second surface reads a companion video's own clock as if it were the show's.
   There is one clock, the soundtrack player's; a companion's time is read only
   to detect drift, corrected only when the drift is material, and rate limited
-  on the *magnitude* of the gap so a backward seek is corrected too.
+  by elapsed show time. A backward transport seek moves the clock behind the
+  last correction and must be treated as a new alignment opportunity, not
+  rejected because its absolute time is inside the suppression interval.
+- A companion readiness check ends when the constructor resolves. Construction
+  can finish after the measured reveal window has already lost the source cut
+  that makes the edit meaningful. Bound readiness to a source-derived clock
+  deadline; if it expires, dispose the player, clear the memoised build result,
+  and refuse a late pop-in. A backward seek inside the same window must reset
+  that verdict and rebuild cleanly, but must align once to the new soundtrack
+  time rather than adding a second park seek during the reset.
 - A drift or retry rate limiter has no test that drives *repeated* out-of-
   tolerance polls inside one suppression interval. Assert one corrective seek
   across the burst and another after the interval, or deleting the guard —
@@ -175,6 +184,12 @@ an unidentified player request.
   explicit seek to its opening frame.
 - A buffer is promoted to air on `sides[side].segmentIndex` alone, without
   checking `getVideoData().video_id` against the segment it is supposed to be.
+- A finale companion is assumed correct because its constructor was given the
+  approved id. Read `getVideoData().video_id` after cueing and again when
+  `PLAYING` is reported; a wrong upload must never be synchronized or shown.
+  A DEV-only evidence hook should expose the live player id, source time,
+  readiness, synchronization, mute and volume state so a browser harness reads
+  the runtime rather than mock-player bookkeeping.
 - An `onError` is handled only for the active side, so a failure on the buffer
   holding the *next* segment is discarded.
 - A prewarm is silenced with `setVolume(0)` instead of `mute()`, or a path that
@@ -190,6 +205,10 @@ an unidentified player request.
   sequence.
 - A parked player is hidden with `display: none` or `v-show`. That can prevent
   composition and un-warm the warm. Use `opacity: 0` plus `aria-hidden`/`inert`.
+- A takeover is considered complete because an opaque frame covers the old
+  slide. Unmount the ordinary grid and sidecar with the finale; assert zero
+  rendered slide layers, not merely that the old image is hard to see. The
+  inverse probe must seek back and prove the ordinary chrome returns.
 - A handoff holds the outgoing image on an unbounded await of the incoming
   player's `PLAYING`. If that event never arrives the show is stuck on a still
   frame with no recovery. Bound the hold and release on whichever lands first.
@@ -201,6 +220,14 @@ an unidentified player request.
 - A bounded await sits *inside* an unbounded one, so the bound is decorative.
 - A prewarm, cache warm, or other optimisation is awaited on the critical path
   to first audio.
+- A paging slot and its display-clear beat are conflated. Preserve the
+  `(duration, elapsed)` window across a mid-run handoff so the bulletin does
+  not re-page, then clear it on its own measured beat before the next clause;
+  shortening the slot drops authored pages instead of making them read faster.
+- A clause is kept mounted after terminal black because it is "under" the
+  fade. Remove terminal content from the DOM when the finished-state backstop
+  reaches black; otherwise a later seek or accessibility tree can expose stale
+  closing prose.
 - A cold skip switches sides and ramps before the incoming player reports
   `PLAYING`.
 - The transport clock stops publishing while a crossfade runs.
@@ -362,6 +389,22 @@ an unidentified player request.
 - [ ] Relevant unit tests, typecheck, and build pass.
 - [ ] Chromium checks cover bounds and controls.
 - [ ] Production deployment follows the validation skill.
+
+For the Director's Cut finale, the focused loop is:
+
+```bash
+npx vitest run src/tests/wolvesDirectorsCutFinale.test.ts \
+  src/tests/wolvesDirectorsCutFinaleStage.test.ts \
+  src/tests/wolvesFinaleReveal.test.ts
+WOLVES_BASE_URL=http://127.0.0.1:5173 node tests/wolves-directors-cut-finale.mjs
+WOLVES_BASE_URL=http://127.0.0.1:5173 WOLVES_VIEWPORT=390x844 \
+  node tests/wolves-directors-cut-finale.mjs
+```
+
+The harness must identify whether it ran with the deterministic mock or the
+live IFrame API. `WOLVES_REAL_MEDIA=1` is evidence about YouTube only when the
+browser can decode the soundtrack and companion; a `SKIPPED (no real media
+support)` result is an environment limitation, not a green real-media claim.
 
 ## References
 

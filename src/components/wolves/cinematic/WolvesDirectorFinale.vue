@@ -13,7 +13,7 @@
  * 1. covers the ordinary Track 0 slide schedule for good, with the Collapse
  *    plate turning from day to night across the barrage;
  * 2. carries the missing-scientist bulletin — already running in the lore
- *    column when the finale opens — on its own authored window, as a minor
+ *    column when the finale opens — on its authored paging window, as a minor
  *    beat beside the main frame, and clears it before the companion reveal;
  * 3. drives the second authored Track 0 companion video (`PjryN2F6fF0`) in the
  *    corner, muted, cued and parked long before the audience sees it, revealed
@@ -44,20 +44,25 @@ import {
   DIRECTORS_CUT_COMPANION_DRIFT_TOLERANCE_S,
   DIRECTORS_CUT_COMPANION_VIDEO_ID,
   DIRECTORS_CUT_EXTINCTION_CLAUSE,
-  DIRECTORS_CUT_FINALE_ANCHORS,
+  DIRECTORS_CUT_EXTINCTION_FADE_SECONDS,
   DIRECTORS_CUT_SAGAN_SOURCE,
   DIRECTORS_CUT_SURVIVAL_CLAUSE,
   DIRECTORS_CUT_TERMINAL_FADE_SECONDS,
   directorsCutBulletinVisible,
   directorsCutCollapseNightOpacity,
   directorsCutCompanionPlaying,
+  directorsCutCompanionReadinessExpired,
   directorsCutCompanionVisible,
   directorsCutExtinctionFading,
   directorsCutExtinctionVisible,
   directorsCutSurvivalVisible,
   directorsCutTerminalFadeEngaged,
 } from '@/data/wolves-directors-cut-finale'
-import { DIRECTORS_CUT_BULLETIN_ARTIFACT_ID } from '@/data/wolves-directors-cut-timeline'
+import {
+  DIRECTORS_CUT_BULLETIN_ARTIFACT_ID,
+  DIRECTORS_CUT_BULLETIN_END,
+  DIRECTORS_CUT_BULLETIN_START,
+} from '@/data/wolves-directors-cut-timeline'
 import { useCinematicStore } from '@/stores/cinematic'
 
 const store = useCinematicStore()
@@ -71,15 +76,33 @@ const collapseNightUrl = `url('${base}${DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE}')`
 const collapseNightOpacity = computed(() => directorsCutCollapseNightOpacity(time.value))
 
 const bulletinVisible = computed(() => covering.value && directorsCutBulletinVisible(time.value))
-const bulletinDuration = DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd - DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart
+/**
+ * The bulletin's *paging* window is the lore slot's, not the finale's display
+ * window.
+ *
+ * `WolvesLoreColumn` paginates purely from `(duration, elapsed)`, and the
+ * theater's own column has been showing this record on the slot's numbers since
+ * `DIRECTORS_CUT_BULLETIN_START` — through the ten seconds before the cover
+ * opens. Handing the finale's shorter display window to a second instance would
+ * re-paginate the record at the handover and jump the page in front of the
+ * room. The authored window itself ends on the companion play handoff, after
+ * every page has been read, so the display can clear without re-timing it.
+ */
+const bulletinDuration = DIRECTORS_CUT_BULLETIN_END - DIRECTORS_CUT_BULLETIN_START
 const bulletinElapsed = computed(() => Math.min(
   bulletinDuration,
-  Math.max(0, time.value - DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart),
+  Math.max(0, time.value - DIRECTORS_CUT_BULLETIN_START),
 ))
 
 const extinctionVisible = computed(() => covering.value && directorsCutExtinctionVisible(time.value))
 const extinctionFading = computed(() => directorsCutExtinctionFading(time.value))
-const survivalVisible = computed(() => covering.value && directorsCutSurvivalVisible(time.value))
+/**
+ * The clause fade is authored as its window minus the reserve the removal beat
+ * needs — see `DIRECTORS_CUT_CLAUSE_FADE_SAFETY_SECONDS`. Publishing it as a
+ * custom property keeps the one number in the anchors module instead of a
+ * hand-typed CSS time that drifts the next time a beat moves.
+ */
+const clauseFadeStyle = { '--wc-dcf-clause-fade': `${DIRECTORS_CUT_EXTINCTION_FADE_SECONDS}s` } as Record<string, string>
 
 // The terminal fade is a latched CSS transition, not a per-tick opacity: the
 // YouTube clock routinely plateaus near the end of an upload, and an opacity
@@ -88,6 +111,9 @@ const survivalVisible = computed(() => covering.value && directorsCutSurvivalVis
 const terminalFading = computed(() => covering.value && directorsCutTerminalFadeEngaged(time.value))
 const terminalBlack = computed(() => store.directorTerminalBlack)
 const terminalFadeStyle = { '--wc-dcf-terminal-fade': `${DIRECTORS_CUT_TERMINAL_FADE_SECONDS}s` } as Record<string, string>
+const survivalVisible = computed(() => covering.value
+  && !terminalBlack.value
+  && directorsCutSurvivalVisible(time.value))
 
 /**
  * Whether the companion is known to be dead — a failed API load, a missing
@@ -100,9 +126,39 @@ const terminalFadeStyle = { '--wc-dcf-terminal-fade': `${DIRECTORS_CUT_TERMINAL_
  * Nothing must paint if nothing can play.
  */
 const companionUnavailable = ref(false)
+/**
+ * Whether the player has reported playback since the last alignment seek.
+ *
+ * Not a convenience flag: it is the difference between a corner that cuts in on
+ * a decoded frame and one that cuts in on a buffering spinner. A YouTube embed
+ * rebuffers after *every* seek — the alignment seek at the start of the hidden
+ * lead and every drift correction after it — so the corner is only on stage
+ * between the embed saying `PLAYING` and the next seek that takes that back.
+ */
 const companionSynchronized = ref(false)
+/**
+ * The corner was asked to roll and never reported playback before the source's
+ * own last cut, so it is given up on for this pass through the window.
+ *
+ * A fast-forward straight into the reveal — which is what any operator seek
+ * looks like — skips the whole pre-arm lead, and a cold embed can take longer
+ * to decode than the reveal window is worth. Without a bound the corner sits
+ * transparent forever, and could light up on a black frame halfway through the
+ * closing quote. This is a *clock* deadline, not a timer, so it unwinds on a
+ * backward seek like everything else here: `parkCompanion()` clears it whenever
+ * the companion's window is not open.
+ */
+const companionReadinessLost = ref(false)
+/** Whether the corner has genuinely played in this pass; the deadline governs the first alignment only. */
+const companionEverPlayed = ref(false)
+/**
+ * Whether the corner is in the DOM at all. A dead or given-up companion is
+ * removed rather than left transparent: the corner is a lit frame, and an empty
+ * one on a projector reads from the back row as a broken slide.
+ */
+const companionRendered = computed(() => !companionUnavailable.value && !companionReadinessLost.value)
 const companionVisible = computed(() => covering.value
-  && !companionUnavailable.value
+  && companionRendered.value
   && companionSynchronized.value
   && directorsCutCompanionVisible(time.value))
 const companionHost = ref<HTMLElement | null>(null)
@@ -142,6 +198,15 @@ function silence(player: YoutubePlayer) {
   player.setVolume?.(0)
 }
 
+function companionVideoId(player: YoutubePlayer): string | null {
+  try {
+    return player.getVideoData?.()?.video_id ?? null
+  }
+  catch {
+    return null
+  }
+}
+
 /** Tear a player down at most once, whichever path gets there first. */
 function disposeCompanion(player: YoutubePlayer | null | undefined) {
   if (!player || disposedPlayers.has(player)) {
@@ -166,6 +231,32 @@ function releaseCompanion(player: YoutubePlayer) {
     companionRolling = false
   }
   disposeCompanion(player)
+}
+
+/** Give up on this pass without making a dead corner permanent. */
+function loseCompanionReadiness(player: YoutubePlayer) {
+  companionReadinessLost.value = true
+  companionSynchronized.value = false
+  companionEverPlayed.value = false
+  companionRolling = false
+  releaseCompanion(player)
+  // The disposed instance was the resolved value of this memoised promise.
+  // Clear it so a backward seek can build into the new host after the
+  // readiness-lost corner is removed from the DOM.
+  companionBuild = null
+}
+
+/** Reset all pass-local companion state after a backward transport seek. */
+function resetCompanionPass() {
+  companionReadinessLost.value = false
+  companionSynchronized.value = false
+  companionEverPlayed.value = false
+  if (companionPlayer && companionRolling) {
+    companionRolling = false
+    silence(companionPlayer)
+    companionPlayer.pauseVideo?.()
+  }
+  lastCorrectionAt = Number.NEGATIVE_INFINITY
 }
 
 /**
@@ -206,10 +297,33 @@ function buildCompanion(): Promise<YoutubePlayer | null> {
         releaseCompanion(target)
       }
       const built = await new Promise<YoutubePlayer | null>((resolve) => {
-        const handleStateChange = (event: { data: number }) => {
-          if (event.data === getYoutubePlayerState().PLAYING) {
-            companionSynchronized.value = true
+        const handleStateChange = (event: { data: number, target?: YoutubePlayer }) => {
+          // Only playback that follows an alignment seek is evidence the corner
+          // can be cut to. A `PLAYING` while the finale has not asked this
+          // player to roll — the API's own post-cue prewarm, a resumed embed —
+          // says nothing about whether it is on the frame the edit needs.
+          if (event.data !== getYoutubePlayerState().PLAYING || !companionRolling) {
+            return
           }
+          const player = event.target ?? companionPlayer
+          if (!player) {
+            return
+          }
+          const reportedVideoId = companionVideoId(player)
+          if (reportedVideoId !== DIRECTORS_CUT_COMPANION_VIDEO_ID) {
+            if (reportedVideoId) {
+              markCompanionUnavailable()
+              releaseCompanion(player)
+            }
+            return
+          }
+          const expected = companionSourceTimeAt(store.nativeTime)
+          const actual = player.getCurrentTime?.()
+          if (actual !== undefined && Math.abs(actual - expected) > DIRECTORS_CUT_COMPANION_DRIFT_TOLERANCE_S) {
+            return
+          }
+          companionSynchronized.value = true
+          companionEverPlayed.value = true
         }
         const handleReady = (event?: { target?: YoutubePlayer }) => {
           const player = event?.target ?? instance
@@ -283,7 +397,13 @@ function buildCompanion(): Promise<YoutubePlayer | null> {
 
 /** Put the companion back on its measured lead frame, paused and silent. */
 function parkCompanion() {
+  // Everything about this pass through the companion's window is released
+  // here, including the readiness verdict: the window is closed, so a later
+  // pass — a backward seek in rehearsal — starts from a clean slate rather
+  // than inheriting a deadline that expired on the run before it.
   companionSynchronized.value = false
+  companionReadinessLost.value = false
+  companionEverPlayed.value = false
   if (!companionPlayer || !companionRolling) {
     return
   }
@@ -302,6 +422,10 @@ function parkCompanion() {
  * alone and corrections are rate limited. Without the interval guard a player
  * reporting a stale time while buffering is "corrected" on every poll, which
  * turns the corner into a stutter loop.
+ *
+ * Every seek issued here also takes the corner off stage until the player
+ * reports playback again: the frames straight after a seek are the embed's
+ * buffering state, not the film.
  */
 function syncCompanion(now: number) {
   const player = companionPlayer
@@ -312,32 +436,74 @@ function syncCompanion(now: number) {
     parkCompanion()
     return
   }
+  // Given up on for this pass: stop driving it entirely. Without this the
+  // released `companionRolling` flag reads as "not started yet" on the next
+  // tick and the whole alignment fires again, once every poll.
+  if (companionReadinessLost.value) {
+    return
+  }
+  const reportedVideoId = companionVideoId(player)
+  if (reportedVideoId !== DIRECTORS_CUT_COMPANION_VIDEO_ID) {
+    if (reportedVideoId) {
+      markCompanionUnavailable()
+      releaseCompanion(player)
+    }
+    return
+  }
+  // A cold build can finish after the reveal window's measured readiness
+  // deadline. Do not start it then: a late PLAYING event would otherwise light
+  // the corner for only the tail of the edit, after the impact has passed.
+  if (!companionEverPlayed.value && directorsCutCompanionReadinessExpired(now)) {
+    loseCompanionReadiness(player)
+    return
+  }
   const expected = companionSourceTimeAt(now)
   if (!companionRolling) {
     companionRolling = true
+    companionSynchronized.value = false
     silence(player)
     player.seekTo?.(expected, true)
     player.playVideo?.()
     lastCorrectionAt = now
     return
   }
+  // A corner that was asked to roll and has still not reported playback by the
+  // film's own last cut has nothing left to show. Give it up rather than hold a
+  // transparent box that could light up on a black frame later in the window.
+  if (!companionEverPlayed.value && directorsCutCompanionReadinessExpired(now)) {
+    companionReadinessLost.value = true
+    companionRolling = false
+    companionSynchronized.value = false
+    silence(player)
+    player.pauseVideo?.()
+    return
+  }
   const actual = player.getCurrentTime?.() ?? expected
   if (Math.abs(actual - expected) <= DIRECTORS_CUT_COMPANION_DRIFT_TOLERANCE_S) {
     return
   }
-  if (Math.abs(now - lastCorrectionAt) < DIRECTORS_CUT_COMPANION_DRIFT_INTERVAL_S) {
+  // Rate limit forward progress only. A backward transport seek moves `now`
+  // behind the last correction, and a limiter written on the magnitude of the
+  // gap reads that as "just corrected" and refuses — leaving the corner ahead
+  // of the music, which is the one thing this beat cannot survive.
+  if (now >= lastCorrectionAt && now - lastCorrectionAt < DIRECTORS_CUT_COMPANION_DRIFT_INTERVAL_S) {
     return
   }
   lastCorrectionAt = now
+  companionSynchronized.value = false
   player.seekTo?.(expected, true)
   player.playVideo?.()
 }
 
 watch(
   () => [store.directorFinalePrearmed, time.value] as const,
-  async ([prearmed, now]) => {
+  async ([prearmed, now], previous) => {
     if (destroyed || companionUnavailable.value) {
       return
+    }
+    const previousTime = previous?.[1]
+    if (previousTime !== undefined && now < previousTime) {
+      resetCompanionPass()
     }
     if (!prearmed) {
       parkCompanion()
@@ -369,7 +535,12 @@ onBeforeUnmount(async () => {
   companionPlayer = null
   companionSynchronized.value = false
   companionRolling = false
+  companionReadinessLost.value = false
+  companionEverPlayed.value = false
   disposeCompanion(current)
+  if (import.meta.env.DEV && typeof window !== 'undefined') {
+    delete (window as any).__wolvesFinaleCompanion
+  }
   // A build still in flight resolves after this hook. Its `onReady` disposes of
   // the player itself once `destroyed` is set; awaiting here covers the window
   // where it resolved between the two, and the identity guard covers the far
@@ -378,6 +549,36 @@ onBeforeUnmount(async () => {
   companionBuild = null
   disposeCompanion(await pending)
 })
+
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  // Live companion evidence for `tests/wolves-directors-cut-finale.mjs`.
+  //
+  // The harness used to read the corner's source time out of its own mock's
+  // call log, which is bookkeeping, not evidence: under `WOLVES_REAL_MEDIA=1`
+  // there is no mock and the field was simply null, so the mode that exists to
+  // prove real playback proved nothing about it. This publishes what the real
+  // embed says about itself — its own clock, its mute state, its player state
+  // — so both modes read the same live surface.
+  ;(window as any).__wolvesFinaleCompanion = () => {
+    const player = companionPlayer
+    return {
+      built: Boolean(player),
+      rendered: companionRendered.value,
+      visible: companionVisible.value,
+      synchronized: companionSynchronized.value,
+      everPlayed: companionEverPlayed.value,
+      unavailable: companionUnavailable.value,
+      readinessLost: companionReadinessLost.value,
+      sourceTime: player?.getCurrentTime?.() ?? null,
+      muted: player?.isMuted?.() ?? null,
+      volume: player?.getVolume?.() ?? null,
+      videoId: player?.getVideoData?.()?.video_id ?? null,
+      duration: player?.getDuration?.() ?? null,
+      expectedSourceTime: companionSourceTimeAt(store.nativeTime),
+      soundtrackTime: store.nativeTime,
+    }
+  }
+}
 </script>
 
 <template>
@@ -403,8 +604,9 @@ onBeforeUnmount(async () => {
     </div>
 
     <!-- The minor beat: the missing-scientist bulletin, carried in from the
-         lore column on the same authored window so it never re-pages. It clears
-         before the corner video reveals, so the two never share frame space. -->
+         lore column on the same authored paging window so it never re-pages.
+         It clears on the companion play handoff, before the corner reveals, so
+         the two never share frame space. -->
     <aside v-if="bulletinVisible" class="wc-dcf-bulletin" data-director-finale-bulletin>
       <WolvesLoreColumn
         :artifact-id="DIRECTORS_CUT_BULLETIN_ARTIFACT_ID"
@@ -421,14 +623,15 @@ onBeforeUnmount(async () => {
          beat on a first paint. It is made invisible instead (zero opacity, no
          hit testing, out of the accessibility tree) and revealed on exactly the
          same authored beat as before, as a hard cut.
-         A companion that never became available is removed from the DOM
-         entirely: the corner is a lit frame, and an empty one on a projector is
-         indistinguishable from a broken slide.
+         A companion that never became available — a dead embed, or one that
+         never reported playback before the film's own last cut — is removed
+         from the DOM entirely: the corner is a lit frame, and an empty one on a
+         projector is indistinguishable from a broken slide.
          Kept out of the flow at every viewport: on a projector it sits in the
          corner, and below the theater's own 1024px breakpoint it becomes a
          centred band across the foot of the frame rather than being dropped. -->
     <section
-      v-if="!companionUnavailable"
+      v-if="companionRendered"
       class="wc-dcf-companion"
       :class="{ 'wc-dcf-companion--hidden': !companionVisible }"
       data-director-finale-companion
@@ -443,6 +646,7 @@ onBeforeUnmount(async () => {
       <p
         class="wc-dcf-clause-text"
         :class="{ 'wc-dcf-clause-text--out': extinctionFading }"
+        :style="clauseFadeStyle"
         :data-quote-source="DIRECTORS_CUT_SAGAN_SOURCE.citation"
       >
         {{ DIRECTORS_CUT_EXTINCTION_CLAUSE }}
@@ -452,6 +656,7 @@ onBeforeUnmount(async () => {
     <div v-if="survivalVisible" class="wc-dcf-clause" data-director-finale-clause="survival">
       <p
         class="wc-dcf-clause-text"
+        :style="clauseFadeStyle"
         :data-quote-source="DIRECTORS_CUT_SAGAN_SOURCE.citation"
       >
         {{ DIRECTORS_CUT_SURVIVAL_CLAUSE }}
@@ -582,7 +787,7 @@ onBeforeUnmount(async () => {
     0 0 82px rgb(37 99 235 / 68%),
     0 0 24px rgb(8 9 12 / 90%);
   opacity: 1;
-  transition: opacity 1.1s linear;
+  transition: opacity var(--wc-dcf-clause-fade, 1.1s) linear;
 }
 
 .wc-dcf-clause-text--out {
@@ -608,19 +813,31 @@ onBeforeUnmount(async () => {
 
 @media (max-width: 1023px) {
   // Explicit narrow-viewport treatment. The standard Track 0 sidecar simply
-  // does not mount below this breakpoint; the finale's companion is a scored
-  // beat, so it is re-placed rather than dropped — a centred band across the
-  // foot of the frame. The bulletin follows the theater's own rule and stands
-  // down, because a 30vw dossier and a 16:9 band cannot share a phone frame.
+  // does not mount below this breakpoint; the finale's beats are scored, so
+  // they are re-placed rather than dropped. Both become centred bands stacked
+  // up the frame, sized off one pair of custom properties so the geometry that
+  // keeps them apart is stated once and cannot drift between the two rules.
+  .wc-dcf {
+    --wc-dcf-band-inset: 4vh;
+    --wc-dcf-band-gap: 3vh;
+    --wc-dcf-band-width: min(88vw, 56rem);
+    --wc-dcf-band-height: calc(var(--wc-dcf-band-width) * 9 / 16);
+  }
+
   .wc-dcf-bulletin {
-    display: none;
+    top: 7vh;
+    left: 50%;
+    right: auto;
+    bottom: calc(var(--wc-dcf-band-inset) + var(--wc-dcf-band-height) + var(--wc-dcf-band-gap));
+    width: var(--wc-dcf-band-width);
+    transform: translateX(-50%);
   }
 
   .wc-dcf-companion {
     right: auto;
     left: 50%;
-    bottom: 4vh;
-    width: min(88vw, 56rem);
+    bottom: var(--wc-dcf-band-inset);
+    width: var(--wc-dcf-band-width);
     transform: translateX(-50%);
   }
 

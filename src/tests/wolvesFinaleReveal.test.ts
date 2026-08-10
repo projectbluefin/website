@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { parseLoreSpeakerParagraphs, rebuildLoreSpeakerParagraph } from '../components/wolves/lore'
-import { loreChatPages, loreProsePages, pickBlockPage, pickPageIndexForElapsed } from '../components/wolves/lore/lore-pages'
+import { estimatePagesSeconds, loreChatPages, loreProsePages, pickBlockPage, pickPageIndexForElapsed } from '../components/wolves/lore/lore-pages'
 import { DIRECTORS_CUT_FINALE_ANCHORS } from '../data/wolves-directors-cut-finale'
 import { wolvesDirectorsCutNarrativeTimeline } from '../data/wolves-directors-cut-timeline'
 import { loadAllLoreRecords } from '../data/wolves-lore-records'
@@ -169,9 +169,14 @@ describe('finale reveal', () => {
       return pages[index]!
     }
 
-    it('hands the bulletin to the finale on exactly its own window', () => {
+    it('pages and clears the bulletin on its complete authored window', () => {
+      // The finale takes the record over mid-run from the lore column. It must
+      // keep the timeline slot's `(duration, elapsed)` pair so the handover
+      // cannot re-page, and the complete slot ends before the impact reveal.
       expect(directorSlot.startTime).toBe(DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart)
       expect(directorSlot.endTime).toBe(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
+      expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBeGreaterThan(DIRECTORS_CUT_FINALE_ANCHORS.coverStart)
+      expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
     })
 
     it('still shows the death reveal, inside the finale the audience is watching', () => {
@@ -186,14 +191,32 @@ describe('finale reveal', () => {
       expect(revealTimes[revealTimes.length - 1]!).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
     })
 
-    it('lands the elegy page before the impact reveal, not against the first quote clause', () => {
+    it('lands the elegy page, read in full, before the bulletin clears', () => {
       const record = loadAllLoreRecords().find(entry => entry.id === FINAL_ID)!
       const pages = loreProsePages(record.body)
-      const last = directorPageAt(directorSlot.endTime - 0.1)
-      expect(last).toBe(pages[pages.length - 1])
-      expect(last).toContain('truly a great loss for humanity')
-      expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart)
-      expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+      const elegy = pages[pages.length - 1]!
+      // The last frame the bulletin is on screen is also the last frame of its
+      // complete paging window. The page must be the authored elegy, not a
+      // truncated record dropped early to make room for the finale.
+      expect(directorPageAt(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd - 0.1)).toBe(elegy)
+      expect(elegy).toContain('truly a great loss for humanity')
+
+      // And it is not cut off mid-read: the elegy has been up for longer than
+      // the reading time the pager itself charged for it before it is cleared.
+      let elegyStart = directorSlot.endTime
+      for (let time = directorSlot.startTime; time < directorSlot.endTime; time += 0.05) {
+        if (directorPageAt(time) === elegy) {
+          elegyStart = time
+          break
+        }
+      }
+      expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd - elegyStart)
+        .toBeGreaterThan(estimatePagesSeconds([elegy]))
+      // It does not share the frame with the impact or closing quote either.
+      expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
+        .toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart)
+      expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
+        .toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
     })
   })
 })

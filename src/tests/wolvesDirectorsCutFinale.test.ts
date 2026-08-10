@@ -1,27 +1,34 @@
 import { describe, expect, it } from 'vitest'
-import { PRE_END_THRESHOLD_S } from '../config/wolves-cinematic'
+import { affordablePageCount, estimatePagesSeconds, loreProsePages } from '../components/wolves/lore/lore-pages'
+import { PRE_END_THRESHOLD_S, TIME_POLL_MS } from '../config/wolves-cinematic'
 import {
   COMPANION_SOURCE_BLACK_SECONDS,
   COMPANION_SOURCE_IMPACT_SECONDS,
   COMPANION_SOURCE_RUNTIME_SECONDS,
   COMPANION_SOURCE_SPACE_IMPACT_SECONDS,
   companionSourceTimeAt,
+  DIRECTORS_CUT_CLAUSE_FADE_SAFETY_SECONDS,
   DIRECTORS_CUT_COMPANION_DRIFT_TOLERANCE_S,
+  DIRECTORS_CUT_COMPANION_READINESS_DEADLINE_S,
   DIRECTORS_CUT_COMPANION_SIDECAR_INDEX,
   DIRECTORS_CUT_COMPANION_VIDEO_ID,
   DIRECTORS_CUT_EXTINCTION_CLAUSE,
+  DIRECTORS_CUT_EXTINCTION_FADE_SECONDS,
   DIRECTORS_CUT_FINALE_ANCHOR_ORDER,
   DIRECTORS_CUT_FINALE_ANCHORS,
   DIRECTORS_CUT_SAGAN_SOURCE,
   DIRECTORS_CUT_SURVIVAL_CLAUSE,
+  directorsCutBulletinVisible,
   directorsCutCollapseNightOpacity,
   directorsCutCompanionPlaying,
+  directorsCutCompanionReadinessExpired,
   directorsCutCompanionVisible,
   directorsCutExtinctionVisible,
   directorsCutSurvivalVisible,
   directorsCutTerminalFadeEngaged,
 } from '../data/wolves-directors-cut-finale'
-import { DIRECTORS_CUT_BULLETIN_END, DIRECTORS_CUT_BULLETIN_START, DIRECTORS_CUT_FINALE_START } from '../data/wolves-directors-cut-timeline'
+import { DIRECTORS_CUT_BULLETIN_ARTIFACT_ID, DIRECTORS_CUT_BULLETIN_END, DIRECTORS_CUT_BULLETIN_START, DIRECTORS_CUT_FINALE_START } from '../data/wolves-directors-cut-timeline'
+import { loadAllLoreRecords } from '../data/wolves-lore-records'
 import { TRACK_ZERO_BEAT_TIMES, TRACK_ZERO_SECTIONS } from '../data/wolves-track-zero-beats'
 import { TRACKZERO_SIDECAR_VIDEO_IDS } from '../data/wolves-track-zero-sidecar'
 
@@ -91,8 +98,26 @@ describe('director\'s cut finale anchors', () => {
     expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
   })
 
-  it('clears the bulletin before the first quote clause is shown', () => {
-    expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBeLessThanOrEqual(DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart)
+  it('clears the bulletin before the impact and closing quote', () => {
+    expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBe(DIRECTORS_CUT_FINALE_ANCHORS.companionPlayStart)
+    expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart)
+    expect(directorsCutBulletinVisible(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)).toBe(false)
+    expect(directorsCutBulletinVisible(DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart - 0.001)).toBe(false)
+  })
+
+  it('clears the bulletin only after its last authored page has been read', () => {
+    // Clearing early is only safe because the pages are affordable inside the
+    // *paging* window and finish being read before the clearing beat. If a
+    // page were still being read at `bulletinEnd`, this cut would drop
+    // authored content in front of the room rather than tidy the frame.
+    const record = loadAllLoreRecords().find(entry => entry.id === DIRECTORS_CUT_BULLETIN_ARTIFACT_ID)
+    expect(record, `${DIRECTORS_CUT_BULLETIN_ARTIFACT_ID} is not a registered lore record`).toBeTruthy()
+    const pages = loreProsePages(record!.body)
+    const pagingWindow = DIRECTORS_CUT_BULLETIN_END - DIRECTORS_CUT_BULLETIN_START
+    expect(affordablePageCount(pages, pagingWindow)).toBe(pages.length)
+    const lastPageReadBy = DIRECTORS_CUT_BULLETIN_START + estimatePagesSeconds(pages)
+    expect(lastPageReadBy).toBeLessThanOrEqual(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
   })
 
   it('lands the quote ending on the Become Legend cue', () => {
@@ -159,6 +184,24 @@ describe('director\'s cut companion video', () => {
     expect(DIRECTORS_CUT_COMPANION_DRIFT_TOLERANCE_S).toBeGreaterThan(0.1)
     expect(DIRECTORS_CUT_COMPANION_DRIFT_TOLERANCE_S).toBeLessThanOrEqual(1)
   })
+
+  it('gives readiness a deadline measured from the source, not a round number', () => {
+    // A corner that has still not reported playback by the film's own last cut
+    // can no longer show the audience anything the edit was built around: the
+    // blast is past, and what is left is a shot already fading to black. The
+    // deadline is therefore that cut, in show time, not an invented grace.
+    expect(DIRECTORS_CUT_COMPANION_READINESS_DEADLINE_S).toBeCloseTo(
+      DIRECTORS_CUT_FINALE_ANCHORS.companionReveal
+      + (COMPANION_SOURCE_SPACE_IMPACT_SECONDS - COMPANION_SOURCE_IMPACT_SECONDS),
+      6,
+    )
+    expect(DIRECTORS_CUT_COMPANION_READINESS_DEADLINE_S).toBeGreaterThan(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    expect(DIRECTORS_CUT_COMPANION_READINESS_DEADLINE_S).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.companionEnd)
+    expect(directorsCutCompanionReadinessExpired(DIRECTORS_CUT_FINALE_ANCHORS.companionPlayStart)).toBe(false)
+    expect(directorsCutCompanionReadinessExpired(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)).toBe(false)
+    expect(directorsCutCompanionReadinessExpired(DIRECTORS_CUT_COMPANION_READINESS_DEADLINE_S - 0.001)).toBe(false)
+    expect(directorsCutCompanionReadinessExpired(DIRECTORS_CUT_COMPANION_READINESS_DEADLINE_S)).toBe(true)
+  })
 })
 
 describe('director\'s cut collapse frame', () => {
@@ -210,6 +253,22 @@ describe('director\'s cut quote clauses', () => {
     expect(directorsCutSurvivalVisible(DIRECTORS_CUT_FINALE_ANCHORS.extinctionEnd)).toBe(false)
   })
 
+  it('finishes the first clause\'s fade with a whole poll interval to spare', () => {
+    // The fade is engaged by a clock crossing, so it can start up to one
+    // published tick late, and the compositor needs a frame after that. A CSS
+    // fade authored to within 84 ms of the removal beat — which is less than
+    // one 100 ms poll — is therefore not "finished just in time": on a late
+    // tick the clause is still visible at the instant it is removed, and the
+    // room sees it disappear rather than fade.
+    const span = DIRECTORS_CUT_FINALE_ANCHORS.extinctionEnd - DIRECTORS_CUT_FINALE_ANCHORS.extinctionFadeStart
+    expect(DIRECTORS_CUT_EXTINCTION_FADE_SECONDS).toBeCloseTo(span - DIRECTORS_CUT_CLAUSE_FADE_SAFETY_SECONDS, 6)
+    expect(DIRECTORS_CUT_CLAUSE_FADE_SAFETY_SECONDS).toBeGreaterThan((TIME_POLL_MS / 1000) * 2)
+    expect(span - DIRECTORS_CUT_EXTINCTION_FADE_SECONDS).toBeGreaterThan(TIME_POLL_MS / 1000)
+    // …and still long enough to read as a fade rather than a cut.
+    expect(DIRECTORS_CUT_EXTINCTION_FADE_SECONDS).toBeGreaterThanOrEqual(0.6)
+    expect(DIRECTORS_CUT_EXTINCTION_FADE_SECONDS).toBeLessThan(span)
+  })
+
   it('holds each clause long enough to be read from the back row', () => {
     const extinctionHold = DIRECTORS_CUT_FINALE_ANCHORS.extinctionFadeStart - DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart
     const survivalHold = DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeStart - DIRECTORS_CUT_FINALE_ANCHORS.survivalStart
@@ -219,7 +278,8 @@ describe('director\'s cut quote clauses', () => {
 
   it('carries the survival clause through the outro to the terminal fade', () => {
     expect(directorsCutSurvivalVisible(DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeStart)).toBe(true)
-    expect(directorsCutSurvivalVisible(DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeEnd)).toBe(true)
+    expect(directorsCutSurvivalVisible(DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeEnd - 0.001)).toBe(true)
+    expect(directorsCutSurvivalVisible(DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeEnd)).toBe(false)
   })
 })
 

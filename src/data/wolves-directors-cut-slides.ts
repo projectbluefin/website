@@ -40,11 +40,11 @@ import {
  *
  * Choosing it hands the Director finale the whole closing section (355.219s to
  * the end of the segment) — room to pre-arm and run the companion video,
- * cross-fade the Collapse artwork, clear the bulletin at its own finale anchor,
- * and land both
- * quote clauses and the terminal fade. `TRACK_ZERO_SECTIONS.finaleStart` was
- * the alternative and is far too late: it leaves under sixteen seconds for all
- * of that.
+ * cross-fade the Collapse artwork, carry the full bulletin window through the
+ * handoff, and clear it on the companion play anchor before the impact. It
+ * also leaves room to land both quote clauses and the terminal fade.
+ * `TRACK_ZERO_SECTIONS.finaleStart` was the alternative and is far too late:
+ * it leaves under sixteen seconds for all of that.
  */
 export const DIRECTORS_CUT_FINALE_START: number = TRACK_ZERO_SECTIONS.bkEnd
 

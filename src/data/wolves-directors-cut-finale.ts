@@ -39,6 +39,7 @@
  * authored runtime is 424 s.
  */
 
+import { TIME_POLL_MS } from '../config/wolves-cinematic'
 import { TRACK_ZERO_BEAT_TIMES } from './wolves-track-zero-beats'
 import { TRACKZERO_SIDECAR_VIDEO_IDS } from './wolves-track-zero-sidecar'
 
@@ -74,6 +75,11 @@ export const DIRECTORS_CUT_COMPANION_DRIFT_TOLERANCE_S = 0.5
  * Minimum gap between two seek corrections. Without it a player that reports a
  * stale time while buffering is "corrected" on every poll, which is how a
  * corner video turns into a stutter loop in front of the room.
+ *
+ * The guard is on *elapsed show time since the last correction*, not on its
+ * magnitude: a backward transport seek moves the published clock behind the
+ * last correction, and a magnitude test reads that as "we just corrected" and
+ * refuses to re-align, leaving the corner running ahead of the music.
  */
 export const DIRECTORS_CUT_COMPANION_DRIFT_INTERVAL_S = 2
 
@@ -123,7 +129,9 @@ const BULLETIN_BEATS = 160
  *   cleared, the Collapse night plate is fully up, and the first quote clause
  *   takes the empty frame.
  * - `extinctionFadeStart` (beat 1024) / `extinctionEnd` (beat 1027) — the first
- *   clause holds 4.296 s and then fades out over 1.184 s.
+ *   clause holds 4.296 s and then fades out over
+ *   `DIRECTORS_CUT_EXTINCTION_FADE_SECONDS`, which is the 1.184 s window less
+ *   the safety margin the removal beat needs.
  * - `survivalStart` (beat 1029) — 0.790 s of empty frame guarantees the two
  *   clauses are never on stage together.
  * - `terminalFadeStart` (beat 1043) — the music is down to 2% of its peak; the
@@ -240,6 +248,35 @@ export function directorsCutCompanionVisible(time: number): boolean {
     && time < DIRECTORS_CUT_FINALE_ANCHORS.companionEnd
 }
 
+/**
+ * Show time by which the companion must have reported playback, or the corner
+ * is given up on for the rest of the window.
+ *
+ * The corner is a lit frame, and the reveal is a hard cut onto a measured
+ * frame of the source. A player that has still not started by the film's own
+ * last cut — Earth from space, `COMPANION_SOURCE_SPACE_IMPACT_SECONDS` — can no
+ * longer show the audience any of the edit this window was built around: the
+ * blast is past and what remains is a shot already on its way to black. So the
+ * deadline is that cut, transposed onto the show clock; it is a measured frame
+ * of the source rather than an invented grace period, and it is a *clock*
+ * deadline rather than a timer, so it unwinds on a backward seek like every
+ * other beat in this window.
+ */
+export const DIRECTORS_CUT_COMPANION_READINESS_DEADLINE_S
+  = DIRECTORS_CUT_FINALE_ANCHORS.companionReveal
+    + (COMPANION_SOURCE_SPACE_IMPACT_SECONDS - COMPANION_SOURCE_IMPACT_SECONDS)
+
+/**
+ * Whether a companion that has not yet reported playback is out of time.
+ *
+ * Only meaningful before the corner has ever been revealed in this pass: once
+ * it has played, a later rebuffer merely hides it until it reports playback
+ * again, which paints nothing rather than removing a working corner.
+ */
+export function directorsCutCompanionReadinessExpired(time: number): boolean {
+  return time >= DIRECTORS_CUT_COMPANION_READINESS_DEADLINE_S
+}
+
 /** Whether the missing-scientist bulletin is on stage. */
 export function directorsCutBulletinVisible(time: number): boolean {
   return time >= DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart
@@ -271,9 +308,29 @@ export function directorsCutExtinctionFading(time: number): boolean {
   return time >= DIRECTORS_CUT_FINALE_ANCHORS.extinctionFadeStart
 }
 
-/** Whether the second clause is on stage. It never leaves before the black. */
+/**
+ * How much of a clause's authored fade window is reserved rather than animated.
+ *
+ * A clause fade is engaged by a clock crossing, so it can begin up to one
+ * published tick (`TIME_POLL_MS`) after its beat, and the compositor needs a
+ * frame after that before the last pixel is gone. The first clause's window is
+ * 1.184 s and the fade was authored at 1.1 s, leaving 84 ms — less than a
+ * single poll. On a late tick the clause was therefore still on screen at the
+ * instant it was removed, and the room saw a cut where the edit calls for a
+ * fade. Two polls plus one 24 fps frame of the source is the reserve.
+ */
+export const DIRECTORS_CUT_CLAUSE_FADE_SAFETY_SECONDS = (TIME_POLL_MS / 1000) * 2 + 1 / 24
+
+/** How long the first clause's CSS fade runs, with the removal beat's reserve taken out. */
+export const DIRECTORS_CUT_EXTINCTION_FADE_SECONDS
+  = DIRECTORS_CUT_FINALE_ANCHORS.extinctionEnd
+    - DIRECTORS_CUT_FINALE_ANCHORS.extinctionFadeStart
+    - DIRECTORS_CUT_CLAUSE_FADE_SAFETY_SECONDS
+
+/** Whether the second clause is on stage. It leaves when terminal black is complete. */
 export function directorsCutSurvivalVisible(time: number): boolean {
   return time >= DIRECTORS_CUT_FINALE_ANCHORS.survivalStart
+    && time < DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeEnd
 }
 
 /**

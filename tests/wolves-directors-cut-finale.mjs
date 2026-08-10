@@ -59,7 +59,10 @@ const NARROW = width < 1024
 const MOCK_DURATIONS = { LASru9j0oIc: 424, PjryN2F6fF0: 270.458 }
 
 let failures = 0
+let skipped = false
 const log = (...args) => console.log(...args)
+
+class SkipProbe extends Error {}
 
 function assert(label, condition, detail) {
   if (condition) {
@@ -227,7 +230,12 @@ try {
   await page.getByRole('button', { name: /DIRECTOR'S CUT/i }).click()
   await page.waitForFunction(() => typeof window.__wolvesDurations?.skipIntro === 'function', null, { timeout: 20_000 })
   await page.evaluate(() => window.__wolvesDurations.skipIntro())
-  await page.waitForSelector('.wc-trackzero-grid', { state: 'attached', timeout: 20_000 })
+  await page.waitForSelector('.wc-trackzero-grid', { state: 'attached', timeout: 20_000 }).catch((error) => {
+    if (REAL_MEDIA) {
+      throw new SkipProbe(`the real soundtrack never reached Track 0 (${error.message})`)
+    }
+    throw error
+  })
   await page.waitForFunction(() => typeof window.__wolvesCinematic?.seekTo === 'function', null, { timeout: 20_000 })
   log('  Director\'s Cut stage started\n')
 
@@ -258,6 +266,9 @@ try {
       }
       const finale = document.querySelector('[data-director-finale]')
       const companionPlayer = (window.__mockWolvesPlayers ?? []).find(player => player.videoId === videoId) ?? null
+      const liveCompanion = typeof window.__wolvesFinaleCompanion === 'function'
+        ? window.__wolvesFinaleCompanion()
+        : null
       const grid = document.querySelector('[data-trackzero-grid]')
       const slideLayers = [...document.querySelectorAll('.flickr-photo-layer')].map((layer) => {
         const rect = layer.getBoundingClientRect()
@@ -276,7 +287,10 @@ try {
         companion: box('[data-director-finale-companion]'),
         companionIframes: document.querySelectorAll('[data-director-finale-companion] iframe').length,
         companionHostPresent: Boolean(document.querySelector('[data-director-finale-companion] .wc-dcf-companion-host')),
-        companionPlayerBuilt: Boolean(companionPlayer),
+        companionPlayerBuilt: liveCompanion?.built ?? Boolean(companionPlayer),
+        companionRendered: liveCompanion?.rendered ?? null,
+        companionSynchronized: liveCompanion?.synchronized ?? null,
+        companionReadinessLost: liveCompanion?.readinessLost ?? null,
         black: box('[data-director-finale-black]'),
         blackClasses: document.querySelector('[data-director-finale-black]')?.className ?? '',
         extinction: document.querySelector('[data-director-finale-clause="extinction"]')?.textContent?.trim() ?? null,
@@ -289,9 +303,11 @@ try {
         captions: Boolean(document.querySelector('.wc-caption')),
         mediaWidget: Boolean(document.querySelector('.wc-widget')),
         sidecar: Boolean(document.querySelector('[data-trackzero-video-sidecar]')),
-        companionSourceTime: companionPlayer?.getCurrentTime?.() ?? null,
+        companionSourceTime: liveCompanion?.sourceTime ?? companionPlayer?.getCurrentTime?.() ?? null,
         companionCalls: companionPlayer ? companionPlayer.calls.map(entry => entry.method) : null,
-        companionMuted: companionPlayer?.isMuted?.() ?? null,
+        companionMuted: liveCompanion?.muted ?? companionPlayer?.isMuted?.() ?? null,
+        companionVolume: liveCompanion?.volume ?? companionPlayer?.getVolume?.() ?? null,
+        companionVideoId: liveCompanion?.videoId ?? companionPlayer?.getVideoData?.()?.video_id ?? null,
         soundtrackTime: window.__wolvesFinaleProbeTime ?? null,
       }
     }, spec.videoId)
@@ -423,12 +439,7 @@ try {
     // never decodes, and then the embed collapses back to 0. One sample would
     // read that optimism as a working transport; the whole run has to hold.
     if (Math.min(...held) < A.coverStart) {
-      log(`  SKIP  real-media mode: this browser never held the soundtrack clock (samples ${held.join(', ')}).`)
-      log('        No real-media evidence is available here. Run the default mock-transport mode, or')
-      log('        attach to a browser that can actually decode the YouTube source (WOLVES_CDP).')
-      await browser.close()
-      log('\nSKIPPED (no real media support)\n')
-      process.exit(0)
+      throw new SkipProbe(`this browser never held the soundtrack clock (samples ${held.join(', ')})`)
     }
   }
 
@@ -499,7 +510,7 @@ try {
     // ever stops covering it.
     assert(
       `${label}: no ordinary slide is on stage`,
-      stage.gridVisible === false && stage.slideLayers.length > 0 && stage.slideLayers.every(layer => layer.area === 0),
+      stage.gridVisible === false && stage.slideLayers.length === 0,
       { gridVisible: stage.gridVisible, layers: stage.slideLayers },
     )
     // `WolvesOrgAds` and `CinematicCaptions` never render during Track 0 of
@@ -527,14 +538,28 @@ try {
     && byLabel['companion play start'].companion?.height === byLabel['companion reveal'].companion?.height,
     { lead: byLabel['companion play start'].companion, reveal: byLabel['companion reveal'].companion })
   assert('the companion is on stage from its reveal', byLabel['companion reveal'].companion?.visible === true, byLabel['companion reveal'].companion)
+  assert('the revealed companion reports the authored media id',
+    byLabel['companion reveal'].companionVideoId === spec.videoId,
+    byLabel['companion reveal'].companionVideoId)
   assert('the companion is on stage across the from-space impact', byLabel['from-space impact'].companion?.visible === true, byLabel['from-space impact'].companion)
   assert('the companion is cleared on the Become Legend cue', byLabel['become legend cue'].companion?.visible === false, byLabel['become legend cue'].companion)
+  assert('every on-air companion sample reports the authored media id',
+    samples
+      .filter(sample => sample.companion?.visible)
+      .every(sample => sample.companionVideoId === spec.videoId),
+    samples.map(sample => [sample.label, sample.companionVideoId, sample.companion?.visible]))
 
   if (NARROW) {
     const corner = byLabel['companion reveal'].companion
     assert('narrow viewports still get the companion, as a centred band', corner?.visible === true, corner)
     assert('the narrow companion is centred, not cornered', corner && Math.abs((corner.x + corner.width / 2) - width / 2) <= 4, corner)
-    assert('the bulletin stands down on a narrow viewport', byLabel.cover.bulletin?.visible !== true, byLabel.cover.bulletin)
+    const bulletin = byLabel.cover.bulletin
+    assert('narrow viewports keep the bulletin in a readable band', bulletin?.visible === true && bulletin.width <= width, bulletin)
+    assert('the narrow bulletin is centred above the companion',
+      bulletin && Math.abs((bulletin.x + bulletin.width / 2) - width / 2) <= 4
+      && corner
+      && bulletin.y + bulletin.height <= corner.y,
+      { bulletin, companion: corner })
   }
   else {
     const corner = byLabel['companion reveal'].companion
@@ -552,6 +577,12 @@ try {
       return b.y + b.height <= c.y || c.y + c.height <= b.y || b.x + b.width <= c.x || c.x + c.width <= b.x
     })(), { bulletin: byLabel['companion reveal'].bulletin, companion: byLabel['companion reveal'].companion })
   }
+
+  assert('the companion stays muted and at zero volume while it is on air',
+    samples
+      .filter(sample => sample.companion?.visible)
+      .every(sample => sample.companionMuted !== false && (sample.companionVolume === null || sample.companionVolume === 0)),
+    samples.map(sample => [sample.label, sample.companionMuted, sample.companionVolume]))
 
   if (!REAL_MEDIA) {
     for (const label of ['companion reveal', 'from-space impact', 'companion black']) {
@@ -584,6 +615,11 @@ try {
   assert('the frame is empty between the two clauses', byLabel['clause gap'].extinction === null && byLabel['clause gap'].survival === null, byLabel['clause gap'])
   assert('the second clause is on stage alone', byLabel.survival.survival === spec.survival && byLabel.survival.extinction === null, byLabel.survival)
   assert('the second clause is still on stage under the terminal fade', byLabel['terminal fade'].survival === spec.survival, byLabel['terminal fade'].survival)
+  assert('no closing content remains after terminal black',
+    byLabel['terminal black'].survival === null
+    && byLabel['terminal black'].extinction === null
+    && byLabel['terminal black'].bulletin?.visible !== true,
+    byLabel['terminal black'])
   assert('the clause carries its book citation, never Cosmos',
     typeof byLabel.survival.quoteSource === 'string'
     && byLabel.survival.quoteSource.includes('The Varieties of Scientific Experience')
@@ -620,12 +656,20 @@ try {
   assert('no page errors across the finale probe', pageErrors.length === 0, pageErrors)
 }
 catch (error) {
-  failures += 1
-  log(`  FAIL  harness error: ${error.stack ?? error.message}`)
+  if (error instanceof SkipProbe) {
+    skipped = true
+    log(`  SKIP  real-media mode: ${error.message}`)
+    log('        No real-media evidence is available here. Run mock mode, or attach')
+    log('        to a browser that can decode the YouTube source (WOLVES_CDP).')
+  }
+  else {
+    failures += 1
+    log(`  FAIL  harness error: ${error.stack ?? error.message}`)
+  }
 }
 finally {
   await browser.close()
 }
 
-log(`\n${failures === 0 ? 'PASS' : `FAIL (${failures})`}\n`)
-process.exit(failures === 0 ? 0 : 1)
+log(`\n${skipped ? 'SKIPPED (no real media support)' : failures === 0 ? 'PASS' : `FAIL (${failures})`}\n`)
+process.exit(skipped || failures === 0 ? 0 : 1)

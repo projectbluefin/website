@@ -321,6 +321,14 @@ samples the published time repeatedly and requires all of them to hold. One
 sample reads the optimism as a working transport and produces a wall of
 failures that say nothing about the change under test.
 
+The same stand-down applies earlier if the real soundtrack cannot leave the
+intro and mount Track 0 at all. A codec-free browser otherwise reports a
+finale selector timeout, which is transport-environment failure rather than a
+finale assertion. In mock mode the harness uses `__mockWolvesPlayers`; in both
+modes the finale-specific checks read the DEV-only `__wolvesFinaleCompanion`
+hook for the live player id, source time, readiness, synchronization, mute and
+volume state. Mock bookkeeping is not real-media evidence.
+
 ## The full harness inventory
 
 Every standalone Playwright script in `tests/`. Only `wolves-movie-flow` runs in

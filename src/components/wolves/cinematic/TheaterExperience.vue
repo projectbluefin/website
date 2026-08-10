@@ -255,8 +255,16 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
+    <!-- The finale unmounts the ordinary grid rather than covering it. `v-show`
+         left the comic reader and the lore column mounted and running behind an
+         opaque frame: they kept advancing their own clocks, kept the reader's
+         image buffers warm, and — because the finale carries the same lore
+         record — a second live instance of the bulletin ran off screen. Nothing
+         under here is the finale's, so none of it should be alive during it.
+         The standard show never sees this: `directorFinaleActive` is false
+         unless the Director's Cut profile is running. -->
     <div
-      v-show="!store.directorFinaleActive"
+      v-if="!store.directorFinaleActive"
       class="wc-trackzero-grid"
       :class="{ 'wc-trackzero-grid--gallery': !isTrackZero }"
       data-trackzero-grid
