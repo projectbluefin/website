@@ -183,6 +183,16 @@ export interface IntroTextSegment extends IntroSegmentBase {
 
 export type IntroVideoSpec = IntroVideoSegment | IntroTextSegment
 
+/**
+ * Segment id of the standard conference cut's Destiny trailer.
+ *
+ * Exported because the overlay's CC switch is scoped to exactly this segment: the Director's
+ * Cut plays the same footage under a different id (`wolves-directors-destiny`) precisely so a
+ * presentation with no input device offers no switches. Compare against this constant rather
+ * than a retyped string so that intent survives a rename.
+ */
+export const STANDARD_DESTINY_SEGMENT_ID = 'wolves-intro'
+
 export interface IntroSequenceState {
   readonly index: number
   readonly done: boolean
@@ -373,10 +383,74 @@ export function isVideoCutoffReached(segment: IntroVideoSegment, currentTime: nu
 }
 
 /**
- * Whether a `text` segment's authored duration has elapsed and it should auto-advance.
+ * What the real background audio player is reporting about a scored `text` segment right now.
+ *
+ * Every field is derived from the player itself — its `ENDED` state, its `onError`, and whether
+ * its own clock is still moving. None of them is a second clock: cues still key off
+ * `elapsed`, which is that player's `getCurrentTime()`.
  */
-export function isTextSegmentComplete(segment: IntroTextSegment, elapsed: number): boolean {
-  return elapsed >= segment.duration
+export interface IntroAudioClockState {
+  /** The player published its own `ENDED` state. */
+  readonly ended?: boolean
+  /** Wall seconds the player's clock has sat frozen on the identical reading. */
+  readonly stalledSeconds?: number
+}
+
+/**
+ * How far short of a scored card's authored end its clock may plateau and still count as the
+ * end of the track.
+ *
+ * A YouTube player's `getCurrentTime()` routinely stops a fraction of a second below the
+ * duration it reports for the same video, so `elapsed >= duration` alone is a hang waiting to
+ * happen: the Director's Cut prologue is authored to the Gayane source's full 325.6 s container
+ * and would sit on its closing title forever in front of a live room. One second is measured
+ * against that source's own silent tail — its last audible sample is 321.34 s, 4.26 s before
+ * the container ends — so this window can only ever give back silence, never a note.
+ */
+export const TEXT_SEGMENT_END_SLACK_SECONDS = 1
+
+/**
+ * How long a frozen audio clock inside `TEXT_SEGMENT_END_SLACK_SECONDS` is tolerated before the
+ * card completes on its own.
+ *
+ * Deliberately generous: a frozen clock is normally buffering or a mid-roll ad, and a scored
+ * card must wait for the music rather than desync from it. Only a clock frozen *inside the
+ * track's silent tail* is read as "the track is over", which is why this backstop cannot fire
+ * anywhere else in the piece.
+ */
+export const TEXT_SEGMENT_STALL_GRACE_SECONDS = 3
+
+/**
+ * Whether a `text` segment should auto-advance, given its elapsed clock and whatever the real
+ * background audio player is reporting.
+ *
+ * Three ways a card ends, in order of authority:
+ *
+ * 1. Its authored duration elapsed — the normal path, unchanged.
+ * 2. The player published `ENDED`. Authoritative even below the authored duration, because the
+ *    music is demonstrably over. Trusted only once the clock has actually started: a pre-roll
+ *    ad holds the main video's clock at 0, and reading an ad's end as the track's end would
+ *    skip the entire scored act on the cold open.
+ * 3. The clock froze inside the track's silent tail for longer than the stall grace — the
+ *    bounded backstop for a player that plateaus short of its own duration and never fires
+ *    `ENDED` at all.
+ *
+ * A silent card (no audio embed) drives `elapsed` from its own origin, never stalls, and so
+ * only ever ends via (1).
+ */
+export function isTextSegmentComplete(
+  segment: IntroTextSegment,
+  elapsed: number,
+  clock: IntroAudioClockState = {},
+): boolean {
+  if (elapsed >= segment.duration) {
+    return true
+  }
+  if (clock.ended && elapsed > 0) {
+    return true
+  }
+  return elapsed >= segment.duration - TEXT_SEGMENT_END_SLACK_SECONDS
+    && (clock.stalledSeconds ?? 0) >= TEXT_SEGMENT_STALL_GRACE_SECONDS
 }
 
 /**

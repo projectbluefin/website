@@ -21,6 +21,7 @@ import {
   PROLOGUE_SCENE_CROSSFADE_SECONDS,
   PROLOGUE_TEXT_FADE_SECONDS,
   skipIntroSequence,
+  STANDARD_DESTINY_SEGMENT_ID,
 } from '@/data/wolves-intro-sequence'
 
 const props = defineProps<{
@@ -77,15 +78,26 @@ const burnedInCaptionCues = computed<readonly IntroOverlayTextCue[] | undefined>
   }
   return currentSegment.value.burnedInCaptions
 })
-const canToggleDestinyVoiceOver = computed(() =>
-  currentSegment.value?.id === 'wolves-intro'
-  && isVideoSegment(currentSegment.value)
-  && Boolean(currentSegment.value.alternateYoutubeVideoId),
-)
-const canToggleDestinyCaptions = computed(() =>
-  currentSegment.value?.id === 'wolves-intro'
-  && isVideoSegment(currentSegment.value),
-)
+/**
+ * The alternate-source switch is offered by the segment's own data, never by its id: it exists
+ * only where an authored segment actually carries a second upload of the same footage. The
+ * Director's Cut therefore offers none — Ikora's is its primary source, there is no alternate
+ * to switch to, and a theater audience has nothing to press anyway.
+ */
+const canToggleDestinyVoiceOver = computed(() => {
+  const segment = currentSegment.value
+  return Boolean(segment && isVideoSegment(segment) && segment.alternateYoutubeVideoId)
+})
+/**
+ * The CC switch belongs to the standard conference cut's trailer, where a laptop viewer can
+ * reach it. The Director's Cut is performed to a room with no input device and its only
+ * burned-in cue is the Comic Hero title card, which renders switch or no switch, so it
+ * publishes no caption toggle at all.
+ */
+const canToggleDestinyCaptions = computed(() => {
+  const segment = currentSegment.value
+  return Boolean(segment && isVideoSegment(segment) && segment.id === STANDARD_DESTINY_SEGMENT_ID)
+})
 const activeComicTitleCardCue = computed<IntroOverlayTextCue | undefined>(() => {
   const cues = burnedInCaptionCues.value ?? currentSegment.value?.overlays
   if (!cues) {
@@ -403,8 +415,18 @@ let player: YoutubePlayer | null = null
 let audioPlayer: YoutubePlayer | null = null
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let textTimer: ReturnType<typeof setInterval> | null = null
+/** Resolution of a text card's own tick, and the unit the stall watchdog counts in. */
+const TEXT_CLOCK_TICK_MS = 100
 /** performance.now() corresponding to elapsed 0 on a silent text card. */
 let textClockOriginMs = 0
+/** The background audio embed published its own `ENDED` state for the active scored card. */
+let audioTrackEnded = false
+/** The background audio died (error, or an `ENDED` before it started); its clock is abandoned. */
+let audioClockReleased = false
+/** Milliseconds the background audio's clock has sat on `lastAudioClockReading`. */
+let audioClockStalledMs = 0
+/** Previous reading from the background audio's clock, used only to detect a frozen one. */
+let lastAudioClockReading: number | null = null
 
 /**
  * How long the trailer's audio takes to reach silence at the intro→Track 0 junction.
@@ -572,13 +594,34 @@ function fadeOutAndDestroyPlayer() {
 function destroyAudioPlayer() {
   audioPlayer?.destroy?.()
   audioPlayer = null
+  audioTrackEnded = false
+  audioClockReleased = false
+  audioClockStalledMs = 0
+  lastAudioClockReading = null
 }
 
 function advance() {
   sequenceState.value = advanceIntroSequence(sequenceState.value, props.videos.length)
 }
 
-async function loadAudioTrack(youtubeVideoId: string | undefined) {
+/**
+ * Hand a scored card back to its own origin clock after the background audio dies — a player
+ * error, or an `ENDED` that lands before the track ever started (a pre-roll ad, a dead or
+ * region-blocked upload).
+ *
+ * This is not a second clock running alongside the music: it replaces a clock that has stopped
+ * existing. Without it the card would freeze on whichever cue was on screen, because every
+ * later cue keys off an audio clock that will never move again. With it, the authored windows
+ * still play out in silence and the card still ends where it was written to end — which is the
+ * only outcome a live room can survive.
+ */
+function releaseAudioClock() {
+  audioClockReleased = true
+  audioClockStalledMs = 0
+  textClockOriginMs = performance.now() - currentTime.value * 1000
+}
+
+async function loadAudioTrack(youtubeVideoId: string | undefined, token: number) {
   destroyAudioPlayer()
   if (!youtubeVideoId) {
     return
@@ -594,7 +637,7 @@ async function loadAudioTrack(youtubeVideoId: string | undefined) {
   await nextTick()
 
   const PlayerCtor = getYoutubePlayerConstructor()
-  if (!PlayerCtor || !audioMountHost.value) {
+  if (!PlayerCtor || !audioMountHost.value || token !== loadToken) {
     return
   }
 
@@ -607,29 +650,61 @@ async function loadAudioTrack(youtubeVideoId: string | undefined) {
     height: '1',
     videoId: youtubeVideoId,
     playerVars: getChromeFreeYoutubePlayerVars({ autoplay: 1 }),
-    events: {},
+    events: {
+      // The background embed's own end state is the scored card's completion backstop: a real
+      // player's clock routinely plateaus short of the duration it reports, so waiting for
+      // `elapsed >= duration` alone can hang the show on its closing title. These handlers only
+      // raise flags — the 100ms tick below stays the single place that decides the card is
+      // over, so no signal can advance the sequence twice.
+      onStateChange: (event: { data: number }) => {
+        if (token !== loadToken || event.data !== getYoutubePlayerState().ENDED) {
+          return
+        }
+        if (currentTime.value <= 0) {
+          // The track never started, so this is an ad's end or a dead upload, not the music's.
+          releaseAudioClock()
+          return
+        }
+        audioTrackEnded = true
+      },
+      onError: () => {
+        if (token !== loadToken) {
+          return
+        }
+        releaseAudioClock()
+      },
+    },
   })
 }
 
 function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
   stopTextTimer()
+  const token = loadToken
   currentTime.value = 0
   activeSegmentDuration.value = segment.duration
   textClockOriginMs = performance.now()
-  void loadAudioTrack(segment.audioYoutubeVideoId)
+  void loadAudioTrack(segment.audioYoutubeVideoId, token)
 
   textTimer = setInterval(() => {
     const now = performance.now()
     if (isPaused.value) {
       // Hold the clock by trailing the origin, so resuming continues where it stopped.
       textClockOriginMs = now - currentTime.value * 1000
+      // A paused clock is held, not stalled; the end-of-track backstop must not read it as one.
+      audioClockStalledMs = 0
       return
     }
     // Ad resilience: when a background audio embed exists, cues key off the
     // audio's real getCurrentTime(). Pre-roll ads hold it at 0 and mid-roll ads
     // freeze it, so the cold open waits for the music instead of desyncing.
-    if (audioPlayer && typeof audioPlayer.getCurrentTime === 'function') {
-      currentTime.value = audioPlayer.getCurrentTime() ?? 0
+    if (audioPlayer && !audioClockReleased && typeof audioPlayer.getCurrentTime === 'function') {
+      const reading = audioPlayer.getCurrentTime() ?? 0
+      // Watchdog only, never a cue source: how long the player's own clock has sat on the
+      // identical reading. A playing player reports a new value every tick, so any repeat is
+      // buffering, an ad, or the end of the track — `isTextSegmentComplete` decides which.
+      audioClockStalledMs = reading === lastAudioClockReading ? audioClockStalledMs + TEXT_CLOCK_TICK_MS : 0
+      lastAudioClockReading = reading
+      currentTime.value = reading
     }
     else {
       // A silent card (the presenter's welcome slide) has no player to read, so it
@@ -654,10 +729,15 @@ function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
         audioPlayer.setVolume(100)
       }
     }
-    if (isTextSegmentComplete(segment, currentTime.value)) {
+    if (isTextSegmentComplete(segment, currentTime.value, {
+      ended: audioTrackEnded,
+      stalledSeconds: audioClockStalledMs / 1000,
+    })) {
+      // Stop first: the card is over, and a second tick must never advance a second time.
+      stopTextTimer()
       advance()
     }
-  }, 100)
+  }, TEXT_CLOCK_TICK_MS)
 }
 
 async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video' }> | undefined) {
@@ -775,7 +855,9 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
 function loadCurrentSegment(segment: IntroVideoSpec | undefined) {
   loadToken += 1
   isPaused.value = false
-  if (segment?.id !== 'wolves-intro') {
+  // Leaving a segment that offers an alternate source drops back to its primary, so a
+  // Director's Cut segment can never inherit a switch state set on the standard cut.
+  if (!segment || !isVideoSegment(segment) || !segment.alternateYoutubeVideoId) {
     destinyVoiceOverEnabled.value = false
   }
   destroyPlayer()

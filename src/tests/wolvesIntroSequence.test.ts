@@ -16,6 +16,8 @@ import {
   parseDestinyCaptionFile,
   previousIntroSequence,
   skipIntroSequence,
+  TEXT_SEGMENT_END_SLACK_SECONDS,
+  TEXT_SEGMENT_STALL_GRACE_SECONDS,
   TITLE_CARD_PACE,
 } from '../data/wolves-intro-sequence'
 
@@ -91,6 +93,43 @@ describe('wolves intro overlay sequence', () => {
     const segment = { id: 't', kind: 'text' as const, duration: 45 }
     expect(isTextSegmentComplete(segment, 44.9)).toBe(false)
     expect(isTextSegmentComplete(segment, 45)).toBe(true)
+  })
+
+  it('completes a scored card on the real player\'s ENDED state even when its clock plateaus short', () => {
+    const segment = { id: 'wolves-prologue', kind: 'text' as const, duration: 325.6, audioYoutubeVideoId: 'EB3IokHelRk' }
+
+    // The hang this exists to prevent: a real player whose clock stops below the authored end.
+    expect(isTextSegmentComplete(segment, 325.58)).toBe(false)
+    expect(isTextSegmentComplete(segment, 325.58, { ended: true })).toBe(true)
+    // ENDED is authoritative wherever the clock got to, not only at the very end.
+    expect(isTextSegmentComplete(segment, 120, { ended: true })).toBe(true)
+    // ...but never before the track started: a pre-roll ad's end must not skip the whole act.
+    expect(isTextSegmentComplete(segment, 0, { ended: true })).toBe(false)
+  })
+
+  it('completes a scored card whose clock freezes inside the track\'s silent tail', () => {
+    const segment = { id: 'wolves-prologue', kind: 'text' as const, duration: 325.6, audioYoutubeVideoId: 'EB3IokHelRk' }
+    const frozen = { stalledSeconds: TEXT_SEGMENT_STALL_GRACE_SECONDS }
+
+    expect(isTextSegmentComplete(segment, segment.duration - TEXT_SEGMENT_END_SLACK_SECONDS, frozen)).toBe(true)
+    // A frozen clock is only read as the end of the track inside that measured tail...
+    expect(isTextSegmentComplete(segment, segment.duration - TEXT_SEGMENT_END_SLACK_SECONDS - 0.01, frozen)).toBe(false)
+    // ...and only after the grace, so buffering or a mid-roll ad still waits for the music.
+    expect(isTextSegmentComplete(segment, segment.duration - 0.02, {
+      stalledSeconds: TEXT_SEGMENT_STALL_GRACE_SECONDS - 0.1,
+    })).toBe(false)
+    // The whole backstop window sits after the source's last audible sample (321.34s), so it
+    // can only ever give back silence.
+    expect(segment.duration - TEXT_SEGMENT_END_SLACK_SECONDS).toBeGreaterThan(321.34)
+  })
+
+  it('never lets a silent card complete early: it has no player to stall or end', () => {
+    const silent = { id: 'wolves-title-card', kind: 'text' as const, duration: 59 }
+
+    // A silent card reports no clock state at all, so only its authored duration ends it.
+    expect(isTextSegmentComplete(silent, 58.5)).toBe(false)
+    expect(isTextSegmentComplete(silent, 58.5, { stalledSeconds: 0 })).toBe(false)
+    expect(isTextSegmentComplete(silent, 59)).toBe(true)
   })
 
   it('parses the authored Destiny caption file into timed burn-in cues', () => {

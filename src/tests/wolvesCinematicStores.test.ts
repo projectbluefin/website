@@ -1,3 +1,4 @@
+import type { IntroVideoSpec } from '@/data/wolves-intro-sequence'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { CINEMATIC_SEGMENTS } from '@/config/wolves-cinematic'
@@ -18,6 +19,27 @@ const AUTHORED_DURATIONS = WOLVES_EXPERIENCE.segments.map(segment => segment.dur
 const CINEMATIC_DURATION = AUTHORED_DURATIONS.reduce((sum, value) => sum + value, 0)
 const OVERALL_DURATION = INTRO_SEQUENCE_DURATION + CINEMATIC_DURATION
 const LAST_INDEX = CINEMATIC_SEGMENTS.length - 1
+
+/**
+ * Authored runtime of one intro segment, taken from the segment itself: a text card plays its
+ * whole duration, a video segment plays from its rating-card offset to its authored cutoff.
+ * Mirrors the store's own intro timeline contract so an expectation never re-types a number.
+ */
+function introSegmentDuration(segment: IntroVideoSpec): number {
+  if (segment.kind === 'text') {
+    return segment.duration
+  }
+  const nativeStart = segment.startOffset ?? 0
+  return Math.max(0, (segment.maxDuration ?? nativeStart) - nativeStart)
+}
+
+/** Overall-timeline ratio landing in the middle of intro segment `index` of `sequence`. */
+function introRatio(sequence: readonly IntroVideoSpec[], index: number, introDuration: number): number {
+  const before = sequence
+    .slice(0, index)
+    .reduce((sum, segment) => sum + introSegmentDuration(segment), 0)
+  return (before + introSegmentDuration(sequence[index]) / 2) / (introDuration + CINEMATIC_DURATION)
+}
 
 describe('cinematic store', () => {
   beforeEach(() => {
@@ -221,16 +243,21 @@ describe('cinematic store', () => {
     // Cut duration, index clamp, and TOTAL readout described the wrong list.
     const standard = buildIntroVideoSequence()
     const directorsCut = buildDirectorsCutVideoSequence()
-    // Both cuts are two segments now; what differs is their runtime, so compare that
-    // rather than a segment count that no longer distinguishes them.
-    const runtime = (sequence: readonly { id: string }[]) => JSON.stringify(sequence)
-    expect(runtime(directorsCut)).not.toBe(runtime(standard))
+    // Both cuts are two segments, so a length comparison cannot tell them apart and a
+    // swapped or clamped list would look correct. What discriminates them is *which*
+    // segments the store's timeline resolves — their ids and their per-segment durations.
+    expect(directorsCut).toHaveLength(standard.length)
+    expect(directorsCut.map(segment => segment.id)).not.toEqual(standard.map(segment => segment.id))
 
     const store = useCinematicStore()
 
     store.setIntroSequence(standard)
     store.enterIntro()
     const standardDuration = store.sequenceDuration
+    const standardIds = standard.map((_, index) =>
+      resolveOverallRatioTarget(introRatio(standard, index, standardDuration)).segmentId,
+    )
+    expect(standardIds).toEqual(['wolves-title-card', 'wolves-intro'])
 
     store.setIntroSequence(directorsCut)
     store.enterIntro()
@@ -242,8 +269,22 @@ describe('cinematic store', () => {
     // The exported binding follows the active sequence for its importers.
     expect(INTRO_SEQUENCE_DURATION).toBeCloseTo(directorsCutDuration)
 
-    // Per-segment resolution reaches indices that do not exist in the standard
-    // sequence instead of being clamped into it.
+    // Every intro position now resolves to a Director's Cut segment. This is the assertion
+    // the old segment-count check used to carry: resolving 'wolves-title-card' or
+    // 'wolves-intro' here means the timeline is still built from the standard list.
+    const directorsCutIds = directorsCut.map((_, index) =>
+      resolveOverallRatioTarget(introRatio(directorsCut, index, directorsCutDuration)).segmentId,
+    )
+    expect(directorsCutIds).toEqual(directorsCut.map(segment => segment.id))
+    expect(directorsCutIds).not.toEqual(standardIds)
+
+    // Per-segment resolution follows the active list's own authored durations rather than
+    // being clamped into the standard one's.
+    const openingCut = resolveOverallRatioTarget(0)
+    expect(openingCut.segmentId).toBe(directorsCut[0].id)
+    expect(openingCut.segmentDuration).toBeCloseTo(introSegmentDuration(directorsCut[0]))
+    expect(openingCut.segmentDuration).not.toBeCloseTo(introSegmentDuration(standard[0]))
+
     const lastIndex = directorsCut.length - 1
     store.syncIntroStatus({
       segmentIndex: lastIndex,
@@ -252,16 +293,19 @@ describe('cinematic store', () => {
       nativeTime: 0,
     })
     expect(store.segmentIndex).toBe(lastIndex)
-    expect(store.segmentDuration).toBeGreaterThan(0)
+    expect(store.segmentDuration).toBeCloseTo(introSegmentDuration(directorsCut[lastIndex]))
     expect(store.sequenceElapsed).toBeCloseTo(directorsCutDuration - store.segmentDuration)
     expect(store.overallElapsed).toBeCloseTo(store.sequenceElapsed)
 
-    // And switching back restores the standard sequence's math.
+    // And switching back restores the standard sequence's math and its own segments.
     store.setIntroSequence(standard)
     store.enterIntro()
     expect(store.sequenceDuration).toBeCloseTo(standardDuration)
     expect(INTRO_SEQUENCE_DURATION).toBeCloseTo(standardDuration)
     expect(store.overallDuration).toBeCloseTo(standardDuration + CINEMATIC_DURATION)
+    expect(standard.map((_, index) =>
+      resolveOverallRatioTarget(introRatio(standard, index, standardDuration)).segmentId,
+    )).toEqual(standardIds)
   })
 
   it('loads the Director\'s Cut manifest as a single, authored 424-second segment', () => {

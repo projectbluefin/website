@@ -62,6 +62,14 @@ standard sequence in `afterEach` or it leaks into every later test in the file.
 Derive Director's Cut expectations from the store (`store.sequenceDuration`,
 `INTRO_SEQUENCE_DURATION`), never from a typed-in runtime.
 
+**Both cuts are now two segments, so a length check no longer proves anything.**
+`wolvesCinematicStores.test.ts` used to assert `directorsCut.length >
+standard.length`, which stopped discriminating the moment the Director's Cut lost
+its title card. A guard that a sequence swap actually took effect has to compare
+what the timeline *resolves* — `resolveOverallRatioTarget().segmentId` per index,
+and each index's authored `segmentDuration` — not how many entries it has. The
+same rule applies to any future assertion about which cut is on stage.
+
 **Fixing the intro list did not fix what plays after it.** `setIntroSequence()`
 above only retimes the *intro*; the *cinematic* segments the intro hands off
 into are a separate piece of module-level state (`activeSegments`, set by
@@ -79,6 +87,49 @@ left active. See
 for the typed `isWolvesPresentation` replacement for raw
 `experienceId === WOLVES_EXPERIENCE.id` checks this required across the
 runtime.
+
+## A scored card ends when the player says so, not when its clock says so
+
+A `text` segment with an `audioYoutubeVideoId` takes its clock from that background
+embed's `getCurrentTime()` — deliberately, because a pre-roll ad holds that clock at
+0 and a mid-roll ad freezes it, so the card waits for the music instead of desyncing
+from it. That is the right clock, and it is the only clock. It is not, on its own, a
+safe way to end a card.
+
+The Director's Cut prologue is authored to the Gayane source's full container
+(`GAYANE_TRACK_SECONDS = 325.6`, decoded 325.602s). `elapsed >= 325.6` therefore has
+about 2ms of margin against a player that plateaus a few hundredths short of the
+duration it reports — a routine YouTube behaviour. The failure is not a glitch: the
+closing title sits on a theater screen forever, unattended, with no way to recover
+live.
+
+`isTextSegmentComplete()` takes the player's own signals and ends the card three
+ways, in order of authority:
+
+1. **Authored duration elapsed** — the normal path.
+2. **The embed published `ENDED`** — authoritative wherever the clock got to, because
+   the music is demonstrably over. Trusted only once `elapsed > 0`, so an ad's end
+   cannot be read as the track's end and skip the entire scored act on the cold open.
+3. **The clock froze inside the track's silent tail** for longer than
+   `TEXT_SEGMENT_STALL_GRACE_SECONDS` (3s), within `TEXT_SEGMENT_END_SLACK_SECONDS`
+   (1s) of the authored end. This is the bounded backstop for a plateau that never
+   fires `ENDED`, and its whole window sits after the Gayane source's last audible
+   sample (321.34s), so it can only ever give back silence — never a note.
+
+Two rules this encodes:
+
+- **The handlers raise flags; the 100ms tick decides.** `onStateChange` and `onError`
+  never call `advance()` themselves. One decision point is what makes "advances
+  exactly once" true no matter which signals arrive, in which order, or how late.
+- **A dead clock is replaced, not raced.** On `onError`, or on an `ENDED` that lands
+  before the track ever started, `releaseAudioClock()` rebases the card's own origin
+  clock to the current elapsed and the card plays its authored windows out in silence.
+  That is not a second clock running alongside the music; the clock it replaces has
+  stopped existing. Advancing instead would throw away the whole narrated act, and
+  waiting would freeze on whichever cue was on screen.
+
+Constructing a background audio embed with `events: {}` is the defect this section
+exists for.
 
 ## Two uploads of the same trailer do not share an outro
 
@@ -112,6 +163,17 @@ Two more measured differences worth knowing: Bungie's upload carries its own ESR
 **full-frame 16:9**, while the unvoiced re-upload has 2.39:1 letterbox bars baked in
 (active picture rows 92–627 of 720). On a projector the official upload is simply
 the better source.
+
+**Neither switch follows the footage into the Director's Cut.** The overlay's
+alternate-source switch is offered by the segment's own data — `canToggleDestinyVoiceOver`
+tests for `alternateYoutubeVideoId`, not for a segment id — so the Director's Cut, whose
+primary *is* the Ikora upload, structurally cannot expose a stale toggle back to the
+unvoiced re-upload. The CC switch stays scoped to `STANDARD_DESTINY_SEGMENT_ID`
+(`'wolves-intro'`), the conference cut's trailer, where a laptop viewer can reach it;
+the Director's Cut publishes `showCaptionToggle: false` because it is performed to a
+room with no input device and its only burned-in cue is the Comic Hero title card,
+which renders switch or no switch. Both are asserted in `wolvesIntroOverlay.test.ts`,
+from both directions — the standard cut still publishes both switches.
 
 ## `emphasis: 'dominant'` is priced in frame height, not just words
 

@@ -12,15 +12,36 @@ import {
   buildDirectorsCutPrologueSegment,
   buildDirectorsCutVideoSequence,
   DIRECTORS_CUT_DESTINY_SEGMENT_ID,
+  DIRECTORS_CUT_PROLOGUE_SEGMENT_ID,
   GAYANE_TRACK_SECONDS,
   IKORA_LAST_CONTENT_SECOND,
   IKORA_RATING_CARD_SECONDS,
   IKORA_SOURCE_VIDEO_ID,
 } from '../data/wolves-directors-cut-intro'
+import {
+  buildIntroVideoSequence,
+  STANDARD_DESTINY_SEGMENT_ID,
+  TEXT_SEGMENT_STALL_GRACE_SECONDS,
+} from '../data/wolves-intro-sequence'
 
 const { default: WolvesIntroOverlay } = await import('../components/wolves/WolvesIntroOverlay.vue')
 
 const iframeApiSrc = 'https://www.youtube.com/iframe_api'
+
+interface IntroStatusSnapshot {
+  segmentId: string
+  currentTime: number
+  showVoiceOverToggle?: boolean
+  voiceOverEnabled?: boolean
+  showCaptionToggle?: boolean
+  captionsEnabled?: boolean
+}
+
+/** The overlay's most recent published status, which names the segment currently on stage. */
+function latestStatus(wrapper: any): IntroStatusSnapshot {
+  const events = wrapper.emitted('status') as Array<[IntroStatusSnapshot]>
+  return events[events.length - 1][0]
+}
 
 function mountOverlay(component: any, options: Record<string, any> = {}) {
   return mount(component, {
@@ -611,6 +632,32 @@ describe('wolvesIntroOverlay video segments', () => {
     expect(wrapper.find('.wolves-intro-overlay-title-card').exists()).toBe(true)
     expect(wrapper.findAll('.wolves-intro-overlay-burned-caption')).toHaveLength(1)
     expect(wrapper.text()).toContain('We built a city none of us dared')
+  })
+
+  it('still publishes both switches for the authored standard-cut trailer', async () => {
+    // Regression guard for the Director's Cut's "no switches" rule: the alternate-source switch
+    // is now offered by a segment carrying a second upload rather than by a hardcoded id, and
+    // the conference cut must keep both of its affordances.
+    const trailer = buildIntroVideoSequence().find(segment => segment.id === STANDARD_DESTINY_SEGMENT_ID)
+    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: [trailer] } })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+    players[0].triggerReady()
+    await flushPromises()
+
+    const status = latestStatus(wrapper)
+    expect(status.segmentId).toBe(STANDARD_DESTINY_SEGMENT_ID)
+    expect(status.showVoiceOverToggle).toBe(true)
+    expect(status.showCaptionToggle).toBe(true)
+
+    wrapper.vm.setVoiceOverEnabled(true)
+    await flushPromises()
+
+    expect(players[0].loadVideoById).toHaveBeenCalledWith(
+      expect.objectContaining({ videoId: 'BKm0TPqeOjY' }),
+    )
+    expect(latestStatus(wrapper).voiceOverEnabled).toBe(true)
   })
 
   it('renders the QR and Amber quote only during the comic title-card cue', async () => {
@@ -1370,8 +1417,7 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     expect(destiny.videoId).toBe(IKORA_SOURCE_VIDEO_ID)
     expect(destiny.config.playerVars.start).toBe(IKORA_RATING_CARD_SECONDS)
 
-    const status = wrapper.emitted('status') as Array<[{ segmentId: string, showVoiceOverToggle?: boolean }]>
-    const latest = status[status.length - 1][0]
+    const latest = latestStatus(wrapper)
     expect(latest.segmentId).toBe(DIRECTORS_CUT_DESTINY_SEGMENT_ID)
     expect(latest.showVoiceOverToggle).toBe(false)
 
@@ -1385,5 +1431,121 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     await vi.advanceTimersByTimeAsync(200)
     await flushPromises()
     expect(wrapper.emitted('complete')).toHaveLength(1)
+  })
+
+  it('offers the theater no source or caption switch, and refuses one if anything asks', async () => {
+    const wrapper = await mountDirectorsCut()
+
+    wrapper.vm.next()
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+    const destiny = players[players.length - 1]
+    destiny.triggerReady()
+    await flushPromises()
+
+    const onStage = latestStatus(wrapper)
+    expect(onStage.segmentId).toBe(DIRECTORS_CUT_DESTINY_SEGMENT_ID)
+    expect(onStage.showVoiceOverToggle).toBe(false)
+    expect(onStage.voiceOverEnabled).toBe(false)
+    expect(onStage.showCaptionToggle).toBe(false)
+    expect(onStage.captionsEnabled).toBe(false)
+
+    // Ikora's is the Director's Cut's primary source, so there is no stale alternate to expose:
+    // nothing here can switch the show back to the unvoiced re-upload the standard cut toggles.
+    destiny.loadVideoById.mockClear()
+    wrapper.vm.setVoiceOverEnabled(true)
+    wrapper.vm.setCaptionsEnabled(true)
+    await flushPromises()
+
+    expect(destiny.loadVideoById).not.toHaveBeenCalled()
+    expect(destiny.videoId).toBe(IKORA_SOURCE_VIDEO_ID)
+    const afterAsking = latestStatus(wrapper)
+    expect(afterAsking.showVoiceOverToggle).toBe(false)
+    expect(afterAsking.voiceOverEnabled).toBe(false)
+    expect(afterAsking.showCaptionToggle).toBe(false)
+    expect(afterAsking.captionsEnabled).toBe(false)
+  })
+
+  it('waits for the music when the audio clock freezes mid-piece, then advances exactly once on the real ENDED signal', async () => {
+    const wrapper = await mountDirectorsCut()
+    const audio = players[0]
+
+    // A clock frozen in the body of the piece is a mid-roll ad or buffering, not the end of the
+    // track: the scored card must wait for the music rather than run a clock of its own.
+    audio.setCurrentTime(GAYANE_TRACK_SECONDS - 5)
+    await vi.advanceTimersByTimeAsync(30_000)
+    await flushPromises()
+    expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
+    expect(latestStatus(wrapper).currentTime).toBeCloseTo(GAYANE_TRACK_SECONDS - 5)
+    expect(players).toHaveLength(1)
+
+    // The real player's own end state is what releases it. Without this backstop the closing
+    // title sits on a theater screen forever, because the clock never reaches 325.6s.
+    audio.triggerEnded()
+    await vi.advanceTimersByTimeAsync(200)
+    await flushPromises()
+
+    expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_DESTINY_SEGMENT_ID)
+    expect(players[players.length - 1].videoId).toBe(IKORA_SOURCE_VIDEO_ID)
+    // Exactly once: a second advance would run off the end of this two-segment cut and
+    // complete the intro, dropping the audience straight into Track 0.
+    expect(wrapper.emitted('complete')).toBeUndefined()
+  })
+
+  it('completes the closing title when the audio clock plateaus short of the authored end and no ENDED arrives', async () => {
+    const wrapper = await mountDirectorsCut()
+    const audio = players[0]
+
+    // The exact hang the authored 325.6s end invites: the decoded stream is 325.602s, so a real
+    // player that stops a few hundredths short never satisfies `elapsed >= duration`.
+    audio.setCurrentTime(GAYANE_TRACK_SECONDS - 0.02)
+    await vi.advanceTimersByTimeAsync(TEXT_SEGMENT_STALL_GRACE_SECONDS * 1000 - 500)
+    await flushPromises()
+    expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
+
+    await vi.advanceTimersByTimeAsync(1000)
+    await flushPromises()
+
+    expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_DESTINY_SEGMENT_ID)
+    expect(wrapper.emitted('complete')).toBeUndefined()
+
+    // A late ENDED from the abandoned audio embed must not advance a second time, even once the
+    // Destiny player is up and running with a clock of its own.
+    const destiny = players[players.length - 1]
+    destiny.triggerReady()
+    destiny.setCurrentTime(30)
+    await vi.advanceTimersByTimeAsync(200)
+    await flushPromises()
+
+    audio.triggerEnded()
+    await vi.advanceTimersByTimeAsync(500)
+    await flushPromises()
+    expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_DESTINY_SEGMENT_ID)
+    expect(latestStatus(wrapper).currentTime).toBeCloseTo(30)
+    expect(wrapper.emitted('complete')).toBeUndefined()
+  })
+
+  it('plays the scored prologue out on its own clock when the audio embed dies, and still advances once', async () => {
+    const wrapper = await mountDirectorsCut()
+    const audio = players[0]
+
+    await seekPrologue(GAYANE_TRACK_SECONDS - 10)
+    expect(latestStatus(wrapper).currentTime).toBeCloseTo(GAYANE_TRACK_SECONDS - 10)
+
+    audio.triggerError()
+    await vi.advanceTimersByTimeAsync(1000)
+    await flushPromises()
+
+    // The music is gone, but the act still reaches the audience: the card picks up its own
+    // clock from where the music died instead of freezing on whichever cue was up.
+    expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
+    expect(latestStatus(wrapper).currentTime).toBeCloseTo(GAYANE_TRACK_SECONDS - 9, 1)
+
+    await vi.advanceTimersByTimeAsync(10_000)
+    await flushPromises()
+
+    expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_DESTINY_SEGMENT_ID)
+    expect(wrapper.emitted('complete')).toBeUndefined()
   })
 })

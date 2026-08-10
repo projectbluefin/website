@@ -53,6 +53,16 @@ an unidentified player request.
   Director's Cut Gayane grid in `wolves-directors-cut-intro.ts` is the agreement
   between a voted Laplacian structural segmentation (k = 4..10) and an
   independent MFCC-novelty peak pick.
+- A scored `text` segment ends only on `elapsed >= duration`. A real player's
+  `getCurrentTime()` routinely plateaus below the duration it reports for the
+  same upload, so a card authored to its source's full container hangs on its
+  last cue with no way to recover live. Take the completion signal from the
+  player: its `ENDED` state, its `onError`, and a bounded stall watchdog scoped
+  to the track's measured silent tail — never by shortening the authored music,
+  and never by running a wall clock alongside the audio clock.
+- A background audio embed is constructed with `events: {}`. That embed is the
+  scored card's clock; with no `onStateChange`/`onError` the card has no way to
+  learn the clock died.
 - An authored window on one video source is transposed to a second upload of the
   same footage without re-measuring that upload's own frames. A content offset
   transposes; a cutoff does not, because two uploads can end differently. See
