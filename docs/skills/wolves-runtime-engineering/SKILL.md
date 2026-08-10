@@ -4,6 +4,8 @@ description: Use only for explicitly approved Wolves overlay, transport, player,
 metadata:
   verified-sources:
     - https://developer.mozilla.org/en-US/docs/Web/CSS/text-wrap (text-wrap balance six-line cap)
+  context7-sources:
+    - /websites/developers_google_youtube
 ---
 
 # Wolves runtime engineering
