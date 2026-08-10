@@ -178,6 +178,27 @@ an unidentified player request.
   presentation-profile boundary as a known, reported gap, not a fix — retiming
   the wallpaper cycle for a variable segment count is a design/animation-cadence
   change and needs its own approval.
+- A component correctly branches **one** of its `presentationProfile`-dependent
+  computeds and ships that as proof the component is profile-aware.
+  `TheaterExperience.vue`'s `displayedNarrativeSlot` called
+  `getNarrativeSlotForTime()` — the standard show's own narrative timeline —
+  unconditionally, with no profile branch, in the same file whose
+  `WolvesComicReader` slide-schedule prop *did* correctly switch on
+  `presentationProfile` (Task 7). The Director's Cut's nine registered
+  science-quote panel and closing bulletin
+  (`getDirectorsCutNarrativeSlotForTime()`, `wolves-directors-cut-timeline.ts`)
+  were fully built, scheduled, and covered by data-layer tests, but a live
+  Director's Cut run never reached them — it silently rendered whatever the
+  standard show's Jono/Marina/Hikari/Bluefin timeline resolves to at the same
+  clock reading instead, because nothing that mounts `WolvesLoreColumn` inside
+  `TheaterExperience.vue` had ever been given a real `artifact-id` probe for
+  the Director's Cut profile. Every existing test either stubbed
+  `WolvesLoreColumn` entirely (`wolvesHeroTypography.test.ts`'s Director's Cut
+  probe tests, added for the *comic-reader* wiring) or tested the timeline data
+  module in isolation (`wolvesNarrativeTimeline.test.ts`) — none mounted the
+  component and read what it actually passed down. A component with more than
+  one profile-dependent prop needs a probe test *per prop*, not one test that
+  happens to cover the prop most recently worked on.
 - Segments are module-level state too (`activeSegments` in `cinematic.ts`), the
   same class of bug as the intro list documented in
   [`../../reference/wolves-intro-and-overlay.md`](../../reference/wolves-intro-and-overlay.md).

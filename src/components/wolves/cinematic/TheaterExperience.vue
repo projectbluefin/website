@@ -3,10 +3,11 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import WolvesComicReader from '@/components/wolves/WolvesComicReader.vue'
 import WolvesLoreColumn from '@/components/wolves/WolvesLoreColumn.vue'
 import { getChromeFreeYoutubeEmbedParams } from '@/composables/useYoutubeIframeApi'
+import { getDirectorsCutNarrativeSlotForTime } from '@/data/wolves-directors-cut-timeline'
 import { getNarrativeSlotForTime } from '@/data/wolves-narrative-timeline'
 import { getWolvesThesisState } from '@/data/wolves-thesis-sequence'
 import { TRACKZERO_SIDECAR_VIDEO_IDS } from '@/data/wolves-track-zero-sidecar'
-import { useCinematicStore } from '@/stores/cinematic'
+import { useCinematicStore, WOLVES_DIRECTORS_CUT_PROFILE_ID } from '@/stores/cinematic'
 
 // The authored seven-days immersive layer, mounted over the video during the
 // 7 Days segment. The video below stays the audio source; the locked comic
@@ -18,7 +19,17 @@ const time = computed(() => store.nativeTime)
 // The lore column follows the player clock and nothing else. A record used to
 // be able to pin this to its own slot until it finished rendering, which let a
 // long transmission run past its window and start every record after it late.
-const displayedNarrativeSlot = computed(() => getNarrativeSlotForTime(time.value))
+//
+// The Director's Cut schedules its own nine-quote science panel and closing bulletin on a
+// different timeline (`wolves-directors-cut-timeline.ts`), compressed to its one-song runtime
+// rather than the standard show's seven-part clock. Reading `getNarrativeSlotForTime()`
+// unconditionally here resolved every Director's Cut clock reading against the standard show's
+// schedule instead — the authored panel was fully built and tested but never reached live.
+const displayedNarrativeSlot = computed(() =>
+  store.presentationProfile === WOLVES_DIRECTORS_CUT_PROFILE_ID
+    ? getDirectorsCutNarrativeSlotForTime(time.value)
+    : getNarrativeSlotForTime(time.value),
+)
 const slotDuration = computed(() => Math.max(1, displayedNarrativeSlot.value.endTime - displayedNarrativeSlot.value.startTime))
 const slotElapsed = computed(() => Math.min(
   slotDuration.value,

@@ -211,3 +211,19 @@ the standard show at all — excluding them is not evidence of a new
 oversubscription cut, and restoring the count of "eleven" oversubscribed
 artifacts to explain the set's full length would be wrong. Read each labeled
 block for its own reason before assuming the whole set shares one cause.
+
+Registering that panel in the data layer is not the same as it ever reaching
+the audience. `TheaterExperience.vue`'s `displayedNarrativeSlot` computed is
+the one place that resolves "which record is on stage right now" into the
+`WolvesLoreColumn` it mounts, and it has to branch on
+`store.presentationProfile === WOLVES_DIRECTORS_CUT_PROFILE_ID` to call
+`getDirectorsCutNarrativeSlotForTime()` instead of the standard show's
+`getNarrativeSlotForTime()`. That branch shipped later than the panel itself —
+Tasks 2–8 built, scheduled, and unit-tested the panel, but nothing mounted
+`TheaterExperience` with a real `WolvesLoreColumn` probe for the Director's Cut
+profile, so a live run silently showed the standard show's timeline at the
+Director's Cut's own clock readings until Task 9's validation pass caught it.
+`wolvesHeroTypography.test.ts`'s `theater experience lore column narrative
+timeline wiring` tests assert both branches by mounting the real component with
+a lore-column probe; extend those, not just the data-layer tests, if this
+panel's schedule ever changes.

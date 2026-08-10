@@ -3,6 +3,8 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import TheaterExperience from '@/components/wolves/cinematic/TheaterExperience.vue'
+import { getDirectorsCutNarrativeSlotForTime } from '@/data/wolves-directors-cut-timeline'
+import { getNarrativeSlotForTime } from '@/data/wolves-narrative-timeline'
 import { TRACK_ZERO_SECTIONS } from '@/data/wolves-track-zero-beats'
 import { useCinematicStore, WOLVES_DIRECTORS_CUT_EXPERIENCE, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
@@ -357,5 +359,71 @@ describe('theater experience wolves-experience prop wiring', () => {
 
     expect(probe.attributes('data-wolves-experience')).toBe('false')
     expect(probe.attributes('data-experience-id')).toBe('album-test')
+  })
+})
+
+describe('theater experience lore column narrative timeline wiring', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  afterEach(() => {
+    // `activeSegments` is module-level state (see cinematic.ts); restore the
+    // standard show so a Director's Cut test cannot leak into the next one.
+    useCinematicStore().loadExperience(WOLVES_EXPERIENCE)
+  })
+
+  const WolvesLoreColumnProbe = {
+    props: {
+      artifactId: { type: String, default: '' },
+    },
+    template: '<div class="wolves-lore-column-probe" :data-artifact-id="artifactId" />',
+  }
+
+  function mountTheaterWithLoreProbe() {
+    return mount(TheaterExperience, {
+      global: {
+        stubs: {
+          WolvesComicReader: true,
+          WolvesLoreColumn: WolvesLoreColumnProbe,
+        },
+      },
+    })
+  }
+
+  // The lore column's `artifact-id` binding read `getNarrativeSlotForTime()` — the
+  // standard show's own timeline — unconditionally, with no `presentationProfile`
+  // branch. The Director's Cut's nine registered science/humanity quotes and its
+  // missing-scientist bulletin (`wolves-directors-cut-timeline.ts`) were fully built,
+  // scheduled and tested at the data layer, but a live Director's Cut run never
+  // reached them: it showed whatever the standard show's Jono/Marina/Hikari/Bluefin
+  // timeline resolves to at that same clock reading instead.
+  //
+  // t=100 is deliberately not the shared closing bulletin both timelines fall back to
+  // once their own schedule runs out (a fallback both cuts happen to share, which would
+  // make the two expectations coincide and pass either way): it is inside both cuts'
+  // authored schedules, where the two resolve to genuinely different artifacts.
+  it('reads the Director\'s Cut narrative timeline for its own lore column, not the standard show\'s', () => {
+    expect(getDirectorsCutNarrativeSlotForTime(100).artifactId).not.toBe(getNarrativeSlotForTime(100).artifactId)
+
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
+    store.enterCinematic()
+    store.updateTime(100, 425, 100)
+
+    const probe = mountTheaterWithLoreProbe().get('.wolves-lore-column-probe')
+
+    expect(probe.attributes('data-artifact-id')).toBe(getDirectorsCutNarrativeSlotForTime(100).artifactId)
+  })
+
+  it('still reads the standard show\'s own timeline at the same clock reading', () => {
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_EXPERIENCE)
+    store.enterCinematic()
+    store.updateTime(100, 425, 100)
+
+    const probe = mountTheaterWithLoreProbe().get('.wolves-lore-column-probe')
+
+    expect(probe.attributes('data-artifact-id')).toBe(getNarrativeSlotForTime(100).artifactId)
   })
 })

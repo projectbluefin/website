@@ -223,6 +223,29 @@ not a flaky one, so they read as a scheduling bug that did not exist:
 schedule in-page from `/src/data/wolves-directors-cut-slides.ts` rather than
 carrying cut times as constants.
 
+## The lore column's quote crossfade is the same trap, on a different clock
+
+`WolvesLoreColumn`'s quote view (`QuoteLoreView.vue`) fades its text through a
+`Transition name="quote-fade"` keyed on `record.id`
+(`lore-dossier.scss`, 0.5s `opacity` transition), so a probe that seeks and reads
+`.lore-quote-text` immediately after can sample the outgoing quote mid-fade —
+same class of bug as sampling a slide mid-crossfade, on a different selector and
+a shorter window. It has one extra trap the slide probe does not: the
+attribution (`.lore-quote-meta`, in `LoreRecordHeader`'s header slot) sits
+**outside** the `Transition` and updates immediately, so a probe that reads text
+and attribution in the same tick can pair the *outgoing* quote's text with the
+*incoming* quote's attribution — a combination that never exists on screen.
+Poll both together until they agree across two reads, the same discipline
+`slideAt()` uses for the image layers.
+
+A Director's Cut prologue probe has a second, unrelated clock trap: the scored
+card's clock is read from the background audio embed's `getCurrentTime()`, not
+from wall time (see `wolves-runtime-engineering/SKILL.md`). A mock player whose
+clock never advances on its own sits on the prologue's opening silent card
+(`buildNarrationCues()`'s pre-`NARRATION_FIRST_MARK` dark window) forever,
+however long the probe waits in real time — waiting longer does not help, only
+advancing the mock's `currentTime` does.
+
 ## A frozen slide is not a covered slide
 
 `tests/wolves-directors-cut-slides.mjs` originally proved the reserved finale
