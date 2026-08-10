@@ -19,10 +19,10 @@ describe('wolves cinematic lobby', () => {
     })
 
     expect(wrapper.get('.wc-lobby-directors-cut-copy').text()).toBe(
-      "Bluefin's universe is just beginning, and its future is bleaker than presented here. Enjoy the longer original vision as it comes together:",
+      'Bluefin\'s universe is just beginning, and its future is bleaker than presented here. Enjoy the longer original vision as it comes together:',
     )
     expect(wrapper.get('.wc-lobby-directors-cut-btn').text()).toBe(
-      "SEVEN DAYS TO THE WOLVES: DIRECTOR'S CUT",
+      'SEVEN DAYS TO THE WOLVES: DIRECTOR\'S CUT',
     )
   })
 

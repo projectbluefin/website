@@ -615,10 +615,16 @@ function advance() {
  * Without it the card would freeze on whichever cue was on screen, because every later cue keys
  * off an audio clock that will never move again; with it, the authored windows still play out
  * and the card still ends where it was written to end — the only outcome a live room survives.
+ *
+ * Clearing `audioTrackEnded` here matters: an out-of-window `ENDED` is exactly what triggers a
+ * release, and leaving the flag `true` would stay stale on the card's own free-running clock —
+ * completing the card the instant that clock crossed into the end window, up to a full second
+ * before the authored duration, on the strength of a signal that was never inside the window.
  */
 function releaseAudioClock() {
   audioClockReleased = true
   audioClockStalledMs = 0
+  audioTrackEnded = false
   textClockOriginMs = performance.now() - currentTime.value * 1000
 }
 

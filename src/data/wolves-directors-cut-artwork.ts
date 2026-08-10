@@ -59,7 +59,7 @@ export interface UncreditedDirectorsCutDestinyConcept extends DirectorsCutDestin
 
 export type DirectorsCutDestinyConcept
   = CreditedDirectorsCutDestinyConcept
-  | UncreditedDirectorsCutDestinyConcept
+    | UncreditedDirectorsCutDestinyConcept
 
 const BUNGIE_PRESS_ROOM
   = 'https://press.bungie.com/Go-Beyond-the-Light-Destiny-2-Beyond-Light-Arrives-On-September-22' as const

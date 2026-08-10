@@ -21,6 +21,7 @@ import {
 import {
   buildIntroVideoSequence,
   STANDARD_DESTINY_SEGMENT_ID,
+  TEXT_SEGMENT_END_SLACK_SECONDS,
   TEXT_SEGMENT_STALL_GRACE_SECONDS,
 } from '../data/wolves-intro-sequence'
 
@@ -1524,6 +1525,46 @@ describe('wolvesIntroOverlay director\'s cut', () => {
 
     expect(latestStatus(wrapper).currentTime).toBeCloseTo(100.4)
     expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
+    expect(wrapper.emitted('complete')).toBeUndefined()
+  })
+
+  it('does not let a stale ad-break ENDED complete the card early once its own clock reaches the end window', async () => {
+    const wrapper = await mountDirectorsCut()
+    const audio = players[0]
+
+    // Mid-piece, far from the end window: an ad break, not the music ending.
+    audio.setCurrentTime(200)
+    await vi.advanceTimersByTimeAsync(200)
+    await flushPromises()
+
+    audio.triggerEnded()
+    await vi.advanceTimersByTimeAsync(200)
+    await flushPromises()
+    expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
+
+    // Let the card's own free-running clock advance up to the end window's edge but stop
+    // short of it. A stale `ended` flag left over from the ad break's out-of-window ENDED
+    // must not survive the release: if it did, the card would complete the instant its own
+    // clock crossed into the window — up to a full second before the authored duration —
+    // even though nothing about the music actually ended there.
+    const windowStart = GAYANE_TRACK_SECONDS - TEXT_SEGMENT_END_SLACK_SECONDS
+    const beforeWindow = latestStatus(wrapper).currentTime
+    await vi.advanceTimersByTimeAsync(Math.round((windowStart - beforeWindow - 0.2) * 1000))
+    await flushPromises()
+    expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
+    expect(latestStatus(wrapper).currentTime).toBeLessThan(windowStart)
+
+    // Cross into the window without reaching the authored duration.
+    await vi.advanceTimersByTimeAsync(400)
+    await flushPromises()
+    expect(latestStatus(wrapper).currentTime).toBeGreaterThanOrEqual(windowStart)
+    expect(latestStatus(wrapper).currentTime).toBeLessThan(GAYANE_TRACK_SECONDS)
+    expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
+
+    // It still ends, exactly once, on the authored duration rather than hanging.
+    await vi.advanceTimersByTimeAsync(1500)
+    await flushPromises()
+    expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_DESTINY_SEGMENT_ID)
     expect(wrapper.emitted('complete')).toBeUndefined()
   })
 

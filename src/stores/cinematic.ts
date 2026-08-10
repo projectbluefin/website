@@ -515,7 +515,9 @@ export const useCinematicStore = defineStore('cinematic', {
       this.playing = false
       this.crossfading = false
       this.pendingSegmentIndex = null
-      this.showTransitionOverlay = isWolvesPresentationProfile(manifest.presentationProfile)
+      // Reuse the profile just assigned above rather than recomputing it from the manifest —
+      // same value (undefined and 'generic' both resolve false), one source of truth.
+      this.showTransitionOverlay = isWolvesPresentationProfile(this.presentationProfile)
       this.displayOverride = null
       this.finished = false
     },

@@ -2,8 +2,8 @@ import { existsSync, readFileSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
-  BUNGIE_RIGHTS_HOLDER,
   BUNGIE_FAN_CONTENT_POLICY_URL,
+  BUNGIE_RIGHTS_HOLDER,
   DIRECTORS_CUT_DESTINY_CONCEPT_CREDIT,
   DIRECTORS_CUT_DESTINY_CONCEPT_RETRIEVAL_DATE,
   DIRECTORS_CUT_DESTINY_CONCEPTS,

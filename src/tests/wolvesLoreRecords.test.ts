@@ -168,7 +168,11 @@ describe('wolves lore records', () => {
     expect(record?.metadata.timestamp, id).toEqual(expect.any(String))
   })
 
-  it('keeps the Director\'s Cut science-quote panel excluded from the standard show', () => {
+  // The real "excluded from the standard show" claim is verified against the standard
+  // show's own timeline in wolvesNarrativeTimeline.test.ts's "keeps every Director-only
+  // quote id out of the standard show" — this module never loads that timeline, so this
+  // test can only check the panel's own chapter grouping and identity, not exclusion.
+  it('groups the Director\'s Cut science-quote panel under its own chapter with no duplicate ids', () => {
     const directorsCutQuotes = loadAllLoreRecords().filter(record => record.chapterId === 'directors-cut')
 
     expect(directorsCutQuotes.map(record => record.id)).toEqual([

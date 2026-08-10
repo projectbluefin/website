@@ -65,6 +65,18 @@ an unidentified player request.
   mid-roll ad freezes the clock at a *nonzero* time, so believing that signal
   mid-piece trades a hang for a truncation — it ends the scored act in front of
   the room. Scope every end-of-track claim to the same measured window.
+- Releasing a scored card to its own clock (`releaseAudioClock()`) clears
+  everything about the *stall watchdog* but leaves the `ended` flag that
+  triggered the release still set. That flag is stale the instant the release
+  happens — it was only ever true for a reading outside the end window — but it
+  is still read by the next completion check. If the audio clock never
+  recovers, the card's own free-running clock eventually re-enters the end
+  window on its own, and the stale `true` completes the card there instead of
+  at the authored duration: up to `TEXT_SEGMENT_END_SLACK_SECONDS` (1s) early.
+  Bounded by the same measurement that makes the window safe to complete in at
+  all (entirely after the source's last audible sample), so it never truncates
+  audible content — but it is still wrong, and cheap to fix: clear the `ended`
+  flag in the same place that clears everything else about the release.
 - A background audio embed is constructed with `events: {}`. That embed is the
   scored card's clock; with no `onStateChange`/`onError` the card has no way to
   learn the clock died.
