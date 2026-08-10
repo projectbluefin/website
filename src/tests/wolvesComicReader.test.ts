@@ -14,6 +14,7 @@ import { backCatalogueCharacters } from '../data/back-catalogue-characters'
 import { wolvesComicHeroShots } from '../data/wolves-comic-hero-shots'
 import { DIRECTORS_CUT_FINALE_START } from '../data/wolves-directors-cut-slides'
 import { ghostsInTheMistOpeningSlide } from '../data/wolves-gallery-featured'
+import { TRACK_ZERO_SLIDE_MINIMUM_HOLD_SECONDS } from '../data/wolves-slide-preload'
 import {
   TRACK_ZERO_BEAT_TIMES,
   TRACK_ZERO_SECTIONS,
@@ -681,8 +682,8 @@ describe('wolvesComicReader', () => {
   // Blurring a surface that repaints a full-size image on every slide change is
   // what produced the hitch on Ghosts In The Mist onward. The standard show's
   // Track 0 is the one segment whose look is locked, so it keeps its authored
-  // blur; the Director's Cut Track 0 cuts 190 lock-free slides off the beat grid
-  // and takes the static-background treatment with the later tracks.
+  // blur; the Director's Cut Track 0 runs a lock-free measured-beat montage and
+  // takes the static-background treatment with the later tracks.
   describe('slide crossfade blur', () => {
     function crossfadeClass(trackIndex: number, wolvesExperience: boolean, presentationProfile?: PresentationProfile) {
       mockGalleryData()
@@ -714,7 +715,7 @@ describe('wolvesComicReader', () => {
     // a rapid gallery crossfade there. The Director's Cut does — its Track 0 is
     // the fastest schedule in the show — so the exclusion cannot be keyed to
     // `trackIndex !== 0` alone without putting blur work back on the slide
-    // change path for 190 cuts.
+    // change path for the Director's montage.
     it('drops the blur on the director\'s cut Track 0', () => {
       expect(crossfadeClass(0, true, WOLVES_DIRECTORS_CUT_PROFILE_ID))
         .toContain('comic-reader-section--fast-crossfade')
@@ -1894,8 +1895,9 @@ describe('pending segment preload of the authored opening slide', () => {
       const director = await mountCut(WOLVES_DIRECTORS_CUT_PROFILE_ID)
       const slides = scheduleOf(director, 'trackZeroSlides')
 
-      expect(slides.length).toBeLessThan(scheduleOf(director, 'timelineSlides').length)
-      expect(Math.min(...slides.map(slide => slide.duration))).toBeGreaterThanOrEqual(1.5)
+      expect(slides.length).toBeGreaterThan(scheduleOf(director, 'timelineSlides').length)
+      expect(Math.min(...slides.map(slide => slide.duration)))
+        .toBeGreaterThanOrEqual(TRACK_ZERO_SLIDE_MINIMUM_HOLD_SECONDS)
       expect(slides[0].startTime).toBe(0)
       expect(slides[slides.length - 1].endTime).toBe(DIRECTORS_CUT_FINALE_START)
       expect(new Set(slides.map(slide => slide.id)).size).toBe(slides.length)
@@ -1913,6 +1915,24 @@ describe('pending segment preload of the authored opening slide', () => {
       const rezaHold = rezaContributorTrackZeroWindow.endTime - rezaContributorTrackZeroWindow.startTime
       expect(slides.some(slide => slide.startTime === rezaContributorTrackZeroWindow.startTime)).toBe(false)
       expect(slides.every(slide => slide.duration < rezaHold)).toBe(true)
+    })
+
+    it('starts on the first image and changes images throughout the quote edit', async () => {
+      const director = await mountCut(WOLVES_DIRECTORS_CUT_PROFILE_ID)
+      const slides = scheduleOf(director, 'trackZeroSlides')
+      const firstImage = activeTimelineImage(director)
+
+      expect(firstImage).toBeDefined()
+
+      const checkpoints = [1, Math.floor(slides.length / 3), Math.floor((slides.length * 2) / 3)]
+      const seenImages = new Set([firstImage])
+      for (const index of checkpoints) {
+        await advanceTo(director, slides[index]!.startTime + 0.01)
+        await flushImageLoads()
+        seenImages.add(activeTimelineImage(director))
+      }
+
+      expect(seenImages.size).toBe(checkpoints.length + 1)
     })
 
     it('shows nothing scheduled once the finale interval opens', async () => {

@@ -28,6 +28,7 @@ import { wolvesComicHeroShots } from '@/data/wolves-comic-hero-shots'
 import { buildDirectorsCutTrackZeroSlides } from '@/data/wolves-directors-cut-slides'
 import { ghostsInTheMistOpeningSlide } from '@/data/wolves-gallery-featured'
 import { shuffleWolvesGalleryPhotos } from '@/data/wolves-gallery-shuffle'
+import { MAX_LOOKAHEAD_SLIDES, PRELOAD_WINDOW_SECONDS } from '@/data/wolves-slide-preload'
 import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
 import {
   TRACK_ZERO_SECTIONS,
@@ -110,10 +111,10 @@ const isDirectorsCut = computed(() => props.presentationProfile === WOLVES_DIREC
  * treatment, it is the one segment whose look is locked, and it does not run
  * the same rapid gallery crossfade the later tracks and the catalogue do.
  *
- * The Director's Cut is the opposite case: its Track 0 runs 190 lock-free cuts
- * off the measured beat grid — a faster slide rate than any later track — so it
- * takes the static-background treatment with them. Only the profile decides
- * this; standard Track 0 and generic albums keep exactly the behaviour they had.
+ * The Director's Cut is the opposite case: its Track 0 runs a lock-free,
+ * measured-beat montage faster than any later track, so it takes the
+ * static-background treatment with them. Only the profile decides this;
+ * standard Track 0 and generic albums keep exactly the behaviour they had.
  */
 const usesFastCrossfade = computed(() =>
   !isWolvesExperience.value || props.trackIndex !== 0 || isDirectorsCut.value)
@@ -1104,10 +1105,9 @@ watch(() => props.pendingTrackIndex, (pendingTrackIndex) => {
   }
 }, { immediate: true })
 
-/** Seconds of upcoming slides to keep fetched and decoded ahead of the cue. */
-const PRELOAD_WINDOW_SECONDS = 8
-/** Ceiling so a run of very short slides cannot fetch the whole gallery at once. */
-const MAX_LOOKAHEAD_SLIDES = 12
+// Preload depth and the shortest hold it can cover are one contract, so they
+// live together in `wolves-slide-preload.ts` and the Director's Cut schedule
+// test asserts its floor against the same constants this reader runs on.
 
 watch([activeDisplayIndex, mixedPhotosToUse, trackChangeSerial], ([newVal]) => {
   const activePhotoObj = mixedPhotosToUse.value[newVal]
@@ -1125,7 +1125,7 @@ watch([activeDisplayIndex, mixedPhotosToUse, trackChangeSerial], ([newVal]) => {
   // Preload far enough ahead to cover a fetch and decode before the cue lands.
   // The depth is measured in seconds of upcoming slides, not in slides: the old
   // rule preloaded three slides only when the current one was under a second and
-  // one otherwise, so the finale barrage at roughly 1.76s per slide got a single
+  // one otherwise, so a rapid roughly 1.6s-per-slide barrage got a single
   // slide of warning for a multi-megabyte photo. On a cold cache that is not
   // enough time, and the swap below waits for decode, so the previous slide
   // holds past its beat and the whole sequence walks off the music.

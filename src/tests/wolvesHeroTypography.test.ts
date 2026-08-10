@@ -3,7 +3,11 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import TheaterExperience from '@/components/wolves/cinematic/TheaterExperience.vue'
-import { getDirectorsCutNarrativeSlotForTime } from '@/data/wolves-directors-cut-timeline'
+import { DIRECTORS_CUT_FINALE_ANCHORS } from '@/data/wolves-directors-cut-finale'
+import {
+  DIRECTORS_CUT_BULLETIN_ARTIFACT_ID,
+  getDirectorsCutNarrativeSlotForTime,
+} from '@/data/wolves-directors-cut-timeline'
 import { getNarrativeSlotForTime } from '@/data/wolves-narrative-timeline'
 import { TRACK_ZERO_SECTIONS } from '@/data/wolves-track-zero-beats'
 import { useCinematicStore, WOLVES_DIRECTORS_CUT_EXPERIENCE, WOLVES_EXPERIENCE } from '@/stores/cinematic'
@@ -404,7 +408,11 @@ describe('theater experience lore column narrative timeline wiring', () => {
   // make the two expectations coincide and pass either way): it is inside both cuts'
   // authored schedules, where the two resolve to genuinely different artifacts.
   it('reads the Director\'s Cut narrative timeline for its own lore column, not the standard show\'s', () => {
-    expect(getDirectorsCutNarrativeSlotForTime(100).artifactId).not.toBe(getNarrativeSlotForTime(100).artifactId)
+    const directorSlot = getDirectorsCutNarrativeSlotForTime(100)
+    if (!directorSlot) {
+      throw new Error('Director slot missing at 100s')
+    }
+    expect(directorSlot.artifactId).not.toBe(getNarrativeSlotForTime(100).artifactId)
 
     const store = useCinematicStore()
     store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
@@ -413,7 +421,7 @@ describe('theater experience lore column narrative timeline wiring', () => {
 
     const probe = mountTheaterWithLoreProbe().get('.wolves-lore-column-probe')
 
-    expect(probe.attributes('data-artifact-id')).toBe(getDirectorsCutNarrativeSlotForTime(100).artifactId)
+    expect(probe.attributes('data-artifact-id')).toBe(directorSlot.artifactId)
   })
 
   it('still reads the standard show\'s own timeline at the same clock reading', () => {
@@ -425,5 +433,28 @@ describe('theater experience lore column narrative timeline wiring', () => {
     const probe = mountTheaterWithLoreProbe().get('.wolves-lore-column-probe')
 
     expect(probe.attributes('data-artifact-id')).toBe(getNarrativeSlotForTime(100).artifactId)
+  })
+
+  it('clears Director lore during image-only gaps and after the bulletin handoff', async () => {
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
+    store.enterCinematic()
+    store.updateTime(0, 425, 0)
+
+    const wrapper = mountTheaterWithLoreProbe()
+    const probe = () => wrapper.get('.wolves-lore-column-probe')
+
+    const firstQuote = getDirectorsCutNarrativeSlotForTime(0)!
+    store.updateTime(firstQuote.endTime + 1, 425, firstQuote.endTime + 1)
+    await nextTick()
+    expect(probe().attributes('data-artifact-id')).toBe('')
+
+    store.updateTime(DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart, 425, DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart)
+    await nextTick()
+    expect(probe().attributes('data-artifact-id')).toBe(DIRECTORS_CUT_BULLETIN_ARTIFACT_ID)
+
+    store.updateTime(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd, 425, DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
+    await nextTick()
+    expect(probe().attributes('data-artifact-id')).toBe('')
   })
 })

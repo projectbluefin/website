@@ -27,11 +27,12 @@ window is a defect.
 
 | Anchor | Second | Beat | Why here |
 |---|---|---|---|
-| `companionPrearm`, `bulletinStart` | 344.956 | 853 | `TRACK_ZERO_SECTIONS.pivotalStart`. The companion player is built, cued, muted and parked 10.263 s before the cover and 45.789 s before the reveal. The bulletin is already on stage in the lore column. |
+| `bulletinStart` | 327.587 | 809 | Forty bars before the companion starts rolling. The seven-page bulletin opens against the build, so its full reading window is complete before the impact reveal. |
+| `companionPrearm` | 344.956 | 853 | `TRACK_ZERO_SECTIONS.pivotalStart`. The companion player is built, cued, muted and parked 10.263 s before the cover and 46.184 s before the reveal. The bulletin is already on stage in the lore column. |
 | `coverStart`, `collapseDayStart` | 355.219 | 879 | `DIRECTORS_CUT_FINALE_START` = `TRACK_ZERO_SECTIONS.bkEnd`. The ordinary schedule ends here and the Collapse day plate takes the frame. |
-| `companionPlayStart` | 390.745 | 969 | The companion starts rolling **hidden**, one measured beat of lead, so the reveal is never a cold frame. |
+| `companionPlayStart`, `bulletinEnd` | 390.745 | 969 | The companion starts rolling **hidden**, one measured beat of lead, so the reveal is never a cold frame. The bulletin clears on the same beat, leaving the impact window empty beside the player. |
 | `companionReveal` | 391.140 | 970 | The corner appears exactly as the source's measured impact cut lands. |
-| `companionEnd`, `bulletinEnd`, `collapseNightEnd`, `extinctionStart` | 408.137 | 1013 | `TRACK_ZERO_SECTIONS.finaleStart`, the Become Legend cue. The corner (black since 407.765) is parked and cleared, the bulletin is cleared, the night plate is fully up, and the first clause takes the empty frame. |
+| `companionEnd`, `collapseNightEnd`, `extinctionStart` | 408.137 | 1013 | `TRACK_ZERO_SECTIONS.finaleStart`, the Become Legend cue. The corner (black since 407.765) is parked and cleared, the night plate is fully up, and the first clause takes the empty frame. |
 | `extinctionFadeStart` | 412.433 | 1024 | 4.296 s of hold, while the music is still at full power. |
 | `extinctionEnd` | 413.617 | 1027 | 1.184 s of fade; the clause is completely gone. |
 | `survivalStart` | 414.407 | 1029 | 0.790 s of empty frame, so the two clauses are never on stage together. |
@@ -162,8 +163,8 @@ as `data-quote-source` rather than painted over the frame, and
 `src/tests/wolvesDirectorsCutFinale.test.ts` fails if the citation ever names
 *Cosmos*.
 
-The missing-scientist bulletin (`blue-universal-acquires-wayland-yutani`) keeps
-the window Task 6 gave it, 344.956-408.137, because that is exactly what its
-seven authored pages cost (59.5 s against 63.181 s available). Shortening it
-does not compress the pages — `affordablePageCount()` simply drops the ones that
-no longer fit, starting with the elegy and then the death reveal itself.
+The missing-scientist bulletin (`blue-universal-acquires-wayland-yutani`) owns
+327.587-390.745: 63.158 s for seven authored pages whose measured reading cost
+is 59.5 s. It starts before the finale pre-arm and is carried into the finale
+with the same elapsed clock, then clears on `companionPlayStart`; the impact and
+the closing quote therefore never inherit a stale news panel.

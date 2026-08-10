@@ -14,7 +14,7 @@
  *    plate turning from day to night across the barrage;
  * 2. carries the missing-scientist bulletin — already running in the lore
  *    column when the finale opens — on its own authored window, as a minor
- *    beat beside the main frame, and clears it on the Become Legend cue;
+ *    beat beside the main frame, and clears it before the companion reveal;
  * 3. drives the second authored Track 0 companion video (`PjryN2F6fF0`) in the
  *    corner, muted, cued and parked long before the audience sees it, revealed
  *    exactly as the source's measured asteroid-impact frame lands, and parked
@@ -403,8 +403,8 @@ onBeforeUnmount(async () => {
     </div>
 
     <!-- The minor beat: the missing-scientist bulletin, carried in from the
-         lore column on the same authored window so it never re-pages. It sits
-         opposite the corner video so the two never share frame space. -->
+         lore column on the same authored window so it never re-pages. It clears
+         before the corner video reveals, so the two never share frame space. -->
     <aside v-if="bulletinVisible" class="wc-dcf-bulletin" data-director-finale-bulletin>
       <WolvesLoreColumn
         :artifact-id="DIRECTORS_CUT_BULLETIN_ARTIFACT_ID"

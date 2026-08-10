@@ -308,10 +308,10 @@ try {
 
   // The final pre-finale window, twice, warm.
   //
-  // The Director's schedule ends on a 0.790s hold (two measured beats), and the
-  // reader will not swap a slide until its full-size image has fetched AND
-  // decoded. A window that short is where a materially late swap first becomes
-  // visible, and the very last one is the one the finale takes the frame from:
+  // The Director's schedule now keeps a four-measured-beat floor (about 1.58s
+  // at the fastest passage), and the reader will not swap a slide until its
+  // full-size image has fetched AND decoded. The last window is still the one
+  // the finale takes the frame from:
   // if it lands late, or is skipped entirely, the audience sees the previous
   // slide run into the cover.
   //

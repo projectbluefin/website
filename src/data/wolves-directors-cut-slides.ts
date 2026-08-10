@@ -40,8 +40,8 @@ import {
  *
  * Choosing it hands the Director finale the whole closing section (355.219s to
  * the end of the segment) — room to pre-arm and run the companion video,
- * cross-fade the Collapse artwork, clear the bulletin at
- * `DIRECTORS_CUT_BULLETIN_END` (the 408.137s Become Legend cue), and land both
+ * cross-fade the Collapse artwork, clear the bulletin at its own finale anchor,
+ * and land both
  * quote clauses and the terminal fade. `TRACK_ZERO_SECTIONS.finaleStart` was
  * the alternative and is far too late: it leaves under sixteen seconds for all
  * of that.
@@ -83,57 +83,67 @@ export interface DirectorsCutTrackZeroSection {
  * The previous 3/2-beat climax produced 0.79-second random-pool cuts: technically
  * on beat, but visually indistinguishable from an unpolished slideshow.
  *
- * Four beats is the floor: roughly 1.6 seconds at the track's fastest passage.
+ * Four beats is the floor: roughly 1.5 seconds at the track's fastest passage.
  * That is still a rapid montage, but a projected image has time to decode,
- * settle and register before the next cut.
+ * settle and register before the next cut — and it is exactly what the reader's
+ * preload depth can keep ahead of (see
+ * `TRACK_ZERO_SLIDE_MINIMUM_HOLD_SECONDS`).
+ *
+ * Every tier here is shorter than the standard show's for the same section (see
+ * `TRACK_ZERO_PRESENTATION_SECTIONS`) except where the standard has already
+ * reached that floor. The first cut of this table was *slower* than the
+ * standard show through the chorus, bridge and build — a Director's Cut whose
+ * pictures moved less than the cut it was supposed to intensify. Three sections
+ * therefore share the standard's four-beat short tier and win on the long tier
+ * instead: the Director's Cut spends far less of each section on its opening
+ * hold, which is what the audience reads as pace.
  *
  * The first tier is a target, not a ceiling: `trackZeroBeatCuts` adds each
  * section's leftover beats to its opening hold, so slide 0 of a section can run
- * a little longer than the tier says (the ambient intro opens on 14 beats, not
- * 12). That is the intended shape — the longest hold of the section is its
- * first.
+ * a little longer than the tier says. That is the intended shape — the longest
+ * hold of the section is its first.
  */
 export const DIRECTORS_CUT_TRACK_ZERO_SECTIONS: readonly DirectorsCutTrackZeroSection[] = [
   {
     id: 'ambientIntro',
     startTime: 0,
     endTime: TRACK_ZERO_SECTIONS.verseStart,
-    beatGroups: [16, 12],
+    beatGroups: [12, 8],
     pools: ['dayNight', 'showcase', 'people', 'cncf'],
   },
   {
     id: 'drivingVerse',
     startTime: TRACK_ZERO_SECTIONS.verseStart,
     endTime: TRACK_ZERO_SECTIONS.chorusStart,
-    beatGroups: [12, 8],
+    beatGroups: [10, 6],
     pools: ['showcase', 'dayNight', 'people', 'cncf'],
   },
   {
     id: 'contributorChorus',
     startTime: TRACK_ZERO_SECTIONS.chorusStart,
     endTime: TRACK_ZERO_SECTIONS.bridgeStart,
-    beatGroups: [10, 6],
+    beatGroups: [6, 4],
     pools: ['people', 'cncf', 'showcase'],
   },
   {
     id: 'chantingBridge',
     startTime: TRACK_ZERO_SECTIONS.bridgeStart,
     endTime: TRACK_ZERO_SECTIONS.buildStart,
-    beatGroups: [8, 6],
+    beatGroups: [5, 4],
     pools: ['people', 'cncf', 'showcase'],
   },
   {
     id: 'heavyBuild',
     startTime: TRACK_ZERO_SECTIONS.buildStart,
     endTime: TRACK_ZERO_SECTIONS.pivotalStart,
-    beatGroups: [6, 4],
+    beatGroups: [5, 4],
     pools: ['people', 'cncf', 'showcase'],
   },
   {
     id: 'soloClimax',
     startTime: TRACK_ZERO_SECTIONS.pivotalStart,
     endTime: DIRECTORS_CUT_FINALE_START,
-    beatGroups: [6, 4],
+    beatGroups: [5, 4],
     pools: ['people', 'cncf', 'showcase'],
   },
 ] as const
@@ -335,8 +345,15 @@ export function buildDirectorsCutTrackZeroSlides<T extends DirectorsCutSlideSour
   }
 
   // Pass 2: repair the seams between pools, which each pool's own cycle cannot
-  // see. Order-preserving everywhere else, so the pacing plan below is intact.
-  const separated = separateAdjacentEvents(ordered)
+  // see. Fenced at the section boundaries drawn above: an unfenced swap fixes
+  // the seam in the list while moving a photo into a section it was never drawn
+  // for, which is how a day/night wallpaper ends up in the climax montage.
+  const sectionStarts: number[] = []
+  sectionDraws.reduce((start, { count }) => {
+    sectionStarts.push(start)
+    return start + count
+  }, 0)
+  const separated = separateAdjacentEvents(ordered, sectionStarts)
 
   // Pass 3: hand each section its measured cuts.
   const schedule: DirectorsCutTimelineSlide<T>[] = []

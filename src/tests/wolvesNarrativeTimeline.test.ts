@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { estimatePageSeconds } from '../components/wolves/lore/lore-pages'
+import { DIRECTORS_CUT_FINALE_ANCHORS } from '../data/wolves-directors-cut-finale'
 import {
   DIRECTORS_CUT_BULLETIN_ARTIFACT_ID,
   DIRECTORS_CUT_QUOTE_IDS,
+  DIRECTORS_CUT_QUOTE_MAX_HOLD_RATIO,
   getDirectorsCutNarrativeSlotForTime,
   wolvesDirectorsCutNarrativeTimeline,
 } from '../data/wolves-directors-cut-timeline'
@@ -13,7 +15,19 @@ import {
   lockedNarrativeSlots,
   wolvesNarrativeTimeline,
 } from '../data/wolves-narrative-timeline'
-import { TRACK_ZERO_SECTIONS } from '../data/wolves-track-zero-beats'
+import { TRACK_ZERO_BEAT_TIMES, TRACK_ZERO_SECTIONS } from '../data/wolves-track-zero-beats'
+
+const loreRecordsById = new Map(loadAllLoreRecords().map(record => [record.id, record] as const))
+
+/** What a scheduled record costs to read, measured the way the renderer pages it. */
+function readCost(artifactId: string): number {
+  const record = loreRecordsById.get(artifactId)!
+  return estimateLoreReadDuration({
+    kind: record.kind === 'quote' ? 'quote' : 'prose',
+    body: record.body,
+    attribution: record.metadata.attribution,
+  })
+}
 
 describe('wolves narrative timeline', () => {
   it('contains every visible release artifact exactly once', () => {
@@ -203,57 +217,104 @@ describe('wolves director\'s cut narrative timeline', () => {
   })
 
   it('holds every record for at least its full estimateLoreReadDuration() cost', () => {
-    const records = new Map(loadAllLoreRecords().map(record => [record.id, record] as const))
+    for (const slot of wolvesDirectorsCutNarrativeTimeline) {
+      expect(slot.endTime - slot.startTime, slot.artifactId).toBeGreaterThanOrEqual(readCost(slot.artifactId) - 1e-8)
+    }
+  })
+
+  // The first cut of this timeline spent the whole song on nine one-line
+  // quotes, which gave each of them a 34-48 second near-static hold: six
+  // seconds of reading and half a minute of staring at it. A hold that long
+  // is not emphasis, it is a stall, and it is what made the picture edit
+  // underneath look like the only thing moving.
+  it('never holds a quote past two and a half times its own reading cost', () => {
+    for (const slot of wolvesDirectorsCutNarrativeTimeline) {
+      const ratio = (slot.endTime - slot.startTime) / readCost(slot.artifactId)
+      expect(ratio, `${slot.artifactId} holds ${ratio.toFixed(2)}x its reading cost`)
+        .toBeLessThanOrEqual(DIRECTORS_CUT_QUOTE_MAX_HOLD_RATIO + 1e-8)
+    }
+  })
+
+  // Nothing in this cut may cut anywhere but on the music. Every boundary is
+  // either the song's own origin, an authored section mark, or an exact entry
+  // of the measured beat grid.
+  it('lands every quote boundary on a named musical mark or a measured beat', () => {
+    const namedMarks = new Set<number>([0, ...Object.values(TRACK_ZERO_SECTIONS)])
+    const onGrid = (time: number) => TRACK_ZERO_BEAT_TIMES.some(beat => Math.abs(beat - time) < 5e-4)
 
     for (const slot of wolvesDirectorsCutNarrativeTimeline) {
-      const record = records.get(slot.artifactId)!
-      const ideal = estimateLoreReadDuration({
-        kind: record.kind === 'quote' ? 'quote' : 'prose',
-        body: record.body,
-        attribution: record.metadata.attribution,
-      })
-
-      expect(slot.endTime - slot.startTime, slot.artifactId).toBeGreaterThanOrEqual(ideal - 1e-8)
+      expect(namedMarks.has(slot.startTime) || onGrid(slot.startTime), `${slot.artifactId} starts off the grid at ${slot.startTime}`).toBe(true)
+      expect(namedMarks.has(slot.endTime) || onGrid(slot.endTime), `${slot.artifactId} ends off the grid at ${slot.endTime}`).toBe(true)
     }
   })
 
-  it('derives quote windows from approved musical sections rather than equal slices', () => {
-    const durations = wolvesDirectorsCutNarrativeTimeline.map(slot => slot.endTime - slot.startTime)
-    const distinctDurations = new Set(durations.map(duration => duration.toFixed(3)))
+  it('opens each authored quote window on its own named musical mark', () => {
+    const openings = new Set(wolvesDirectorsCutNarrativeTimeline.map(slot => slot.startTime))
 
-    // An equal-slice scheduler would give every quote an identical share of the
-    // range; the section-derived allocator does not.
-    expect(distinctDurations.size).toBeGreaterThan(1)
+    for (const mark of [0, TRACK_ZERO_SECTIONS.verseStart, TRACK_ZERO_SECTIONS.chorusStart, TRACK_ZERO_SECTIONS.bridgeStart, TRACK_ZERO_SECTIONS.buildStart]) {
+      expect(openings.has(mark), `no quote opens the window at ${mark}`).toBe(true)
+    }
   })
 
-  it('places the missing-scientist bulletin last, in an early-finale window at least its full reading cost', () => {
+  // Nine sourced quotes, none compressed, split, or invented. The panel only
+  // survives because every one of them fits a measured window; where the music
+  // has more room than the words need, the frame is deliberately given back to
+  // the picture edit instead of stretching a quote across it.
+  it('leaves the surplus as image-only musical intervals rather than stretching a quote', () => {
+    const quotes = wolvesDirectorsCutNarrativeTimeline.filter(slot => slot.artifactId !== DIRECTORS_CUT_BULLETIN_ARTIFACT_ID)
+    const gaps = quotes.slice(1).map((slot, index) => slot.startTime - quotes[index]!.endTime)
+
+    expect(quotes).toHaveLength(DIRECTORS_CUT_QUOTE_IDS.length)
+    expect(gaps.every(gap => gap > 0), 'the quote panel is still wall-to-wall').toBe(true)
+    for (const time of [DIRECTORS_CUT_QUOTE_IDS.length > 0 ? quotes[0]!.endTime + 0.5 : 0]) {
+      expect(getDirectorsCutNarrativeSlotForTime(time), `${time}s should be image-only`).toBeNull()
+    }
+  })
+
+  it('places the missing-scientist bulletin on the finale\'s own bulletin window, at its full reading cost', () => {
     const bulletinSlot = wolvesDirectorsCutNarrativeTimeline[wolvesDirectorsCutNarrativeTimeline.length - 1]!
-    const bulletinRecord = loadAllLoreRecords().find(record => record.id === DIRECTORS_CUT_BULLETIN_ARTIFACT_ID)!
-    const idealBulletinDuration = estimateLoreReadDuration({ kind: 'prose', body: bulletinRecord.body })
 
     expect(bulletinSlot.artifactId).toBe(DIRECTORS_CUT_BULLETIN_ARTIFACT_ID)
-    expect(bulletinSlot.endTime).toBe(TRACK_ZERO_SECTIONS.finaleStart)
-    expect(bulletinSlot.startTime).toBeLessThan(TRACK_ZERO_SECTIONS.finaleStart)
-    expect(bulletinSlot.startTime).toBeGreaterThanOrEqual(TRACK_ZERO_SECTIONS.buildStart)
-    expect(bulletinSlot.endTime - bulletinSlot.startTime).toBeGreaterThanOrEqual(idealBulletinDuration - 1e-8)
+    expect(bulletinSlot.startTime).toBe(DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart)
+    expect(bulletinSlot.endTime).toBe(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
+    expect(bulletinSlot.endTime - bulletinSlot.startTime)
+      .toBeGreaterThanOrEqual(readCost(DIRECTORS_CUT_BULLETIN_ARTIFACT_ID) - 1e-8)
   })
 
-  it('keeps the full quote-and-bulletin timeline contiguous from the opening beat to the finale beat', () => {
-    expect(wolvesDirectorsCutNarrativeTimeline[0]?.startTime).toBe(0)
+  // The bulletin used to run to the Become Legend cue, which put a seven-page
+  // news transcript on stage across the asteroid impact and straight into the
+  // first Sagan clause. It now begins earlier and is gone before the corner
+  // opens, so the impact has the frame to itself.
+  it('starts the bulletin earlier and clears it before the companion impact reveal', () => {
+    const bulletinSlot = wolvesDirectorsCutNarrativeTimeline[wolvesDirectorsCutNarrativeTimeline.length - 1]!
+
+    expect(bulletinSlot.startTime).toBeLessThan(TRACK_ZERO_SECTIONS.pivotalStart)
+    expect(bulletinSlot.startTime).toBeGreaterThan(TRACK_ZERO_SECTIONS.buildStart)
+    expect(bulletinSlot.endTime).toBeLessThanOrEqual(DIRECTORS_CUT_FINALE_ANCHORS.companionPlayStart)
+    expect(bulletinSlot.endTime).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    expect(bulletinSlot.endTime).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart)
+  })
+
+  it('never overlaps two records, and never runs past the finale\'s own bulletin window', () => {
     for (const [index, slot] of wolvesDirectorsCutNarrativeTimeline.entries()) {
-      if (index === 0) {
-        continue
+      expect(slot.endTime, slot.artifactId).toBeGreaterThan(slot.startTime)
+      if (index > 0) {
+        expect(slot.startTime, slot.artifactId)
+          .toBeGreaterThanOrEqual(wolvesDirectorsCutNarrativeTimeline[index - 1]!.endTime)
       }
-      expect(slot.startTime).toBeCloseTo(wolvesDirectorsCutNarrativeTimeline[index - 1]!.endTime, 8)
     }
+    expect(wolvesDirectorsCutNarrativeTimeline[0]?.startTime).toBe(0)
     expect(wolvesDirectorsCutNarrativeTimeline[wolvesDirectorsCutNarrativeTimeline.length - 1]?.endTime)
-      .toBe(TRACK_ZERO_SECTIONS.finaleStart)
+      .toBe(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
   })
 
-  it('resolves the correct slot for a given elapsed time, holding the bulletin at and after the finale beat', () => {
-    expect(getDirectorsCutNarrativeSlotForTime(0).artifactId).toBe(DIRECTORS_CUT_QUOTE_IDS[0])
-    expect(getDirectorsCutNarrativeSlotForTime(TRACK_ZERO_SECTIONS.finaleStart).artifactId)
+  it('resolves the record on stage for a given clock reading, and nothing at all outside one', () => {
+    expect(getDirectorsCutNarrativeSlotForTime(0)?.artifactId).toBe(DIRECTORS_CUT_QUOTE_IDS[0])
+    expect(getDirectorsCutNarrativeSlotForTime(DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart)?.artifactId)
       .toBe(DIRECTORS_CUT_BULLETIN_ARTIFACT_ID)
-    expect(getDirectorsCutNarrativeSlotForTime(1_000).artifactId).toBe(DIRECTORS_CUT_BULLETIN_ARTIFACT_ID)
+    // The finale owns every second after the bulletin clears; the lore column
+    // must not be still holding a stale record underneath it.
+    expect(getDirectorsCutNarrativeSlotForTime(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)).toBeNull()
+    expect(getDirectorsCutNarrativeSlotForTime(1_000)).toBeNull()
   })
 })

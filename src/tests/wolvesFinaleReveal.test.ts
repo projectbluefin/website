@@ -186,13 +186,14 @@ describe('finale reveal', () => {
       expect(revealTimes[revealTimes.length - 1]!).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
     })
 
-    it('lands the elegy page against the first quote clause', () => {
+    it('lands the elegy page before the impact reveal, not against the first quote clause', () => {
       const record = loadAllLoreRecords().find(entry => entry.id === FINAL_ID)!
       const pages = loreProsePages(record.body)
       const last = directorPageAt(directorSlot.endTime - 0.1)
       expect(last).toBe(pages[pages.length - 1])
       expect(last).toContain('truly a great loss for humanity')
-      expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBe(DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart)
+      expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart)
+      expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
     })
   })
 })

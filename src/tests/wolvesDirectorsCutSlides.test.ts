@@ -6,12 +6,16 @@ import {
   DIRECTORS_CUT_FINALE_START,
   DIRECTORS_CUT_RESERVED_FINALE_INTERVAL,
   DIRECTORS_CUT_TRACK_ZERO_SECTIONS,
+  directorsCutSectionSlideCount,
 } from '../data/wolves-directors-cut-slides'
 import { getWolvesGalleryEventKey } from '../data/wolves-gallery-cycle'
+import { TRACK_ZERO_SLIDE_MINIMUM_HOLD_SECONDS } from '../data/wolves-slide-preload'
 import {
   TRACK_ZERO_BEAT_TIMES,
   TRACK_ZERO_SECTIONS,
+  TRACK_ZERO_SHORTEST_BEAT_SECONDS,
   TRACK_ZERO_TEMPO_PICKUPS,
+  trackZeroBeatCuts,
 } from '../data/wolves-track-zero-beats'
 import { TRACK_ZERO_PRESENTATION_SECTIONS } from '../data/wolves-track-zero-manifest'
 import {
@@ -104,6 +108,30 @@ function buildSchedule(overrides: Partial<Parameters<typeof buildDirectorsCutTra
 }
 
 const schedule = buildSchedule()
+
+const mean = (values: readonly number[]) => values.reduce((sum, value) => sum + value, 0) / values.length
+
+/** Every hold the built schedule gives one authored Director's Cut section. */
+function sectionHolds(
+  built: readonly { startTime: number, endTime: number, duration: number }[],
+  section: { startTime: number, endTime: number },
+): number[] {
+  return built
+    .filter(slide => slide.startTime >= section.startTime && slide.endTime <= section.endTime)
+    .map(slide => slide.duration)
+}
+
+/**
+ * The holds the *standard* cut's pacing table produces over the same window,
+ * built through the same measured-beat helper the reader uses. This is the
+ * baseline the Director's Cut has to beat; without it, "frantic" is a doc
+ * comment rather than a measurement.
+ */
+function standardHolds(startTime: number, endTime: number, beatGroups: readonly number[]): number[] {
+  const count = directorsCutSectionSlideCount(startTime, endTime, beatGroups)
+  const cuts = trackZeroBeatCuts(startTime, endTime, count, beatGroups)
+  return cuts.map((cut, index) => cut - (index === 0 ? startTime : cuts[index - 1]!))
+}
 
 describe('director\'s cut finale boundary', () => {
   it('reserves the measured 5:55 finale pickup, not an invented round timestamp', () => {
@@ -258,11 +286,71 @@ describe('director\'s cut track zero slide schedule', () => {
     expect(last.endTime).toBe(DIRECTORS_CUT_FINALE_START)
   })
 
+  // The Director's Cut only earns its name if the pictures are visibly moving
+  // faster than the standard show's. The first cut's phrase groups were
+  // *longer* than the standard's in three of six sections, which made "frantic"
+  // a claim in a doc comment rather than a property of the edit.
+  //
+  // Compared at schedule level, not tier by tier: three standard sections
+  // already tighten to a four-beat phrase, and four beats is the readable floor
+  // for a projected image, so the Director's Cut cannot beat them by going
+  // shorter there. It beats them by spending far less of each section on its
+  // long tier.
+  it('runs visibly faster than the standard cut in every shared section', () => {
+    for (const section of DIRECTORS_CUT_TRACK_ZERO_SECTIONS) {
+      const standard = TRACK_ZERO_PRESENTATION_SECTIONS[section.id as keyof typeof TRACK_ZERO_PRESENTATION_SECTIONS]
+      if (!standard || !('beatGroups' in standard)) {
+        continue
+      }
+
+      const director = sectionHolds(schedule, section)
+      const reference = standardHolds(section.startTime, section.endTime, standard.beatGroups)
+
+      expect(mean(director), `${section.id} mean hold`).toBeLessThan(mean(reference))
+      expect(Math.max(...director), `${section.id} longest hold`).toBeLessThan(Math.max(...reference))
+      expect(director.length, `${section.id} slide count`).toBeGreaterThan(reference.length)
+    }
+  })
+
+  // The standard show freezes two images across the pivotal and bketelsen
+  // anchors — 5.526s and 4.737s of held frame. The Director's Cut has no
+  // freezes at all: it is still cutting when the finale takes the frame.
+  it('replaces the standard cut\'s two climax freezes with a running montage', () => {
+    const climax = DIRECTORS_CUT_TRACK_ZERO_SECTIONS[DIRECTORS_CUT_TRACK_ZERO_SECTIONS.length - 1]
+    expect(climax.id).toBe('soloClimax')
+
+    const holds = sectionHolds(schedule, climax)
+    const standardFreezes = [
+      TRACK_ZERO_SECTIONS.pivotalEnd - TRACK_ZERO_SECTIONS.pivotalStart,
+      TRACK_ZERO_SECTIONS.bkEnd - TRACK_ZERO_SECTIONS.pivotalEnd,
+    ]
+
+    expect(holds.length).toBeGreaterThan(standardFreezes.length)
+    expect(Math.max(...holds)).toBeLessThan(Math.min(...standardFreezes))
+  })
+
+  it('tightens monotonically from the opening hold to the climax', () => {
+    const sectionMeans = DIRECTORS_CUT_TRACK_ZERO_SECTIONS.map(section => mean(sectionHolds(schedule, section)))
+
+    for (const [index, sectionMean] of sectionMeans.entries()) {
+      if (index === 0) {
+        continue
+      }
+      expect(sectionMean, `${DIRECTORS_CUT_TRACK_ZERO_SECTIONS[index].id} is not tighter than the section before it`)
+        .toBeLessThanOrEqual(sectionMeans[index - 1]!)
+    }
+  })
+
   it('keeps every hold long enough for the decode-aware preload lead to cover it', () => {
     // Sub-second cuts read as a random slideshow and leave too little time for
-    // a projector image to decode, settle and be understood.
+    // a projector image to decode, settle and be understood. The floor is not a
+    // taste call: it is what the reader's own preload window divided by its
+    // lookahead depth can actually keep ahead of.
     const shortest = Math.min(...schedule.map(slide => slide.duration))
-    expect(shortest).toBeGreaterThanOrEqual(1.5)
+    expect(shortest).toBeGreaterThanOrEqual(TRACK_ZERO_SLIDE_MINIMUM_HOLD_SECONDS)
+    // Four measured beats at the track's fastest passage. Derived from the grid
+    // rather than typed in, so a re-measured beat table moves it.
+    expect(shortest).toBeGreaterThanOrEqual(4 * TRACK_ZERO_SHORTEST_BEAT_SECONDS)
   })
 
   it('preserves source and credit metadata verbatim', () => {

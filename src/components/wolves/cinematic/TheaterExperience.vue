@@ -25,15 +25,21 @@ const time = computed(() => store.nativeTime)
 // rather than the standard show's seven-part clock. Reading `getNarrativeSlotForTime()`
 // unconditionally here resolved every Director's Cut clock reading against the standard show's
 // schedule instead — the authored panel was fully built and tested but never reached live.
+//
+// That timeline also returns null, on purpose: the intervals between quotes and
+// everything after the bulletin clears are authored image-only frames. Falling
+// back to the last slot there would leave a stale quote on stage under the
+// impact reveal, so a null slot renders an empty column instead.
 const displayedNarrativeSlot = computed(() =>
   store.presentationProfile === WOLVES_DIRECTORS_CUT_PROFILE_ID
     ? getDirectorsCutNarrativeSlotForTime(time.value)
     : getNarrativeSlotForTime(time.value),
 )
-const slotDuration = computed(() => Math.max(1, displayedNarrativeSlot.value.endTime - displayedNarrativeSlot.value.startTime))
+const displayedArtifactId = computed(() => displayedNarrativeSlot.value?.artifactId ?? '')
+const slotDuration = computed(() => Math.max(1, (displayedNarrativeSlot.value?.endTime ?? 0) - (displayedNarrativeSlot.value?.startTime ?? 0)))
 const slotElapsed = computed(() => Math.min(
   slotDuration.value,
-  Math.max(0, time.value - displayedNarrativeSlot.value.startTime),
+  Math.max(0, time.value - (displayedNarrativeSlot.value?.startTime ?? 0)),
 ))
 const isTrackZero = computed(() => store.segment.trackZeroExperience === true)
 const isWolvesPresentation = computed(() => store.isWolvesPresentation)
@@ -292,7 +298,7 @@ onBeforeUnmount(() => {
       <aside v-if="isTrackZero" class="wc-trackzero-lore immersive-col-right">
         <div class="wc-trackzero-lore-row">
           <WolvesLoreColumn
-            :artifact-id="displayedNarrativeSlot.artifactId"
+            :artifact-id="displayedArtifactId"
             :duration="slotDuration"
             :elapsed="slotElapsed"
             :warning="thesis.warning"

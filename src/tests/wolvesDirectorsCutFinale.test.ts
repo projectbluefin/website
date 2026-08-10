@@ -79,10 +79,16 @@ describe('director\'s cut finale anchors', () => {
   it('carries the missing-scientist bulletin in from its earlier lore window', () => {
     expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart).toBe(DIRECTORS_CUT_BULLETIN_START)
     expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBe(DIRECTORS_CUT_BULLETIN_END)
-    // The bulletin opens before the finale cover and is cleared by it, so the
-    // record is never re-timed and never re-pages when the frame changes hands.
+    // The bulletin opens before the finale cover and is cleared on its own
+    // companion-play anchor, so the record is never re-timed or re-paged when
+    // the frame changes hands.
     expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.coverStart)
-    expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBe(DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart)
+    // Seven pages of news transcript are gone before the asteroid arrives. The
+    // bulletin used to run to the Become Legend cue, which paged a transcript
+    // across the impact reveal and handed the frame to the first Sagan clause
+    // with the column still full.
+    expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBe(DIRECTORS_CUT_FINALE_ANCHORS.companionPlayStart)
+    expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
   })
 
   it('clears the bulletin before the first quote clause is shown', () => {

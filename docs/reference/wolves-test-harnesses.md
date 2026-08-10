@@ -286,10 +286,11 @@ measure the taker, not the absence of change in the taken.
 
 ## Measuring a swap needs a warm cache and a budget
 
-The Director's schedule ends on a 0.790 s hold, and the reader will not swap a
-slide until its full-size image has fetched **and** decoded. Whether the last
-pre-finale window lands on time is therefore a real, load-dependent question —
-and a cold-cache measurement answers a different one (how fast is the network).
+The Director's schedule keeps a four-measured-beat floor (about 1.58 s at the
+fastest passage), and the reader will not swap a slide until its full-size image
+has fetched **and** decoded. Whether the last pre-finale window lands on time is
+therefore a real, load-dependent question — and a cold-cache measurement
+answers a different one (how fast is the network).
 
 `wolves-directors-cut-slides.mjs` seeks that window once to warm it, then seeks
 it again and polls until the expected image is on stage at full opacity,

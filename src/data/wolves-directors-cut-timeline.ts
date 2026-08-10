@@ -15,9 +15,10 @@
  */
 
 import type { LoreTimingInput } from './wolves-lore-timing'
+import { DIRECTORS_CUT_FINALE_ANCHORS } from './wolves-directors-cut-finale'
 import { loadAllLoreRecords } from './wolves-lore-records'
-import { allocateLoreSlots } from './wolves-lore-timing'
-import { TRACK_ZERO_SECTIONS } from './wolves-track-zero-beats'
+import { estimateLoreReadDuration } from './wolves-lore-timing'
+import { TRACK_ZERO_SECTIONS, trackZeroBeatAtOrAfter, trackZeroBeatAtOrBefore } from './wolves-track-zero-beats'
 
 /**
  * The finale's own named anchors — companion-video pre-arm, reveal and park,
@@ -99,11 +100,14 @@ export const DIRECTORS_CUT_QUOTE_IDS = [
 export const DIRECTORS_CUT_BULLETIN_ARTIFACT_ID = 'blue-universal-acquires-wayland-yutani' as const
 
 /**
- * Measured Track 0 marks the quote panel is allowed to cut on. The pivotal
- * freeze and bketelsen freeze (344.956-355.219, see TRACK_ZERO_SECTIONS) are
- * each shorter than PAGE_MINIMUM_SECONDS, too brief to hold even one quote's
- * floor, so no cut is placed inside that pair; the quote side of the
- * timeline ends at pivotalStart instead.
+ * Measured Track 0 marks the quote panel opens windows on. Each window's first
+ * quote lands exactly on its mark, so every entrance is a musical event and not
+ * a division of the runtime.
+ *
+ * The panel stops at the bulletin: the pivotal freeze and bketelsen freeze
+ * (344.956-355.219, see TRACK_ZERO_SECTIONS) are each shorter than
+ * PAGE_MINIMUM_SECONDS, too brief to hold even one quote's floor, and the
+ * finale owns everything past them.
  */
 const DIRECTORS_CUT_QUOTE_SECTION_MARKS = [
   0,
@@ -111,16 +115,30 @@ const DIRECTORS_CUT_QUOTE_SECTION_MARKS = [
   TRACK_ZERO_SECTIONS.chorusStart,
   TRACK_ZERO_SECTIONS.bridgeStart,
   TRACK_ZERO_SECTIONS.buildStart,
-  TRACK_ZERO_SECTIONS.pivotalStart,
+  DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart,
 ] as const
 
 /**
- * The bulletin's own early-finale window: the pivotal freeze through the
- * finale beat. Ends exactly at finaleStart so Task 8's finale cleanly owns
- * every second from there on; this file never schedules anything past it.
+ * The longest a record may stay on stage, as a multiple of what it costs to
+ * read.
+ *
+ * A one-line quote costs about six seconds. The first cut of this timeline
+ * divided the whole song between nine of them, which handed each one a 34-48
+ * second hold: six seconds of reading and then half a minute of a dead panel.
+ * At 2.5x the words are up long enough to be read twice from the back row and
+ * then get out of the way. Where a window has more room than that, the surplus
+ * goes to the picture edit as a deliberate image-only interval — quotes are
+ * never stretched to fill, and never split to fit.
  */
-export const DIRECTORS_CUT_BULLETIN_START: number = TRACK_ZERO_SECTIONS.pivotalStart
-export const DIRECTORS_CUT_BULLETIN_END: number = TRACK_ZERO_SECTIONS.finaleStart
+export const DIRECTORS_CUT_QUOTE_MAX_HOLD_RATIO = 2.5
+
+/**
+ * The bulletin's own window, owned by the finale module because the finale is
+ * what has to keep the frame clear around it. Re-exported here so callers that
+ * already read this module's schedule do not need a second import.
+ */
+export const DIRECTORS_CUT_BULLETIN_START: number = DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart
+export const DIRECTORS_CUT_BULLETIN_END: number = DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd
 
 const recordsById = new Map(loadAllLoreRecords().map(record => [record.id, record] as const))
 
@@ -169,9 +187,33 @@ function proportionalCounts(total: number, weights: readonly number[]): number[]
   return base
 }
 
-function allocateRange(ids: readonly string[], startTime: number, endTime: number): DirectorsCutNarrativeSlot[] {
-  return allocateLoreSlots(ids.map(timingInput), startTime, endTime)
-    .map(slot => ({ artifactId: slot.id, startTime: slot.startTime, endTime: slot.endTime }))
+/**
+ * Give each quote in a window a beat-anchored entrance and a hold capped at
+ * `DIRECTORS_CUT_QUOTE_MAX_HOLD_RATIO` times its reading cost.
+ *
+ * The window's own first quote takes the named mark exactly; the rest enter on
+ * the measured beat nearest their even share of the window, so successive
+ * quotes are spaced by the music rather than butted end to end. Every hold ends
+ * on a measured beat, never on the arithmetic limit itself.
+ */
+function scheduleQuoteWindow(ids: readonly string[], windowStart: number, windowEnd: number): DirectorsCutNarrativeSlot[] {
+  const share = (windowEnd - windowStart) / Math.max(1, ids.length)
+
+  return ids.map((id, index) => {
+    const idealStart = windowStart + index * share
+    // Window 0 opens at the song's origin, which is 0.139s before the first
+    // measured beat: the panel is up as the track starts, not after it.
+    const startTime = index === 0 ? windowStart : trackZeroBeatAtOrAfter(idealStart)
+    const readCost = estimateLoreReadDuration(timingInput(id))
+    const latestEnd = Math.min(startTime + readCost * DIRECTORS_CUT_QUOTE_MAX_HOLD_RATIO, windowEnd)
+    const endTime = trackZeroBeatAtOrBefore(latestEnd)
+
+    if (endTime - startTime < readCost - 1e-8) {
+      throw new Error(`Director's Cut quote "${id}" is scheduled ${(endTime - startTime).toFixed(3)}s, below its ${readCost.toFixed(3)}s reading cost`)
+    }
+
+    return { artifactId: id, startTime, endTime }
+  })
 }
 
 const quoteWindows = DIRECTORS_CUT_QUOTE_SECTION_MARKS
@@ -191,12 +233,26 @@ const quoteGroupsByWindow: string[][] = []
 }
 
 export const wolvesDirectorsCutNarrativeTimeline: readonly DirectorsCutNarrativeSlot[] = [
-  ...quoteWindows.flatMap(([start, end], index) => allocateRange(quoteGroupsByWindow[index]!, start, end)),
-  ...allocateRange([DIRECTORS_CUT_BULLETIN_ARTIFACT_ID], DIRECTORS_CUT_BULLETIN_START, DIRECTORS_CUT_BULLETIN_END),
+  ...quoteWindows.flatMap(([start, end], index) => scheduleQuoteWindow(quoteGroupsByWindow[index]!, start, end)),
+  {
+    artifactId: DIRECTORS_CUT_BULLETIN_ARTIFACT_ID,
+    startTime: DIRECTORS_CUT_BULLETIN_START,
+    endTime: DIRECTORS_CUT_BULLETIN_END,
+  },
 ]
 
-export function getDirectorsCutNarrativeSlotForTime(time: number): DirectorsCutNarrativeSlot {
+/**
+ * The record on stage at `time`, or `null` when the frame belongs to the
+ * picture edit alone.
+ *
+ * Null is a scheduled state, not a miss: the gaps between quotes are authored
+ * image-only intervals, and everything after the bulletin clears belongs to the
+ * finale. A caller that treats null as "keep showing the last record" puts a
+ * stale quote under the impact reveal.
+ */
+export function getDirectorsCutNarrativeSlotForTime(time: number): DirectorsCutNarrativeSlot | null {
   const normalizedTime = Math.max(0, time)
-  return wolvesDirectorsCutNarrativeTimeline.find(slot => normalizedTime < slot.endTime)
-    ?? wolvesDirectorsCutNarrativeTimeline[wolvesDirectorsCutNarrativeTimeline.length - 1]!
+  return wolvesDirectorsCutNarrativeTimeline
+    .find(slot => normalizedTime >= slot.startTime && normalizedTime < slot.endTime)
+    ?? null
 }

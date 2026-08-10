@@ -80,6 +80,23 @@ export const DIRECTORS_CUT_COMPANION_DRIFT_INTERVAL_S = 2
 const beat = (index: number): number => TRACK_ZERO_BEAT_TIMES[index]!
 
 /**
+ * Measured beats the missing-scientist bulletin is given.
+ *
+ * The bulletin is a seven-page news transcript and costs 59.5 s to read at the
+ * theater's page pace, so its window is authored as a beat count rather than a
+ * timestamp: forty bars of four, ending on the beat the companion video starts
+ * rolling. That is 63.158 s — the reading cost with room to spare, and not one
+ * second of it overlaps the asteroid impact.
+ *
+ * It used to run to the Become Legend cue, which left a paging transcript on
+ * stage across the impact reveal and straight into the first Sagan clause.
+ * Beginning it forty bars earlier buys the same reading time out of the build
+ * instead of out of the finale's own beats.
+ */
+const BULLETIN_END_BEAT_INDEX = 969
+const BULLETIN_BEATS = 160
+
+/**
  * Every named show-clock anchor of the Director's Cut finale, in seconds on the
  * Track 0 timeline. Each one is an exact entry of `TRACK_ZERO_BEAT_TIMES`.
  *
@@ -88,21 +105,23 @@ const beat = (index: number): number => TRACK_ZERO_BEAT_TIMES[index]!
  *   on its measured lead frame. 10.263 s before the cover, 45.789 s before the
  *   reveal: a cold IFrame API load plus a cue has to be over before anyone
  *   sees the corner.
- * - `bulletinStart` (beat 853) — the missing-scientist bulletin is already on
- *   stage in the lore column when the finale opens; the finale carries the
- *   same record on the same window so it never re-pages.
+ * - `bulletinStart` (beat 809) — the missing-scientist bulletin opens forty
+ *   bars before the finale, so its seven pages are read against the build
+ *   rather than across the impact. See `BULLETIN_BEATS` above.
  * - `coverStart` / `collapseDayStart` (beat 879, = `DIRECTORS_CUT_FINALE_START`)
  *   — the finale covers the ordinary slide schedule for good, and the Collapse
  *   day plate takes the main frame.
- * - `companionPlayStart` (beat 969) — the companion starts rolling while still
- *   hidden, one measured beat of lead so the reveal is never a cold frame.
+ * - `companionPlayStart` / `bulletinEnd` (beat 969) — the companion starts
+ *   rolling while still hidden, one measured beat of lead so the reveal is
+ *   never a cold frame; the bulletin's last page clears on the same beat, so
+ *   the impact reveal opens into an empty lore column.
  * - `companionReveal` (beat 970) — the corner appears exactly as the source's
  *   measured impact cut (252.917) lands.
- * - `companionEnd` / `bulletinEnd` / `collapseNightEnd` / `extinctionStart`
+ * - `companionEnd` / `collapseNightEnd` / `extinctionStart`
  *   (beat 1013, = `TRACK_ZERO_SECTIONS.finaleStart`) — the Become Legend cue.
  *   The corner (already on the source's own black since 407.765) is parked and
- *   cleared, the bulletin is cleared, the Collapse night plate is fully up, and
- *   the first quote clause takes the empty frame.
+ *   cleared, the Collapse night plate is fully up, and the first quote clause
+ *   takes the empty frame.
  * - `extinctionFadeStart` (beat 1024) / `extinctionEnd` (beat 1027) — the first
  *   clause holds 4.296 s and then fades out over 1.184 s.
  * - `survivalStart` (beat 1029) — 0.790 s of empty frame guarantees the two
@@ -114,14 +133,14 @@ const beat = (index: number): number => TRACK_ZERO_BEAT_TIMES[index]!
  *   the final 0.3 s the transport does not publish.
  */
 export const DIRECTORS_CUT_FINALE_ANCHORS = {
+  bulletinStart: beat(BULLETIN_END_BEAT_INDEX - BULLETIN_BEATS),
   companionPrearm: beat(853),
-  bulletinStart: beat(853),
   coverStart: beat(879),
   collapseDayStart: beat(879),
   companionPlayStart: beat(969),
+  bulletinEnd: beat(BULLETIN_END_BEAT_INDEX),
   companionReveal: beat(970),
   companionEnd: beat(1013),
-  bulletinEnd: beat(1013),
   collapseNightEnd: beat(1013),
   extinctionStart: beat(1013),
   extinctionFadeStart: beat(1024),
@@ -139,14 +158,14 @@ export type DirectorsCutFinaleAnchor = keyof typeof DIRECTORS_CUT_FINALE_ANCHORS
  * this list is what pins that the coincidences are the authored ones.
  */
 export const DIRECTORS_CUT_FINALE_ANCHOR_ORDER: readonly DirectorsCutFinaleAnchor[] = [
-  'companionPrearm',
   'bulletinStart',
+  'companionPrearm',
   'coverStart',
   'collapseDayStart',
   'companionPlayStart',
+  'bulletinEnd',
   'companionReveal',
   'companionEnd',
-  'bulletinEnd',
   'collapseNightEnd',
   'extinctionStart',
   'extinctionFadeStart',

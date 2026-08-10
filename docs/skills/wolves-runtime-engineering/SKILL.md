@@ -6,8 +6,6 @@ metadata:
     - https://developer.mozilla.org/en-US/docs/Web/CSS/text-wrap (text-wrap balance six-line cap)
   context7-sources:
     - /websites/developers_google_youtube
-  context7-sources:
-    - /websites/developers_google_youtube
 ---
 
 # Wolves runtime engineering
@@ -285,12 +283,14 @@ an unidentified player request.
   Cut, a generic album) and does not restore `WOLVES_EXPERIENCE` in `afterEach`
   leaks that manifest's segments into every later test in the file —
   `setActivePinia(createPinia())` alone does not reset it.
-- A slide schedule is asked to cut faster without checking the preload budget.
-  The decode gate only helps if the lookahead is ahead of it:
-  `PRELOAD_WINDOW_SECONDS / MAX_LOOKAHEAD_SLIDES` (8s / 12) is a hard floor of
-  ~0.67s on an average hold, so "make the cuts frantic" past that point buys a
-  stall, not a faster show. Two measured Track 0 beats (0.74-0.88s) is the
-  practical floor.
+- A slide schedule is asked to cut faster without checking both the preload
+  budget and the projection floor. The decode gate only helps if the lookahead
+  is ahead of it: `PRELOAD_WINDOW_SECONDS / MAX_LOOKAHEAD_SLIDES` (8s / 12) is
+  ~0.67s on an average hold, while the Director's four-beat Track 0 floor is
+  about 1.58s at the fastest passage. Two measured beats produced a random
+  slideshow and did not leave enough time for a decoded image to settle and
+  register. Keep the preload constants and the schedule's derived floor in one
+  test seam.
 - A count of slides is handed to `trackZeroBeatCuts` from a pool size rather
   than derived from the section's beat budget. Leftover beats all land on
   **slide 0**, so an undersized pool opens the section on one enormous hold; an
@@ -310,6 +310,13 @@ an unidentified player request.
   does not exist. Poll until the stage settles and take the highest-opacity
   layer. Related: a `type: 'daynight'` slide renders `dayName`/`nightName`,
   never `path`.
+- A profile-specific narrative timeline is tested only as data, while the live
+  theater seam still reads the standard timeline or falls back to the last
+  record. Mount `TheaterExperience` with a lore probe and walk a quote entrance,
+  an intentional image-only gap, the finale-owned bulletin, and its clearing
+  boundary. A `null` slot is an authored empty stage, not a request to retain
+  the previous artifact; pass an empty id through the component so the renderer
+  removes the stale panel.
 - A set of large assets is predecoded by firing every `new Image()` at once
   "because there is idle time". There is no idle network in this show: the
   Track 0 slide preloader and the scored audio embed are on the same connection
@@ -340,8 +347,8 @@ an unidentified player request.
 - A per-segment treatment is gated on position (`trackIndex !== 0`) when a
   second presentation runs a different schedule at the same position. The
   backdrop blur was excluded from Track 0 because the *standard* cut does not
-  crossfade rapidly there; the Director's Cut runs 190 lock-free cuts at the
-  same index and put blur work back on the slide-change path. Gate treatments
+  crossfade rapidly there; the Director's Cut runs a lock-free montage at the
+  same index and puts blur work back on the slide-change path. Gate treatments
   on what the segment actually does — the profile — not on where it sits.
 - A trust boundary that validates only *structure* lets a generated file carry
   *authority*. `parseBackCatalogue()` checks ids, titles and segments, but

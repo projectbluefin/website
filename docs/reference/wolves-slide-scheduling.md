@@ -110,12 +110,14 @@ Three constraints hold that schedule together, and none of them is taste:
   it is the only place the picture edit can stop without stopping mid-phrase.
   The ordinary schedule ends exactly there and nothing ordinary resumes; the
   Director finale owns the rest of the frame.
-- **Two measured beats is the floor on a hold.** The reader keeps
+- **Four measured beats is the Director's floor on a hold.** The reader keeps
   `PRELOAD_WINDOW_SECONDS` (8 s) of upcoming slides warm using at most
-  `MAX_LOOKAHEAD_SLIDES` (12) fetches, so an average hold under 8/12 s puts the
-  lookahead behind the cue and the decode gate turns into a stall. Two measured
-  beats is 0.74-0.88 s across this track's tempo range. A request for "even
-  faster" cuts is a request to change the preload budget first.
+  `MAX_LOOKAHEAD_SLIDES` (12) fetches, so the preloader's average-hold floor is
+  `8 / 12 ≈ 0.67 s`. The Director's projected-image floor is stricter:
+  `4 * TRACK_ZERO_SHORTEST_BEAT_SECONDS ≈ 1.58 s` at the fastest passage. Two
+  beats produced a random slideshow and left too little time for a decoded image
+  to settle and register. A request for faster cuts is a request to change the
+  preload budget and the projection readability floor together.
 - **The slide count comes from the beat budget, never from a pool size.**
   `trackZeroBeatCuts` gives every slide the shortest tier, upgrades earlier
   slides while beats remain, and then dumps whatever is left on **slide 0**. Feed
