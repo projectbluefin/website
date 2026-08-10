@@ -1,7 +1,8 @@
 import type { ExperienceManifest, ExperienceSegment, PresentationProfile } from '@/config/experience-manifest'
 import type { IntroVideoSpec } from '@/data/wolves-intro-sequence'
 import { defineStore } from 'pinia'
-import { CINEMATIC_SEGMENTS, DEFAULT_CROSSFADE_MS } from '@/config/wolves-cinematic'
+import { CINEMATIC_SEGMENTS, DEFAULT_CROSSFADE_MS, PRE_END_THRESHOLD_S } from '@/config/wolves-cinematic'
+import { DIRECTORS_CUT_FINALE_ANCHORS } from '@/data/wolves-directors-cut-finale'
 import { buildIntroVideoSequence, isTextSegment } from '@/data/wolves-intro-sequence'
 
 export type CinematicPhase
@@ -343,6 +344,18 @@ export const useCinematicStore = defineStore('cinematic', {
     playing: false,
     crossfading: false,
     /**
+     * Whether the transport has run the active experience to its end and
+     * stopped. Latched by `finish()` and released the moment the player
+     * publishes an earlier time, so a backward seek out of the terminal state
+     * is a clock event and needs no explicit reset call.
+     *
+     * The Director's Cut finale reads this because the final `PRE_END_THRESHOLD_S`
+     * of a segment is not an animation clock: the player stops publishing time
+     * there, so the closing fade has to be able to complete from "the show
+     * finished" rather than from a tick that will never arrive.
+     */
+    finished: false,
+    /**
      * Where a crossfade in flight is headed. The overlay has to decide on the
      * incoming segment, and `segmentIndex` still names the outgoing one until
      * the fade completes. Null whenever no crossfade is in flight.
@@ -420,6 +433,34 @@ export const useCinematicStore = defineStore('cinematic', {
      * profiles covered.
      */
     isWolvesPresentation: state => isWolvesPresentationProfile(state.presentationProfile),
+    /**
+     * The Director's Cut finale has mounted its companion player but has not
+     * taken the frame yet. The finale needs a mounted, cued, muted and parked
+     * YouTube player well before the audience sees it, or the corner opens on a
+     * cold black frame in front of the room.
+     */
+    directorFinalePrearmed: (state): boolean =>
+      state.presentationProfile === WOLVES_DIRECTORS_CUT_PROFILE_ID
+      && state.phase === 'cinematic'
+      && state.nativeTime >= DIRECTORS_CUT_FINALE_ANCHORS.companionPrearm,
+    /**
+     * The Director's Cut finale owns the frame: the ordinary theater grid,
+     * nameplate, organization ads, captions and media widget are all suppressed
+     * from here to the end of the show.
+     *
+     * Derived from the presentation profile plus the published soundtrack time,
+     * never latched, so seeking backward out of the finale restores every piece
+     * of chrome at once without any surface having to unwind its own state.
+     */
+    directorFinaleActive: (state): boolean =>
+      state.presentationProfile === WOLVES_DIRECTORS_CUT_PROFILE_ID
+      && state.phase === 'cinematic'
+      && state.nativeTime >= DIRECTORS_CUT_FINALE_ANCHORS.coverStart,
+    /** The finale's terminal fade has completed, or the show has stopped. */
+    directorTerminalBlack(state): boolean {
+      return this.directorFinaleActive
+        && (state.nativeTime >= DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeEnd || state.finished)
+    },
     /** What the hero widget shows: the intro override when present, else the segment. */
     display(state): { chapter: string, title: string, artist: string, artwork: string, counter: string } {
       if (state.displayOverride) {
@@ -476,6 +517,7 @@ export const useCinematicStore = defineStore('cinematic', {
       this.pendingSegmentIndex = null
       this.showTransitionOverlay = isWolvesPresentationProfile(manifest.presentationProfile)
       this.displayOverride = null
+      this.finished = false
     },
     /**
      * Publish the intro list about to be performed. `/wolves/` has two authored
@@ -501,12 +543,20 @@ export const useCinematicStore = defineStore('cinematic', {
       this.segmentElapsed = 0
       this.nativeTime = 0
       this.segmentDuration = CINEMATIC_TIMELINE[0]?.segmentDuration ?? 0
+      this.finished = false
     },
     updateTime(elapsed: number, duration: number, nativeTime?: number) {
       this.segmentElapsed = elapsed
       this.nativeTime = nativeTime ?? elapsed
       if (duration > 0) {
         this.segmentDuration = duration
+      }
+      // A published time short of the finish point means the transport is
+      // running again — a backward seek out of the terminal state, or a fresh
+      // run. Releasing the latch here is what lets the Director's Cut finale
+      // hand the show back without an explicit "un-finish" call from anywhere.
+      if (this.finished && this.segmentDuration > 0 && elapsed < this.segmentDuration - PRE_END_THRESHOLD_S) {
+        this.finished = false
       }
     },
     syncIntroStatus(payload: { segmentIndex: number, segmentElapsed: number, segmentDuration: number, nativeTime: number }) {
@@ -538,6 +588,7 @@ export const useCinematicStore = defineStore('cinematic', {
       this.segmentDuration = CINEMATIC_TIMELINE[this.segmentIndex]?.segmentDuration ?? 0
       this.crossfading = false
       this.pendingSegmentIndex = null
+      this.finished = false
     },
     /** Manual skip to an arbitrary segment (prev/next); only watched time accrues. */
     jumpToSegment(index: number) {
@@ -548,6 +599,7 @@ export const useCinematicStore = defineStore('cinematic', {
       this.segmentDuration = CINEMATIC_TIMELINE[this.segmentIndex]?.segmentDuration ?? 0
       this.crossfading = false
       this.pendingSegmentIndex = null
+      this.finished = false
     },
     finish() {
       this.segmentIndex = this.segments.length - 1
@@ -557,6 +609,7 @@ export const useCinematicStore = defineStore('cinematic', {
       this.playing = false
       this.crossfading = false
       this.pendingSegmentIndex = null
+      this.finished = true
     },
     setDisplayOverride(override: typeof this.displayOverride) {
       this.displayOverride = override

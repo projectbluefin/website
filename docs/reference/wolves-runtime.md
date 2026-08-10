@@ -49,6 +49,9 @@ The defect-derived detail behind that gate lives in these companion references:
   oversubscription math, anchoring text to measured beats.
 - [`wolves-slide-scheduling.md`](wolves-slide-scheduling.md) — beat grids, locked
   slide windows, preload budgeting, slide buffer continuity.
+- [`wolves-directors-cut-finale.md`](wolves-directors-cut-finale.md) — the
+  Director's Cut finale: named anchors, the measured companion-video frames, the
+  latched terminal fade, and store-derived chrome suppression.
 - [`wolves-test-harnesses.md`](wolves-test-harnesses.md) — browser harnesses and
   player mocks.
 

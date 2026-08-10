@@ -10,8 +10,11 @@
  *
  * The probe seeks the real transport to the inside of an early, middle and late
  * Director cut window, plus both sides of a cut boundary, and asserts the image
- * on stage is the one the schedule allocated. It then seeks into the reserved
- * finale interval and asserts nothing new is scheduled there.
+ * on stage is the one the schedule allocated. It measures the last pre-finale
+ * window twice, warm, so a materially late or skipped final swap fails rather
+ * than passing as "the same image is still up". It then seeks into the reserved
+ * finale interval and asserts the ordinary schedule is not merely frozen there
+ * but genuinely off stage, covered by the Director finale.
  *
  * Deterministic by construction: the YouTube IFrame API is mocked so the clock
  * only moves when this harness seeks it, and the schedule itself is seeded.
@@ -198,7 +201,7 @@ try {
   await page.getByRole('button', { name: /DIRECTOR'S CUT/i }).click()
   await page.waitForFunction(() => typeof window.__wolvesDurations?.skipIntro === 'function', null, { timeout: 20_000 })
   await page.evaluate(() => window.__wolvesDurations.skipIntro())
-  await page.waitForSelector('.wc-trackzero-grid', { state: 'visible', timeout: 20_000 })
+  await page.waitForSelector('.wc-trackzero-grid', { state: 'attached', timeout: 20_000 })
   await page.waitForFunction(() => typeof window.__wolvesCinematic?.seekTo === 'function', null, { timeout: 20_000 })
   log('  Director\'s Cut stage started\n')
 
@@ -212,6 +215,12 @@ try {
     for (let attempt = 0; attempt < 20; attempt++) {
       await page.waitForTimeout(250)
       settled = await readStage()
+      // Inside the Director finale the grid is covered and stops changing, so
+      // "the same image twice" is not a settle signal there — the finale's own
+      // cover is.
+      if (settled.finaleCovering === 'true') {
+        return settled
+      }
       if (settled.src && settled.src === previous?.src && settled.opacity >= 0.99) {
         return settled
       }
@@ -230,11 +239,23 @@ try {
         .map(layer => ({ layer, opacity: Number.parseFloat(getComputedStyle(layer).opacity) || 0 }))
         .sort((left, right) => right.opacity - left.opacity)[0]
       const img = brightest?.layer.querySelector('.flickr-img')
+      const grid = document.querySelector('[data-trackzero-grid]')
+      const finaleFrame = document.querySelector('[data-director-finale-frame]')
+      const frameRect = finaleFrame?.getBoundingClientRect()
       return {
         src: img?.getAttribute('src') ?? null,
         naturalWidth: img?.naturalWidth ?? 0,
         opacity: brightest?.opacity ?? 0,
         caption: document.querySelector('.flickr-caption')?.textContent?.trim() ?? null,
+        // A covered grid gives every descendant a zero-area rect, which is the
+        // only "the audience cannot see this" signal a browser can give.
+        gridVisible: grid ? getComputedStyle(grid).display !== 'none' : false,
+        layerArea: layers.reduce((total, layer) => {
+          const rect = layer.getBoundingClientRect()
+          return total + Math.round(rect.width * rect.height)
+        }, 0),
+        finaleCovering: document.querySelector('[data-director-finale]')?.getAttribute('data-covering') ?? null,
+        finaleFrame: frameRect ? { width: Math.round(frameRect.width), height: Math.round(frameRect.height) } : null,
       }
     })
   }
@@ -278,14 +299,72 @@ try {
   const after = await slideAt(boundary.endTime + 0.25)
   assert('the image changes across a measured Director cut', before.src !== after.src, { before: before.src, after: after.src })
 
-  // The reserved finale interval: nothing new may be scheduled there.
-  const lastOrdinary = await slideAt(schedule.finaleStart - 0.2)
-  for (const time of [schedule.finaleStart + 1, 380, 408.137, 420]) {
+  // The final pre-finale window, twice, warm.
+  //
+  // The Director's schedule ends on a 0.790s hold (two measured beats), and the
+  // reader will not swap a slide until its full-size image has fetched AND
+  // decoded. A window that short is where a materially late swap first becomes
+  // visible, and the very last one is the one the finale takes the frame from:
+  // if it lands late, or is skipped entirely, the audience sees the previous
+  // slide run into the cover.
+  //
+  // This is deliberately a warm-cache measurement, sampled after a first pass
+  // has already fetched and decoded the image, so it measures the runtime's
+  // own scheduling rather than the network. It fails if the correct image is
+  // not on stage within the window it was allocated.
+  const finalWindow = schedule.slides[schedule.slides.length - 1]
+  const finalWindowSeconds = finalWindow.endTime - finalWindow.startTime
+  const finalWindowFiles = expectedFiles(finalWindow)
+  await slideAt(finalWindow.startTime + finalWindowSeconds / 2) // warm the cache
+
+  const warmStart = Date.now()
+  await page.evaluate(time => window.__wolvesCinematic.seekTo(time), finalWindow.startTime + 0.05)
+  let warmSettleMs = null
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const observed = await readStage()
+    const decoded = decodeURIComponent(observed.src ?? '')
+    if (observed.opacity >= 0.99 && finalWindowFiles.some(file => decoded.endsWith(file))) {
+      warmSettleMs = Date.now() - warmStart
+      break
+    }
+    await page.waitForTimeout(50)
+  }
+  assert(
+    `the final pre-finale slide lands inside its own ${finalWindowSeconds.toFixed(3)}s window when warm`,
+    warmSettleMs !== null && warmSettleMs <= finalWindowSeconds * 1000,
+    { warmSettleMs, budgetMs: Math.round(finalWindowSeconds * 1000), expected: finalWindowFiles },
+  )
+  assert(
+    'the final pre-finale slide is never skipped when warm',
+    warmSettleMs !== null,
+    { expected: finalWindowFiles },
+  )
+
+  // The reserved finale interval: nothing ordinary may be on stage there.
+  //
+  // The ordinary schedule stops at the finale beat and the reader holds its
+  // last slide for the rest of the song. Asserting that the held slide is
+  // still the same image scores that freeze as success — which it was, before
+  // there was a finale — so this now asserts the negative the finale exists to
+  // guarantee: the theater grid has no rendered area at all, and the finale's
+  // own cover fills the frame.
+  const beforeFinale = await slideAt(schedule.finaleStart - 0.2)
+  assert(
+    'the ordinary theater grid is on stage right up to the finale beat',
+    beforeFinale.gridVisible === true && beforeFinale.layerArea > 0,
+    beforeFinale,
+  )
+  for (const time of [schedule.finaleStart, schedule.finaleStart + 1, 380, 408.137, 420, 423.9]) {
     const inFinale = await slideAt(time)
     assert(
-      `no ordinary slide is scheduled at ${time}s inside the reserved finale`,
-      inFinale.src === lastOrdinary.src,
-      { at: time, expectedHeld: lastOrdinary.src, observed: inFinale.src },
+      `no ordinary slide is visible at ${time}s inside the reserved finale`,
+      inFinale.gridVisible === false && inFinale.layerArea === 0,
+      { at: time, gridVisible: inFinale.gridVisible, layerArea: inFinale.layerArea, observed: inFinale.src },
+    )
+    assert(
+      `the Director finale covers the whole frame at ${time}s`,
+      inFinale.finaleCovering === 'true' && inFinale.finaleFrame?.width === VIEWPORT.width && inFinale.finaleFrame?.height === VIEWPORT.height,
+      { at: time, covering: inFinale.finaleCovering, frame: inFinale.finaleFrame },
     )
   }
 
@@ -299,7 +378,7 @@ try {
   await page.getByRole('button', { name: /JOIN THE EVOLUTION|BEGIN TRANSMISSION|MEET YOUR TEAMMATES/i }).first().click()
   await page.waitForFunction(() => typeof window.__wolvesDurations?.skipIntro === 'function', null, { timeout: 20_000 })
   await page.evaluate(() => window.__wolvesDurations.skipIntro())
-  await page.waitForSelector('.wc-trackzero-grid', { state: 'visible', timeout: 20_000 })
+  await page.waitForSelector('.wc-trackzero-grid', { state: 'attached', timeout: 20_000 })
   await page.waitForFunction(() => typeof window.__wolvesCinematic?.seekTo === 'function', null, { timeout: 20_000 })
 
   const standardHeroLock = await slideAt(169.8)

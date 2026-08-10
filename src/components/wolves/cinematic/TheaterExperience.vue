@@ -5,6 +5,7 @@ import WolvesLoreColumn from '@/components/wolves/WolvesLoreColumn.vue'
 import { getChromeFreeYoutubeEmbedParams } from '@/composables/useYoutubeIframeApi'
 import { getNarrativeSlotForTime } from '@/data/wolves-narrative-timeline'
 import { getWolvesThesisState } from '@/data/wolves-thesis-sequence'
+import { TRACKZERO_SIDECAR_VIDEO_IDS } from '@/data/wolves-track-zero-sidecar'
 import { useCinematicStore } from '@/stores/cinematic'
 
 // The authored seven-days immersive layer, mounted over the video during the
@@ -33,15 +34,10 @@ const thesis = computed(() => (isTrackZero.value ? getWolvesThesisState(time.val
 // through the authored playlist, and inline on mobile browsers that support
 // it. It must not mount on narrow viewports, so it is gated behind a
 // reactive desktop media-query guard rather than CSS alone.
-const TRACKZERO_SIDECAR_VIDEO_IDS = [
-  'xu_yE8h3jT8',
-  'PjryN2F6fF0',
-  'jRXB67fcXZA',
-  'tcj7O-hsCN0',
-  '-lo2IXn9RK4',
-  '_4SQ2mWxnEc',
-  'bCA6l-VlpAY',
-] as const
+//
+// The playlist itself lives in `wolves-track-zero-sidecar.ts` because the
+// Director's Cut finale drives one of its entries through the IFrame API and
+// the two surfaces must never disagree about which upload that is.
 
 const trackZeroSidecarSrc = computed(() => {
   const [firstVideoId] = TRACKZERO_SIDECAR_VIDEO_IDS
@@ -118,7 +114,8 @@ watch([isTrackZero, isDesktopViewport], ([trackZero, desktop]) => {
 const showTrackZeroSidecar = computed(() => store.phase === 'cinematic'
   && isTrackZero.value
   && isDesktopViewport.value
-  && sidecarReady.value)
+  && sidecarReady.value
+  && !store.directorFinaleActive)
 
 // Background wallpaper layers, carried over from the original immersive
 // theater: monthly Bluefin day/night pairs crossfade over 1.5s as soundtrack
@@ -241,7 +238,12 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div class="wc-trackzero-grid" :class="{ 'wc-trackzero-grid--gallery': !isTrackZero }">
+    <div
+      v-show="!store.directorFinaleActive"
+      class="wc-trackzero-grid"
+      :class="{ 'wc-trackzero-grid--gallery': !isTrackZero }"
+      data-trackzero-grid
+    >
       <div class="wc-trackzero-viewer">
         <!-- One persistent reader across every part preserves the single
              Fisher-Yates gallery shuffle (no photo reuse between songs).

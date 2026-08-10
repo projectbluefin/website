@@ -263,3 +263,25 @@ are covered by the transition overlay, so they can afford the fetch.
 The general rule: **a decode gate is only as good as what has been fetched before
 it.** Any time you make a swap wait for readiness, check what warms the thing it
 is waiting on — and if nothing does, the gate is a stall, not a guarantee.
+
+## The Director's Cut finale covers the frame; it does not schedule slides
+
+From `DIRECTORS_CUT_FINALE_START` (355.219 s) to the end of the song, the
+ordinary Track 0 schedule is finished and `WolvesComicReader.vue` holds its last
+slide — that is what the reader always does when a schedule runs out. The
+Director finale is what the audience sees instead:
+`WolvesDirectorFinale.vue` renders an opaque cover over the theater grid, and
+`TheaterExperience.vue` also takes the grid out of layout with
+`v-show="!store.directorFinaleActive"`.
+
+Both halves matter, and the reason is a testing one. "The same slide is still on
+stage at 420 s" is true whether the finale exists or not, so a probe that
+asserts it proves nothing. See
+`../reference/wolves-test-harnesses.md` — the finale probes assert the negative
+(no rendered area for any slide layer) plus the positive (the finale's own frame
+measures the full viewport).
+
+`v-show`, not `v-if`, on that grid: destroying `WolvesComicReader` would re-deal
+its one Fisher-Yates gallery shuffle and re-run every preload the moment the
+finale opens, and a backward seek would then land on a different show than the
+one the audience was watching.

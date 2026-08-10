@@ -943,6 +943,46 @@ describe('useDualBufferPlayer', () => {
     expect(store.segmentIndex).toBe(CINEMATIC_SEGMENTS.length - 2)
   })
 
+  it('gives the clock back after the show has finished and the presenter seeks away', async () => {
+    const player = await startPlayer()
+    const store = useCinematicStore()
+    for (let i = 0; i < CINEMATIC_SEGMENTS.length - 1; i++) {
+      const active = player.activeSide.value === 'a' ? FakePlayer.instances[0] : FakePlayer.instances[1]
+      active.duration = 1000
+      active.currentTime = 1000
+      vi.advanceTimersByTime(TIME_POLL_MS)
+      vi.advanceTimersByTime(3000)
+    }
+    const active = player.activeSide.value === 'a' ? FakePlayer.instances[0] : FakePlayer.instances[1]
+    active.duration = 1000
+    active.currentTime = 1000
+    vi.advanceTimersByTime(TIME_POLL_MS)
+    expect(store.finished).toBe(true)
+    expect(store.playing).toBe(false)
+
+    // A real embed answers `getCurrentTime()` from a value it pushes across the
+    // message channel, so the first polls after a seek still report the
+    // pre-seek time. Model that: the seek lands on the player, but its clock
+    // reports the end for another two polls. Without a guard those polls run
+    // the end of the segment again — pause, `finish()`, `stopPolling()` — and
+    // the backward seek the presenter just made is silently undone, with no
+    // way to restart the clock live.
+    const staleTime = active.currentTime
+    const realSeek = active.seekTo.bind(active)
+    active.seekTo = () => {}
+    player.seekTo(120)
+    vi.advanceTimersByTime(TIME_POLL_MS * 2)
+    expect(active.currentTime).toBe(staleTime)
+
+    active.seekTo = realSeek
+    active.seekTo(120)
+    vi.advanceTimersByTime(TIME_POLL_MS * 2)
+
+    expect(store.finished).toBe(false)
+    expect(store.nativeTime).toBe(120)
+    expect(store.segmentIndex).toBe(CINEMATIC_SEGMENTS.length - 1)
+  })
+
   it('abandons a stalled preparation instead of hanging the show on the intro overlay', async () => {
     // onReady never fires. `prepare()` awaits the shared API load and both readiness
     // callbacks, and neither await is bounded by the API itself.

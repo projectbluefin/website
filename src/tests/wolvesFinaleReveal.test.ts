@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { parseLoreSpeakerParagraphs, rebuildLoreSpeakerParagraph } from '../components/wolves/lore'
 import { loreChatPages, loreProsePages, pickBlockPage, pickPageIndexForElapsed } from '../components/wolves/lore/lore-pages'
+import { DIRECTORS_CUT_FINALE_ANCHORS } from '../data/wolves-directors-cut-finale'
+import { wolvesDirectorsCutNarrativeTimeline } from '../data/wolves-directors-cut-timeline'
 import { loadAllLoreRecords } from '../data/wolves-lore-records'
 import { wolvesNarrativeTimeline } from '../data/wolves-narrative-timeline'
 import { getWolvesThesisState } from '../data/wolves-thesis-sequence'
@@ -147,6 +149,50 @@ describe('finale reveal', () => {
             .toMatch(/^\*\*/)
         }
       }
+    })
+  })
+  // The Director's Cut plays the same bulletin on its own window, and the
+  // finale — not the lore column — is what renders it from the finale beat on.
+  // The reveal therefore lands on a different second in that cut, and the only
+  // thing that must never happen is the audience not seeing it at all.
+  describe('the Director\'s Cut carries the same bulletin', () => {
+    const directorSlot = wolvesDirectorsCutNarrativeTimeline.find(entry => entry.artifactId === FINAL_ID)!
+
+    function directorPageAt(time: number) {
+      const record = loadAllLoreRecords().find(entry => entry.id === FINAL_ID)!
+      const pages = loreProsePages(record.body)
+      const index = pickPageIndexForElapsed(
+        pages,
+        time - directorSlot.startTime,
+        directorSlot.endTime - directorSlot.startTime,
+      )
+      return pages[index]!
+    }
+
+    it('hands the bulletin to the finale on exactly its own window', () => {
+      expect(directorSlot.startTime).toBe(DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart)
+      expect(directorSlot.endTime).toBe(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
+    })
+
+    it('still shows the death reveal, inside the finale the audience is watching', () => {
+      const revealTimes: number[] = []
+      for (let time = directorSlot.startTime; time < directorSlot.endTime; time += 0.25) {
+        if (directorPageAt(time).includes('Dr. Andy Anderson')) {
+          revealTimes.push(time)
+        }
+      }
+      expect(revealTimes.length, 'the Director\'s Cut never shows the death reveal').toBeGreaterThan(0)
+      expect(revealTimes[0]!).toBeGreaterThan(DIRECTORS_CUT_FINALE_ANCHORS.coverStart)
+      expect(revealTimes[revealTimes.length - 1]!).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
+    })
+
+    it('lands the elegy page against the first quote clause', () => {
+      const record = loadAllLoreRecords().find(entry => entry.id === FINAL_ID)!
+      const pages = loreProsePages(record.body)
+      const last = directorPageAt(directorSlot.endTime - 0.1)
+      expect(last).toBe(pages[pages.length - 1])
+      expect(last).toContain('truly a great loss for humanity')
+      expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBe(DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart)
     })
   })
 })

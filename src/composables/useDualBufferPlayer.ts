@@ -84,6 +84,17 @@ export const COLD_SKIP_PLAYBACK_TIMEOUT_MS = 3000
 export const START_PLAYBACK_TIMEOUT_MS = 8000
 
 /**
+ * Polls after a seek during which the end-of-segment boundary check is stood
+ * down.
+ *
+ * `getCurrentTime()` is a value the embed pushes across the message channel, so
+ * the first polls after a seek can still report the pre-seek time. Five polls
+ * is half a second at `TIME_POLL_MS`, which is well inside the shortest
+ * authored segment and long enough for the embed to acknowledge the seek.
+ */
+export const SEEK_GUARD_POLLS = 5
+
+/**
  * Double-buffered YouTube playback. While one player is on screen playing segment N,
  * the other has segment N+1 cued, muted, and invisible. The handoff swaps opacity
  * (CSS, driven by `activeSide`) and ramps volumes; the freed player then cues N+2.
@@ -104,6 +115,8 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
   }
 
   let pollTimer: ReturnType<typeof setInterval> | null = null
+  /** Remaining polls to ignore the end-of-segment boundary for; see `SEEK_GUARD_POLLS`. */
+  let seekGuardPolls = 0
   let swapping = false
   /**
    * The side that is still on air for store purposes while a swap runs. `activeSide`
@@ -596,6 +609,18 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     const swapLeadSeconds = store.isLastSegment
       ? PRE_END_THRESHOLD_S
       : PRE_END_THRESHOLD_S + boundaryCrossfadeMs(store.segmentIndex + 1) / 1000
+    // A just-issued seek has not necessarily reached the iframe yet.
+    // `getCurrentTime()` is a value the embed pushes across the message channel,
+    // so the first polls after a seek can still report the PRE-seek time — and
+    // if the show had just ended, that stale time is past the boundary. Acting
+    // on it re-runs the end of the segment: the player is paused, `finish()`
+    // re-latches, polling stops, and the backward seek the presenter just made
+    // is undone with no way to recover. Ride out a bounded number of polls
+    // instead of racing the embed.
+    if (seekGuardPolls > 0) {
+      seekGuardPolls -= 1
+      return
+    }
     if (endAt > 0 && time >= endAt - swapLeadSeconds) {
       beginSwap()
     }
@@ -955,6 +980,11 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
 
   function seekTo(seconds: number) {
     activePlayer()?.seekTo?.(seconds, true)
+    // The final segment stops the poll loop when it finishes. Without this the
+    // store's clock would stay pinned at the end after a backward seek, so
+    // anything derived from published time — the Director's Cut finale's chrome
+    // suppression, the progress readout — would never come back.
+    resumePollingAfterSeek()
   }
 
   /** Seek within the current segment's authored window by 0..1 ratio (widget progress bar). */
@@ -965,6 +995,23 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     const startAt = store.segments[store.segmentIndex]?.startSeconds ?? 0
     const clamped = Math.min(Math.max(ratio, 0), 1)
     activePlayer()?.seekTo?.(startAt + clamped * store.segmentDuration, true)
+    resumePollingAfterSeek()
+  }
+
+  /**
+   * Restart the time poll after a seek, but only for a show that has already
+   * started. Polling during the prewarm window would publish a buffer's time as
+   * the show's, which is the same defect `beginSwap()` guards against.
+   *
+   * The guard counter is armed here rather than in `pollActiveTime` because it
+   * has to cover the polls issued between the seek request and the embed
+   * acknowledging it — see the comment on `seekGuardPolls` in `pollActiveTime`.
+   */
+  function resumePollingAfterSeek() {
+    seekGuardPolls = SEEK_GUARD_POLLS
+    if (started.value) {
+      startPolling()
+    }
   }
 
   function destroy() {

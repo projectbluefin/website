@@ -368,7 +368,7 @@ onBeforeUnmount(() => {
       </template>
 
       <MediaWidget
-        v-else
+        v-else-if="!store.directorFinaleActive"
         auto-hide
         @toggle-play="stage?.togglePlay()"
         @skip="(delta: number) => stage?.skip(delta)"

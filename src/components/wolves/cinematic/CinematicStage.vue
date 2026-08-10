@@ -7,6 +7,7 @@ import CinematicCaptions from './CinematicCaptions.vue'
 import CinematicTransition from './CinematicTransition.vue'
 import Nameplate from './Nameplate.vue'
 import TheaterExperience from './TheaterExperience.vue'
+import WolvesDirectorFinale from './WolvesDirectorFinale.vue'
 import WolvesOrgAds from './WolvesOrgAds.vue'
 
 const store = useCinematicStore()
@@ -90,9 +91,13 @@ defineExpose({
          YouTube chrome can appear beneath the Destiny overlay. -->
     <TheaterExperience v-if="store.phase === 'cinematic'" />
 
-    <WolvesOrgAds />
+    <!-- Every piece of standing chrome stands down for the Director's Cut
+         finale, and comes back on its own if the transport is seeked back
+         before it: the suppression is a store getter derived from the profile
+         and the published clock, not a latch any of these components hold. -->
+    <WolvesOrgAds v-if="!store.directorFinaleActive" />
 
-    <div class="wc-stage-nameplate">
+    <div v-if="!store.directorFinaleActive" class="wc-stage-nameplate">
       <Nameplate
         :credit-artist="plateCreditArtist"
         :detail="plateDetail"
@@ -101,7 +106,11 @@ defineExpose({
       />
     </div>
 
-    <CinematicCaptions />
+    <CinematicCaptions v-if="!store.directorFinaleActive" />
+
+    <!-- Mounted from the pre-arm anchor so the companion player is warm; it
+         takes the frame only from its own cover anchor. -->
+    <WolvesDirectorFinale v-if="store.phase === 'cinematic' && store.directorFinalePrearmed" />
 
     <CinematicTransition />
   </div>

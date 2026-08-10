@@ -78,6 +78,23 @@ an unidentified player request.
 - A browser harness samples an intro cue without waiting out the 3.9s scene
   dissolve and 7.8s somber fade, which both restart on a clock jump, and then
   reports the previous cue's element as the current one.
+- A closing animation is computed per clock tick. The transport stops publishing
+  time in the final `PRE_END_THRESHOLD_S` of a segment and a YouTube clock
+  plateaus before that anyway, so `(time - start) / span` freezes the show
+  half-faded with no way to recover live. Latch a CSS transition on one boolean
+  crossing and complete it from the store's finished state.
+- A takeover is verified by asserting that nothing changed. "The same slide is
+  still on stage" passes identically whether the thing that should have covered
+  it exists or not. Measure the taker: zero rendered area for what should be
+  covered, full-viewport bounds for what should be covering.
+- A source video's frames are measured after a fast seek (`ffmpeg -ss` before
+  `-i`), which offsets every timestamp by up to a GOP — 0.208s on the Director's
+  Cut companion. Decode from frame 0 when the frame number is going to be
+  anchored to a beat.
+- A second surface reads a companion video's own clock as if it were the show's.
+  There is one clock, the soundtrack player's; a companion's time is read only
+  to detect drift, corrected only when the drift is material, and rate limited
+  on the *magnitude* of the gap so a backward seek is corrected too.
 - A page ends on a title such as `Dr.`, orphaning the name it introduces, or on
   a preposition or article, making the audience wait a page turn for the rest of
   the phrase.
@@ -207,6 +224,11 @@ one links back to this skill.
   measured beat grids, locked slide windows, preload budgeting, buffer
   continuity at segment boundaries, and the non-Wolves shows the comic reader
   serves.
+- [`../../reference/wolves-directors-cut-finale.md`](../../reference/wolves-directors-cut-finale.md) —
+  the Director's Cut finale's named anchors, the frame-measured companion video
+  window, why the terminal fade is a latched CSS transition rather than a
+  per-tick opacity, and the three surfaces that consume the store's finale
+  state.
 - [`../../reference/wolves-test-harnesses.md`](../../reference/wolves-test-harnesses.md) —
   driving Track 0 in a browser, keeping the movie-flow harness alive, player
   mock load lifecycle, and deriving expectations from live modules.

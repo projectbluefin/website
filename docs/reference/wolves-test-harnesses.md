@@ -223,6 +223,61 @@ not a flaky one, so they read as a scheduling bug that did not exist:
 schedule in-page from `/src/data/wolves-directors-cut-slides.ts` rather than
 carrying cut times as constants.
 
+## A frozen slide is not a covered slide
+
+`tests/wolves-directors-cut-slides.mjs` originally proved the reserved finale
+interval by asserting the image on stage at 380 s was the *same* image as at
+355 s. That passed for the wrong reason: the reader simply holds its last slide
+when the schedule runs out, so the assertion scored a frozen ordinary slide as
+a working finale, and would have kept passing if the finale never rendered.
+
+Assert the negative instead. A covered element gives every descendant a
+zero-area `getBoundingClientRect()`, so:
+
+- the theater grid's computed `display` is `none`, **and**
+- every `.flickr-photo-layer` has zero rendered area, **and**
+- the finale's own frame measures the full viewport.
+
+The same trap has a general form: *"nothing changed" is not evidence that the
+thing that should have covered it exists.* Any probe of a takeover has to
+measure the taker, not the absence of change in the taken.
+
+## Measuring a swap needs a warm cache and a budget
+
+The Director's schedule ends on a 0.790 s hold, and the reader will not swap a
+slide until its full-size image has fetched **and** decoded. Whether the last
+pre-finale window lands on time is therefore a real, load-dependent question —
+and a cold-cache measurement answers a different one (how fast is the network).
+
+`wolves-directors-cut-slides.mjs` seeks that window once to warm it, then seeks
+it again and polls until the expected image is on stage at full opacity,
+failing if that takes longer than the window itself. A skipped swap fails the
+same assertion, because the expected image never arrives at all.
+
+## Mock evidence and real-media evidence are different claims
+
+`wolves-directors-cut-finale.mjs` prints which of the two it is producing, and
+they are not interchangeable:
+
+- **Mock transport** (default) replaces `window.YT` with a deterministic fake.
+  The show clock only moves when the harness seeks it, and the companion's own
+  clock is frozen — which is deliberate, because a frozen companion is what a
+  stalled embed looks like, so the drift correction has to fire and its seek
+  target becomes directly observable. Nothing in this mode is evidence that
+  YouTube decoded anything.
+- **Real media** (`WOLVES_REAL_MEDIA=1`) loads the live IFrame API. Playwright's
+  bundled Chromium has no proprietary codecs, and `WOLVES_CDP` can attach to a
+  real Chrome instead (on a Flatpak host, launch it with `flatpak run
+  --command=chrome com.google.Chrome --headless=new --remote-debugging-port=9333
+  --remote-allow-origins='*'` and connect over CDP).
+
+Real media mode **stands down rather than failing** when the browser cannot hold
+the clock. `getCurrentTime()` answers a seek optimistically even when no media
+ever decodes, and then the embed collapses back to 0 — so the precondition
+samples the published time repeatedly and requires all of them to hold. One
+sample reads the optimism as a working transport and produces a wall of
+failures that say nothing about the change under test.
+
 ## The full harness inventory
 
 Every standalone Playwright script in `tests/`. Only `wolves-movie-flow` runs in
@@ -242,7 +297,8 @@ stale unnoticed. All of them take `WOLVES_BASE_URL` (default
 | `wolves-lobby-progress.mjs` | Lobby and progress readouts; reads live durations, never constants. |
 | `wolves-immersive-layout.mjs` | Track 0 immersive grid layout. |
 | `wolves-trackzero-sidecar-real-player.mjs` | Track 0 against a real player; source of the canonical mock. |
-| `wolves-directors-cut-slides.mjs` | Director's Cut Track 0 cut boundaries, the reserved finale interval, and the standard cut's hero locks. |
+| `wolves-directors-cut-slides.mjs` | Director's Cut Track 0 cut boundaries, the covered finale interval, the warm final pre-finale window, and the standard cut's hero locks. |
+| `wolves-directors-cut-finale.mjs` | Director's Cut finale: every named anchor, the companion player's source seconds, chrome suppression, narrow-viewport placement and the terminal black. |
 | `navbar-visual.mjs` | Main-site navbar, not Wolves. |
 
 `tests/wolves-intro-silence.mjs` covers the other half of that: the cinematic

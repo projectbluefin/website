@@ -4,10 +4,10 @@
  * Nine source-verified science and humanity quotes (the panel approved for
  * the Director's Cut finale) play in their authored order across the run of
  * the song, followed by the existing missing-scientist bulletin held in an
- * early-finale window. This file owns only that quote/bulletin schedule.
- * Task 8 later adds the finale's own named anchors (companion video,
- * Collapse artwork, extinction/survival clauses, terminal fade) to this same
- * module; nothing here should be read as the whole finale.
+ * early-finale window. This file owns that quote/bulletin schedule, and
+ * re-exports the finale's own named anchors (companion video, Collapse
+ * artwork, extinction/survival clauses, terminal fade) from
+ * `wolves-directors-cut-finale.ts`.
  *
  * These records are Director's Cut only. They are never authored for the
  * standard show: see hiddenFromWolvesVideoArtifactIds in
@@ -19,6 +19,48 @@ import { loadAllLoreRecords } from './wolves-lore-records'
 import { allocateLoreSlots } from './wolves-lore-timing'
 import { TRACK_ZERO_SECTIONS } from './wolves-track-zero-beats'
 
+/**
+ * The finale's own named anchors — companion-video pre-arm, reveal and park,
+ * the Collapse day-to-night crossfade, both quote clauses and the terminal fade
+ * — plus the measured companion-source frames they are derived from.
+ *
+ * Defined in `wolves-directors-cut-finale.ts` (a leaf with no lore imports, so
+ * the cinematic store can read the boundaries without pulling the whole lore
+ * corpus into its graph) and re-exported here, exactly as
+ * `DIRECTORS_CUT_FINALE_START` is, so every Director's Cut anchor still
+ * resolves through this one module.
+ */
+export {
+  COMPANION_PLAY_LEAD_SECONDS,
+  COMPANION_SOURCE_BLACK_SECONDS,
+  COMPANION_SOURCE_IMPACT_SECONDS,
+  COMPANION_SOURCE_PARK_SECONDS,
+  COMPANION_SOURCE_RUNTIME_SECONDS,
+  COMPANION_SOURCE_SPACE_IMPACT_SECONDS,
+  companionSourceTimeAt,
+  DIRECTORS_CUT_COLLAPSE_DAY_IMAGE,
+  DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE,
+  DIRECTORS_CUT_COMPANION_DRIFT_INTERVAL_S,
+  DIRECTORS_CUT_COMPANION_DRIFT_TOLERANCE_S,
+  DIRECTORS_CUT_COMPANION_SIDECAR_INDEX,
+  DIRECTORS_CUT_COMPANION_VIDEO_ID,
+  DIRECTORS_CUT_EXTINCTION_CLAUSE,
+  DIRECTORS_CUT_FINALE_ANCHOR_ORDER,
+  DIRECTORS_CUT_FINALE_ANCHORS,
+  DIRECTORS_CUT_SAGAN_SOURCE,
+  DIRECTORS_CUT_SURVIVAL_CLAUSE,
+  DIRECTORS_CUT_TERMINAL_FADE_SECONDS,
+  directorsCutBulletinVisible,
+  directorsCutCollapseNightOpacity,
+  directorsCutCompanionPlaying,
+  directorsCutCompanionVisible,
+  directorsCutExtinctionFading,
+  directorsCutExtinctionVisible,
+  directorsCutSurvivalVisible,
+  directorsCutTerminalFadeEngaged,
+} from './wolves-directors-cut-finale'
+
+export type { DirectorsCutFinaleAnchor } from './wolves-directors-cut-finale'
 /**
  * The measured beat where the Director's Cut hands the frame to its finale.
  *
