@@ -39,6 +39,23 @@ owner-requested tag, and do not invent a repository media directory or a
 separate scratch location. Treat owner-renamed filenames as storyboard IDs:
 preserve them verbatim and use them when referring to the corresponding clip.
 
+When an owner asks to maximize a storyboard clip's quality, use its filename's
+YouTube ID and embedded keep range as the index. First list the available
+formats, then download the highest native video stream into the existing
+`sources/` directory; do not upscale the low-resolution storyboard derivative
+or replace it:
+
+```bash
+yt-dlp -F "https://www.youtube.com/watch?v=<storyboard-id>"
+yt-dlp -f <selected-video-format> \
+  -o "sources/<storyboard-id>.%(ext)s" \
+  "https://www.youtube.com/watch?v=<storyboard-id>"
+```
+
+Trim the downloaded source with the original, absolute keep ranges. A
+constrained social output should downscale from that native source, while a
+master retains its native dimensions.
+
 Before rendering an H.264 review artifact, verify the selected FFmpeg binary
 offers `libx264`:
 
@@ -119,6 +136,7 @@ record. Do not invent names, scientific facts, pairings, or provenance.
 
 - Context7: `/addyosmani/agent-skills` (skill file structure and required sections)
 - Context7: `/websites/ffmpeg_documentation` (encoder discovery and `-c:v libx264`)
+- Context7: `/yt-dlp/yt-dlp` (format selection and output templates)
 
 ## Pages break at thoughts, not at character counts
 
