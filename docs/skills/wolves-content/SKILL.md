@@ -39,6 +39,18 @@ owner-requested tag, and do not invent a repository media directory or a
 separate scratch location. Treat owner-renamed filenames as storyboard IDs:
 preserve them verbatim and use them when referring to the corresponding clip.
 
+Before rendering an H.264 review artifact, verify the selected FFmpeg binary
+offers `libx264`:
+
+```bash
+ffmpeg -encoders | grep 'libx264'
+```
+
+Some system FFmpeg builds omit external encoders. If that probe is empty, list
+available FFmpeg binaries with `which -a ffmpeg` and use a binary that reports
+`libx264`; do not silently replace the requested codec with a different one.
+Use `-c:v libx264` explicitly in the render command.
+
 For a visible WebP quality regression, compare the optimized asset with its
 approved source at identical dimensions. Recover only demonstrated high-loss
 PNG or screenshot derivatives as lossless WebP; do not upscale assets whose
@@ -106,6 +118,7 @@ record. Do not invent names, scientific facts, pairings, or provenance.
 ## Sources
 
 - Context7: `/addyosmani/agent-skills` (skill file structure and required sections)
+- Context7: `/websites/ffmpeg_documentation` (encoder discovery and `-c:v libx264`)
 
 ## Pages break at thoughts, not at character counts
 
