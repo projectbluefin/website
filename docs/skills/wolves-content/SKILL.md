@@ -36,7 +36,8 @@ segment-relative `0`, or the authored source timing and tests drift.
 Use `~/Videos/` as the shared local scratch space for source clips and previews
 the owner needs to review. Keep future video work together there, use the
 owner-requested tag, and do not invent a repository media directory or a
-separate scratch location.
+separate scratch location. Treat owner-renamed filenames as storyboard IDs:
+preserve them verbatim and use them when referring to the corresponding clip.
 
 For a visible WebP quality regression, compare the optimized asset with its
 approved source at identical dimensions. Recover only demonstrated high-loss
