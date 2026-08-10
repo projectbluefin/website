@@ -141,7 +141,7 @@ describe('director\'s cut Destiny concept-art registry', () => {
     }
   })
 
-  it('references downloaded local JPEGs that exist, are non-empty, and have real dimensions', () => {
+  it('references downloaded local JPEGs that exist, are non-empty, and match the ledger\'s recorded source geometry exactly', () => {
     for (const record of DIRECTORS_CUT_DESTINY_CONCEPTS) {
       const absolute = resolve(process.cwd(), 'public', record.localPath)
 
@@ -149,8 +149,21 @@ describe('director\'s cut Destiny concept-art registry', () => {
       expect(statSync(absolute).size, `${record.localPath} should be non-empty`).toBeGreaterThan(0)
 
       const { width, height } = readJpegDimensions(absolute)
-      expect(width, `${record.localPath} width`).toBeGreaterThan(0)
-      expect(height, `${record.localPath} height`).toBeGreaterThan(0)
+      // Compare against the ledger's expected geometry, not merely "> 0", so a
+      // silently truncated or swapped download fails the test even though the
+      // file still decodes as a valid nonzero-size JPEG.
+      expect(width, `${record.localPath} width should match the recorded source geometry`).toBe(record.sourceWidth)
+      expect(height, `${record.localPath} height should match the recorded source geometry`).toBe(record.sourceHeight)
     }
+  })
+
+  it('records the largest approved ArtStation /4k/ source geometry (2200px wide) for C9 and C7', () => {
+    const c9 = DIRECTORS_CUT_DESTINY_CONCEPTS.find(record => record.referenceId === 'C9')
+    const c7 = DIRECTORS_CUT_DESTINY_CONCEPTS.find(record => record.referenceId === 'C7')
+
+    expect(c9).toMatchObject({ sourceWidth: 2200, sourceHeight: 1123 })
+    expect(c7).toMatchObject({ sourceWidth: 2200, sourceHeight: 1611 })
+    expect(c9?.upstreamAssetUrl).toMatch(/\/4k\//)
+    expect(c7?.upstreamAssetUrl).toMatch(/\/4k\//)
   })
 })

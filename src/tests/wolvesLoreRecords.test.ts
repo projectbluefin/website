@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  DIRECTORS_CUT_QUOTE_EVIDENCE,
+  findDirectorsCutQuoteEvidence,
+} from '../data/wolves-directors-cut-quote-evidence'
+import {
   deriveLoreTelemetry,
   loadAllLoreRecords,
   parseLoreRecord,
@@ -189,14 +193,24 @@ describe('wolves lore records', () => {
     expect(new Set(directorsCutQuotes.map(record => record.id)).size).toBe(directorsCutQuotes.length)
   })
 
-  it('publishes a source URL for every Director\'s Cut science-quote panel record', () => {
-    const directorsCutQuoteIds = loadAllLoreRecords()
-      .filter(record => record.chapterId === 'directors-cut')
-      .map(record => record.id)
+  it('publishes the exact approved evidence for every Director\'s Cut science-quote panel record, not merely a URL shape', () => {
+    const directorsCutRecords = loadAllLoreRecords().filter(record => record.chapterId === 'directors-cut')
 
-    for (const id of directorsCutQuoteIds) {
-      const artifact = wolvesRelease.artifacts.find(item => item.id === id)
-      expect(artifact?.sourceUrl, id).toMatch(/^https:\/\//)
+    expect(directorsCutRecords.map(record => record.id)).toEqual(
+      DIRECTORS_CUT_QUOTE_EVIDENCE.map(evidence => evidence.id),
+    )
+
+    for (const record of directorsCutRecords) {
+      const evidence = findDirectorsCutQuoteEvidence(record.id)
+      if (!evidence) {
+        throw new Error(`Expected quote evidence for ${record.id}`)
+      }
+
+      const artifact = wolvesRelease.artifacts.find(item => item.id === record.id)
+      // Compare the exact approved value, not just that a URL-shaped string is
+      // present: a plausible-looking but wrong or swapped URL must fail here.
+      expect(artifact?.sourceUrl, record.id).toBe(evidence.sourceUrl)
+      expect(record.metadata.attribution, record.id).toBe(evidence.attribution)
     }
   })
 

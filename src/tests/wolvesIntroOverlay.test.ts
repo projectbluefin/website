@@ -1038,7 +1038,15 @@ AN4-ChK-12: Potential. Unlimited. Solution. Imagination. Probability? Most certa
     const scene = wrapper.get('.wolves-intro-overlay-scene')
     expect(scene.attributes('role')).toBe('figure')
     expect(scene.attributes('aria-label')).toBe(europaConcept.backgroundFigure.label)
-    expect(scene.attributes('aria-description')).toBe(DIRECTORS_CUT_DESTINY_CONCEPT_CREDIT)
+    // `aria-description` has unreliable screen-reader support; the credit is
+    // exposed through `aria-describedby` pointing at a visually hidden node
+    // instead, which every tested screen reader honors.
+    const describedById = scene.attributes('aria-describedby')
+    expect(describedById).toBeTruthy()
+    expect(scene.attributes('aria-description')).toBeUndefined()
+    const creditNode = wrapper.get(`#${describedById}`)
+    expect(creditNode.text()).toBe(DIRECTORS_CUT_DESTINY_CONCEPT_CREDIT)
+    expect(creditNode.classes()).toContain('wolves-intro-overlay-visually-hidden')
     expect(scene.find('.wolves-intro-overlay-burned-caption').exists()).toBe(false)
   })
 
@@ -1397,7 +1405,9 @@ describe('wolvesIntroOverlay director\'s cut', () => {
       expect(image.attributes('src')).toContain(record.localPath)
       expect(scene.attributes('role')).toBe('figure')
       expect(scene.attributes('aria-label')).toBe(record.backgroundFigure.label)
-      expect(scene.attributes('aria-description')).toBe(DIRECTORS_CUT_DESTINY_CONCEPT_CREDIT)
+      const describedById = scene.attributes('aria-describedby')
+      expect(describedById, record.id).toBeTruthy()
+      expect(wrapper.get(`#${describedById}`).text(), record.id).toBe(DIRECTORS_CUT_DESTINY_CONCEPT_CREDIT)
       expect(wrapper.get('.wolves-intro-overlay-text').text())
         .toContain(cue.text.split('\n')[0]!.replace(/[.,]/g, ''))
       expect(image.classes()).not.toContain('wolves-intro-overlay-background-kenburns')

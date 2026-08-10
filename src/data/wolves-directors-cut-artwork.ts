@@ -39,6 +39,14 @@ interface DirectorsCutDestinyConceptBase {
   readonly authoritativeSourceUrl: string
   /** Exact direct asset URL the local file was retrieved from. */
   readonly upstreamAssetUrl: string
+  /**
+   * Pixel geometry of the exact upstream asset at `upstreamAssetUrl`, as
+   * retrieved on `retrievalDate`. Tests compare the downloaded local JPEG's
+   * real dimensions against these two fields, not merely against "nonzero",
+   * so a truncated, re-compressed, or silently swapped download fails.
+   */
+  readonly sourceWidth: number
+  readonly sourceHeight: number
   readonly retrievalDate: typeof DIRECTORS_CUT_DESTINY_CONCEPT_RETRIEVAL_DATE
   readonly policyUrl: typeof BUNGIE_FAN_CONTENT_POLICY_URL
   readonly usageBasis: 'non-commercial-fan-content'
@@ -129,6 +137,12 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
     workTitle: 'Europa environment',
     authoritativeSourceUrl: BUNGIE_PRESS_ROOM,
     upstreamAssetUrl: 'https://imgeucdn.gamespress.com/cdn/files/PremierPR/2020/06/09163147-741099bb-d13d-4d1a-bf66-a5f5300c3ed9/Destiny_2_Beyond_Light_Europa_Environment_01.jpg?otf=y&lightbox=y&sky=1b9ae393e24c13847cf692b20b8c587754b3b5106b459664b26043307b74c1c1',
+    // NOTE: this Bungie Press Room asset URL carries a signed/expiring query
+    // token (`otf`, `sky`). It is retrieval evidence for `retrievalDate`
+    // only, not a stable future download endpoint — do not expect this exact
+    // URL to keep resolving, and re-verify before relying on it again.
+    sourceWidth: 1920,
+    sourceHeight: 1080,
   }),
   creditedRecord({
     referenceId: 'C1',
@@ -138,6 +152,8 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
     workTitle: 'Europa Landscape V1',
     authoritativeSourceUrl: BUNGIE_ART_BLAST,
     upstreamAssetUrl: 'https://cdnb.artstation.com/p/assets/images/images/012/963/475/4k/mark-goldsworthy-europa-landscape-v1-copy.jpg?1537386402',
+    sourceWidth: 2048,
+    sourceHeight: 771,
   }),
   creditedRecord({
     referenceId: 'C2',
@@ -147,6 +163,8 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
     workTitle: 'Underneath the ice on Europa',
     authoritativeSourceUrl: JESSE_VAN_DIJK_ARTSTATION,
     upstreamAssetUrl: 'https://cdna.artstation.com/p/assets/images/images/032/810/504/large/jesse-van-dijk-destiny-2020-jessevandijk-030.jpg?1607533935',
+    sourceWidth: 1920,
+    sourceHeight: 1200,
   }),
   creditedRecord({
     referenceId: 'C3',
@@ -156,6 +174,8 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
     workTitle: 'Early Europa concept',
     authoritativeSourceUrl: JESSE_VAN_DIJK_ARTSTATION,
     upstreamAssetUrl: 'https://cdna.artstation.com/p/assets/images/images/032/809/884/large/jesse-van-dijk-destiny-2020-jessevandijk-010.jpg?1607532980',
+    sourceWidth: 1920,
+    sourceHeight: 1200,
   }),
   creditedRecord({
     referenceId: 'C4',
@@ -165,6 +185,8 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
     workTitle: 'Cryovolcanoes',
     authoritativeSourceUrl: JESSE_VAN_DIJK_ARTSTATION,
     upstreamAssetUrl: 'https://cdnb.artstation.com/p/assets/images/images/032/810/477/large/jesse-van-dijk-destiny-2020-jessevandijk-020.jpg?1607533856',
+    sourceWidth: 1920,
+    sourceHeight: 1200,
   }),
   creditedRecord({
     referenceId: 'C9',
@@ -173,7 +195,11 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
     artist: 'Mark Goldsworthy',
     workTitle: 'Mars Farm Collapse',
     authoritativeSourceUrl: MARK_GOLDSWORTHY_ARTSTATION,
-    upstreamAssetUrl: 'https://cdnb.artstation.com/p/assets/images/images/046/905/269/large/mark-goldsworthy-markg-mars-farm-collapse-concept.jpg?1646261226',
+    // Largest approved ArtStation rendition (`/4k/`, 2200px wide), replacing
+    // the earlier `/large/` (1920px) download.
+    upstreamAssetUrl: 'https://cdnb.artstation.com/p/assets/images/images/046/905/269/4k/mark-goldsworthy-markg-mars-farm-collapse-concept.jpg?1646261226',
+    sourceWidth: 2200,
+    sourceHeight: 1123,
   }),
   creditedRecord({
     referenceId: 'C6',
@@ -183,6 +209,8 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
     workTitle: 'Fallen Citadel',
     authoritativeSourceUrl: MARK_GOLDSWORTHY_ARTSTATION,
     upstreamAssetUrl: 'https://cdna.artstation.com/p/assets/images/images/032/669/612/large/mark-goldsworthy-fallen-citadel-oct-1.jpg?1607107735',
+    sourceWidth: 1920,
+    sourceHeight: 842,
   }),
   creditedRecord({
     referenceId: 'C5',
@@ -192,6 +220,8 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
     workTitle: 'Ice-shelf shapes',
     authoritativeSourceUrl: JESSE_VAN_DIJK_ARTSTATION,
     upstreamAssetUrl: 'https://cdna.artstation.com/p/assets/images/images/032/810/096/large/jesse-van-dijk-destiny-2020-jessevandijk-079.jpg?1607533346',
+    sourceWidth: 1920,
+    sourceHeight: 998,
   }),
   creditedRecord({
     referenceId: 'C7',
@@ -200,7 +230,11 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
     artist: 'Mark Goldsworthy',
     workTitle: 'Early Throne World citadel',
     authoritativeSourceUrl: MARK_GOLDSWORTHY_ARTSTATION,
-    upstreamAssetUrl: 'https://cdna.artstation.com/p/assets/images/images/046/905/669/large/mark-goldsworthy-markg-citadel-concept.jpg?1646262190',
+    // Largest approved ArtStation rendition (`/4k/`, 2200px wide), replacing
+    // the earlier `/large/` (1920px) download.
+    upstreamAssetUrl: 'https://cdna.artstation.com/p/assets/images/images/046/905/669/4k/mark-goldsworthy-markg-citadel-concept.jpg?1646262190',
+    sourceWidth: 2200,
+    sourceHeight: 1611,
   }),
   creditedRecord({
     referenceId: 'C10',
@@ -210,5 +244,7 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
     workTitle: 'Crash',
     authoritativeSourceUrl: JESSE_VAN_DIJK_ARTSTATION,
     upstreamAssetUrl: 'https://cdna.artstation.com/p/assets/images/images/001/163/640/large/jesse-van-dijk-jvd-cabalshipcrashintrohiveship-1920.jpg?1441351541',
+    sourceWidth: 1920,
+    sourceHeight: 984,
   }),
 ] as const

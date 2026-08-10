@@ -79,6 +79,14 @@ of retyping it in the sequence. If an approved source does not name an
 individual artist, set `artist: null` and record an explicit uncredited state
 with the rights holder/source rather than inventing a name.
 
+Expose that credit through `aria-describedby`, not `aria-description`: the
+latter is not part of stable ARIA (no accessibility-tree/API mapping in most
+browsers, so assistive tech may never announce it), while `aria-describedby`
+references a real, visually-hidden DOM node
+(`WolvesIntroOverlay.vue`'s `.wolves-intro-overlay-visually-hidden` span) that
+every screen reader resolves. Keep the visible design unchanged — this is an
+accessible-name/description fix, not a layout change.
+
 ## Common Rationalizations
 
 - "It is in an official press kit, so it is freely licensed." Availability is
@@ -332,6 +340,22 @@ A download button proves availability, not redistribution rights. If an asset
 has no authoritative source or the proposed use falls outside the approved
 non-commercial fan-content scope, do not add it.
 
+ArtStation asset URLs follow
+`https://cdn{a|b}.artstation.com/p/assets/images/images/<id>/{large|4k}/<filename>?<timestamp>`.
+The `/4k/` rendition is the largest publicly retrievable size (2200px wide, at
+least for the Director's Cut's Mark Goldsworthy concept paintings) and is
+preferred over `/large/` (1920px) when the brief calls for the largest
+approved source; `cdna`/`cdnb` serve identical bytes for the same asset id, so
+keep whichever subdomain the existing record already used to minimize diff.
+
+Not every upstream URL in the artwork ledger is a stable download endpoint.
+E1's `upstreamAssetUrl` is a signed, expiring gamespress.com CDN link
+(`?otf=y&lightbox=y&sky=...` query parameters). It is retrieval evidence for
+where and when the asset was obtained, not a link a future agent can fetch
+again once it expires; the ledger's inline comment on that record says so.
+Don't "fix" it by swapping in a different, unverified URL just to make it look
+durable — record the instability instead.
+
 
 ## `wolves/people/` is hand-picked, and two thirds of it is CNCF photography
 
@@ -466,6 +490,20 @@ nine-quote science/humanity panel, Task 6):
 4. `sourceUrlsByRecordId` (`wolves-story.ts`) accepts a source URL for any
    lore `kind`, not only `kind: 'source'` — register one entry per new record
    there too if the record has independently verifiable provenance.
+4a. For a quote panel specifically, also register a typed evidence record per
+   quote in `src/data/wolves-directors-cut-quote-evidence.ts`: attribution,
+   work, edition/publication, locator, exact source URL, copyright status, and
+   a `verificationConfidence` (`primary-print-scan` for a Google
+   Books/archive.org page image of the physical edition,
+   `primary-web-publication` for the author/org's own first-party web page,
+   `official-secondary-reproduction` for an authoritative third party
+   reproducing the passage without a print scan of their own). This is the
+   single typed authority the sourceUrl tests compare against for exact
+   values, not just URL shape — do not let `wolves-story.ts`'s map and this
+   ledger's `sourceUrl` field drift to different URLs for the same id.
+   Candidate quotes researched but not owner-approved for the ledger (in this
+   batch: Dune and Tolkien excerpts) stay excluded — neither is public domain
+   and no written estate permission was recorded.
 5. Give the batch its own timeline module (`wolves-directors-cut-timeline.ts`)
    rather than teaching the standard scheduler about a second show. It reuses
    the existing `allocateLoreSlots()`/`estimateLoreReadDuration()` primitives

@@ -442,6 +442,21 @@ const activeSceneKey = computed(() => {
   return 'blank'
 })
 
+/**
+ * `aria-description` has unreliable screen-reader support, so the montage
+ * credit is exposed instead through `aria-describedby` pointing at a
+ * visually hidden node (see `.wolves-intro-overlay-visually-hidden` below).
+ * The id is derived from the already-unique `activeSceneKey` so it stays
+ * stable per painting without a second identity source.
+ */
+const activeFigureCreditId = computed(() => {
+  if (!activeCue.value?.backgroundFigure) {
+    return undefined
+  }
+  const slug = activeSceneKey.value.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '')
+  return `wolves-intro-figure-credit-${slug}`
+})
+
 /** Splits text into single-character parts so every literal B/F can be highlighted without v-html. */
 /**
  * Punctuation is stripped from displayed intro text only (authored data keeps
@@ -1161,9 +1176,14 @@ defineExpose({
               class="wolves-intro-overlay-scene"
               :role="activeCue?.backgroundFigure ? 'figure' : undefined"
               :aria-label="activeCue?.backgroundFigure?.label"
-              :aria-description="activeCue?.backgroundFigure?.credit"
+              :aria-describedby="activeFigureCreditId"
               :style="{ transitionDuration: `${PROLOGUE_SCENE_CROSSFADE_SECONDS}s` }"
             >
+              <span
+                v-if="activeCue?.backgroundFigure"
+                :id="activeFigureCreditId"
+                class="wolves-intro-overlay-visually-hidden"
+              >{{ activeCue.backgroundFigure.credit }}</span>
               <img
                 v-if="activeCue?.backgroundImage"
                 class="wolves-intro-overlay-background"
@@ -1456,6 +1476,20 @@ defineExpose({
 .wolves-intro-overlay-scene {
   position: absolute;
   inset: 0;
+}
+
+/* Exposes the montage credit to assistive tech via aria-describedby without
+   painting a visible caption over the artwork. */
+.wolves-intro-overlay-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .wolves-scene-crossfade-enter-active,

@@ -209,6 +209,16 @@ an unidentified player request.
   identity; a "which specific presentation" question (restoring the standard
   show after a Director's Cut run) still compares against
   `WOLVES_STANDARD_PROFILE_ID`/`WOLVES_DIRECTORS_CUT_PROFILE_ID` explicitly.
+- The `PresentationProfile` type lives in `experience-manifest.ts`; the
+  `WOLVES_STANDARD_PROFILE_ID`/`WOLVES_DIRECTORS_CUT_PROFILE_ID` constants and
+  the `isWolvesPresentationProfile()` helper live in `cinematic.ts` alongside
+  the store that consumes them. No `wolves-presentation-profiles.ts` (or
+  similarly named standalone module) exists, and none should be created just
+  to match an earlier planning document's file-structure sketch — an external
+  plan naming a path is not itself a benefit. Only move these definitions if a
+  concrete benefit is identified first (e.g. an import cycle these are
+  currently trapped in); otherwise leave them where their nearest consumer
+  already imports them from.
 - A computed derives a fraction of show progress from a hardcoded segment count
   (`TheaterExperience.vue`'s `totalProgress` divides by `7`, sized for the
   standard show's day/night wallpaper cycle). A single-segment presentation
