@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ExperienceManifest } from '@/config/experience-manifest'
 import type { IntroStatusPayload } from '@/data/wolves-intro-sequence'
-import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import CinematicLobby from '@/components/wolves/cinematic/CinematicLobby.vue'
 import CinematicStage from '@/components/wolves/cinematic/CinematicStage.vue'
 import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
@@ -294,6 +294,15 @@ async function handleSegmentSeek(ratio: number) {
     stage.value?.seekToRatio(ratio)
   }
 }
+
+onMounted(() => {
+  // Deep-link into the Director's Cut for projection / recording workflows that
+  // need the cut to start without a lobby click. The default front-door behavior
+  // is unchanged when the parameter is absent.
+  if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('directors-cut')) {
+    void enterIntro(null, true)
+  }
+})
 
 onBeforeUnmount(() => {
   unmounted = true

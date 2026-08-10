@@ -94,6 +94,29 @@ an unidentified player request.
 - A change removes authored content — a segment, lore, prose — without the
   owner's explicit word, or its justification does not match its diff.
 
+## Director's Cut entry points and autoplay resilience
+
+The Director's Cut can be entered in two ways:
+
+1. **Lobby click** — `CinematicLobby` emits `enter-directors-cut`, which calls
+   `enterIntro(null, true)`. The click satisfies browser autoplay policy.
+2. **Deep link** — `/wolves/?directors-cut` auto-starts the Director's Cut on
+   mount. This is intended for projection / recording workflows, but it may
+   lack a user gesture, so the browser may block autoplay.
+
+If the scored prologue's background-audio embed or the Destiny trailer video is
+blocked, `currentTime` stops advancing and the show hangs. The intro overlay
+handles this with bounded fallbacks:
+
+- **Text/audio segments**: if `getCurrentTime()` stays at `0` for more than
+  `MAX_AUDIO_STALL_SECONDS` (5s), pacing falls back to the existing wall-clock
+  derivation. Time never rewinds when the audio player starts late.
+- **Video segments**: if `currentTime` stays within the opening seconds for more
+  than 15s, the segment advances so the cinematic handoff is not stranded.
+
+These fallbacks are last-resort unattended behavior. For normal projection, prefer
+a real user gesture so the authored music and trailer play as intended.
+
 ## Verification
 
 - [ ] Explicit approval exists.

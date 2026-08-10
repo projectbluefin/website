@@ -611,12 +611,24 @@ async function loadAudioTrack(youtubeVideoId: string | undefined) {
   })
 }
 
+/**
+ * How long a background-audio embed may sit at 0s before we conclude the browser
+ * has blocked autoplay (or an ad/pre-roll has stalled) and fall back to wall-clock
+ * pacing. The show is unattended: waiting forever for audio that will never start
+ * is a black frame the audience cannot recover from.
+ */
+const MAX_AUDIO_STALL_SECONDS = 5
+
 function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
   stopTextTimer()
   currentTime.value = 0
   activeSegmentDuration.value = segment.duration
   textClockOriginMs = performance.now()
   void loadAudioTrack(segment.audioYoutubeVideoId)
+
+  let lastAudioTime = -1
+  let lastAudioAdvanceMs = textClockOriginMs
+  let audioStalled = false
 
   textTimer = setInterval(() => {
     const now = performance.now()
@@ -625,13 +637,24 @@ function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
       textClockOriginMs = now - currentTime.value * 1000
       return
     }
-    // Ad resilience: when a background audio embed exists, cues key off the
-    // audio's real getCurrentTime(). Pre-roll ads hold it at 0 and mid-roll ads
-    // freeze it, so the cold open waits for the music instead of desyncing.
-    if (audioPlayer && typeof audioPlayer.getCurrentTime === 'function') {
-      currentTime.value = audioPlayer.getCurrentTime() ?? 0
+
+    const audioTime = audioPlayer?.getCurrentTime?.() ?? null
+    if (audioTime != null && !audioStalled) {
+      // Ad resilience: when a background audio embed exists, cues key off the
+      // audio's real getCurrentTime(). Pre-roll ads hold it at 0 and mid-roll ads
+      // freeze it, so the cold open waits for the music instead of desyncing.
+      if (audioTime !== lastAudioTime) {
+        lastAudioTime = audioTime
+        lastAudioAdvanceMs = now
+      }
+      else if (audioTime === 0 && (now - lastAudioAdvanceMs) / 1000 > MAX_AUDIO_STALL_SECONDS) {
+        // Audio never left the origin: treat it as blocked and pace by wall clock
+        // so the cold open does not hang forever.
+        audioStalled = true
+      }
     }
-    else {
+
+    if (audioStalled || audioTime == null) {
       // A silent card (the presenter's welcome slide) has no player to read, so it
       // derives elapsed time from a fixed origin. Two rules this encodes the hard
       // way: never assume the interval fired on schedule — a hardcoded `+= 0.2` on
@@ -639,6 +662,11 @@ function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
       // played in 29.5s and nobody in the back row finished a paragraph — and never
       // accumulate deltas, which drifts over a card this long.
       currentTime.value = (now - textClockOriginMs) / 1000
+    }
+    else {
+      // Never rewind: if the audio player starts late (e.g. after a blocked-autoplay
+      // delay) the wall clock may already be ahead; snapping back would restart the card.
+      currentTime.value = Math.max(currentTime.value, audioTime)
     }
     // Authored musical fade: ramp the audio down across the excerpt's final
     // seconds so it ends on the phrase's own decay instead of a hard cut. The
@@ -737,10 +765,28 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
         activeSegmentDuration.value = activeVideoCutoffDuration(segment) ?? player?.getDuration?.() ?? 0
         segmentDurations.value[sequenceState.value.index] = activeSegmentDuration.value
         stopPolling()
+        let lastVideoTime = -1
+        let lastVideoAdvanceMs = performance.now()
         pollTimer = setInterval(() => {
           currentTime.value = player?.getCurrentTime?.() ?? 0
+          const now = performance.now()
+          if (currentTime.value !== lastVideoTime) {
+            lastVideoTime = currentTime.value
+            lastVideoAdvanceMs = now
+          }
           updateHandoffFade()
-          if (activeVideoCutoffDuration(segment) != null && currentTime.value >= activeSegmentDuration.value && !isPaused.value) {
+          if (activeVideoCutoffDuration(segment) == null || isPaused.value) {
+            return
+          }
+          if (currentTime.value >= activeSegmentDuration.value) {
+            advance()
+            return
+          }
+          // Unattended fallback: if the video never left its opening seconds,
+          // assume autoplay was blocked and advance so the show does not hang.
+          const stalledSeconds = (now - lastVideoAdvanceMs) / 1000
+          const nearStart = currentTime.value <= Math.min(10, activeSegmentDuration.value / 2)
+          if (stalledSeconds > 15 && nearStart) {
             advance()
           }
         }, 200)

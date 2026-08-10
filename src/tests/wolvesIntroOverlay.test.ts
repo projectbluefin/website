@@ -285,6 +285,30 @@ describe('wolvesIntroOverlay video segments', () => {
     expect(wrapper.emitted('complete')).toHaveLength(1)
   })
 
+  it('advances when the video is stuck near its opening frame for too long', async () => {
+    const stuckSequence = [
+      { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BV3BZKbpBns', maxDuration: 120 },
+    ]
+    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: stuckSequence } })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+    players[0].triggerReady()
+    await flushPromises()
+
+    // The mock player never reports a time change, simulating a blocked autoplay.
+    expect(players[0].getCurrentTime()).toBe(0)
+
+    await vi.advanceTimersByTimeAsync(15_000)
+    await flushPromises()
+    expect(wrapper.emitted('complete')).toBeUndefined()
+
+    await vi.advanceTimersByTimeAsync(1_500)
+    await flushPromises()
+
+    expect(wrapper.emitted('complete')).toHaveLength(1)
+  })
+
   it('shows the active overlay text cue synced to playback time', async () => {
     const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
     await flushPromises()
@@ -966,6 +990,29 @@ surrounded by predators`)
 
     await vi.advanceTimersByTimeAsync(1000)
     await flushPromises()
+    await vi.advanceTimersByTimeAsync(1000)
+    await flushPromises()
+
+    expect(wrapper.emitted('complete')).toHaveLength(1)
+  })
+
+  it('falls back to wall-clock pacing when the scored audio embed is blocked at 0s', async () => {
+    const textSequence = [
+      { id: 'wolves-prologue', kind: 'text' as const, duration: 1, audioYoutubeVideoId: 'EB3IokHelRk' },
+    ]
+    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+
+    // The mock player reports 0s forever, simulating a browser that blocked autoplay.
+    expect(players[0].getCurrentTime()).toBe(0)
+
+    // Stall grace period (5s) plus the authored 1s duration.
+    await vi.advanceTimersByTimeAsync(5000)
+    await flushPromises()
+    expect(wrapper.emitted('complete')).toBeUndefined()
+
     await vi.advanceTimersByTimeAsync(1000)
     await flushPromises()
 
