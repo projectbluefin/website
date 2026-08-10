@@ -1,3 +1,4 @@
+import type { PresentationProfile } from '../config/experience-manifest'
 import type { SoundtrackTrack } from '../data/wolves-soundtrack'
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
@@ -11,6 +12,7 @@ import { CINEMATIC_SEGMENTS } from '../config/wolves-cinematic'
 import { bazziteArtworkWallpapers, ublueArtworkWallpapers } from '../data/artwork-wallpapers'
 import { backCatalogueCharacters } from '../data/back-catalogue-characters'
 import { wolvesComicHeroShots } from '../data/wolves-comic-hero-shots'
+import { DIRECTORS_CUT_FINALE_START } from '../data/wolves-directors-cut-slides'
 import { ghostsInTheMistOpeningSlide } from '../data/wolves-gallery-featured'
 import {
   TRACK_ZERO_BEAT_TIMES,
@@ -40,6 +42,7 @@ import {
   topheeTrackZeroWindow,
   trackZeroFastFinalePhotoIds,
 } from '../data/wolves-track-zero-slides'
+import { WOLVES_DIRECTORS_CUT_PROFILE_ID, WOLVES_STANDARD_PROFILE_ID } from '../stores/cinematic'
 import { isShowcaseSlide, slideAspectFromNaturalSize } from '../utils/slide-showcase'
 
 const source = {
@@ -1829,6 +1832,76 @@ describe('pending segment preload of the authored opening slide', () => {
     await flushImageLoads()
     expect(activeTimelineImage(wrapper)).toBe(featuredOpeningUrl)
     expect((wrapper.vm as any).crossfadeActive).toBe(true)
+  })
+
+  describe('director\'s cut track zero schedule', () => {
+    async function mountCut(presentationProfile?: PresentationProfile) {
+      const wrapper = mount(WolvesComicReader, {
+        props: { trackIndex: 0, playlistCurrentTime: 0, presentationProfile },
+      })
+      await flushPromises()
+      return wrapper
+    }
+
+    function scheduleOf(wrapper: Awaited<ReturnType<typeof mountCut>>, key: 'trackZeroSlides' | 'timelineSlides') {
+      return (wrapper.vm as any)[key] as Array<{ id: string, startTime: number, duration: number, endTime: number }>
+    }
+
+    it('drives the standard show from the authored lock schedule, unchanged', async () => {
+      const standard = await mountCut(WOLVES_STANDARD_PROFILE_ID)
+      const noProfile = await mountCut()
+
+      expect(scheduleOf(standard, 'trackZeroSlides')).toEqual(scheduleOf(standard, 'timelineSlides'))
+      expect(scheduleOf(noProfile, 'trackZeroSlides')).toEqual(scheduleOf(noProfile, 'timelineSlides'))
+
+      const jono = scheduleOf(standard, 'trackZeroSlides').find(slide => slide.id === jonoBaconSlideId)
+      expect(jono?.startTime).toBe(jonoBaconTrackZeroWindow.startTime)
+      expect(jono?.endTime).toBe(jonoBaconTrackZeroWindow.endTime)
+    })
+
+    it('leaves the standard schedule byte-identical while the director cut plays', async () => {
+      const standard = await mountCut(WOLVES_STANDARD_PROFILE_ID)
+      const director = await mountCut(WOLVES_DIRECTORS_CUT_PROFILE_ID)
+
+      expect(scheduleOf(director, 'timelineSlides')).toEqual(scheduleOf(standard, 'timelineSlides'))
+      expect(scheduleOf(director, 'trackZeroSlides')).not.toEqual(scheduleOf(standard, 'trackZeroSlides'))
+    })
+
+    it('runs its own lock-free schedule to the reserved finale anchor', async () => {
+      const director = await mountCut(WOLVES_DIRECTORS_CUT_PROFILE_ID)
+      const slides = scheduleOf(director, 'trackZeroSlides')
+
+      expect(slides.length).toBeGreaterThan(scheduleOf(director, 'timelineSlides').length)
+      expect(slides[0].startTime).toBe(0)
+      expect(slides[slides.length - 1].endTime).toBe(DIRECTORS_CUT_FINALE_START)
+      expect(new Set(slides.map(slide => slide.id)).size).toBe(slides.length)
+      for (const slide of slides) {
+        expect(TRACK_ZERO_BEAT_TIMES.some(beat => Math.abs(beat - slide.endTime) < 0.0005)).toBe(true)
+      }
+      // Every authored hero lock is gone: Jono no longer owns 167.8-171.88.
+      // His portrait is still in the pool, so an absent slide would be a
+      // drawn-pool regression, not a pass.
+      const jono = slides.find(slide => slide.id === jonoBaconSlideId)
+      expect(jono).toBeDefined()
+      expect(jono?.startTime).not.toBe(jonoBaconTrackZeroWindow.startTime)
+      // Reza's two-window hold cannot exist here whether or not his portrait is
+      // drawn: nothing in the Director cut starts on his window or holds that long.
+      const rezaHold = rezaContributorTrackZeroWindow.endTime - rezaContributorTrackZeroWindow.startTime
+      expect(slides.some(slide => slide.startTime === rezaContributorTrackZeroWindow.startTime)).toBe(false)
+      expect(slides.every(slide => slide.duration < rezaHold)).toBe(true)
+    })
+
+    it('shows nothing scheduled once the finale interval opens', async () => {
+      const director = await mountCut(WOLVES_DIRECTORS_CUT_PROFILE_ID)
+      const slides = scheduleOf(director, 'trackZeroSlides')
+
+      for (const time of [DIRECTORS_CUT_FINALE_START, 380, TRACK_ZERO_SECTIONS.finaleStart, 422]) {
+        expect(slides.some(slide => slide.startTime <= time && slide.endTime > time)).toBe(false)
+      }
+      // The standard show is still scheduled across that same stretch.
+      const standard = scheduleOf(director, 'timelineSlides')
+      expect(standard.some(slide => slide.startTime <= 380 && slide.endTime > 380)).toBe(true)
+    })
   })
 })
 

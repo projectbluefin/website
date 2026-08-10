@@ -255,6 +255,7 @@ onBeforeUnmount(() => {
           :playlist-current-time="time"
           :experience-id="store.experienceId"
           :wolves-experience="isWolvesPresentation"
+          :presentation-profile="store.presentationProfile"
         />
 
         <Transition name="wc-thesis">

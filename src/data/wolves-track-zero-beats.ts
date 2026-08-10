@@ -1102,7 +1102,14 @@ export const TRACK_ZERO_SECTIONS = {
   finaleStart: 408.137,
 } as const
 
-function nearestBeatIndex(time: number): number {
+/**
+ * Index of the measured beat closest to `time`.
+ *
+ * Exported so every scheduler resolves "which measured beat" through one
+ * implementation. A second copy of this search is how a schedule starts
+ * cutting a beat away from the one its section boundary names.
+ */
+export function trackZeroNearestBeatIndex(time: number): number {
   const beats = TRACK_ZERO_BEAT_TIMES
   let lo = 0
   let hi = beats.length - 1
@@ -1147,8 +1154,8 @@ export function trackZeroBeatCuts(
   }
 
   const beats = TRACK_ZERO_BEAT_TIMES
-  const startIndex = nearestBeatIndex(startTime)
-  const endIndex = nearestBeatIndex(endTime)
+  const startIndex = trackZeroNearestBeatIndex(startTime)
+  const endIndex = trackZeroNearestBeatIndex(endTime)
   const totalBeats = endIndex - startIndex
   const base = tiers[tiers.length - 1]
   if (totalBeats < base * count) {
@@ -1188,8 +1195,8 @@ export function trackZeroEvenBeatCuts(
     return []
   }
 
-  const startIndex = nearestBeatIndex(startTime)
-  const endIndex = nearestBeatIndex(endTime)
+  const startIndex = trackZeroNearestBeatIndex(startTime)
+  const endIndex = trackZeroNearestBeatIndex(endTime)
   const totalBeats = endIndex - startIndex
   if (totalBeats < count) {
     return Array.from({ length: count }, (_, index) =>
@@ -1222,9 +1229,9 @@ export function trackZeroBeatCutsWithPickup(
     return []
   }
 
-  const startIndex = nearestBeatIndex(startTime)
-  const pickupIndex = nearestBeatIndex(pickupTime)
-  const endIndex = nearestBeatIndex(endTime)
+  const startIndex = trackZeroNearestBeatIndex(startTime)
+  const pickupIndex = trackZeroNearestBeatIndex(pickupTime)
+  const endIndex = trackZeroNearestBeatIndex(endTime)
   const totalBeats = endIndex - startIndex
   if (totalBeats < afterBeats * count) {
     return Array.from({ length: count }, (_, index) =>

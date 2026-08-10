@@ -90,6 +90,65 @@ fresh at each time: `setProps` alone does not swap the displayed buffer in jsdom
 because the incoming image never loads, so a stale slide keeps reporting and the
 check silently passes.
 
+## The Director's Cut runs a second Track 0 schedule
+
+`/wolves/` plays two cuts of the same song through the same component, selected
+by `presentationProfile` (see `src/stores/cinematic.ts`). The standard cut keeps
+everything above. The Director's Cut runs
+`buildDirectorsCutTrackZeroSlides()` from
+`src/data/wolves-directors-cut-slides.ts` and drops **every** authored lock: no
+hero pins, no post-hero opening run, no Reza hold, no pivotal/bketelsen freezes,
+no reserved closing photo. `trackZeroSlides` in `WolvesComicReader.vue` is the
+switch; `timelineSlides` is untouched and still drives `wolves-standard`.
+
+Three constraints hold that schedule together, and none of them is taste:
+
+- **`DIRECTORS_CUT_FINALE_START` is a measured beat, not a chosen time.** It is
+  `TRACK_ZERO_SECTIONS.bkEnd` (355.219 s, beat 879) — the same beat the standard
+  show already names `TRACK_ZERO_TEMPO_PICKUPS.finale` and already uses to open
+  its own `finaleBarrage`. It is the last section boundary before the outro, so
+  it is the only place the picture edit can stop without stopping mid-phrase.
+  The ordinary schedule ends exactly there and nothing ordinary resumes; the
+  Director finale owns the rest of the frame.
+- **Two measured beats is the floor on a hold.** The reader keeps
+  `PRELOAD_WINDOW_SECONDS` (8 s) of upcoming slides warm using at most
+  `MAX_LOOKAHEAD_SLIDES` (12) fetches, so an average hold under 8/12 s puts the
+  lookahead behind the cue and the decode gate turns into a stall. Two measured
+  beats is 0.74-0.88 s across this track's tempo range. A request for "even
+  faster" cuts is a request to change the preload budget first.
+- **The slide count comes from the beat budget, never from a pool size.**
+  `trackZeroBeatCuts` gives every slide the shortest tier, upgrades earlier
+  slides while beats remain, and then dumps whatever is left on **slide 0**. Feed
+  it too few slides and the section opens on one enormous hold; feed it more than
+  `floor(totalBeats / shortestTier)` and it silently abandons the measured grid
+  for a uniform division of the window. `directorsCutSectionSlideCount()` picks
+  `round(2 * totalBeats / (longest + shortest))` clamped between those two
+  bounds, which lands roughly half the section on each tier — the tightening
+  shape. Whatever beats remain still go to slide 0, so a section's opening hold
+  runs a little past its top tier by design (the ambient intro opens on 14
+  beats, not 12); it is the longest hold of the section either way.
+
+Pools are drawn in the section's declared order and fall through as each
+exhausts, with the live CNCF feed last. With today's 254 local wallpapers the
+feed is never reached; it exists so a shrinking local pool degrades into more
+photographs rather than into fewer slides. A feed photo whose id already appears
+inside a local filename (`wolves/people/kubecon-55168684055.webp`) is dropped, or
+the same frame plays twice under two ids.
+
+The pool cycling order is load-bearing, not cosmetic: every pool draws from one
+shared seeded generator, and the reader rebuilds this schedule the moment the
+Flickr feed resolves. Cycle the feed **last** or a suddenly-populated pool
+re-deals the whole show underneath a playing segment.
+
+A reserved interval is a hand-off, not a gap. The schedule stops at the earliest
+reserved `startTime` — snapped back to the nearest measured beat, because
+`trackZeroBeatCuts` clamps its last cut to whatever window end it is handed and
+would otherwise put an off-grid cut in the show — and never resumes.
+
+Diversity is the existing `buildWolvesGalleryCycle` per pool plus one
+`separateAdjacentEvents` pass over the assembled run, which is what repairs the
+seams *between* pools. Assign the beat cuts after that pass, never before.
+
 ## Slide preloading is measured in seconds, not slides
 
 `WolvesComicReader.vue` gates each slide swap on the incoming image having
@@ -123,11 +182,13 @@ either branch. Measure over several runs before blaming a change for it.
 `WolvesComicReader.vue` drives three different shows and only one is the
 presentation:
 
-- `timelineSlides` — the Wolves Track 0 schedule (`wolvesExperience` true).
+- `timelineSlides` — the standard Wolves Track 0 schedule (`wolvesExperience`
+  true), reached through `trackZeroSlides`, which swaps in the Director's Cut
+  schedule for the `wolves-directors-cut` profile.
 - `laterTrackPhotos` — Wolves tracks 1 and later.
 - `mixedPhotos` — the eleven albums in `public/experiences/catalogue.json`.
 
-`mixedPhotosToUse` only swaps in `timelineSlides` when `wolvesExperience` is
+`mixedPhotosToUse` only swaps in `trackZeroSlides` when `wolvesExperience` is
 true, so `mixedPhotos` is live for every non-Wolves album. It reads as dead
 legacy code beside the newer Wolves path, and an audit flagged ~113 lines of it
 for deletion; deleting it would have broken eleven experiences while leaving

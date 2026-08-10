@@ -4,8 +4,11 @@ WolvesComicReader — soundtrack-synced slideshow
 Drives two different shows from one component:
 
   - The Wolves presentation (`wolvesExperience` true, trackIndex 0) uses
-    `timelineSlides`, whose Track 0 schedule is pinned to authored windows in
-    `src/data/wolves-track-zero-slides.ts`.
+    `trackZeroSlides`: the standard cut's `timelineSlides`, whose Track 0
+    schedule is pinned to authored windows in
+    `src/data/wolves-track-zero-slides.ts`, or — under the
+    `wolves-directors-cut` presentation profile — the frantic, lock-free
+    schedule from `src/data/wolves-directors-cut-slides.ts`.
   - Every other album in `public/experiences/catalogue.json` uses
     `mixedPhotos`, and later Wolves tracks use `laterTrackPhotos`.
 
@@ -13,6 +16,7 @@ There is no PDF and no canvas despite the historical name; `loadComicPdf()`
 is a no-op kept only for the download link.
 -->
 <script setup lang="ts">
+import type { PresentationProfile } from '@/config/experience-manifest'
 import type { SoundtrackTrack, WolvesSoundtrackManifest } from '@/data/wolves-soundtrack'
 
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
@@ -21,6 +25,7 @@ import { backCatalogueCharacters } from '@/data/back-catalogue-characters'
 import { classifyCuratedSlide, isCncfSlide, orderBackCatalogueSlides } from '@/data/back-catalogue-order'
 import { formatGalleryCaption, getGalleryCaptionLabel } from '@/data/gallery-captions'
 import { wolvesComicHeroShots } from '@/data/wolves-comic-hero-shots'
+import { buildDirectorsCutTrackZeroSlides } from '@/data/wolves-directors-cut-slides'
 import { ghostsInTheMistOpeningSlide } from '@/data/wolves-gallery-featured'
 import { shuffleWolvesGalleryPhotos } from '@/data/wolves-gallery-shuffle'
 import { loadWolvesSoundtrack } from '@/data/wolves-soundtrack'
@@ -49,6 +54,7 @@ import {
   topheeSlideId,
   topheeTrackZeroWindow,
 } from '@/data/wolves-track-zero-slides'
+import { WOLVES_DIRECTORS_CUT_PROFILE_ID } from '@/stores/cinematic'
 import { isShowcaseSlide, slideAspectFromNaturalSize } from '@/utils/slide-showcase'
 import { wallpapers } from './wallpapers-list'
 
@@ -75,6 +81,13 @@ const props = withDefaults(defineProps<{
   playlistCurrentTime?: number
   experienceId?: string
   wolvesExperience?: boolean
+  /**
+   * Which authored show is playing. Both Wolves profiles run the Track 0
+   * beat-synced gallery, but the Director's Cut runs its own frantic schedule
+   * (`buildDirectorsCutTrackZeroSlides`) instead of the standard cut's authored
+   * lock windows. Absent or `'generic'` means a back-catalogue album.
+   */
+  presentationProfile?: PresentationProfile
 }>(), {
   experienceId: 'seven-days-to-the-wolves',
   wolvesExperience: true,
@@ -85,6 +98,7 @@ const trackZeroReservedForLaterIds = new Set([
 ])
 
 const isWolvesExperience = computed(() => props.wolvesExperience)
+const isDirectorsCut = computed(() => props.presentationProfile === WOLVES_DIRECTORS_CUT_PROFILE_ID)
 
 /**
  * Slide crossfades run without backdrop blur everywhere except the primary
@@ -678,8 +692,62 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   return result
 })
 
+/**
+ * The Director's Cut runs the same measured beat grid and the same photo pools
+ * as the standard cut, and none of its authored lock windows: no hero pins, no
+ * post-hero run, no Reza hold, no thesis freezes, no reserved closing photo.
+ * The cuts are shorter and tighten section by section, and the whole schedule
+ * stops on `DIRECTORS_CUT_FINALE_START` so the Director finale owns the
+ * remaining frame. See `src/data/wolves-directors-cut-slides.ts`.
+ *
+ * The standard show never reaches this branch — `timelineSlides` above is
+ * untouched and still drives `wolves-standard`.
+ */
+const directorsCutTimelineSlides = computed<TimelineSlide[]>(() => {
+  const toSlide = (wallpaper: (typeof wallpapers)[number]) => ({
+    id: wallpaper.name || wallpaper.dayName || wallpaper.nightName || '',
+    isLocal: true,
+    path: wallpaper.name,
+    title: wallpaper.title,
+    type: wallpaper.type,
+    dayName: wallpaper.dayName,
+    nightName: wallpaper.nightName,
+    fit: wallpaper.fit,
+    description: wallpaper.description,
+    theaterTitleOnly: wallpaper.theaterTitleOnly,
+  })
+  const isPeopleWallpaper = (wallpaper: (typeof wallpapers)[number]) =>
+    Boolean(wallpaper.name?.includes('/people/') || wallpaper.dayName?.includes('/people/') || wallpaper.nightName?.includes('/people/'))
+
+  const localSlides = wallpapers.filter(wallpaper => !wallpaper.name?.endsWith('.gif'))
+  const peopleSlides = localSlides
+    .filter(wallpaper => isPeopleWallpaper(wallpaper) && !trackZeroReservedForLaterIds.has(wallpaper.name ?? wallpaper.dayName ?? wallpaper.nightName ?? ''))
+    .map(toSlide)
+  const showcase = localSlides.filter(wallpaper => !isPeopleWallpaper(wallpaper))
+
+  return buildDirectorsCutTrackZeroSlides<TimelineSlide>({
+    dayNightSlides: showcase.filter(wallpaper => wallpaper.type === 'daynight').map(toSlide) as TimelineSlide[],
+    showcaseSlides: showcase.filter(wallpaper => wallpaper.type !== 'daynight').map(toSlide) as TimelineSlide[],
+    peopleSlides: peopleSlides as TimelineSlide[],
+    cncfSlides: flickrPhotos.value.map(photo => ({
+      id: photo.id,
+      isLocal: false,
+      path: `https://live.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_b.jpg`,
+      title: photo.title,
+      type: 'single' as const,
+      kind: 'cncf' as const,
+      rawPhoto: photo,
+    })) as unknown as TimelineSlide[],
+    duplicateCncfPhotoIds: trackZeroFlickrPhotoIds,
+  })
+})
+
+/** The Track 0 schedule for whichever authored cut is playing. */
+const trackZeroSlides = computed<TimelineSlide[]>(() =>
+  isDirectorsCut.value ? directorsCutTimelineSlides.value : timelineSlides.value)
+
 const trackZeroCarryForwardPhotos = computed(() => {
-  const scheduledIds = new Set(timelineSlides.value.map(slide => slide.id))
+  const scheduledIds = new Set(trackZeroSlides.value.map(slide => slide.id))
   return wallpapers
     .filter(wallpaper => wallpaper.name?.includes('/people/'))
     .map(wallpaper => ({
@@ -777,15 +845,15 @@ const backCatalogueCuratedPhotos = computed(() => {
 })
 
 const activeTimelineSlide = computed(() => {
-  if (!isWolvesExperience.value || props.trackIndex !== 0 || !isExperimental.value || timelineSlides.value.length === 0) {
+  if (!isWolvesExperience.value || props.trackIndex !== 0 || !isExperimental.value || trackZeroSlides.value.length === 0) {
     return null
   }
   const curTime = props.playlistCurrentTime ?? 0
-  let index = timelineSlides.value.findIndex(s => curTime < s.endTime)
+  let index = trackZeroSlides.value.findIndex(s => curTime < s.endTime)
   if (index === -1) {
-    index = timelineSlides.value.length - 1
+    index = trackZeroSlides.value.length - 1
   }
-  return timelineSlides.value[index]
+  return trackZeroSlides.value[index]
 })
 
 const laterTrackSlideHold = computed(() => {
@@ -851,20 +919,20 @@ const daynightNightOpacityB = computed(() => {
 })
 
 const activeTimelineSlideIndex = computed(() => {
-  if (timelineSlides.value.length === 0) {
+  if (trackZeroSlides.value.length === 0) {
     return 0
   }
   const slide = activeTimelineSlide.value
   if (!slide) {
     return 0
   }
-  return timelineSlides.value.indexOf(slide)
+  return trackZeroSlides.value.indexOf(slide)
 })
 
 const mixedPhotos = computed(() => {
   // NOT DEAD CODE. This is the slideshow for the ten non-Wolves album
   // experiences in public/experiences/catalogue.json. `mixedPhotosToUse` only
-  // swaps in `timelineSlides` when `wolvesExperience` is true, so this branch
+  // swaps in `trackZeroSlides` when `wolvesExperience` is true, so this branch
   // still runs for every other album at trackIndex 0. Deleting it because the
   // Wolves path looks like a replacement breaks those albums silently — the
   // Wolves route keeps working, so a /wolves/ smoke test will not catch it.
@@ -942,7 +1010,7 @@ const featuredOpeningQuotePart = computed(() => {
 
 const mixedPhotosToUse = computed(() => {
   if (isWolvesExperience.value && props.trackIndex === 0 && isExperimental.value) {
-    return timelineSlides.value
+    return trackZeroSlides.value
   }
   return mixedPhotos.value
 })
@@ -1232,7 +1300,7 @@ function orderGalleryPool(pool: any[]): any[] {
 }
 
 function snapshotLaterTrackPhotos() {
-  const scheduledIds = new Set(timelineSlides.value.map(slide => slide.id))
+  const scheduledIds = new Set(trackZeroSlides.value.map(slide => slide.id))
   const remotePhotos = flickrPhotos.value
     .filter(photo => !trackZeroFlickrPhotoIds.has(photo.id) && !scheduledIds.has(photo.id))
     .map((photo) => {

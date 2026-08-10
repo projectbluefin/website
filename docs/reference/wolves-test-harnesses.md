@@ -199,6 +199,30 @@ Two things about running it:
   `CinematicTransition.vue` deliberately runs without the overlay, so anything that
   goes wrong there is seen by the whole room.
 
+## Reading the slide on stage is a timing problem, not a selector problem
+
+A probe that seeks the transport, waits a fixed interval and then reads
+`.flickr-img` is sampling a race. Both traps below reported the *wrong slide*,
+not a flaky one, so they read as a scheduling bug that did not exist:
+
+- **A fixed wait samples the previous frame.** The swap is gated on fetching and
+  decoding a full-size image and then on the crossfade
+  (`currentSlideTransitionDuration` = `min(duration >= 8 ? 1600 : 800,
+  duration * 300)` ms). 700 ms after a seek the stage can still be holding the
+  slide it was on. Poll until the stage settles — same `src` twice in a row with
+  the visible layer at full opacity — instead of guessing a duration.
+- **Both buffers are above half opacity mid-fade.** Picking "the first layer with
+  opacity > 0.5" returns the **outgoing** buffer whenever it is earlier in the
+  DOM. Take the layer with the highest opacity.
+- **A day/night wallpaper never renders its `path`.** `getFlickrPhotoUrl` resolves
+  `type: 'daynight'` through `dayName`/`nightName`, so asserting the rendered
+  `src` against `slide.path` reports a false miss on exactly those slides.
+  Compare against `[path, dayName, nightName]`.
+
+`tests/wolves-directors-cut-slides.mjs` does all three, and rebuilds the expected
+schedule in-page from `/src/data/wolves-directors-cut-slides.ts` rather than
+carrying cut times as constants.
+
 ## The full harness inventory
 
 Every standalone Playwright script in `tests/`. Only `wolves-movie-flow` runs in
@@ -218,6 +242,7 @@ stale unnoticed. All of them take `WOLVES_BASE_URL` (default
 | `wolves-lobby-progress.mjs` | Lobby and progress readouts; reads live durations, never constants. |
 | `wolves-immersive-layout.mjs` | Track 0 immersive grid layout. |
 | `wolves-trackzero-sidecar-real-player.mjs` | Track 0 against a real player; source of the canonical mock. |
+| `wolves-directors-cut-slides.mjs` | Director's Cut Track 0 cut boundaries, the reserved finale interval, and the standard cut's hero locks. |
 | `navbar-visual.mjs` | Main-site navbar, not Wolves. |
 
 `tests/wolves-intro-silence.mjs` covers the other half of that: the cinematic

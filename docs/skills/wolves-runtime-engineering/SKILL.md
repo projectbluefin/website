@@ -150,6 +150,31 @@ an unidentified player request.
   Cut, a generic album) and does not restore `WOLVES_EXPERIENCE` in `afterEach`
   leaks that manifest's segments into every later test in the file —
   `setActivePinia(createPinia())` alone does not reset it.
+- A slide schedule is asked to cut faster without checking the preload budget.
+  The decode gate only helps if the lookahead is ahead of it:
+  `PRELOAD_WINDOW_SECONDS / MAX_LOOKAHEAD_SLIDES` (8s / 12) is a hard floor of
+  ~0.67s on an average hold, so "make the cuts frantic" past that point buys a
+  stall, not a faster show. Two measured Track 0 beats (0.74-0.88s) is the
+  practical floor.
+- A count of slides is handed to `trackZeroBeatCuts` from a pool size rather
+  than derived from the section's beat budget. Leftover beats all land on
+  **slide 0**, so an undersized pool opens the section on one enormous hold; an
+  oversized one (past `floor(totalBeats / shortestTier)`) silently abandons the
+  measured grid for a uniform division and every cut in that section stops
+  landing on a beat. Derive the count from the budget and clamp it to both
+  bounds.
+- A second cut of a scored segment invents its own handoff timestamp. The
+  Director's Cut stops its picture edit on `DIRECTORS_CUT_FINALE_START`, which
+  *is* `TRACK_ZERO_SECTIONS.bkEnd` — an existing measured section boundary the
+  standard show already uses — not a round number chosen for how much room it
+  leaves.
+- A browser probe reads the slide on stage after a fixed wait, or as "the first
+  layer above half opacity". The swap is gated on fetch, decode and then the
+  crossfade, and mid-dissolve both buffers are above half — so the probe samples
+  the previous frame or the outgoing buffer and reports a scheduling bug that
+  does not exist. Poll until the stage settles and take the highest-opacity
+  layer. Related: a `type: 'daynight'` slide renders `dayName`/`nightName`,
+  never `path`.
 
 ## Verification
 

@@ -19,6 +19,16 @@ import { loadAllLoreRecords } from './wolves-lore-records'
 import { allocateLoreSlots } from './wolves-lore-timing'
 import { TRACK_ZERO_SECTIONS } from './wolves-track-zero-beats'
 
+/**
+ * The measured beat where the Director's Cut hands the frame to its finale.
+ *
+ * Defined next to the slide schedule that has to stop on it — see
+ * `wolves-directors-cut-slides.ts` for why beat 879 (355.219s) is the anchor —
+ * and re-exported here so every Director's Cut anchor resolves from this one
+ * module.
+ */
+export { DIRECTORS_CUT_FINALE_START } from './wolves-directors-cut-slides'
+
 export interface DirectorsCutNarrativeSlot {
   artifactId: string
   startTime: number
