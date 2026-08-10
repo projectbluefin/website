@@ -28,7 +28,7 @@ import { buildWolvesGalleryCycle } from './wolves-gallery-cycle'
 import { shuffleWolvesGalleryPhotos } from './wolves-gallery-shuffle'
 
 /** Provenance of a slide. Drives both ordering and the on-screen credit. */
-export type BackCatalogueSlideKind = 'cncf' | 'curated' | 'showcase' | 'mascot' | 'hero'
+export type BackCatalogueSlideKind = 'cncf' | 'curated' | 'showcase' | 'mascot' | 'hero' | 'artwork' | 'bazzite'
 
 export interface BackCatalogueSlide extends WolvesGalleryPhoto {
   kind: BackCatalogueSlideKind
@@ -49,6 +49,15 @@ export function isCncfSlide(slide: { kind?: BackCatalogueSlideKind }): boolean {
  * checked explicitly rather than inferred from the directory.
  */
 export function classifyCuratedSlide(id: string, title = ''): BackCatalogueSlideKind {
+  // Registered artwork registries carry explicit provenance prefixes; check
+  // them first so an id like `artwork/bluefin-01` can never fall through to
+  // the mascot branch's `bluefin-` stem match.
+  if (id.startsWith('artwork/')) {
+    return 'artwork'
+  }
+  if (id.startsWith('bazzite/')) {
+    return 'bazzite'
+  }
   if (id.includes('/showcase/')) {
     return 'showcase'
   }

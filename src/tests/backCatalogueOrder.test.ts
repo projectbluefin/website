@@ -1,5 +1,8 @@
 import type { BackCatalogueSlide, BackCatalogueSlideKind } from '@/data/back-catalogue-order'
+import { existsSync, statSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { bazziteArtworkWallpapers, ublueArtworkWallpapers } from '@/data/artwork-wallpapers'
 import {
   classifyCuratedSlide,
   isCncfSlide,
@@ -36,6 +39,8 @@ function buildPool() {
     ...Array.from({ length: 8 }, (_, index) => slide('showcase', index)),
     ...Array.from({ length: 4 }, (_, index) => slide('mascot', index)),
     ...Array.from({ length: 6 }, (_, index) => slide('hero', index)),
+    ...Array.from({ length: 11 }, (_, index) => slide('artwork', index)),
+    ...Array.from({ length: 2 }, (_, index) => slide('bazzite', index)),
   ]
   return { cncf, curated }
 }
@@ -58,6 +63,15 @@ describe('classifyCuratedSlide', () => {
 
   it('classifies a day/night mascot pair by its synthetic name', () => {
     expect(classifyCuratedSlide('bluefin-duality', 'Duality (Day & Night)')).toBe('mascot')
+  })
+
+  // The registry ids carry their provenance as a prefix; both branches must
+  // win over the mascot fallback's `bluefin-` stem match.
+  it('classifies the imported artwork registries by their id prefixes', () => {
+    expect(classifyCuratedSlide('artwork/bluefin-01', 'Bluefin 01 - January')).toBe('artwork')
+    expect(classifyCuratedSlide('bazzite/convergence', 'Convergence')).toBe('bazzite')
+    expect(classifyCuratedSlide('bazzite/convergence.webp', 'Convergence')).toBe('bazzite')
+    expect(classifyCuratedSlide('bazzite/convergence-dx.webp', 'Convergence DX')).toBe('bazzite')
   })
 })
 
@@ -122,7 +136,7 @@ describe('orderBackCatalogueSlides', () => {
     const { cncf, curated } = buildPool()
     const kinds = new Set(orderBackCatalogueSlides(cncf, curated, seededRandom(23)).map(item => item.kind))
 
-    expect(kinds).toEqual(new Set(['cncf', 'curated', 'showcase', 'mascot', 'hero']))
+    expect(kinds).toEqual(new Set(['cncf', 'curated', 'showcase', 'mascot', 'hero', 'artwork', 'bazzite']))
   })
 
   // The owner's instruction was "do not give a preference" — CNCF should lead
@@ -165,5 +179,56 @@ describe('orderBackCatalogueSlides', () => {
     const heroIds = ordered.filter(item => item.kind === 'hero').map(item => item.id)
 
     expect(heroIds).toEqual(heroes.map(item => item.id))
+  })
+})
+
+describe('artwork-wallpapers registry', () => {
+  const registries = [...ublueArtworkWallpapers, ...bazziteArtworkWallpapers]
+
+  it('imports 11 Bluefin day/night pairs and 2 Bazzite singles, skipping bluefin-11', () => {
+    expect(ublueArtworkWallpapers).toHaveLength(11)
+    expect(bazziteArtworkWallpapers).toHaveLength(2)
+    // Pair 11 stays out: upstream replaced it with the Collapse artwork, and
+    // the local bluefin-11-*.webp files are byte-identical to bluefin-12-*,
+    // so registering it would double-book the December scene.
+    expect(ublueArtworkWallpapers.some(wallpaper => wallpaper.name === 'artwork/bluefin-11')).toBe(false)
+  })
+
+  it('gives every record a kind, a real title, and full provenance', () => {
+    for (const wallpaper of registries) {
+      expect(['artwork', 'bazzite']).toContain(wallpaper.kind)
+      expect(classifyCuratedSlide(wallpaper.name, wallpaper.title)).toBe(wallpaper.kind)
+      expect(wallpaper.title.trim().length).toBeGreaterThan(0)
+      expect(wallpaper.sourceRepo).toMatch(/^https:\/\/github\.com\/ublue-os\//)
+      expect(wallpaper.sourceCommit).toMatch(/^[0-9a-f]{40}$/)
+      expect(wallpaper.sourceLicense).toBe('Apache-2.0')
+    }
+  })
+
+  // The owner has stated the project does not have permission to use Aurora's
+  // artwork. That is a permission boundary, not a licence question, so the
+  // registries are an explicit allowlist and this test is the durable guard:
+  // no record may reference an Aurora path or one of the four Aurora-origin
+  // xe_* duplicates that sit under Bluefin upstream.
+  it('contains no Aurora asset', () => {
+    const auroraPattern = /aurora|xe_(?:clouds|foothills|space_needle|sunset)/i
+    for (const wallpaper of registries) {
+      for (const path of [wallpaper.name, wallpaper.dayName, wallpaper.nightName].filter(Boolean)) {
+        expect(path).not.toMatch(auroraPattern)
+      }
+    }
+  })
+
+  it('references files that exist and are non-empty under public/img/wallpapers/', () => {
+    for (const wallpaper of registries) {
+      const paths = wallpaper.type === 'daynight'
+        ? [wallpaper.dayName, wallpaper.nightName]
+        : [wallpaper.name]
+      for (const path of paths) {
+        const absolute = resolve(process.cwd(), 'public/img/wallpapers', path ?? '')
+        expect(existsSync(absolute), `${path} should exist`).toBe(true)
+        expect(statSync(absolute).size, `${path} should be non-empty`).toBeGreaterThan(0)
+      }
+    }
   })
 })

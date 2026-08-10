@@ -16,6 +16,8 @@ is a no-op kept only for the download link.
 import type { SoundtrackTrack, WolvesSoundtrackManifest } from '@/data/wolves-soundtrack'
 
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { bazziteArtworkWallpapers, ublueArtworkWallpapers } from '@/data/artwork-wallpapers'
+import { backCatalogueCharacters } from '@/data/back-catalogue-characters'
 import { classifyCuratedSlide, isCncfSlide, orderBackCatalogueSlides } from '@/data/back-catalogue-order'
 import { formatGalleryCaption, getGalleryCaptionLabel } from '@/data/gallery-captions'
 import { wolvesComicHeroShots } from '@/data/wolves-comic-hero-shots'
@@ -697,7 +699,9 @@ const trackZeroCarryForwardPhotos = computed(() => {
 
 /**
  * The rest of the curated catalogue, for back-catalogue albums only: product
- * showcase, commissioned mascot art, and the comic hero shots.
+ * showcase, commissioned mascot art, the comic hero shots, the character art
+ * the intro overlay does not carry, and the Universal Blue family artwork
+ * (Bluefin monthly rotation + Bazzite Convergence).
  *
  * None of these could previously reach an album. `trackZeroCarryForwardPhotos`
  * filters to `/people/`, so showcase and mascot art were excluded, and the hero
@@ -736,7 +740,40 @@ const backCatalogueCuratedPhotos = computed(() => {
     kind: 'hero' as const,
   }))
 
-  return [...showcaseAndArt, ...heroShots]
+  // Character art the intro overlay does NOT carry — back catalogue only,
+  // never the Wolves presentation. Appended after the hero shots so
+  // `orderCuratedSlides` keeps the combined hand-spread species order; the
+  // data file documents why its first record is not a Deinonychus.
+  const extraCharacters = backCatalogueCharacters.map(character => ({
+    id: character.id,
+    isLocal: false,
+    path: `${baseUrl}${character.src}`,
+    title: character.title,
+    type: 'single' as const,
+    dayName: undefined,
+    nightName: undefined,
+    kind: 'hero' as const,
+  }))
+
+  // First-party Universal Blue family artwork: the Bluefin monthly day/night
+  // rotation and the two Bazzite Convergence wallpapers. These resolve from
+  // `img/wallpapers/` like the generated list, but the generator only scans
+  // the `wolves/` subtree, so they are registered explicitly in
+  // `artwork-wallpapers.ts` — which is also what keeps the import an
+  // allowlist. Aurora artwork is excluded there and pinned by a test.
+  const familyArtwork = [...ublueArtworkWallpapers, ...bazziteArtworkWallpapers].map(wallpaper => ({
+    id: wallpaper.name,
+    isLocal: true,
+    path: wallpaper.name,
+    title: wallpaper.title,
+    type: wallpaper.type,
+    dayName: wallpaper.dayName,
+    nightName: wallpaper.nightName,
+    fit: wallpaper.fit,
+    kind: wallpaper.kind,
+  }))
+
+  return [...showcaseAndArt, ...heroShots, ...extraCharacters, ...familyArtwork]
 })
 
 const activeTimelineSlide = computed(() => {

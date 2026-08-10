@@ -260,6 +260,8 @@ const KIND_LABELS: Record<BackCatalogueSlideKind, string> = {
   showcase: 'BLUEFIN SHOWCASE //',
   mascot: 'BLUEFIN ORIGINAL //',
   hero: 'BLUEFIN ORIGINAL //',
+  artwork: 'UNIVERSAL BLUE ARTWORK //',
+  bazzite: 'BAZZITE ARTWORK //',
 }
 
 /**

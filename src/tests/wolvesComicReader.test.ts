@@ -8,6 +8,9 @@ import { nextTick } from 'vue'
 import { wallpapers } from '../components/wolves/wallpapers-list'
 import WolvesComicReader from '../components/wolves/WolvesComicReader.vue'
 import { CINEMATIC_SEGMENTS } from '../config/wolves-cinematic'
+import { bazziteArtworkWallpapers, ublueArtworkWallpapers } from '../data/artwork-wallpapers'
+import { backCatalogueCharacters } from '../data/back-catalogue-characters'
+import { wolvesComicHeroShots } from '../data/wolves-comic-hero-shots'
 import { ghostsInTheMistOpeningSlide } from '../data/wolves-gallery-featured'
 import {
   TRACK_ZERO_BEAT_TIMES,
@@ -1336,6 +1339,108 @@ describe('wolves segment-to-playlist track identity', () => {
     expect(vm.mixedPhotos.length).toBeGreaterThan(0)
     expect(vm.mixedPhotosToUse).toBe(vm.mixedPhotos)
     expect(vm.mixedPhotosToUse).not.toBe(vm.timelineSlides)
+  })
+
+  it('spreads every back-catalogue-only character into the album pool exactly once', async () => {
+    mockGalleryData()
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        trackIndex: 0,
+        trackId: 'LASru9j0oIc',
+        playlistCurrentTime: 0,
+        experienceId: 'album-test',
+        wolvesExperience: false,
+      },
+    })
+    await flushPromises()
+
+    const pool = (wrapper.vm as any).mixedPhotos as Array<{ id: string, kind?: string, path?: string }>
+    const heroIds = new Set<string>(wolvesComicHeroShots.map(shot => shot.id))
+    for (const character of backCatalogueCharacters) {
+      const slides = pool.filter(slide => slide.id === character.id)
+      expect(slides, `${character.id} should appear exactly once`).toHaveLength(1)
+      expect(slides[0]?.kind).toBe('hero')
+      expect(slides[0]?.path?.endsWith(character.src)).toBe(true)
+      // Ids are `characters/`-prefixed so they can never collide with the
+      // hero-shot ids the pool de-duplicates against.
+      expect(heroIds.has(character.id)).toBe(false)
+    }
+  })
+
+  // Durable guard on the owner's boundary: these characters are back
+  // catalogue only, NEVER the authored Wolves show. `wolvesComicHeroShots`
+  // feeds both the intro overlay and the back catalogue, which is why these
+  // records live in a separate export — if any of them ever leak into the
+  // overlay cycle or the authored track pools (timeline slides, track-0
+  // carry-forward, later-track gallery), this test must fail.
+  it('never lets back-catalogue-only characters reach the Wolves presentation', async () => {
+    const characterIds = new Set<string>(backCatalogueCharacters.map(character => character.id))
+    const characterSrcs = new Set<string>(backCatalogueCharacters.map(character => character.src))
+
+    // The frozen intro-overlay title-card cycle.
+    const overlayIds = new Set<string>(wolvesComicHeroShots.map(shot => shot.id))
+    const overlaySrcs = new Set<string>(wolvesComicHeroShots.map(shot => shot.src))
+    for (const character of backCatalogueCharacters) {
+      expect(overlayIds.has(character.id)).toBe(false)
+      expect(overlaySrcs.has(character.src)).toBe(false)
+    }
+
+    // The authored Wolves track pools.
+    mockGalleryData()
+    const wrapper = mount(WolvesComicReader, {
+      props: { trackIndex: 0, playlistCurrentTime: 0 },
+    })
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    const timelineIds = (vm.timelineSlides as Array<{ id: string }>).map(slide => slide.id)
+    const carryForwardIds = (vm.trackZeroCarryForwardPhotos as Array<{ id: string }>).map(photo => photo.id)
+    expect(timelineIds.filter(id => characterIds.has(id))).toEqual([])
+    expect(carryForwardIds.filter(id => characterIds.has(id))).toEqual([])
+
+    await wrapper.setProps({ trackIndex: 1 })
+    await flushPromises()
+    const laterTrackIds = (vm.laterTrackPhotos as Array<{ id: string }>).map(photo => photo.id)
+    expect(laterTrackIds.filter(id => characterIds.has(id))).toEqual([])
+    expect(characterSrcs.size).toBe(characterIds.size)
+  })
+
+  // The Universal Blue family artwork is registered by hand in
+  // `artwork-wallpapers.ts` because the wallpaper generator only scans the
+  // `wolves/` asset subtree. Walking the show clock to look for these is
+  // roulette in an ~800-slide pool, so assert pool membership directly.
+  it('registers the Universal Blue family artwork in the album pool only', async () => {
+    mockGalleryData()
+    const wrapper = mount(WolvesComicReader, {
+      props: {
+        trackIndex: 0,
+        trackId: 'LASru9j0oIc',
+        playlistCurrentTime: 0,
+        experienceId: 'album-test',
+        wolvesExperience: false,
+      },
+    })
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    const pool = vm.mixedPhotos as Array<{ id: string, kind?: string, dayName?: string, nightName?: string }>
+    const artwork = [...ublueArtworkWallpapers, ...bazziteArtworkWallpapers]
+
+    expect(ublueArtworkWallpapers).toHaveLength(11)
+    expect(bazziteArtworkWallpapers).toHaveLength(2)
+
+    for (const record of artwork) {
+      const slides = pool.filter(slide => slide.id === record.name)
+      expect(slides, `${record.name} should appear exactly once`).toHaveLength(1)
+      expect(slides[0]?.kind).toBe(record.kind)
+    }
+
+    // Never the authored Wolves show — same boundary as the character art.
+    const artworkIds = new Set(artwork.map(record => record.name))
+    const timeline = (vm.timelineSlides as Array<{ id: string }>).map(slide => slide.id)
+    const carryForward = (vm.trackZeroCarryForwardPhotos as Array<{ id: string }>).map(photo => photo.id)
+    expect(timeline.filter(id => artworkIds.has(id))).toEqual([])
+    expect(carryForward.filter(id => artworkIds.has(id))).toEqual([])
   })
 })
 

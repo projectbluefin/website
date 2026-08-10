@@ -70,6 +70,17 @@ describe('getGalleryCaptionLabel', () => {
     expect(getGalleryCaptionLabel({ kind: 'hero' })).toBe('BLUEFIN ORIGINAL //')
   })
 
+  it('credits the imported artwork registries to their projects', () => {
+    expect(getGalleryCaptionLabel({ kind: 'artwork' })).toBe('UNIVERSAL BLUE ARTWORK //')
+    expect(getGalleryCaptionLabel({ kind: 'bazzite' })).toBe('BAZZITE ARTWORK //')
+  })
+
+  it('keeps the registered artwork titles as captions', () => {
+    expect(formatGalleryCaption('Bluefin 01 - January')).toBe('Bluefin 01 - January')
+    expect(formatGalleryCaption('Convergence')).toBe('Convergence')
+    expect(formatGalleryCaption('Convergence DX')).toBe('Convergence DX')
+  })
+
   it('falls back to locality for slides with no provenance, preserving Wolves behaviour', () => {
     expect(getGalleryCaptionLabel({ isLocal: true })).toBe('BLUEFIN SHOWCASE //')
     expect(getGalleryCaptionLabel({ isLocal: false })).toBe('CNCF STREAM //')

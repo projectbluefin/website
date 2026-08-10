@@ -246,6 +246,38 @@ curated slides before placing them, and verify by asking where the first slide
 of the rarest category actually lands.
 
 
+## The Bluefin monthly wallpaper numbering does not match upstream, and pair 11 exists nowhere
+
+`public/img/wallpapers/bluefin-{01..12}-{day,night}.webp` (added by `cb85d6c6`,
+registered in `src/data/artwork-wallpapers.ts`) are the Bluefin monthly set
+from `ublue-os/artwork` `wallpapers/bluefin/`, but the numbering has traps:
+
+- **Local 11 ≡ local 12, byte for byte.** Both are the December mammoth scene;
+  pair 11 was mis-encoded as a copy of 12 at import time. Register only
+  01–10 and 12 — importing 11 double-books December.
+- **Upstream, #11 is now "Collapse - November"** (`fix: replace 11-bluefin
+  with Collapse`, and `11-bluefin-day.svg` is byte-identical to
+  `wallpapers/collapse/collapse-day.svg`). So "bluefin-11" means the mammoths
+  on disk here but the dinosaur-and-asteroid Collapse artwork upstream. Verify
+  any claim about this set against the local files, not the upstream index.
+- **The Collapse artwork is not in the wallpaper pool at all.** It lives only
+  in `public/wolves-intro/bluefin-collapse-{day,night}.webp`, driven by
+  `wolves-intro-sequence.ts`. Nothing in `wallpapers-list.ts` references it.
+
+First-party artwork registries (`artwork-wallpapers.ts`) carry `kind`
+(`artwork`/`bazzite`), pinned source commits, and licence ids, and their
+`name` prefixes are what `classifyCuratedSlide()` branches on. Aurora artwork
+is excluded by the owner's permission decision, not by licence: the registries
+are an explicit allowlist, and `backCatalogueOrder.test.ts` asserts no record
+can reference an Aurora path or the four Aurora-origin `xe_*` duplicates.
+
+The Bazzite press kit forbids modifying artwork ("including spacing, color,
+elements, and scaling"). Format conversion at identical geometry (PNG -> WebP,
+3940x2160 unchanged) is the compliant reading the owner approved; CI's
+`calibreapp/image-actions` recompresses added images ~25% with no dimension
+loss, which is expected.
+
+
 ## `wolves/people/` is hand-picked, and two thirds of it is CNCF photography
 
 `wolves/people/` is the owner's selection for the Wolves catalogue. It is **not**
