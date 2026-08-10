@@ -2,6 +2,7 @@ import type { IntroOverlayTextCue } from '@/data/wolves-intro-sequence'
 import { describe, expect, it } from 'vitest'
 import { estimatePageSeconds } from '@/components/wolves/lore/lore-pages'
 import { DIRECTORS_CUT_DESTINY_CONCEPTS } from '@/data/wolves-directors-cut-artwork'
+import { DIRECTORS_CUT_COLLAPSE_DAY_IMAGE, DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE } from '@/data/wolves-directors-cut-finale'
 import {
   buildDirectorsCutVideoSequence,
   DIRECTORS_CUT_DESTINY_SEGMENT_ID,
@@ -32,15 +33,27 @@ const CONCEPT_PREFIX = 'wolves-intro/destiny-concepts/'
  * be split. Both remain in the authored corpus.
  */
 const APPROVED_PROLOGUE_TEXT = new Set([
-  'A Gardener and a Winnower walked among the stars.',
-  'One day changed the Garden forever.',
-  'New Children arose and filled the pattern.',
-  'For eons, Maintainer-Guardians cultivated the Garden...',
-  'Until an AI-fueled Society deemed Guardians unnecessary.\nAnd then, a threat.',
-  'Others came to claim a bountiful and unprotected Garden.',
-  'Now, what\'s left of a proud order fights for survival,\nsurrounded by predators.',
+  'A Gardener and a Winnower\nwalked among the stars.',
+  'One day changed\nthe Garden forever.',
+  'New Children arose\nand filled the pattern.',
+  'For eons, Maintainer-Guardians\ncultivated the Garden...',
+  'Until an AI-fueled Society\ndeemed Guardians unnecessary.\nAnd then, a threat.',
+  'Others came to claim\na bountiful and unprotected Garden.',
+  'Now, what\'s left of a proud order\nfights for survival,\nsurrounded by predators.',
   'PROJECT BLUEFIN\nseven days to the wolves',
 ])
+
+/**
+ * The same thoughts with their projection line breaks collapsed.
+ *
+ * The wording is what may not change; where a line ends is a projection
+ * decision, because Michroma across 90vw turns a run-on sentence into a wall of
+ * text from the back row. Comparing on this normalized form is what lets the
+ * two be checked independently — an edited *word* still fails.
+ */
+const APPROVED_PROLOGUE_WORDING = new Set(
+  [...APPROVED_PROLOGUE_TEXT].map(text => text.replace(/\s+/g, ' ')),
+)
 
 function prologue() {
   const segment = buildDirectorsCutVideoSequence()[0]
@@ -173,6 +186,10 @@ describe('director\'s cut intro sequence', () => {
 
   it('writes no new lore: every displayed beat is approved prologue wording', () => {
     for (const cue of textCues()) {
+      // Checked twice, on purpose. The exact form pins the projection line
+      // breaks; the normalized form pins the *words*, so re-breaking a line
+      // stays a projection decision while editing a word is still new lore.
+      expect(APPROVED_PROLOGUE_WORDING.has(cue.text.replace(/\s+/g, ' ')), cue.text).toBe(true)
       expect(APPROVED_PROLOGUE_TEXT.has(cue.text), cue.text).toBe(true)
     }
   })
@@ -270,10 +287,17 @@ describe('director\'s cut intro sequence', () => {
 
     expect(firstConcept).toBeGreaterThan(0)
     for (const cue of all.slice(firstConcept)) {
-      expect(cue.backgroundImage, `${cue.start}-${cue.end}`).toBeTruthy()
+      // A crossfade is imagery too: the crescendo carries the Collapse as a
+      // day-to-night pair rather than a still, so "has a background" cannot be
+      // spelled as "has a `backgroundImage`" any more.
+      const hasImagery = Boolean(cue.backgroundImage) || Boolean(cue.backgroundCrossfade?.length)
+      expect(hasImagery, `${cue.start}-${cue.end}`).toBe(true)
     }
     // The old cut went imageless at the last painting and stayed black for 55.5s.
-    expect(Math.max(...conceptCues().map(cue => cue.end))).toBe(GAYANE_TRACK_SECONDS)
+    // The tail is the Collapse now, not a painting, so the montage runs to the
+    // crescendo and the Collapse carries the rest.
+    expect(Math.max(...conceptCues().map(cue => cue.end)))
+      .toBe(DIRECTORS_CUT_FINAL_CRESCENDO_SECOND)
   })
 
   it('lands the dominant handoff on the measured final crescendo', () => {
@@ -288,14 +312,49 @@ describe('director\'s cut intro sequence', () => {
     }
   })
 
-  it('closes on the authored title, over a painting, running to the track end', () => {
+  it('closes on the authored title, over the Collapse at night, running to the track end', () => {
     const all = cues()
     const closing = all[all.length - 1]
 
     expect(closing.text).toBe('PROJECT BLUEFIN\nseven days to the wolves')
     expect(closing.slim).toBe(true)
-    expect(closing.backgroundImage?.startsWith(CONCEPT_PREFIX)).toBe(true)
+    // The title used to bookend on the montage's first painting. The Collapse
+    // is the image the prologue walks towards now, so the title holds the night
+    // plate the crescendo just faded to rather than cutting away from it.
+    expect(closing.backgroundImage).toBe(DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE)
     expect(closing.end).toBe(GAYANE_TRACK_SECONDS)
+  })
+
+  it('spends the Collapse once, on the final crescendo, as a day-to-night fade', () => {
+    const all = cues()
+    const collapse = all.filter(cue =>
+      cue.backgroundImage === DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE
+      || cue.backgroundCrossfade?.some(pair => pair.day === DIRECTORS_CUT_COLLAPSE_DAY_IMAGE))
+
+    // It used to occupy marks 3-6 — 33.03s to 98.71s — which put the show's
+    // ending on stage a minute into it and left the finale nothing to arrive at.
+    expect(collapse.every(cue => cue.start >= DIRECTORS_CUT_FINAL_CRESCENDO_SECOND)).toBe(true)
+    const fade = all.find(cue => cue.backgroundCrossfade?.some(pair => pair.day === DIRECTORS_CUT_COLLAPSE_DAY_IMAGE))
+    expect(fade?.start).toBe(DIRECTORS_CUT_FINAL_CRESCENDO_SECOND)
+    expect(fade?.backgroundCrossfade?.[0]?.night).toBe(DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE)
+  })
+
+  it('never dresses the prologue in an unrelated Bluefin wallpaper', () => {
+    // Act I rode `img/wallpapers/bluefin-06-day/night.webp` — a monthly desktop
+    // wallpaper with no place in this story. Every image the prologue shows is
+    // either approved Destiny concept art or the Collapse.
+    for (const cue of cues()) {
+      const images = [
+        cue.backgroundImage,
+        ...(cue.backgroundCrossfade ?? []).flatMap(pair => [pair.day, pair.night]),
+      ].filter(Boolean) as string[]
+      for (const image of images) {
+        expect(
+          image.startsWith(CONCEPT_PREFIX) || image.startsWith('wolves-intro/bluefin-collapse-'),
+          `${cue.start}-${cue.end} shows ${image}`,
+        ).toBe(true)
+      }
+    }
   })
 
   it('pairs the Director scene dissolve with its own short text reveal', () => {

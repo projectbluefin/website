@@ -150,7 +150,15 @@ const browser = await chromium.launch({ headless: process.env.HEADED !== '1', ar
 const pageErrors = []
 
 /** Opens the Director's Cut and stops at the first frame of the scored prologue. */
+/**
+ * Screenshots are namespaced by viewport. Both passes seek the same beats, so a
+ * flat filename means the narrow run silently overwrites the projector run —
+ * and the projector is the one this show is judged on.
+ */
+let shotPrefix = 'shot'
+
 async function openPrologue(viewport) {
+  shotPrefix = `${viewport.width}x${viewport.height}`
   const page = await browser.newPage({ viewport })
   page.on('pageerror', error => pageErrors.push(error.message))
   await page.addInitScript(MOCK_PLAYERS)
@@ -167,6 +175,17 @@ async function openPrologue(viewport) {
  * "Settled" is two identical readings of a fully-opaque scene, not a fixed sleep: the scene
  * cross-dissolves, so any single sample taken during the dissolve reads the outgoing shot.
  */
+/**
+ * Write a screenshot of every seeked beat to this directory.
+ *
+ * Off by default; the assertions are the signal. It exists because this is a
+ * projected show and "the cue is present with the right text" is not the same
+ * claim as "the back row can read it in the time the music allows".
+ *
+ *   WOLVES_SHOT_DIR=/var/tmp/website-agent/prologue node tests/wolves-directors-cut-prologue.mjs
+ */
+const SHOT_DIR = process.env.WOLVES_SHOT_DIR ?? null
+
 async function seekPrologue(page, seconds) {
   await page.evaluate(target => window.__wolvesIntro.seekTo(target), seconds)
   await page.waitForFunction(
@@ -179,9 +198,15 @@ async function seekPrologue(page, seconds) {
     await page.waitForTimeout(150)
     const stage = await readStage(page)
     if (previous && stage.src === previous.src && stage.sceneOpacity >= 0.99) {
+      if (SHOT_DIR) {
+        await page.screenshot({ path: `${SHOT_DIR}/${shotPrefix}-t${String(Math.round(seconds)).padStart(3, '0')}s.png` })
+      }
       return stage
     }
     previous = stage
+  }
+  if (SHOT_DIR) {
+    await page.screenshot({ path: `${SHOT_DIR}/${shotPrefix}-t${String(Math.round(seconds)).padStart(3, '0')}s.png` })
   }
   return previous
 }

@@ -16,6 +16,7 @@
 import type { IntroOverlayTextCue, IntroTextSegment, IntroVideoSegment, IntroVideoSpec } from './wolves-intro-sequence'
 import { estimatePageSeconds } from '../components/wolves/lore/lore-pages'
 import { DIRECTORS_CUT_DESTINY_CONCEPTS } from './wolves-directors-cut-artwork'
+import { DIRECTORS_CUT_COLLAPSE_DAY_IMAGE, DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE } from './wolves-directors-cut-finale'
 import { buildIntroVideoSequence, isVideoSegment } from './wolves-intro-sequence'
 
 export const DIRECTORS_CUT_PROLOGUE_SEGMENT_ID = 'wolves-prologue' as const
@@ -101,19 +102,6 @@ const HANDOFF_FIRST_MARK = 18
  * biggest moment in the piece on a line the audience had already finished reading.
  */
 export const DIRECTORS_CUT_FINAL_CRESCENDO_SECOND = GAYANE_PROLOGUE_MARKS[19]
-
-/**
- * The Collapse plate the prologue shows.
- *
- * This is the sunset side of the pair. It used to be spelled
- * `bluefin-collapse-night.webp`, because the two files were named the wrong way
- * round: the file called "night" was the warm sunset and the file called "day"
- * was the grey moonlit scene. The finale cross-fades day into night off those
- * names and was therefore fading *out of* night *into* a sunset. The files were
- * swapped to match what they actually depict; this constant follows the image,
- * not the old name, so the prologue shows exactly what it showed before.
- */
-const COLLAPSE_BACKGROUND = 'wolves-intro/bluefin-collapse-day.webp'
 
 /**
  * Word ceiling for any cue projected in this prologue.
@@ -277,40 +265,55 @@ function painting(index: number): Pick<IntroOverlayTextCue, 'backgroundImage' | 
   }
 }
 
-const GARDENER_AND_WINNOWER = 'A Gardener and a Winnower walked among the stars.'
-const ONE_DAY = 'One day changed the Garden forever.'
-const NEW_CHILDREN = 'New Children arose and filled the pattern.'
-const FOR_EONS = 'For eons, Maintainer-Guardians cultivated the Garden...'
-const A_THREAT = `Until an AI-fueled Society deemed Guardians unnecessary.
+/**
+ * The projected narration, broken into lines rather than run as sentences.
+ *
+ * Every word is the authored wording, unchanged. The only thing authored here
+ * is *where each line ends*, and that is a projection decision, not an
+ * editorial one: this type is Michroma across 90vw, and Michroma is a very wide
+ * face. A 55-character sentence set as one paragraph fills the frame edge to
+ * edge and wraps wherever the box happens to run out, which from a theater seat
+ * reads as a wall of text rather than as a line of narration — the back row is
+ * still parsing line one when the cue changes.
+ *
+ * So each line is cut at its own phrase break and stacked. `white-space:
+ * pre-line` on `.wolves-intro-overlay-text` preserves these breaks, and
+ * `DIRECTORS_CUT_MAX_CUE_WORDS` still governs the whole cue: breaking a line
+ * does not license a longer thought.
+ */
+const GARDENER_AND_WINNOWER = `A Gardener and a Winnower
+walked among the stars.`
+const ONE_DAY = `One day changed
+the Garden forever.`
+const NEW_CHILDREN = `New Children arose
+and filled the pattern.`
+const FOR_EONS = `For eons, Maintainer-Guardians
+cultivated the Garden...`
+const A_THREAT = `Until an AI-fueled Society
+deemed Guardians unnecessary.
 And then, a threat.`
-const OTHERS_CAME = 'Others came to claim a bountiful and unprotected Garden.'
-const WHAT_IS_LEFT = `Now, what's left of a proud order fights for survival,
+const OTHERS_CAME = `Others came to claim
+a bountiful and unprotected Garden.`
+const WHAT_IS_LEFT = `Now, what's left of a proud order
+fights for survival,
 surrounded by predators.`
 const CLOSING_TITLE = 'PROJECT BLUEFIN\nseven days to the wolves'
 
 const PROLOGUE_SHOTS: readonly PrologueShot[] = [
-  // Act I — the narration, over the Collapse.
+  // Act I — the narration, on black.
+  //
+  // The Collapse used to sit under this whole act (marks 3-6, 33.03-98.71 s),
+  // which put the show's ending on stage a minute into it and left nothing for
+  // the finale to arrive at. It plays once now, at the end, as a fade. Act I is
+  // a cold open: the narration alone, on black, the way marks 1 and 7 always
+  // were.
   { mark: NARRATION_FIRST_MARK, text: GARDENER_AND_WINNOWER },
-  {
-    mark: 2,
-    text: ONE_DAY,
-    // The wallpaper's own day->night dissolve *is* the day that changed the Garden, so the
-    // line rides the transition instead of describing a still.
-    backgroundCrossfade: [
-      {
-        day: 'img/wallpapers/bluefin-06-day.webp',
-        night: 'img/wallpapers/bluefin-06-night.webp',
-      },
-    ],
-    textPosition: 'bottom-right',
-    highlightSubstring: 'Garden',
-  },
-  // The Collapse itself plays wordless. It is the one image in the prologue that needs no
-  // caption, and the silence sets up the dominant line that follows it.
-  { mark: 3, backgroundImage: COLLAPSE_BACKGROUND },
-  { mark: 4, text: NEW_CHILDREN, emphasis: 'dominant', textPosition: 'bottom', backgroundImage: COLLAPSE_BACKGROUND },
-  { mark: 5, text: FOR_EONS, backgroundImage: COLLAPSE_BACKGROUND },
-  { mark: 6, text: A_THREAT, backgroundImage: COLLAPSE_BACKGROUND },
+  { mark: 2, text: ONE_DAY, textPosition: 'bottom-right', highlightSubstring: 'Garden' },
+  // One wordless beat before the dominant line, so the silence still sets it up.
+  { mark: 3 },
+  { mark: 4, text: NEW_CHILDREN, emphasis: 'dominant', textPosition: 'bottom' },
+  { mark: 5, text: FOR_EONS },
+  { mark: 6, text: A_THREAT },
   { mark: 7, text: OTHERS_CAME },
 
   // Act II — the ten approved paintings, once each in registry order. Six authored thoughts
@@ -338,15 +341,24 @@ const PROLOGUE_SHOTS: readonly PrologueShot[] = [
     emphasis: 'dominant',
     textPosition: 'bottom',
     highlightSubstring: 'fights',
-    // The Fallen Citadel returns under the defiant line: the predators, named.
-    ...painting(6),
+    // The Collapse, once, on the final crescendo — and as the day-to-night fade
+    // it is, rather than a static night plate. This is the image the whole
+    // prologue has been walking towards, so it arrives with the biggest event
+    // in the piece instead of being spent in the first minute.
+    backgroundCrossfade: [
+      {
+        day: DIRECTORS_CUT_COLLAPSE_DAY_IMAGE,
+        night: DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE,
+      },
+    ],
   },
   {
     mark: 20,
     text: CLOSING_TITLE,
     slim: true,
-    // Bookend: the Europa environment that opened the montage closes the show.
-    ...painting(0),
+    // The title lands on the Collapse at full night, holding the fade the
+    // crescendo just completed rather than cutting away from it.
+    backgroundImage: DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE,
   },
 ]
 
