@@ -6,7 +6,10 @@ import {
   INTRO_SEQUENCE_DURATION,
   resolveOverallRatioTarget,
   useCinematicStore,
+  WOLVES_DIRECTORS_CUT_EXPERIENCE,
+  WOLVES_DIRECTORS_CUT_PROFILE_ID,
   WOLVES_EXPERIENCE,
+  WOLVES_STANDARD_PROFILE_ID,
 } from '@/stores/cinematic'
 
 /** Authored segment durations, read back off the manifest — never re-typed here. */
@@ -21,9 +24,13 @@ describe('cinematic store', () => {
   })
 
   afterEach(() => {
-    // The intro timeline is module-level state; leave the standard sequence
-    // active so a Director's Cut test cannot leak into the next one.
-    useCinematicStore().setIntroSequence(buildIntroVideoSequence())
+    // The intro list AND the active segments are module-level state; leave the
+    // standard show active so a Director's Cut test cannot leak into the next
+    // one (loadExperience resets `activeSegments`; setIntroSequence resets the
+    // intro list — a test that only did one would leave the other stale).
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_EXPERIENCE)
+    store.setIntroSequence(buildIntroVideoSequence())
   })
 
   it('carries one authored duration per curated segment, in segment order', () => {
@@ -251,5 +258,56 @@ describe('cinematic store', () => {
     expect(store.sequenceDuration).toBeCloseTo(standardDuration)
     expect(INTRO_SEQUENCE_DURATION).toBeCloseTo(standardDuration)
     expect(store.overallDuration).toBeCloseTo(standardDuration + CINEMATIC_DURATION)
+  })
+
+  it('loads the Director\'s Cut manifest as a single, authored 424-second segment', () => {
+    const store = useCinematicStore()
+
+    store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
+
+    expect(store.segmentCount).toBe(1)
+    expect(store.segments[0].id).toBe(CINEMATIC_SEGMENTS[0].id)
+    expect(store.segments[0].durationSeconds).toBe(424)
+    expect(store.presentationProfile).toBe(WOLVES_DIRECTORS_CUT_PROFILE_ID)
+    expect(store.isWolvesPresentation).toBe(true)
+    // The Director's Cut is authored Wolves content: it gets the same
+    // segment-transition overlay treatment as the standard show.
+    expect(store.showTransitionOverlay).toBe(true)
+  })
+
+  it('cannot advance the Director\'s Cut past its one segment', () => {
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
+    store.enterCinematic()
+
+    expect(store.isLastSegment).toBe(true)
+    store.advanceSegment()
+    expect(store.segmentIndex).toBe(0)
+    expect(store.isLastSegment).toBe(true)
+    store.advanceSegment()
+    expect(store.segmentIndex).toBe(0)
+  })
+
+  it('measures the Director\'s Cut overall duration as its intro plus the 424-second segment', () => {
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
+    store.setIntroSequence(buildDirectorsCutVideoSequence())
+    const directorsCutIntroDuration = INTRO_SEQUENCE_DURATION
+
+    store.enterCinematic()
+
+    expect(store.overallDuration).toBeCloseTo(directorsCutIntroDuration + 424)
+  })
+
+  it('restores the standard seven-part profile and segment count after a Director\'s Cut load', () => {
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
+    expect(store.segmentCount).toBe(1)
+
+    store.loadExperience(WOLVES_EXPERIENCE)
+
+    expect(store.segmentCount).toBe(CINEMATIC_SEGMENTS.length)
+    expect(store.presentationProfile).toBe(WOLVES_STANDARD_PROFILE_ID)
+    expect(store.isWolvesPresentation).toBe(true)
   })
 })

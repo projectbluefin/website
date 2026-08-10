@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
+import { useCinematicStore } from '@/stores/cinematic'
 import TrackCredit from './TrackCredit.vue'
 
 const props = withDefaults(defineProps<{
@@ -29,7 +29,7 @@ const store = useCinematicStore()
 const base = import.meta.env.BASE_URL
 const mediaTitle = computed(() => props.title ?? store.display.title)
 const showCatalogueCredit = computed(() =>
-  !props.title && store.experienceId !== WOLVES_EXPERIENCE.id,
+  !props.title && !store.isWolvesPresentation,
 )
 const artworkSrc = computed(() =>
   store.display.artwork.startsWith('http') ? store.display.artwork : `${base}${store.display.artwork}`,

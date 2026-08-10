@@ -8,7 +8,7 @@ import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import Nameplate from '@/components/wolves/cinematic/Nameplate.vue'
 import WolvesIntroOverlay from '@/components/wolves/WolvesIntroOverlay.vue'
 import { buildDirectorsCutVideoSequence, buildIntroVideoSequence, guardianIntroStartTime, isTextSegment } from '@/data/wolves-intro-sequence'
-import { INTRO_SEQUENCE_DURATION, useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
+import { INTRO_SEQUENCE_DURATION, useCinematicStore, WOLVES_DIRECTORS_CUT_EXPERIENCE, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
 const store = useCinematicStore()
 
@@ -82,7 +82,6 @@ async function launchExperience(manifest: ExperienceManifest) {
   // Preserve the authored intro and Track 0 presentation for the canonical
   // Wolves catalogue card instead of playing its generated fallback manifest.
   if (manifest.id === WOLVES_EXPERIENCE.sourcePlaylistId) {
-    store.loadExperience(WOLVES_EXPERIENCE)
     await enterIntro()
     return
   }
@@ -133,6 +132,11 @@ async function enterIntro(startAtNativeTime: number | null = null, directorsCut 
   introHandoff.value = false
   introStartAt.value = startAtNativeTime
   introTransparent.value = false
+  // Load the cinematic segments for the requested cut BEFORE publishing the
+  // intro sequence: the Director's Cut intro hands off into the one-song
+  // cinematic, not the standard seven-part show, and both the intro and
+  // cinematic timelines read the experience this sets active.
+  store.loadExperience(directorsCut ? WOLVES_DIRECTORS_CUT_EXPERIENCE : WOLVES_EXPERIENCE)
   // The Director's Cut is a different list with different segments and
   // durations. Publish it before entering the phase so the store's timeline,
   // index clamping, and TOTAL readout describe the intro actually playing.

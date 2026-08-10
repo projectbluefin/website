@@ -5,7 +5,7 @@ import WolvesLoreColumn from '@/components/wolves/WolvesLoreColumn.vue'
 import { getChromeFreeYoutubeEmbedParams } from '@/composables/useYoutubeIframeApi'
 import { getNarrativeSlotForTime } from '@/data/wolves-narrative-timeline'
 import { getWolvesThesisState } from '@/data/wolves-thesis-sequence'
-import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
+import { useCinematicStore } from '@/stores/cinematic'
 
 // The authored seven-days immersive layer, mounted over the video during the
 // 7 Days segment. The video below stays the audio source; the locked comic
@@ -24,7 +24,7 @@ const slotElapsed = computed(() => Math.min(
   Math.max(0, time.value - displayedNarrativeSlot.value.startTime),
 ))
 const isTrackZero = computed(() => store.segment.trackZeroExperience === true)
-const isWolvesExperience = computed(() => store.experienceId === WOLVES_EXPERIENCE.id)
+const isWolvesPresentation = computed(() => store.isWolvesPresentation)
 const thesis = computed(() => (isTrackZero.value ? getWolvesThesisState(time.value) : getWolvesThesisState(0)))
 
 // Static ordered video-loop sidecar for Track 0's desktop right column, below
@@ -130,7 +130,7 @@ const totalProgress = computed(() => {
 })
 
 const wallpaperNightOpacity = computed(() => {
-  if (!isWolvesExperience.value) {
+  if (!isWolvesPresentation.value) {
     return 0
   }
   if (thesis.value.dayPulse) {
@@ -144,7 +144,7 @@ const currentPairIndex = computed(() => {
   // Back-catalogue albums already crossfade large slideshow images. Running the
   // full-screen month wallpaper dissolve underneath at the same time compounds
   // decode/compositor work into a visible hitch, so their backdrop stays fixed.
-  if (!isWolvesExperience.value) {
+  if (!isWolvesPresentation.value) {
     return 6
   }
   const wallpaperIndexFloat = totalProgress.value * 12 + 6
@@ -254,7 +254,7 @@ onBeforeUnmount(() => {
           :pending-track-index="store.pendingSegmentIndex ?? undefined"
           :playlist-current-time="time"
           :experience-id="store.experienceId"
-          :wolves-experience="store.experienceId === WOLVES_EXPERIENCE.id"
+          :wolves-experience="isWolvesPresentation"
         />
 
         <Transition name="wc-thesis">

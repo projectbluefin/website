@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import WolvesOrgAds from '@/components/wolves/cinematic/WolvesOrgAds.vue'
 import {
   getWolvesOrgAdBlend,
@@ -8,7 +8,7 @@ import {
   WOLVES_AD_ROTATION_SECONDS,
   WOLVES_ORG_AD_PAIRS,
 } from '@/data/wolves-org-ads'
-import { useCinematicStore } from '@/stores/cinematic'
+import { useCinematicStore, WOLVES_DIRECTORS_CUT_EXPERIENCE, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
 describe('wolves organization ad pairs', () => {
   it('starts a synchronized four-second crossfade every 30 seconds', () => {
@@ -42,6 +42,12 @@ describe('wolves organization ad pairs', () => {
 describe('wolvesOrgAds component', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+  })
+
+  afterEach(() => {
+    // `activeSegments` is module-level state (see cinematic.ts); restore the
+    // standard show so a Director's Cut test cannot leak into the next one.
+    useCinematicStore().loadExperience(WOLVES_EXPERIENCE)
   })
 
   it('renders two synchronized pairs with Pair A initially visible', () => {
@@ -82,6 +88,25 @@ describe('wolvesOrgAds component', () => {
 
     const wrapper = mount(WolvesOrgAds)
 
+    expect(wrapper.find('.wc-org-ads').exists()).toBe(false)
+  })
+
+  it('stays hidden for the whole Director\'s Cut Track 0, even past a failed advance attempt', async () => {
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
+    store.enterCinematic()
+
+    const wrapper = mount(WolvesOrgAds)
+
+    expect(wrapper.find('.wc-org-ads').exists()).toBe(false)
+
+    // The Director's Cut has only one segment, so this can never advance —
+    // ads must stay hidden rather than appear once `segmentIndex` failed to
+    // clamp.
+    store.advanceSegment()
+    await wrapper.vm.$nextTick()
+
+    expect(store.segmentIndex).toBe(0)
     expect(wrapper.find('.wc-org-ads').exists()).toBe(false)
   })
 })

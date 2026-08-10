@@ -2,12 +2,12 @@
 import { usePreferredReducedMotion } from '@vueuse/core'
 import { computed } from 'vue'
 import { getWolvesOrgAdBlend, WOLVES_ORG_AD_PAIRS } from '@/data/wolves-org-ads'
-import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
+import { useCinematicStore } from '@/stores/cinematic'
 
 const store = useCinematicStore()
 const reducedMotion = usePreferredReducedMotion()
 const visible = computed(() => store.phase === 'cinematic'
-  && (store.experienceId !== WOLVES_EXPERIENCE.id || store.segmentIndex > 0))
+  && (!store.isWolvesPresentation || store.segmentIndex > 0))
 const blend = computed(() => getWolvesOrgAdBlend(store.segmentElapsed))
 const opacities = computed(() => {
   if (reducedMotion.value !== 'reduce') {

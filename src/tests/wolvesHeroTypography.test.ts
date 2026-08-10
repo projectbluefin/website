@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import TheaterExperience from '@/components/wolves/cinematic/TheaterExperience.vue'
 import { TRACK_ZERO_SECTIONS } from '@/data/wolves-track-zero-beats'
-import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
+import { useCinematicStore, WOLVES_DIRECTORS_CUT_EXPERIENCE, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
 describe('wolves hero typography timeline', () => {
   beforeEach(() => {
@@ -274,5 +274,88 @@ describe('cinematic wallpaper transitions', () => {
 
     expect(wrapper.find('.wc-wallpaper-buffer.fading-out').exists()).toBe(true)
     expect(wrapper.find('.wc-wallpaper-buffer.is-transitioning').exists()).toBe(true)
+  })
+})
+
+describe('theater experience wolves-experience prop wiring', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  afterEach(() => {
+    // `activeSegments` is module-level state (see cinematic.ts); restore the
+    // standard show so a Director's Cut test cannot leak into the next one.
+    useCinematicStore().loadExperience(WOLVES_EXPERIENCE)
+  })
+
+  const WolvesComicReaderProbe = {
+    props: {
+      wolvesExperience: { type: Boolean, default: false },
+      experienceId: { type: String, default: '' },
+    },
+    template: '<div class="wolves-comic-reader-probe" :data-wolves-experience="wolvesExperience" :data-experience-id="experienceId" />',
+  }
+
+  function mountTheater() {
+    return mount(TheaterExperience, {
+      global: {
+        stubs: {
+          WolvesComicReader: WolvesComicReaderProbe,
+          WolvesLoreColumn: true,
+        },
+      },
+    })
+  }
+
+  // The template used to carry a second, separate `experienceId === WOLVES_EXPERIENCE.id`
+  // check inline for this one prop, duplicating (and briefly diverging from) the
+  // component's own `isWolvesExperience` computed. That duplicate read the Director's
+  // Cut as a generic album — losing the beat-synced `timelineSlides` gallery for
+  // generic back-catalogue photos — even after the computed itself was fixed.
+  it('passes wolves-experience true for the standard show', () => {
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_EXPERIENCE)
+    store.enterCinematic()
+
+    const probe = mountTheater().get('.wolves-comic-reader-probe')
+
+    expect(probe.attributes('data-wolves-experience')).toBe('true')
+    expect(probe.attributes('data-experience-id')).toBe(WOLVES_EXPERIENCE.id)
+  })
+
+  it('passes wolves-experience true for the Director\'s Cut, not the generic default', () => {
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
+    store.enterCinematic()
+
+    const probe = mountTheater().get('.wolves-comic-reader-probe')
+
+    expect(probe.attributes('data-wolves-experience')).toBe('true')
+    expect(probe.attributes('data-experience-id')).toBe(WOLVES_DIRECTORS_CUT_EXPERIENCE.id)
+  })
+
+  it('passes wolves-experience false for a generic back-catalogue album', () => {
+    const store = useCinematicStore()
+    store.loadExperience({
+      id: 'album-test',
+      title: 'Album Test',
+      artwork: 'album.jpg',
+      segments: [{
+        id: 'track-one',
+        kind: 'youtube',
+        youtubeId: 'track-one',
+        chapter: 'Album Test',
+        title: 'Track One',
+        artist: 'Artist',
+        artwork: 'track.jpg',
+        durationSeconds: 200,
+      }],
+    })
+    store.enterCinematic()
+
+    const probe = mountTheater().get('.wolves-comic-reader-probe')
+
+    expect(probe.attributes('data-wolves-experience')).toBe('false')
+    expect(probe.attributes('data-experience-id')).toBe('album-test')
   })
 })

@@ -1,4 +1,4 @@
-import type { ExperienceManifest, ExperienceSegment } from '@/config/experience-manifest'
+import type { ExperienceManifest, ExperienceSegment, PresentationProfile } from '@/config/experience-manifest'
 import type { IntroVideoSpec } from '@/data/wolves-intro-sequence'
 import { defineStore } from 'pinia'
 import { CINEMATIC_SEGMENTS, DEFAULT_CROSSFADE_MS } from '@/config/wolves-cinematic'
@@ -69,6 +69,26 @@ let INTRO_SEGMENTS: readonly IntroVideoSpec[] = buildIntroVideoSequence()
  */
 const CINEMATIC_AUTHORED_DURATIONS = [424, 347, 251, 384, 193, 234, 271] as const
 
+/** `presentationProfile` value for the standard, seven-part Wolves show. */
+export const WOLVES_STANDARD_PROFILE_ID: PresentationProfile = 'wolves-standard'
+/** `presentationProfile` value for the one-song Director's Cut. */
+export const WOLVES_DIRECTORS_CUT_PROFILE_ID: PresentationProfile = 'wolves-directors-cut'
+
+/**
+ * True for either authored Wolves show — the seven-part standard cut or the
+ * one-song Director's Cut — false for a generic back-catalogue album (or an
+ * experience that has not set a profile at all). This is the typed
+ * replacement for raw `experienceId === WOLVES_EXPERIENCE.id` checks, which
+ * read a Director's Cut playthrough as a generic album because its manifest
+ * carries a different `id`. Code that means "the standard seven-part show
+ * specifically" (e.g. restoring it after a Director's Cut run) must still
+ * compare against `WOLVES_STANDARD_PROFILE_ID` explicitly rather than call
+ * this helper.
+ */
+export function isWolvesPresentationProfile(profile: PresentationProfile | undefined): boolean {
+  return profile === WOLVES_STANDARD_PROFILE_ID || profile === WOLVES_DIRECTORS_CUT_PROFILE_ID
+}
+
 /**
  * The authored Wolves cinematic expressed as a generic experience manifest —
  * the default the runtime boots with. Back-catalogue albums load their own
@@ -80,10 +100,30 @@ export const WOLVES_EXPERIENCE: ExperienceManifest = {
   title: 'Seven Days to the Wolves',
   artwork: 'wolves-artwork/LASru9j0oIc.jpg',
   includeIntro: true,
+  presentationProfile: WOLVES_STANDARD_PROFILE_ID,
   segments: CINEMATIC_SEGMENTS.map((segment, index) => ({
     ...segment,
     durationSeconds: CINEMATIC_AUTHORED_DURATIONS[index] ?? 0,
   })),
+}
+
+/**
+ * The Director's Cut cinematic: only the authored 7 Days segment, at its
+ * measured duration. The Director's Cut *intro* (prologue + Destiny trailer,
+ * `buildDirectorsCutVideoSequence()`) is published separately through
+ * `setIntroSequence()` — this manifest only carries the cinematic segments
+ * `loadExperience()` swaps in.
+ */
+export const WOLVES_DIRECTORS_CUT_EXPERIENCE: ExperienceManifest = {
+  id: 'wolves-directors-cut',
+  title: 'Director\'s Cut',
+  artwork: CINEMATIC_SEGMENTS[0].artwork,
+  includeIntro: true,
+  presentationProfile: WOLVES_DIRECTORS_CUT_PROFILE_ID,
+  segments: [{
+    ...CINEMATIC_SEGMENTS[0],
+    durationSeconds: CINEMATIC_AUTHORED_DURATIONS[0],
+  }],
 }
 
 // Active experience: module-level so the timeline math below stays plain
@@ -274,6 +314,14 @@ export const useCinematicStore = defineStore('cinematic', {
     phase: 'lobby' as CinematicPhase,
     /** Stable manifest identity used by experience-specific presentation rules. */
     experienceId: WOLVES_EXPERIENCE.id,
+    /**
+     * Which authored presentation is active: `'wolves-standard'`,
+     * `'wolves-directors-cut'`, or `'generic'` for a back-catalogue album.
+     * Set from the manifest in `loadExperience()`; typed consumers use
+     * `isWolvesPresentation` or compare against a `*_PROFILE_ID` constant
+     * rather than re-deriving this from `experienceId`.
+     */
+    presentationProfile: (WOLVES_EXPERIENCE.presentationProfile ?? 'generic') as PresentationProfile,
     /** Segments of the active experience (defaults to the Wolves cinematic). */
     segments: WOLVES_EXPERIENCE.segments as ExperienceSegment[],
     segmentIndex: 0,
@@ -365,13 +413,20 @@ export const useCinematicStore = defineStore('cinematic', {
       return duration > 0 ? Math.min(1, this.overallElapsed / duration) : 0
     },
     isLastSegment: state => state.segmentIndex >= state.segments.length - 1,
+    /**
+     * True for either authored Wolves show. The typed replacement for raw
+     * `experienceId === WOLVES_EXPERIENCE.id` checks — see
+     * `isWolvesPresentationProfile()` for why the Director's Cut needs both
+     * profiles covered.
+     */
+    isWolvesPresentation: state => isWolvesPresentationProfile(state.presentationProfile),
     /** What the hero widget shows: the intro override when present, else the segment. */
     display(state): { chapter: string, title: string, artist: string, artwork: string, counter: string } {
       if (state.displayOverride) {
         return { ...state.displayOverride, counter: state.displayOverride.chapter }
       }
       const segment = this.segment
-      const title = state.experienceId === WOLVES_EXPERIENCE.id
+      const title = this.isWolvesPresentation
         ? segment.title
         : `${segment.title} by ${segment.artist}`
       return {
@@ -409,6 +464,7 @@ export const useCinematicStore = defineStore('cinematic', {
       this.timelineRevision += 1
       this.segments = manifest.segments
       this.experienceId = manifest.id
+      this.presentationProfile = manifest.presentationProfile ?? 'generic'
       this.phase = 'lobby'
       this.segmentIndex = 0
       this.segmentElapsed = 0
@@ -418,7 +474,7 @@ export const useCinematicStore = defineStore('cinematic', {
       this.playing = false
       this.crossfading = false
       this.pendingSegmentIndex = null
-      this.showTransitionOverlay = manifest.id === WOLVES_EXPERIENCE.id
+      this.showTransitionOverlay = isWolvesPresentationProfile(manifest.presentationProfile)
       this.displayOverride = null
     },
     /**

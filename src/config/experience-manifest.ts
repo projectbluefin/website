@@ -11,6 +11,17 @@ import type { CinematicSegment } from '@/config/wolves-cinematic'
 export type ExperienceMediaKind = 'youtube' | 'image'
 
 /**
+ * Which authored presentation a manifest belongs to, if any. `'generic'` (the
+ * default when omitted) is any back-catalogue album — its own title/artist
+ * credit and freeform decorative treatment. `'wolves-standard'` and
+ * `'wolves-directors-cut'` are both the authored Wolves show and share its
+ * display and theater treatment; they differ only in which segments and intro
+ * play. Consumers that mean "is this an authored Wolves presentation" must
+ * check both, not just one.
+ */
+export type PresentationProfile = 'generic' | 'wolves-standard' | 'wolves-directors-cut'
+
+/**
  * One playable segment. Extends the wolves CinematicSegment so the existing
  * runtime consumes it unchanged; adds the authored duration (drives the
  * overall seek-bar timeline) and the media kind.
@@ -42,6 +53,8 @@ export interface ExperienceManifest {
    * Wolves experience sets this; it is authored content, not generic.
    */
   includeIntro?: boolean
+  /** Which authored presentation this manifest belongs to; see `PresentationProfile`. */
+  presentationProfile?: PresentationProfile
   segments: ExperienceSegment[]
 }
 

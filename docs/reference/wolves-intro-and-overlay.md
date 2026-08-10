@@ -58,6 +58,24 @@ standard sequence in `afterEach` or it leaks into every later test in the file.
 Derive Director's Cut expectations from the store (`store.sequenceDuration`,
 `INTRO_SEQUENCE_DURATION`), never from a typed-in runtime.
 
+**Fixing the intro list did not fix what plays after it.** `setIntroSequence()`
+above only retimes the *intro*; the *cinematic* segments the intro hands off
+into are a separate piece of module-level state (`activeSegments`, set by
+`loadExperience()`). `enterIntro()` used to publish the Director's Cut intro
+list correctly but never call `loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)`
+— so choosing the Director's Cut played its own, correctly-timed intro and then
+handed off into the full seven-part standard cinematic anyway. The manifest now
+carries a `presentationProfile` (`'wolves-standard' | 'wolves-directors-cut' |
+'generic'`), and `enterIntro()` calls `store.loadExperience(directorsCut ?
+WOLVES_DIRECTORS_CUT_EXPERIENCE : WOLVES_EXPERIENCE)` before publishing the
+intro sequence, so the standard lobby's own `Enter` button always restores
+`WOLVES_EXPERIENCE` explicitly rather than relying on whatever a previous run
+left active. See
+[`../skills/wolves-runtime-engineering/SKILL.md`](../skills/wolves-runtime-engineering/SKILL.md)
+for the typed `isWolvesPresentation` replacement for raw
+`experienceId === WOLVES_EXPERIENCE.id` checks this required across the
+runtime.
+
 ## Silent card windows are derived, not hand-picked
 
 `buildOpeningTitleCardSegment()` used to carry `windows = [14, 16, 12, 17]` — a

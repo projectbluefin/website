@@ -93,6 +93,33 @@ an unidentified player request.
   rather than as evidence of a deletion.
 - A change removes authored content — a segment, lore, prose — without the
   owner's explicit word, or its justification does not match its diff.
+- A raw `experienceId === WOLVES_EXPERIENCE.id` (or `manifest.id === ...`) check
+  is used to mean "this is an authored Wolves presentation." A second Wolves
+  manifest with a different top-level `id` (the Director's Cut) silently reads
+  as a generic back-catalogue album, and every place that check is duplicated
+  can drift independently (`TheaterExperience.vue` once carried its own inline
+  copy of the same check on a single prop, computing a different answer than
+  the component's own `isWolvesExperience`). Use the manifest's typed
+  `presentationProfile` and the store's `isWolvesPresentation` getter (or the
+  `isWolvesPresentationProfile()` helper) instead of comparing manifest
+  identity; a "which specific presentation" question (restoring the standard
+  show after a Director's Cut run) still compares against
+  `WOLVES_STANDARD_PROFILE_ID`/`WOLVES_DIRECTORS_CUT_PROFILE_ID` explicitly.
+- A computed derives a fraction of show progress from a hardcoded segment count
+  (`TheaterExperience.vue`'s `totalProgress` divides by `7`, sized for the
+  standard show's day/night wallpaper cycle). A single-segment presentation
+  (the Director's Cut) can never advance `segmentIndex` past `0`, so that
+  computed can only ever reach `~1/7` of its cycle. This shipped with the
+  presentation-profile boundary as a known, reported gap, not a fix — retiming
+  the wallpaper cycle for a variable segment count is a design/animation-cadence
+  change and needs its own approval.
+- Segments are module-level state too (`activeSegments` in `cinematic.ts`), the
+  same class of bug as the intro list documented in
+  [`../../reference/wolves-intro-and-overlay.md`](../../reference/wolves-intro-and-overlay.md).
+  A test that calls `loadExperience()` with a non-default manifest (Director's
+  Cut, a generic album) and does not restore `WOLVES_EXPERIENCE` in `afterEach`
+  leaks that manifest's segments into every later test in the file —
+  `setActivePinia(createPinia())` alone does not reset it.
 
 ## Verification
 

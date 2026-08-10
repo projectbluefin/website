@@ -5,7 +5,14 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick } from 'vue'
 import { buildDirectorsCutVideoSequence, buildIntroVideoSequence } from '@/data/wolves-intro-sequence'
-import { INTRO_SEQUENCE_DURATION, useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
+import {
+  INTRO_SEQUENCE_DURATION,
+  useCinematicStore,
+  WOLVES_DIRECTORS_CUT_EXPERIENCE,
+  WOLVES_DIRECTORS_CUT_PROFILE_ID,
+  WOLVES_EXPERIENCE,
+  WOLVES_STANDARD_PROFILE_ID,
+} from '@/stores/cinematic'
 import WolvesApp from '@/WolvesApp.vue'
 
 const CinematicLobbyStub = defineComponent({
@@ -501,6 +508,12 @@ describe('wolvesApp intro status handling', () => {
     expect(store.sequenceDuration).toBeGreaterThan(standardDuration)
     expect(INTRO_SEQUENCE_DURATION).toBeCloseTo(store.sequenceDuration)
 
+    // The Director CTA also loads the one-song cinematic manifest, not just
+    // the longer intro list: the audience must not hand off into the full
+    // seven-part show after choosing the Director's Cut.
+    expect(store.segmentCount).toBe(1)
+    expect(store.presentationProfile).toBe(WOLVES_DIRECTORS_CUT_PROFILE_ID)
+
     // Resolution follows the Director's Cut list: its last index exists and is
     // no longer clamped into the shorter standard sequence.
     const lastIndex = directorsCut.length - 1
@@ -516,10 +529,39 @@ describe('wolvesApp intro status handling', () => {
 
     expect(store.segmentIndex).toBe(lastIndex)
     expect(store.overallDuration).toBeCloseTo(
-      store.sequenceDuration + WOLVES_EXPERIENCE.segments.reduce(
+      store.sequenceDuration + WOLVES_DIRECTORS_CUT_EXPERIENCE.segments.reduce(
         (sum, segment) => sum + (segment.durationSeconds ?? 0),
         0,
       ),
     )
+  })
+
+  it('restores the standard seven-part experience when Enter is used after a Director\'s Cut run', async () => {
+    const store = useCinematicStore()
+
+    const wrapper = shallowMount(WolvesApp, {
+      global: { stubs: stubs() },
+    })
+
+    wrapper.getComponent(CinematicLobbyStub).vm.$emit('enter-directors-cut')
+    await flushPromises()
+
+    expect(store.segmentCount).toBe(1)
+    expect(store.presentationProfile).toBe(WOLVES_DIRECTORS_CUT_PROFILE_ID)
+
+    // No live in-app "return to lobby" navigation exists yet (see
+    // docs/skills/wolves-runtime-engineering/SKILL.md); a phase reset is the
+    // only way today's runtime models the audience arriving back at the
+    // lobby. What this test proves is the entry point's own behavior: the
+    // standard Enter button always reloads WOLVES_EXPERIENCE, regardless of
+    // whatever ran before it.
+    store.phase = 'lobby'
+    await wrapper.vm.$nextTick()
+
+    wrapper.getComponent(CinematicLobbyStub).vm.$emit('enter')
+    await flushPromises()
+
+    expect(store.segmentCount).toBe(WOLVES_EXPERIENCE.segments.length)
+    expect(store.presentationProfile).toBe(WOLVES_STANDARD_PROFILE_ID)
   })
 })

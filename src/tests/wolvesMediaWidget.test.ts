@@ -1,9 +1,9 @@
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
-import { useCinematicStore } from '@/stores/cinematic'
+import { useCinematicStore, WOLVES_DIRECTORS_CUT_EXPERIENCE, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
 /** Mirrors the widget's own clock formatting so expectations track the real timeline. */
 function mmss(seconds: number): string {
@@ -15,6 +15,13 @@ describe('media widget', () => {
   beforeEach(() => {
     const pinia = createPinia()
     setActivePinia(pinia)
+  })
+
+  afterEach(() => {
+    // `activeSegments` is module-level state (see cinematic.ts); restore the
+    // standard show so a Director's Cut or catalogue test cannot leak into
+    // the next one.
+    useCinematicStore().loadExperience(WOLVES_EXPERIENCE)
   })
 
   it('drives its primary progress telemetry from the authored overall timeline while keeping segment time secondary', () => {
@@ -79,5 +86,17 @@ describe('media widget', () => {
 
     expect(wrapper.get('.wc-track-credit-title').text()).toBe('Ava of Death')
     expect(wrapper.get('.wc-track-credit-byline').text()).toBe('By Eleine')
+  })
+
+  it('shows the plain authored title, not a catalogue credit, for the Director\'s Cut', () => {
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
+    store.enterCinematic()
+
+    const wrapper = mount(MediaWidget)
+
+    expect(wrapper.find('.wc-track-credit-title').exists()).toBe(false)
+    expect(wrapper.find('.wc-track-credit-byline').exists()).toBe(false)
+    expect(wrapper.get('.wc-widget-title').text()).toBe(store.segment.title)
   })
 })
