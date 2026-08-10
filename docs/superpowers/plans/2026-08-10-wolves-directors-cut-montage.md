@@ -3,12 +3,14 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Render a 70-second local-review-only Wolves Director's Cut montage
-from the seven approved storyboard clips.
+from the seven approved storyboard clips with the owner-authorized local remix
+track.
 
 **Architecture:** FFmpeg's concat demuxer supplies the seven unchanged clip
-streams in storyboard order. The render maps only the concatenated video and a
-generated silent AAC stream, producing a compatible H.264/AAC review artifact
-without touching the Wolves website or its media registry.
+streams in storyboard order. Homebrew FFmpeg maps that video with a 70-second
+audio range, starting at 08:17, from the owner-authorized local Wolves remix
+source, then encodes a compatible H.264/AAC review artifact without touching
+the Wolves website or its media registry.
 
 **Tech Stack:** FFmpeg 7.1+, FFprobe, H.264 (`libx264`), AAC.
 
@@ -21,8 +23,9 @@ without touching the Wolves website or its media registry.
 - Remove all source audio.
 - Render 640x360 video at 24 fps with an AAC audio stream and a total duration
   of 70 seconds.
-- Use a silent audio stream unless the owner separately supplies an authorized
-  audio file; do not download, extract, or use a YouTube recording.
+- Use `/var/home/jorge/Videos/wolves-directors-cut/Beauty Of The Beast
+  [X3WrCzLIIvk].webm` as the owner-authorized local remix source, starting its
+  audio at source timestamp 08:17. Do not download media.
 - The artifact is `local review` only and must not change the Wolves website,
   register an asset, or imply approval for integration.
 
@@ -34,9 +37,10 @@ without touching the Wolves website or its media registry.
 |---|---|
 | `/var/home/jorge/Videos/wolves-directors-cut/h-5S82ETKvI_*.mp4` | Immutable source clips, identified by storyboard filename. |
 | `/var/tmp/website-agent/wolves-directors-cut-concat.txt` | Temporary FFmpeg concat manifest. Remove after rendering. |
+| `/var/home/jorge/Videos/wolves-directors-cut/Beauty Of The Beast [X3WrCzLIIvk].webm` | Owner-authorized local remix source. |
 | `/var/home/jorge/Videos/wolves-directors-cut/wolves-directors-cut-mockup.mp4` | Local-review output artifact. |
 
-### Task 1: Render the silent storyboard montage
+### Task 1: Render the scored storyboard montage
 
 **Files:**
 - Create: `/var/tmp/website-agent/wolves-directors-cut-concat.txt`
@@ -45,9 +49,10 @@ without touching the Wolves website or its media registry.
 
 **Interfaces:**
 - Consumes: Seven 640x360, 24 fps storyboard clips with the exact filenames
-  listed in the manifest below.
+  listed in the manifest below, plus the owner-authorized local remix source.
 - Produces: `wolves-directors-cut-mockup.mp4`, a 70-second, 640x360, 24 fps
-  H.264 video with silent 44.1 kHz stereo AAC audio.
+  H.264 video with 48 kHz stereo AAC audio beginning at source timestamp
+  08:17 of the authorized remix.
 
 - [ ] **Step 1: Verify every source clip exists and has the expected video stream**
 
@@ -93,15 +98,16 @@ without touching the Wolves website or its media registry.
   Expected: The manifest contains seven `file` lines in the approved
   chronological order.
 
-- [ ] **Step 3: Render the silent H.264/AAC review artifact**
+- [ ] **Step 3: Render the scored H.264/AAC review artifact**
 
   Run:
 
   ```bash
-  ffmpeg -y \
+  /home/linuxbrew/.linuxbrew/bin/ffmpeg -y \
     -f concat -safe 0 \
     -i /var/tmp/website-agent/wolves-directors-cut-concat.txt \
-    -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+    -ss 497 -t 70 \
+    -i '/var/home/jorge/Videos/wolves-directors-cut/Beauty Of The Beast [X3WrCzLIIvk].webm' \
     -map 0:v:0 -map 1:a:0 \
     -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -r 24 \
     -c:a aac -b:a 192k -t 70 -movflags +faststart \
@@ -110,7 +116,7 @@ without touching the Wolves website or its media registry.
 
   Expected: FFmpeg exits successfully and writes the output file. Its video
   contains the seven source ranges with no inserted transition frames; its
-  audio comes only from `anullsrc`.
+  audio is the authorized local source from 08:17 through 09:27.
 
 - [ ] **Step 4: Verify the rendered media properties and decode it fully**
 
@@ -125,7 +131,7 @@ without touching the Wolves website or its media registry.
   ```
 
   Expected: Duration is 70 seconds (within one frame), video is H.264 at
-  640x360 and 24 fps, audio is AAC at 44.1 kHz stereo, and the complete decode
+  640x360 and 24 fps, audio is AAC at 48 kHz stereo, and the complete decode
   emits no errors.
 
 - [ ] **Step 5: Remove the temporary concat manifest**

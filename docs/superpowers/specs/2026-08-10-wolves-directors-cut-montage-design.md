@@ -24,10 +24,10 @@ boundaries. It adds no titles, overlays, transitions, effects, speed changes,
 or new narrative content. Source audio is removed. The output is a
 640x360, 24 fps H.264 MP4 with an AAC audio stream.
 
-If the owner supplies a separately authorized audio file, its playback begins
-at source timestamp 08:17 and runs for the 70-second montage duration. Until
-that authorization is supplied, the output uses a silent AAC track. The
-mockup process must not download, extract, or use a YouTube recording.
+The owner authorized the local Wolves remix source
+`Beauty Of The Beast [X3WrCzLIIvk].webm`. Its audio begins at source timestamp
+08:17 and runs for the 70-second montage duration. The mockup process uses
+that existing local source only and does not download media.
 
 ## Alternatives considered
 
