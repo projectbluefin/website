@@ -1,11 +1,17 @@
+import type { IntroOverlayTextCue } from '@/data/wolves-intro-sequence'
 import { describe, expect, it } from 'vitest'
 import { estimatePageSeconds } from '@/components/wolves/lore/lore-pages'
 import { DIRECTORS_CUT_DESTINY_CONCEPTS } from '@/data/wolves-directors-cut-artwork'
 import {
   buildDirectorsCutVideoSequence,
   DIRECTORS_CUT_DESTINY_SEGMENT_ID,
+  DIRECTORS_CUT_FINAL_CRESCENDO_SECOND,
+  DIRECTORS_CUT_MAX_CUE_WORDS,
+  DIRECTORS_CUT_MAX_TEXTLESS_SECONDS,
   DIRECTORS_CUT_PROLOGUE_SEGMENT_ID,
-  DOMINANT_EMPHASIS_MAX_WORDS,
+  DIRECTORS_CUT_SCENE_CROSSFADE_SECONDS,
+  DIRECTORS_CUT_TEXT_FADE_SECONDS,
+  DIRECTORS_CUT_TEXT_HOLD_RATIO,
   GAYANE_PROLOGUE_MARKS,
   GAYANE_SOURCE_VIDEO_ID,
   GAYANE_TRACK_SECONDS,
@@ -16,15 +22,21 @@ import {
 } from '@/data/wolves-directors-cut-intro'
 import { buildIntroVideoSequence, isTextSegment, isVideoSegment } from '@/data/wolves-intro-sequence'
 
+const CONCEPT_PREFIX = 'wolves-intro/destiny-concepts/'
+
+/**
+ * Every thought the projected prologue is allowed to display, verbatim.
+ *
+ * The 16-word Gardener/Winnower stanza and the 35-word Clarke sentence are both
+ * absent on purpose: neither fits the projector word ceiling whole, and neither may
+ * be split. Both remain in the authored corpus.
+ */
 const APPROVED_PROLOGUE_TEXT = new Set([
   'A Gardener and a Winnower walked among the stars.',
-  'One to spread life,\nand one to cull the dross\nto shape the Garden of Earth.',
   'One day changed the Garden forever.',
   'New Children arose and filled the pattern.',
   'For eons, Maintainer-Guardians cultivated the Garden...',
   'Until an AI-fueled Society deemed Guardians unnecessary.\nAnd then, a threat.',
-  'An AI-fueled Society deemed Guardians unnecessary.',
-  'And then, a threat.',
   'Others came to claim a bountiful and unprotected Garden.',
   'Now, what\'s left of a proud order fights for survival,\nsurrounded by predators.',
   'PROJECT BLUEFIN\nseven days to the wolves',
@@ -46,8 +58,37 @@ function destiny() {
   return segment
 }
 
-function montageCues() {
-  return prologue().overlays!.filter(cue => cue.backgroundImage?.startsWith('wolves-intro/destiny-concepts/'))
+function cues(): readonly IntroOverlayTextCue[] {
+  return prologue().overlays!
+}
+
+function textCues(): readonly IntroOverlayTextCue[] {
+  return cues().filter(cue => cue.text.trim().length > 0)
+}
+
+function conceptCues(): readonly IntroOverlayTextCue[] {
+  return cues().filter(cue => cue.backgroundImage?.startsWith(CONCEPT_PREFIX))
+}
+
+/** The first time each painting takes the stage: the montage proper, in registry order. */
+function firstConceptAppearances(): readonly IntroOverlayTextCue[] {
+  const seen = new Set<string>()
+  return conceptCues().filter((cue) => {
+    if (seen.has(cue.backgroundImage!)) {
+      return false
+    }
+    seen.add(cue.backgroundImage!)
+    return true
+  })
+}
+
+/** How long a cue's words actually stay on the screen, which is not its window. */
+function textHold(cue: IntroOverlayTextCue): number {
+  return cue.textHoldSeconds ?? cue.end - cue.start
+}
+
+function wordCount(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length
 }
 
 describe('director\'s cut intro sequence', () => {
@@ -78,18 +119,16 @@ describe('director\'s cut intro sequence', () => {
   it('cues every prologue beat on a measured Gayane section boundary', () => {
     const marks = new Set<number>(GAYANE_PROLOGUE_MARKS)
 
-    for (const cue of prologue().overlays!) {
+    for (const cue of cues()) {
       expect(marks.has(cue.start)).toBe(true)
       expect(marks.has(cue.end)).toBe(true)
     }
   })
 
   it('tiles the marks after the dark open without gaps or overlaps, ending on the last mark', () => {
-    const cues = prologue().overlays!
-
     let cursor: number = GAYANE_PROLOGUE_MARKS[1]
-    expect(cues[0].start).toBe(cursor)
-    for (const cue of cues) {
+    expect(cues()[0].start).toBe(cursor)
+    for (const cue of cues()) {
       expect(cue.start).toBe(cursor)
       expect(cue.end).toBeGreaterThan(cue.start)
       cursor = cue.end
@@ -100,67 +139,116 @@ describe('director\'s cut intro sequence', () => {
     expect(GAYANE_PROLOGUE_MARKS[1]).toBeGreaterThan(0)
   })
 
-  it('gives every narrated beat at least its theater reading cost', () => {
-    for (const cue of prologue().overlays!) {
-      if (!cue.text) {
+  it('holds every displayed thought for its reading cost and not much longer', () => {
+    const all = cues()
+    const closing = all[all.length - 1]
+
+    for (const cue of all.filter(candidate => candidate.text.trim().length > 0)) {
+      const cost = estimatePageSeconds(cue.text)
+      const hold = textHold(cue)
+      expect(hold, cue.text).toBeGreaterThanOrEqual(cost)
+      if (cue === closing) {
+        // The film's own title card is the last shot, not a narrative beat: it holds
+        // to the cut, which is why it is the one documented exception.
+        expect(hold).toBe(cue.end - cue.start)
         continue
       }
-      expect(cue.end - cue.start).toBeGreaterThanOrEqual(estimatePageSeconds(cue.text))
+      expect(hold, cue.text).toBeLessThanOrEqual(cost * DIRECTORS_CUT_TEXT_HOLD_RATIO)
     }
   })
 
-  it('writes no new lore: every narrated beat is approved prologue or sourced wording', () => {
-    for (const cue of prologue().overlays!) {
-      if (!cue.text) {
+  it('never leaves the projector wordless for longer than a single held shot', () => {
+    let lastTextEnd: number = GAYANE_PROLOGUE_MARKS[1]
+    let longest = 0
+    for (const cue of cues()) {
+      if (cue.text.trim().length === 0) {
         continue
       }
-      expect(APPROVED_PROLOGUE_TEXT.has(cue.text)).toBe(true)
+      longest = Math.max(longest, cue.start - lastTextEnd)
+      lastTextEnd = cue.start + textHold(cue)
+    }
+
+    expect(longest).toBeLessThanOrEqual(DIRECTORS_CUT_MAX_TEXTLESS_SECONDS)
+  })
+
+  it('writes no new lore: every displayed beat is approved prologue wording', () => {
+    for (const cue of textCues()) {
+      expect(APPROVED_PROLOGUE_TEXT.has(cue.text), cue.text).toBe(true)
     }
   })
 
-  it('omits the Clarke paragraph instead of splitting it or painting a wall of text', () => {
-    const cues = prologue().overlays!
-    const clarke = cues.filter(cue => cue.text.includes('humanity had lost its future'))
-
-    expect(clarke).toHaveLength(0)
-    expect(cues.some(cue => cue.text === 'When its children are taken from it')).toBe(false)
-    expect(Math.max(...cues.map(cue => cue.text.trim().split(/\s+/).length))).toBeLessThanOrEqual(18)
+  it('keeps every displayed cue inside the projector word ceiling', () => {
+    expect(DIRECTORS_CUT_MAX_CUE_WORDS).toBe(13)
+    for (const cue of textCues()) {
+      expect(wordCount(cue.text), cue.text).toBeLessThanOrEqual(DIRECTORS_CUT_MAX_CUE_WORDS)
+    }
   })
 
-  it('keeps the dominant display treatment on beats that fit a 720p projector frame', () => {
-    const cues = prologue().overlays!
+  it('omits the thoughts that cannot be shown whole inside that ceiling', () => {
+    const serialized = JSON.stringify(cues())
 
-    for (const cue of cues) {
-      if (cue.emphasis !== 'dominant') {
-        continue
-      }
-      expect(cue.text.trim().split(/\s+/).length).toBeLessThanOrEqual(DOMINANT_EMPHASIS_MAX_WORDS)
+    expect(serialized).not.toContain('humanity had lost its future')
+    expect(serialized).not.toContain('cull the dross')
+    expect(serialized).not.toContain('When its children are taken from it')
+  })
+
+  it('recurs each thought as a motif rather than repeating it into wallpaper', () => {
+    const spoken = textCues().map(cue => cue.text)
+    const counts = new Map<string, number>()
+    for (const text of spoken) {
+      counts.set(text, (counts.get(text) ?? 0) + 1)
     }
 
-    expect(cues.some(cue => cue.emphasis === 'dominant')).toBe(true)
+    for (const [text, count] of counts) {
+      expect(count, text).toBeLessThanOrEqual(2)
+    }
+    // A thought never follows itself: that reads as a stuck slide, not a refrain.
+    for (const [index, text] of spoken.entries()) {
+      if (index === 0) {
+        continue
+      }
+      expect(text, `repeat at ${index}`).not.toBe(spoken[index - 1])
+    }
   })
 
-  it('plays the ten approved paintings in registry order with complete recurring thoughts', () => {
-    const cues = montageCues()
+  it('plays the ten approved paintings once each, in registry order, before any reprise', () => {
+    const openings = firstConceptAppearances()
 
-    expect(cues).toHaveLength(DIRECTORS_CUT_DESTINY_CONCEPTS.length)
-    expect(cues.map(cue => cue.backgroundImage)).toEqual(
+    expect(openings.map(cue => cue.backgroundImage)).toEqual(
       DIRECTORS_CUT_DESTINY_CONCEPTS.map(record => record.localPath),
     )
-    for (const [index, cue] of cues.entries()) {
-      const record = DIRECTORS_CUT_DESTINY_CONCEPTS[index]
-      expect(cue.text.trim().length).toBeGreaterThan(0)
-      expect(cue.text.trim().split(/\s+/).length).toBeLessThanOrEqual(18)
-      expect(cue.backgroundFigure).toEqual(record.backgroundFigure)
-      expect(cue.backgroundMotion).toBeUndefined()
-    }
     expect(DIRECTORS_CUT_DESTINY_CONCEPTS.map(record => record.referenceId)).toEqual(
       ['E1', 'C1', 'C2', 'C3', 'C4', 'C9', 'C6', 'C5', 'C7', 'C10'],
     )
+    const approved = new Map(DIRECTORS_CUT_DESTINY_CONCEPTS.map(record => [record.localPath, record]))
+    for (const cue of conceptCues()) {
+      const record = approved.get(cue.backgroundImage!)
+      expect(record, cue.backgroundImage).toBeTruthy()
+      expect(cue.backgroundFigure).toEqual(record!.backgroundFigure)
+    }
+    // The retired Ken Burns crop is gone from the data surface, not merely unused.
+    expect(JSON.stringify(cues())).not.toContain('kenburns')
+    expect(JSON.stringify(buildIntroVideoSequence())).not.toContain('backgroundMotion')
+  })
+
+  it('frames every painting whole at its own measured source geometry', () => {
+    const approved = new Map(DIRECTORS_CUT_DESTINY_CONCEPTS.map(record => [record.localPath, record]))
+
+    for (const cue of conceptCues()) {
+      const record = approved.get(cue.backgroundImage!)!
+      expect(cue.backgroundFraming, record.id).toEqual({
+        fit: 'contain',
+        sourceWidth: record.sourceWidth,
+        sourceHeight: record.sourceHeight,
+      })
+    }
+    // Panoramic and portrait-ish paintings are exactly what a global `cover` crop destroys.
+    expect(DIRECTORS_CUT_DESTINY_CONCEPTS.some(record => record.sourceWidth / record.sourceHeight > 2.2)).toBe(true)
+    expect(DIRECTORS_CUT_DESTINY_CONCEPTS.some(record => record.sourceWidth / record.sourceHeight < 1.5)).toBe(true)
   })
 
   it('shapes the montage as a hybrid crescendo on the measured sections', () => {
-    const holds = montageCues().map(cue => cue.end - cue.start)
+    const holds = firstConceptAppearances().map(cue => cue.end - cue.start)
     const europa = holds.slice(0, 5)
     const [c9, c6, c5, c7, c10] = holds.slice(5)
 
@@ -176,24 +264,43 @@ describe('director\'s cut intro sequence', () => {
     expect(c10).toBe(Math.min(...holds))
   })
 
-  it('runs the montage between the narrated opening and the authored handoff', () => {
-    const cues = prologue().overlays!
-    const isMontage = (cue: typeof cues[number]) =>
-      Boolean(cue.backgroundImage?.startsWith('wolves-intro/destiny-concepts/'))
-    const montage = cues.filter(isMontage)
-    const firstMontageIndex = cues.findIndex(isMontage)
-    const lastMontageIndex = cues.length - 1 - [...cues].reverse().findIndex(isMontage)
+  it('carries deliberate imagery from the montage through the crescendo and the title', () => {
+    const all = cues()
+    const firstConcept = all.findIndex(cue => cue.backgroundImage?.startsWith(CONCEPT_PREFIX))
 
-    expect(firstMontageIndex).toBeGreaterThan(0)
-    expect(lastMontageIndex).toBe(firstMontageIndex + montage.length - 1)
-    // Narrated opening before it, authored handoff after it.
-    expect(cues.slice(0, firstMontageIndex).every(cue => Boolean(cue.text))).toBe(true)
-    const handoff = cues.slice(lastMontageIndex + 1)
-    expect(handoff.map(cue => cue.text)).toEqual([
-      'Now, what\'s left of a proud order fights for survival,\nsurrounded by predators.',
-      'PROJECT BLUEFIN\nseven days to the wolves',
-    ])
-    expect(handoff[handoff.length - 1].end).toBe(GAYANE_TRACK_SECONDS)
+    expect(firstConcept).toBeGreaterThan(0)
+    for (const cue of all.slice(firstConcept)) {
+      expect(cue.backgroundImage, `${cue.start}-${cue.end}`).toBeTruthy()
+    }
+    // The old cut went imageless at the last painting and stayed black for 55.5s.
+    expect(Math.max(...conceptCues().map(cue => cue.end))).toBe(GAYANE_TRACK_SECONDS)
+  })
+
+  it('lands the dominant handoff on the measured final crescendo', () => {
+    const dominant = cues().filter(cue => cue.emphasis === 'dominant')
+    const crescendo = dominant.find(cue => cue.text.startsWith('Now, what\'s left'))
+
+    expect(DIRECTORS_CUT_FINAL_CRESCENDO_SECOND).toBe(276)
+    expect(GAYANE_PROLOGUE_MARKS).toContain(DIRECTORS_CUT_FINAL_CRESCENDO_SECOND)
+    expect(crescendo?.start).toBe(DIRECTORS_CUT_FINAL_CRESCENDO_SECOND)
+    for (const cue of dominant) {
+      expect(wordCount(cue.text), cue.text).toBeLessThanOrEqual(DIRECTORS_CUT_MAX_CUE_WORDS)
+    }
+  })
+
+  it('closes on the authored title, over a painting, running to the track end', () => {
+    const all = cues()
+    const closing = all[all.length - 1]
+
+    expect(closing.text).toBe('PROJECT BLUEFIN\nseven days to the wolves')
+    expect(closing.slim).toBe(true)
+    expect(closing.backgroundImage?.startsWith(CONCEPT_PREFIX)).toBe(true)
+    expect(closing.end).toBe(GAYANE_TRACK_SECONDS)
+  })
+
+  it('pairs the Director scene dissolve with its own short text reveal', () => {
+    expect(DIRECTORS_CUT_TEXT_FADE_SECONDS).toBe(1.6)
+    expect(DIRECTORS_CUT_SCENE_CROSSFADE_SECONDS).toBe(DIRECTORS_CUT_TEXT_FADE_SECONDS)
   })
 
   it('hands off into the frame-verified Ikora source with no voice-over toggle', () => {
@@ -250,5 +357,8 @@ describe('director\'s cut intro sequence', () => {
       expect(serialized).not.toContain(record.localPath)
     }
     expect(serialized).not.toContain(GAYANE_SOURCE_VIDEO_ID)
+    // Nothing in the standard cut takes the Director's own framing or reading holds.
+    expect(serialized).not.toContain('backgroundFraming')
+    expect(serialized).not.toContain('textHoldSeconds')
   })
 })

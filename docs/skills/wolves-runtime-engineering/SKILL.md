@@ -110,7 +110,23 @@ an unidentified player request.
   `../../reference/wolves-intro-and-overlay.md`.
 - A long text beat is given `emphasis: 'dominant'` on the strength of what it
   says rather than how tall it renders. Dominant is priced in frame height, and
-  overflows a 1280x720 projector frame past `DOMINANT_EMPHASIS_MAX_WORDS`.
+  overflows a 1280x720 projector frame past `DIRECTORS_CUT_MAX_CUE_WORDS`.
+- A cue's window is treated as its text's dwell time. The window is how long the
+  *shot* runs; a thought priced at 6.8s reading cost left up on a 38s shot reads
+  as a frozen show. Price text separately (`textHoldSeconds`) and let the image
+  play on wordless once the words are read.
+- A painting is rendered with `object-fit: cover` because it fills the frame.
+  Cover crops: `c1-europa-landscape-v1` (2048x771) loses a third of its height on
+  a 16:9 stage. Frame paintings `contain`, capped at their source pixels, and buy
+  text legibility with a scrim rather than by dimming the art.
+- A browser probe asks `getBoundingClientRect()` whether a `contain` image is
+  cropped. It reports the element box, so letterboxed and cropped both answer
+  1280x720. Derive the painted box from the decoded `naturalWidth`/`naturalHeight`
+  and assert the artwork ledger matches that decode.
+- A responsive rule hides text globally when only some surfaces should lose it.
+  The blanket `@media (max-width: 640px) { .wolves-intro-overlay-text { display: none } }`
+  silently blanked the entire Director narration; scope such rules with `:not()`
+  and give the surviving surface its own type scale.
 - A Director prologue cue uses the shared 7.8s somber fade. That consumes most
   of a short musical window and makes a seek look blank; the Director's Cut has
   its own short reveal followed by a real reading hold.
@@ -165,6 +181,20 @@ an unidentified player request.
   holding the *next* segment is discarded.
 - A prewarm is silenced with `setVolume(0)` instead of `mute()`, or a path that
   puts a side on air forgets to lift the mute.
+- A warmed player is promoted with `loadVideoById()` or a second `seekTo()`. The
+  warm buffer is already cued to its opening frame; reloading it discards the
+  warm and reintroduces the stutter the prewarm existed to remove. Promote by
+  adopting the instance, lifting the mute, and playing.
+- A prewarmed player is built with different event handlers than the cold path.
+  YouTube fixes handlers at construction, so a parked player cannot be rewired
+  later. Share one constructor and have every handler guard on "am I the show
+  player?" so a parked player's CUED/ENDED/error traffic cannot drive the
+  sequence.
+- A parked player is hidden with `display: none` or `v-show`. That can prevent
+  composition and un-warm the warm. Use `opacity: 0` plus `aria-hidden`/`inert`.
+- A handoff holds the outgoing image on an unbounded await of the incoming
+  player's `PLAYING`. If that event never arrives the show is stuck on a still
+  frame with no recovery. Bound the hold and release on whichever lands first.
 - A boundary, skip, or recovery load can run before `start()`, so it plays a
   segment underneath the intro.
 - Only the inactive buffer is prewarmed, so the first track enters cold.

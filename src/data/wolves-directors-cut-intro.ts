@@ -14,6 +14,7 @@
  */
 
 import type { IntroOverlayTextCue, IntroTextSegment, IntroVideoSegment, IntroVideoSpec } from './wolves-intro-sequence'
+import { estimatePageSeconds } from '../components/wolves/lore/lore-pages'
 import { DIRECTORS_CUT_DESTINY_CONCEPTS } from './wolves-directors-cut-artwork'
 import { buildIntroVideoSequence, isVideoSegment } from './wolves-intro-sequence'
 
@@ -92,18 +93,86 @@ const NARRATION_FIRST_MARK = 1
 const MONTAGE_FIRST_MARK = 8
 const HANDOFF_FIRST_MARK = 18
 
+/**
+ * The measured second the piece's final crescendo starts.
+ *
+ * The defiant handoff line is cut to this, not to the section boundary before it: 270.1 s is
+ * a real mark, but it is the *approach*, and putting the line there spent six seconds of the
+ * biggest moment in the piece on a line the audience had already finished reading.
+ */
+export const DIRECTORS_CUT_FINAL_CRESCENDO_SECOND = GAYANE_PROLOGUE_MARKS[19]
+
 const COLLAPSE_BACKGROUND = 'wolves-intro/bluefin-collapse-night.webp'
 
 /**
- * Word ceiling for a cue allowed to carry `emphasis: 'dominant'`.
+ * Word ceiling for any cue projected in this prologue.
  *
- * Dominant is an ~81px display treatment, so its cost is measured in frame height, not just
- * reading time. Measured in Chromium at 1280x720 — the smallest projector this show should
- * survive — a 13-word dominant beat renders 488px of the 720px frame and clears the nameplate,
- * while the 35-word Clarke quote renders 878px and is cut off at the top of the frame. Keep
- * dominant for the singular high-impact lines it was invented for.
+ * Measured in Chromium at 1280x720 — the smallest projector this show should survive. A
+ * 13-word dominant beat renders 488px of the 720px frame and clears the nameplate; the 35-word
+ * Clarke sentence renders 878px and is cut off at the top of the frame. The ceiling is applied
+ * to every displayed cue rather than only to dominant ones, because the back row's reading
+ * budget is set by the music, not by the type size: a cue that needs a second pass to parse
+ * has already lost the beat it was cut to.
+ *
+ * A thought that cannot be shown whole under this ceiling is not split across two shots — the
+ * show's quote rule forbids that — it is omitted from the projected sequence and left in the
+ * lore corpus, where it can be read at the reader's own pace.
  */
-export const DOMINANT_EMPHASIS_MAX_WORDS = 13
+export const DIRECTORS_CUT_MAX_CUE_WORDS = 13
+
+/**
+ * How much longer than its bare reading cost a thought may stay on screen.
+ *
+ * `estimatePageSeconds` is the show's shared reading-cost model (a floor of 6 s plus 3 words
+ * per second), already used to schedule the lore pages. A projected line needs more than that
+ * — the back row is further away and cannot re-read at will — but not unboundedly more: past
+ * roughly twice the cost, a held line stops reading as emphasis and starts reading as a stuck
+ * slide. 1.8x keeps every thought comfortably legible and still lets the image breathe.
+ */
+export const DIRECTORS_CUT_TEXT_HOLD_RATIO = 1.8
+
+/**
+ * The longest the projector may stay wordless.
+ *
+ * Silence is a deliberate instrument here — the Collapse and the darkest montage beats are
+ * stronger without a caption — but past about half a minute an audience stops reading the
+ * silence as intent and starts wondering whether the show has broken. Every gap in the recut
+ * is under this; the widest is 28.79 s, across the montage's darkest stretch.
+ */
+export const DIRECTORS_CUT_MAX_TEXTLESS_SECONDS = 30
+
+/**
+ * Scene dissolve length for the Director's prologue, paired to its own text reveal.
+ *
+ * The shared prologue pairs a 7.8 s text fade with a 3.9 s scene crossfade. This cut reveals
+ * text in 1.6 s, so inheriting the shared 3.9 s dissolve left the words fully up over an
+ * image still half-dissolved into the previous one — the montage's paintings read as a smear
+ * rather than as cuts. Matching the dissolve to the text reveal restores the pairing the
+ * shared prologue has, at this cut's own tempo.
+ */
+export const DIRECTORS_CUT_SCENE_CROSSFADE_SECONDS = DIRECTORS_CUT_TEXT_FADE_SECONDS
+
+/**
+ * The measured second the Ikora player is built and parked during the prologue.
+ *
+ * The handoff used to build its iframe at the cut, so the last thing a theater saw of the
+ * prologue was a black frame while YouTube negotiated a stream. This builds it against the
+ * montage's penultimate section boundary instead — mark 17, 64.6 s of warm-up — which is long
+ * enough for any projector's connection and short enough that the cued stream is not left to
+ * go stale for the whole five-and-a-half-minute piece.
+ */
+export const DIRECTORS_CUT_IKORA_PREWARM_SECOND = GAYANE_PROLOGUE_MARKS[17]
+
+/**
+ * How long the last painting may be held over a promoted-but-not-yet-playing trailer.
+ *
+ * The hold exists so the audience never sees black between the prologue and the trailer. It
+ * is bounded because the alternative failure is worse: a player that never reports PLAYING —
+ * a dead embed, a region block, a stalled network — would otherwise freeze the show on a
+ * still image with no operator able to recover it. At the bound the trailer is revealed
+ * regardless, and the segment's own error paths take over from there.
+ */
+export const DIRECTORS_CUT_HANDOFF_HOLD_MAX_MS = 3000
 
 /** Bungie's official "Destiny 2: Into the Light Cinematic" upload — the Ikora-voiced source. */
 export const IKORA_SOURCE_VIDEO_ID = 'BKm0TPqeOjY' as const
@@ -147,129 +216,163 @@ function round(seconds: number): number {
 }
 
 /**
- * The narrated opening: the existing authored prologue lines, in their authored order, each
- * given a window bounded by two measured section marks.
+ * The narrated opening, the concept-art montage, and the handoff, as one shot list.
  *
- * Nothing here is new writing. The long Clarke sentence is deliberately omitted from this
- * projected sequence: keeping a quote whole turned it into a 35-word wall, while splitting it
- * would violate the show's quote rule. The sourced quote remains available in the lore corpus.
+ * They were three independent builders, each cutting its own block of marks, and the seams
+ * were where the defects lived: the montage repeated every narration line verbatim one
+ * section later, and the handoff opened on the section *before* the crescendo it was written
+ * for. They are one list now because the recut's decisions — which thought recurs where, how
+ * long the projector may stay wordless, where the images start and stop — are decisions about
+ * the whole prologue, and cannot be made correctly inside a block that cannot see the others.
+ *
+ * Nothing here is new writing. Every line is an existing authored prologue line, shown whole.
+ * Two authored thoughts are omitted from the *projected* sequence and remain in the lore
+ * corpus: the 35-word Clarke sentence, and the 16-word "One to spread life, / and one to cull
+ * the dross / to shape the Garden of Earth." Both exceed `DIRECTORS_CUT_MAX_CUE_WORDS` and
+ * neither can be split without breaking a quote across two shots. The Gardener/Winnower
+ * duality still opens the show in the line above it.
+ *
+ * Structure, in three acts on the measured grid:
+ *
+ * - **Narration** (5.32-108.51): the authored lines in authored order, over the Collapse.
+ * - **Montage** (108.51-270.1): the ten approved paintings, once each in registry order, with
+ *   six of the authored thoughts recurring as motifs against them and four paintings held
+ *   wordless.
+ * - **Handoff** (270.1-325.6): the last painting carries the approach, the defiant line takes
+ *   the final crescendo, and the title bookends onto the montage's opening painting.
  */
-function buildNarrationCues(): IntroOverlayTextCue[] {
-  const texts: IntroOverlayTextCue[] = [
-    { text: 'A Gardener and a Winnower walked among the stars.', start: 0, end: 0 },
-    {
-      text: `One to spread life,
-and one to cull the dross
-to shape the Garden of Earth.`,
-      start: 0,
-      end: 0,
-      backgroundCrossfade: [
-        {
-          day: 'img/wallpapers/bluefin-06-day.webp',
-          night: 'img/wallpapers/bluefin-06-night.webp',
-        },
-      ],
-      textPosition: 'bottom-right',
-      highlightSubstrings: ['life', 'dross', 'Garden'],
-    },
-    {
-      text: 'One day changed the Garden forever.',
-      start: 0,
-      end: 0,
-      backgroundImage: COLLAPSE_BACKGROUND,
-    },
-    {
-      text: 'New Children arose and filled the pattern.',
-      start: 0,
-      end: 0,
-      emphasis: 'dominant',
-      textPosition: 'bottom',
-      backgroundImage: COLLAPSE_BACKGROUND,
-    },
-    {
-      text: 'For eons, Maintainer-Guardians cultivated the Garden...',
-      start: 0,
-      end: 0,
-      backgroundImage: COLLAPSE_BACKGROUND,
-    },
-    {
-      text: `Until an AI-fueled Society deemed Guardians unnecessary.
-And then, a threat.`,
-      start: 0,
-      end: 0,
-      backgroundImage: COLLAPSE_BACKGROUND,
-    },
-    { text: 'Others came to claim a bountiful and unprotected Garden.', start: 0, end: 0 },
-  ]
-
-  return texts.map((cue, index) => ({
-    ...cue,
-    start: mark(NARRATION_FIRST_MARK + index),
-    end: mark(NARRATION_FIRST_MARK + index + 1),
-  }))
+type PrologueShot = Omit<IntroOverlayTextCue, 'start' | 'end' | 'text'> & {
+  /** Index into `GAYANE_PROLOGUE_MARKS` where this shot cuts in; it runs to the next mark. */
+  readonly mark: number
+  /** The thought this shot carries, or nothing at all: a wordless shot is a deliberate beat. */
+  readonly text?: string
 }
 
-/**
- * The approved Destiny concept-art montage, in registry order (E1, C1, C2, C3, C4, C9, C6,
- * C5, C7, C10), one cue per painting.
- *
- * Complete authored thoughts recur across the instrumental movement, so the full song keeps
- * advancing the prologue instead of becoming a 142-second silent slideshow. The recurrence is
- * deliberate: it gives the score motifs without inventing connective lore. Every painting is
- * static; the former 1.15 -> 1.65 Ken Burns crop made source art soft and unreadable.
- *
- * The registry's figure metadata carries the artist and the Bungie credit into assistive
- * technology.
- */
-function buildMontageCues(): IntroOverlayTextCue[] {
-  const refrains = [
-    'A Gardener and a Winnower walked among the stars.',
-    `One to spread life,
-and one to cull the dross
-to shape the Garden of Earth.`,
-    'One day changed the Garden forever.',
-    'New Children arose and filled the pattern.',
-    'For eons, Maintainer-Guardians cultivated the Garden...',
-    'An AI-fueled Society deemed Guardians unnecessary.',
-    'And then, a threat.',
-    'Others came to claim a bountiful and unprotected Garden.',
-    `Now, what's left of a proud order fights for survival,
-surrounded by predators.`,
-    'One day changed the Garden forever.',
-  ] as const
+/** Applies a painting from the approved registry to a shot, whole and at its own geometry. */
+function painting(index: number): Pick<IntroOverlayTextCue, 'backgroundImage' | 'backgroundFigure' | 'backgroundFraming'> {
+  const record = DIRECTORS_CUT_DESTINY_CONCEPTS[index]
+  if (!record) {
+    throw new Error(`No approved Destiny concept record at index ${index}`)
+  }
 
-  return DIRECTORS_CUT_DESTINY_CONCEPTS.map((record, index) => ({
-    text: refrains[index]!,
-    start: mark(MONTAGE_FIRST_MARK + index),
-    end: mark(MONTAGE_FIRST_MARK + index + 1),
+  return {
     backgroundImage: record.localPath,
     backgroundFigure: record.backgroundFigure,
-  }))
+    backgroundFraming: {
+      fit: 'contain',
+      sourceWidth: record.sourceWidth,
+      sourceHeight: record.sourceHeight,
+    },
+  }
 }
 
-/**
- * The authored handoff into Destiny: the defiant line rides the piece's loudest passage
- * (276-291.67 s, the final crescendo), and the show's title holds through the closing decay
- * into the source's own silence. Both are existing authored prologue lines, unchanged.
- */
-function buildHandoffCues(): IntroOverlayTextCue[] {
-  const texts: IntroOverlayTextCue[] = [
-    {
-      text: `Now, what's left of a proud order fights for survival,
-surrounded by predators.`,
-      start: 0,
-      end: 0,
-      emphasis: 'dominant',
-      textPosition: 'bottom',
-      highlightSubstring: 'fights',
-    },
-    { text: 'PROJECT BLUEFIN\nseven days to the wolves', start: 0, end: 0, slim: true },
-  ]
+const GARDENER_AND_WINNOWER = 'A Gardener and a Winnower walked among the stars.'
+const ONE_DAY = 'One day changed the Garden forever.'
+const NEW_CHILDREN = 'New Children arose and filled the pattern.'
+const FOR_EONS = 'For eons, Maintainer-Guardians cultivated the Garden...'
+const A_THREAT = `Until an AI-fueled Society deemed Guardians unnecessary.
+And then, a threat.`
+const OTHERS_CAME = 'Others came to claim a bountiful and unprotected Garden.'
+const WHAT_IS_LEFT = `Now, what's left of a proud order fights for survival,
+surrounded by predators.`
+const CLOSING_TITLE = 'PROJECT BLUEFIN\nseven days to the wolves'
 
-  return [
-    { ...texts[0]!, start: mark(HANDOFF_FIRST_MARK), end: mark(HANDOFF_FIRST_MARK + 2) },
-    { ...texts[1]!, start: mark(HANDOFF_FIRST_MARK + 2), end: mark(HANDOFF_FIRST_MARK + 3) },
-  ]
+const PROLOGUE_SHOTS: readonly PrologueShot[] = [
+  // Act I — the narration, over the Collapse.
+  { mark: NARRATION_FIRST_MARK, text: GARDENER_AND_WINNOWER },
+  {
+    mark: 2,
+    text: ONE_DAY,
+    // The wallpaper's own day->night dissolve *is* the day that changed the Garden, so the
+    // line rides the transition instead of describing a still.
+    backgroundCrossfade: [
+      {
+        day: 'img/wallpapers/bluefin-06-day.webp',
+        night: 'img/wallpapers/bluefin-06-night.webp',
+      },
+    ],
+    textPosition: 'bottom-right',
+    highlightSubstring: 'Garden',
+  },
+  // The Collapse itself plays wordless. It is the one image in the prologue that needs no
+  // caption, and the silence sets up the dominant line that follows it.
+  { mark: 3, backgroundImage: COLLAPSE_BACKGROUND },
+  { mark: 4, text: NEW_CHILDREN, emphasis: 'dominant', textPosition: 'bottom', backgroundImage: COLLAPSE_BACKGROUND },
+  { mark: 5, text: FOR_EONS, backgroundImage: COLLAPSE_BACKGROUND },
+  { mark: 6, text: A_THREAT, backgroundImage: COLLAPSE_BACKGROUND },
+  { mark: 7, text: OTHERS_CAME },
+
+  // Act II — the ten approved paintings, once each in registry order. Six authored thoughts
+  // recur here as motifs, never twice running and never more than twice in the whole show;
+  // four paintings are held wordless so the recurrences read as returns rather than as a
+  // caption track.
+  { mark: MONTAGE_FIRST_MARK, text: GARDENER_AND_WINNOWER, ...painting(0) },
+  { mark: 9, text: NEW_CHILDREN, ...painting(1) },
+  { mark: 10, text: FOR_EONS, ...painting(2) },
+  { mark: 11, ...painting(3) },
+  { mark: 12, text: ONE_DAY, ...painting(4) },
+  { mark: 13, text: A_THREAT, ...painting(5) },
+  { mark: 14, ...painting(6) },
+  { mark: 15, ...painting(7) },
+  { mark: 16, text: OTHERS_CAME, ...painting(8) },
+  { mark: 17, ...painting(9) },
+
+  // Act III — the handoff. The approach (270.1-276) holds the same painting as the shot
+  // before it, so the crescendo arrives as a cut into new art rather than into a dissolve
+  // already in progress.
+  { mark: HANDOFF_FIRST_MARK, ...painting(9) },
+  {
+    mark: 19,
+    text: WHAT_IS_LEFT,
+    emphasis: 'dominant',
+    textPosition: 'bottom',
+    highlightSubstring: 'fights',
+    // The Fallen Citadel returns under the defiant line: the predators, named.
+    ...painting(6),
+  },
+  {
+    mark: 20,
+    text: CLOSING_TITLE,
+    slim: true,
+    // Bookend: the Europa environment that opened the montage closes the show.
+    ...painting(0),
+  },
+]
+
+/**
+ * How long a shot's words stay up: its reading cost, stretched by
+ * `DIRECTORS_CUT_TEXT_HOLD_RATIO`, and never past the shot's own end.
+ *
+ * Floored to a hundredth of a second: these are published data values, and a hold carrying
+ * sixteen digits of binary noise is not a measurement of anything. Rounding to a hundredth
+ * can land a shade *above* the exact bound, so the hundredth is stepped back down when it
+ * does — a bound that rounds itself over the line is not a bound.
+ *
+ * The closing title card is the one deliberate exception and is handled by the caller: it
+ * holds its full 33.93 s window, because the show's name is not a line to be read and
+ * cleared, it is what the audience sits with while the music resolves and the projector hands
+ * off to the trailer.
+ */
+function textHoldFor(text: string, windowSeconds: number): number {
+  const cost = estimatePageSeconds(text)
+  const bound = cost * DIRECTORS_CUT_TEXT_HOLD_RATIO
+  const hundredths = Math.floor(bound * 100)
+  const stretched = hundredths / 100
+  return Math.min(windowSeconds, stretched > bound ? (hundredths - 1) / 100 : stretched)
+}
+
+function buildPrologueCues(): IntroOverlayTextCue[] {
+  return PROLOGUE_SHOTS.map(({ mark: index, ...shot }) => {
+    const start = mark(index)
+    const end = mark(index + 1)
+    const cue: IntroOverlayTextCue = { ...shot, text: shot.text ?? '', start, end }
+
+    if (!cue.text || cue.text === CLOSING_TITLE) {
+      return cue
+    }
+
+    return { ...cue, textHoldSeconds: textHoldFor(cue.text, round(end - start)) }
+  })
 }
 
 export function buildDirectorsCutPrologueSegment(): IntroTextSegment {
@@ -279,11 +382,7 @@ export function buildDirectorsCutPrologueSegment(): IntroTextSegment {
     duration: GAYANE_TRACK_SECONDS,
     audioFadeOutSeconds: GAYANE_AUDIO_FADE_SECONDS,
     audioYoutubeVideoId: GAYANE_SOURCE_VIDEO_ID,
-    overlays: [
-      ...buildNarrationCues(),
-      ...buildMontageCues(),
-      ...buildHandoffCues(),
-    ],
+    overlays: buildPrologueCues(),
   }
 }
 

@@ -246,8 +246,27 @@ clock never advances on its own sits on the prologue's opening silent card
 however long the probe waits in real time — waiting longer does not help, only
 advancing the mock's `currentTime` does.
 
-## A frozen slide is not a covered slide
+## An element box does not answer a cropping question
 
+`getBoundingClientRect()` on an `<img>` reports the **element** box, so a
+painting letterboxed by `object-fit: contain` and one cropped by `cover` both
+answer `1280x720` on a 16:9 stage. `wolves-directors-cut-prologue.mjs` first
+"proved" whole-frame framing that way and passed against artwork it had not
+looked at.
+
+Measure the painted content box instead: read the browser's decoded
+`naturalWidth`/`naturalHeight`, assert the artwork ledger's `sourceWidth`/
+`sourceHeight` matches that decode — otherwise the probe is validating our own
+assumption — then derive the painted box from the element box the way `contain`
+is defined to compute it. Assert the painted aspect equals the source aspect,
+that the scale never exceeds 1, and that the painting still reaches one axis of
+the stage, or "framed whole" also passes for a postage stamp.
+
+That distinction is what the panoramas turn on: `c1-europa-landscape-v1`
+(2048x771) paints 1280x482 and `c7-early-throne-world-citadel` (2200x1611) paints
+983x720 — neither is 1280x720, and under `cover` both were.
+
+## A frozen slide is not a covered slide
 `tests/wolves-directors-cut-slides.mjs` originally proved the reserved finale
 interval by asserting the image on stage at 380 s was the *same* image as at
 355 s. That passed for the wrong reason: the reader simply holds its last slide
@@ -322,6 +341,7 @@ stale unnoticed. All of them take `WOLVES_BASE_URL` (default
 | `wolves-trackzero-sidecar-real-player.mjs` | Track 0 against a real player; source of the canonical mock. |
 | `wolves-directors-cut-slides.mjs` | Director's Cut Track 0 cut boundaries, the covered finale interval, the warm final pre-finale window, and the standard cut's hero locks. |
 | `wolves-directors-cut-finale.mjs` | Director's Cut finale: every named anchor, the companion player's source seconds, chrome suppression, narrow-viewport placement and the terminal black. |
+| `wolves-directors-cut-prologue.mjs` | Director's Cut scored prologue: every painting framed whole at source geometry, full brightness plus scrim, the reading hold clearing while its shot runs, the warm-silent-promoted Ikora handoff, and the narration surviving a 390px viewport. |
 | `navbar-visual.mjs` | Main-site navbar, not Wolves. |
 
 `tests/wolves-intro-silence.mjs` covers the other half of that: the cinematic

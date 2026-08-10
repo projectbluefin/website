@@ -58,7 +58,9 @@ existing `IntroOverlayTextCue` capabilities:
 
 - `backgroundImage` for each painting;
 - a complete recurring authored thought for each painting;
-- no `backgroundMotion`; preserve source sharpness and framing;
+- `backgroundFraming: { fit: 'contain', sourceWidth, sourceHeight }` so each
+  painting is framed whole at its own geometry; preserve source sharpness, never
+  crop or enlarge, and never animate the frame;
 - the existing background transition rather than a new gallery component.
 
 The montage must not add controls, input requirements, scrolling, or a new

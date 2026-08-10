@@ -1,3 +1,4 @@
+import type { IntroOverlayTextCue } from '../data/wolves-intro-sequence'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { flushPromises, mount } from '@vue/test-utils'
@@ -12,7 +13,11 @@ import {
   buildDirectorsCutPrologueSegment,
   buildDirectorsCutVideoSequence,
   DIRECTORS_CUT_DESTINY_SEGMENT_ID,
+  DIRECTORS_CUT_HANDOFF_HOLD_MAX_MS,
+  DIRECTORS_CUT_IKORA_PREWARM_SECOND,
   DIRECTORS_CUT_PROLOGUE_SEGMENT_ID,
+  DIRECTORS_CUT_SCENE_CROSSFADE_SECONDS,
+  DIRECTORS_CUT_TEXT_FADE_SECONDS,
   GAYANE_TRACK_SECONDS,
   IKORA_LAST_CONTENT_SECOND,
   IKORA_RATING_CARD_SECONDS,
@@ -70,6 +75,17 @@ interface MockPlayerRecord {
   pauseVideo: MockPlayerMethod<() => void>
   playVideo: MockPlayerMethod<() => void>
   seekTo: MockPlayerMethod<(seconds: number) => void>
+  cueVideoById: MockPlayerMethod<(video: string | { videoId: string, startSeconds?: number }) => void>
+  getVideoData: MockPlayerMethod<() => { video_id?: string } | undefined>
+  mute: MockPlayerMethod<() => void>
+  unMute: MockPlayerMethod<() => void>
+  isMuted: MockPlayerMethod<() => boolean>
+  /** The second this player was cued to and parked at, or null if it was never cued. */
+  cuedAt: number | null
+  /** The player's live mute latch, which volume alone does not answer. */
+  muted: boolean
+  /** Every mute/unmute actually pushed to the player, in order. */
+  muteLog: boolean[]
   setVolume: MockPlayerMethod<(volume: number) => void>
   getVolume: MockPlayerMethod<() => number>
   destroy: MockPlayerMethod<() => void>
@@ -116,6 +132,39 @@ function installMockIframeApi() {
       this.currentSeconds = seconds
       this.getCurrentTime = vi.fn(() => seconds)
     })
+
+    /**
+     * A cue is not a load: the real embed stages the media and stays parked, publishing CUED
+     * rather than PLAYING. A double that reported PLAYING here would make a prewarmed player
+     * indistinguishable from a promoted one, which is the whole thing the prewarm tests check.
+     */
+    cueVideoById = vi.fn((video: string | { videoId: string, startSeconds?: number }) => {
+      const nextVideoId = typeof video === 'string' ? video : video.videoId
+      const startSeconds = typeof video === 'string' ? 0 : (video.startSeconds ?? 0)
+      this.videoId = nextVideoId
+      this.cuedAt = startSeconds
+      this.currentSeconds = startSeconds
+      this.getCurrentTime = vi.fn(() => startSeconds)
+      this.config.events?.onStateChange?.({ data: (window as any).YT.PlayerState.CUED, target: this })
+    })
+
+    getVideoData = vi.fn(() => ({ video_id: this.videoId }))
+
+    cuedAt: number | null = null
+    muted = false
+    muteLog: boolean[] = []
+
+    mute = vi.fn(() => {
+      this.muted = true
+      this.muteLog.push(true)
+    })
+
+    unMute = vi.fn(() => {
+      this.muted = false
+      this.muteLog.push(false)
+    })
+
+    isMuted = vi.fn(() => this.muted)
 
     volume = 100
     volumeLog: number[] = []
@@ -1390,13 +1439,30 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     await flushPromises()
   }
 
-  it('renders every montage painting with its complete thought, provenance and no crop motion', async () => {
+  /** Run the prologue up to the warm-up mark and let the warmed player report ready. */
+  async function warmIkoraPlayer() {
+    await seekPrologue(DIRECTORS_CUT_IKORA_PREWARM_SECOND + 1)
+    resolveIframeApi()
+    await flushPromises()
+    const warmed = players[players.length - 1]
+    warmed.triggerReady()
+    await flushPromises()
+    return warmed
+  }
+
+  it('renders every montage painting whole, with its provenance, at its own source geometry', async () => {
     const wrapper = await mountDirectorsCut()
     const montage = buildDirectorsCutPrologueSegment().overlays!.filter(cue => cue.backgroundImage?.startsWith('wolves-intro/destiny-concepts/'))
-    expect(montage).toHaveLength(DIRECTORS_CUT_DESTINY_CONCEPTS.length)
+    const firstAppearances = new Map<string, IntroOverlayTextCue>()
+    for (const cue of montage) {
+      if (!firstAppearances.has(cue.backgroundImage!)) {
+        firstAppearances.set(cue.backgroundImage!, cue)
+      }
+    }
+    expect(firstAppearances.size).toBe(DIRECTORS_CUT_DESTINY_CONCEPTS.length)
 
-    for (const [index, cue] of montage.entries()) {
-      const record = DIRECTORS_CUT_DESTINY_CONCEPTS[index]
+    for (const record of DIRECTORS_CUT_DESTINY_CONCEPTS) {
+      const cue = firstAppearances.get(record.localPath)!
       // Sample inside the cue, past its dissolve, so the painting is fully on stage.
       await seekPrologue(cue.start + (cue.end - cue.start) / 2)
 
@@ -1408,11 +1474,124 @@ describe('wolvesIntroOverlay director\'s cut', () => {
       const describedById = scene.attributes('aria-describedby')
       expect(describedById, record.id).toBeTruthy()
       expect(wrapper.get(`#${describedById}`).text(), record.id).toBe(DIRECTORS_CUT_DESTINY_CONCEPT_CREDIT)
-      expect(wrapper.get('.wolves-intro-overlay-text').text())
-        .toContain(cue.text.split('\n')[0]!.replace(/[.,]/g, ''))
+
+      // A painting is the subject, not a backdrop: shown whole, and never blown up past
+      // the pixels the artist actually delivered.
+      const style = image.attributes('style') ?? ''
+      expect(image.classes(), record.id).toContain('wolves-intro-overlay-background-framed')
+      expect(style, record.id).toContain(`max-width: ${record.sourceWidth}px`)
+      expect(style, record.id).toContain(`max-height: ${record.sourceHeight}px`)
+      // The retired Ken Burns crop left no residue that could animate a painting.
       expect(image.classes()).not.toContain('wolves-intro-overlay-background-kenburns')
-      expect(image.attributes('style') ?? '').not.toContain('animation-duration')
+      expect(style).not.toContain('animation-duration')
     }
+  })
+
+  it('lights the paintings fully and buys legibility with a scrim rather than a global dim', async () => {
+    const wrapper = await mountDirectorsCut()
+    const painting = buildDirectorsCutPrologueSegment().overlays!.find(cue => cue.backgroundImage?.startsWith('wolves-intro/destiny-concepts/') && cue.text.trim().length > 0)!
+
+    await seekPrologue(painting.start + 1)
+    expect(wrapper.find('.wolves-intro-overlay-scrim').exists()).toBe(true)
+
+    // The narration's black beats carry no painting, so they need no scrim over the black.
+    const dark = buildDirectorsCutPrologueSegment().overlays![0]
+    await seekPrologue(dark.start + 1)
+    expect(wrapper.find('.wolves-intro-overlay-scrim').exists()).toBe(false)
+  })
+
+  it('clears a thought once it has been read, while its shot keeps running', async () => {
+    const wrapper = await mountDirectorsCut()
+    const held = buildDirectorsCutPrologueSegment().overlays!.find(cue => cue.textHoldSeconds != null && cue.end - cue.start - cue.textHoldSeconds > 2)!
+
+    await seekPrologue(held.start + held.textHoldSeconds! - 0.5)
+    expect(wrapper.get('.wolves-intro-overlay-text').text().length).toBeGreaterThan(0)
+
+    await seekPrologue(held.start + held.textHoldSeconds! + 1)
+    expect(wrapper.find('.wolves-intro-overlay-text').exists()).toBe(false)
+    // The shot itself is untouched: the image plays out its full musical section.
+    expect(wrapper.find('.wolves-intro-overlay-scene').exists()).toBe(true)
+  })
+
+  it('dissolves scenes at its own reveal tempo, not the standard prologue\'s', async () => {
+    const wrapper = await mountDirectorsCut()
+    await seekPrologue(140)
+
+    const scene = wrapper.get('.wolves-intro-overlay-scene')
+    expect(scene.attributes('style')).toContain(`transition-duration: ${DIRECTORS_CUT_SCENE_CROSSFADE_SECONDS}s`)
+    expect(DIRECTORS_CUT_SCENE_CROSSFADE_SECONDS).toBe(DIRECTORS_CUT_TEXT_FADE_SECONDS)
+  })
+
+  it('marks its projected text so a narrow viewport can rescale it instead of blanking it', async () => {
+    const wrapper = await mountDirectorsCut()
+    await seekPrologue(10)
+
+    expect(wrapper.get('.wolves-intro-overlay-text').classes()).toContain('wolves-intro-overlay-text-director')
+  })
+
+  it('warms the Ikora player during the prologue, parked silent on its opening frame', async () => {
+    const wrapper = await mountDirectorsCut()
+    expect(players).toHaveLength(1)
+
+    const ikora = await warmIkoraPlayer()
+
+    expect(players).toHaveLength(2)
+    expect(ikora.cueVideoById).toHaveBeenCalled()
+    expect(ikora.videoId).toBe(IKORA_SOURCE_VIDEO_ID)
+    expect(ikora.cuedAt).toBe(IKORA_RATING_CARD_SECONDS)
+    // Parked, not playing: a warm player that plays is a trailer starting under the music.
+    expect(ikora.muted).toBe(true)
+    expect(ikora.playVideo).not.toHaveBeenCalled()
+    // The prologue is still what the room sees.
+    expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
+    expect(wrapper.get('.wolves-intro-overlay-player').classes()).toContain('wolves-intro-overlay-player-hidden')
+  })
+
+  it('promotes the warmed player instead of rebuilding it, with no second seek and no overlap', async () => {
+    const wrapper = await mountDirectorsCut()
+    const audio = players[0]
+    const ikora = await warmIkoraPlayer()
+    ikora.seekTo.mockClear()
+
+    wrapper.vm.next()
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(200)
+    await flushPromises()
+
+    // The warmed iframe *is* the show player. Rebuilding it here throws away the warm-up.
+    expect(players).toHaveLength(2)
+    expect(players[players.length - 1]).toBe(ikora)
+    // A cued player is already parked on its opening frame; loading and seeking it again
+    // is the visible stutter this prewarm exists to remove.
+    expect(ikora.loadVideoById).not.toHaveBeenCalled()
+    expect(ikora.seekTo).not.toHaveBeenCalled()
+    // The music is gone before the trailer's audio arrives — never both at once.
+    expect(audio.destroy).toHaveBeenCalled()
+    expect(ikora.destroyedAtVolume).toBeNull()
+    expect(ikora.unMute).toHaveBeenCalled()
+    expect(ikora.playVideo).toHaveBeenCalled()
+  })
+
+  it('holds the last painting until the trailer is really playing, and never longer than the bound', async () => {
+    const wrapper = await mountDirectorsCut()
+    const ikora = await warmIkoraPlayer()
+    // A promoted player that has not started yet: playVideo is a request, not a frame.
+    ikora.playVideo = vi.fn(() => {}) as typeof ikora.playVideo
+
+    wrapper.vm.next()
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(200)
+    await flushPromises()
+
+    // No black frame in front of a live room while the trailer spins up.
+    expect(wrapper.find('.wolves-intro-overlay-scene').exists()).toBe(true)
+    expect(wrapper.get('.wolves-intro-overlay-player').classes()).toContain('wolves-intro-overlay-player-hidden')
+
+    // A player that never starts must not freeze the show: the hold is bounded.
+    await vi.advanceTimersByTimeAsync(DIRECTORS_CUT_HANDOFF_HOLD_MAX_MS + 400)
+    await flushPromises()
+    expect(wrapper.find('.wolves-intro-overlay-scene').exists()).toBe(false)
+    expect(wrapper.get('.wolves-intro-overlay-player').classes()).not.toContain('wolves-intro-overlay-player-hidden')
   })
 
   it('opens dark on the silent lead-in and closes on the authored title', async () => {
@@ -1499,7 +1678,11 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     await flushPromises()
     expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
     expect(latestStatus(wrapper).currentTime).toBeCloseTo(GAYANE_TRACK_SECONDS - 5)
-    expect(players).toHaveLength(1)
+    // The trailer's player exists by now — it is deliberately warmed at the montage's
+    // penultimate mark — but it is parked. Nothing has taken the stage from the scored card.
+    for (const warmed of players.slice(1)) {
+      expect(warmed.playVideo).not.toHaveBeenCalled()
+    }
 
     // An ENDED from outside the measured silent tail is an ad break, not the music ending.
     // Believing it would cut a 325.6s scored act short in front of a live room.

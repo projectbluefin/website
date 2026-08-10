@@ -53,6 +53,33 @@ export interface IntroOverlayTextCue {
   readonly backgroundImage?: string
   /** Accessible figure metadata for a background-led cue, without adding a visible caption. */
   readonly backgroundFigure?: IntroOverlayFigureMetadata
+  /**
+   * Preserves a source painting's complete framing.
+   *
+   * The default treatment `cover`-crops a background to the frame, which is right for a
+   * backdrop and wrong for a painting: it amputates a 2.66:1 panorama top and bottom and a
+   * 1.37:1 canvas left and right, and it upscales whatever survives. A cue that carries this
+   * is letterboxed instead (`contain`) and capped at the source's own measured pixel
+   * geometry, so the painting is never cropped and never enlarged past what the artist
+   * delivered. The numbers come from the asset ledger, never from the file on disk.
+   */
+  readonly backgroundFraming?: {
+    readonly fit: 'contain'
+    readonly sourceWidth: number
+    readonly sourceHeight: number
+  }
+  /**
+   * How long this cue's *words* stay on screen, when that is shorter than the cue's own
+   * window.
+   *
+   * A scored cue is cut to a measured musical section, and a musical section is far longer
+   * than the reading cost of the thought it carries. Holding the words for the whole section
+   * leaves the audience re-reading a finished line for ten seconds; dropping the section to
+   * the reading cost would put the cut somewhere the music does not. This separates the two:
+   * the shot runs `start`→`end`, the words run `start`→`start + textHoldSeconds`. It is not a
+   * second clock — it is read off the same player time every other cue field is.
+   */
+  readonly textHoldSeconds?: number
   /** Renders a full-screen comic title card instead of the standard overlay treatment. */
   readonly comicHeroTitleCard?: boolean
   /**
@@ -73,12 +100,6 @@ export interface IntroOverlayTextCue {
    * unbroken text).
    */
   readonly backgroundCrossfade?: readonly IntroBackgroundCrossfade[]
-  /**
-   * Animated zoom/pan treatment for `backgroundImage` only. `'kenburns'` slowly zooms and pans
-   * the image over the cue's full duration, framed to keep faces in view rather than the empty
-   * plant/floor padding around a wide group photo.
-   */
-  readonly backgroundMotion?: 'kenburns'
   /**
    * Marks a cue that should dominate the screen visually (much larger, bolder, centered text)
    * rather than the standard lower-third caption treatment. Reserved for singular, high-impact

@@ -195,21 +195,56 @@ window is a stable reading hold.
 The former 35-word Clarke sentence is not split—the presentation rule still
 forbids splitting a quote—but it is also not painted as one projected paragraph.
 It remains in the sourced lore corpus and is omitted from this intro sequence.
-Every displayed prologue cue is at most 18 words.
+Every displayed prologue cue is at most `DIRECTORS_CUT_MAX_CUE_WORDS` (13) words.
+The 16-word Gardener/Winnower stanza ("One to spread life, / and one to cull the
+dross / to shape the Garden of Earth.") is omitted from the projected sequence
+under the same rule, and survives in `src/data/lore/chris-aniszczyk.md` and
+`src/data/lore/ishtar-the-wager.md`.
+
+A cue's window is how long its *shot* runs, not how long its *words* stay up.
+Text now carries its own `textHoldSeconds`, priced at
+`min(window, estimatePageSeconds(text) * DIRECTORS_CUT_TEXT_HOLD_RATIO)` — the
+same reading model the lore column uses, stretched 1.8×. Past that hold the
+caption fades and the painting plays on wordless. Without it a 6.8s thought sat
+on screen for 38s, which reads as the show having frozen. The closing title card
+is the one deliberate exception: it holds its full window, because it is the last
+thing on screen and has nothing to hand over to.
 
 The ten concept paintings no longer form a 142.42s textless interval. Complete
 authored thoughts recur across that movement, and the paintings are static.
-The former shared Ken Burns treatment enlarged them from 115% to 165%, which
-made already-cropped source art soft and over-framed on projection.
+`DIRECTORS_CUT_MAX_TEXTLESS_SECONDS` (30) bounds the longest wordless stretch.
+
+Paintings are framed whole, not cropped to fill. Cues carry
+`backgroundFraming: { fit: 'contain', sourceWidth, sourceHeight }` from the
+artwork ledger; the runtime sets `object-fit: contain` and caps `max-width` /
+`max-height` at the source pixels, so a painting is letterboxed rather than
+enlarged. This matters most for the panoramic records — `c1-europa-landscape-v1`
+(2048×771) lost a third of its height to `cover`, and `c7-early-throne-world-citadel`
+(2200×1611) lost its sides. The former shared Ken Burns treatment made this worse
+by enlarging them from 115% to 165%, so already-cropped source art also went soft;
+that treatment and its `backgroundMotion` cue field are both gone.
+
+Legibility over a fully-lit painting is bought with `.wolves-intro-overlay-scrim`,
+a gradient behind the text, not by dimming the artwork. The painting renders at
+full opacity.
 
 For browser seek probes, wait for two independent conditions: the transport has
 published the requested native time, and the intended incoming image has decoded
 and become the active layer. "The previous image stayed stable twice" is not a
 settle condition.
 
-Do not read a black frame below 641px as a defect either:
-`@media (max-width: 640px)` sets `.wolves-intro-overlay-text { display: none }` on
-purpose — "Mobile keeps the footage and the app-level playback widget only."
+`getBoundingClientRect()` on an `object-fit: contain` image reports the *element*
+box, not the painted pixels — a letterboxed painting and a cropped one give the
+same 1280×720 answer. Derive the painted box from the browser's decoded
+`naturalWidth`/`naturalHeight` instead, and assert the ledger geometry matches
+that decode, or the probe is measuring its own assumption.
+
+Below 641px the Director prologue keeps its words. `@media (max-width: 640px)`
+hides `.wolves-intro-overlay-text:not(.wolves-intro-overlay-text-director)` —
+the older blanket `display: none` ("Mobile keeps the footage and the app-level
+playback widget only") still applies to every other intro surface, but blanking
+the prologue would drop the entire narration. Director text is rescaled instead
+(measured 19px base / 25px dominant at 390×844).
 
 ## Silent card windows are derived, not hand-picked
 
