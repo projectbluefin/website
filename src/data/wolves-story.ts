@@ -38,6 +38,17 @@ const sourceUrlsByRecordId: Readonly<Record<string, string>> = {
   'ishtar-patternfall': 'https://www.ishtar-collective.net/entries/patternfall',
   'ishtar-cambrian-explosion': 'https://www.ishtar-collective.net/entries/the-cambrian-explosion',
   'ishtar-final-shape': 'https://www.ishtar-collective.net/entries/the-final-shape',
+  // Director's Cut nine-quote panel (Task 6): source-verified evidence URLs
+  // from the owner-approved science-quote research report.
+  'quote-sagan-extinction-forever': 'https://books.google.com/books?id=a2iouZybD8sC&pg=PA204&dq=%22Extinction+is+forever%22',
+  'quote-sagan-pale-blue-dot': 'https://science.nasa.gov/resource/voyager-pale-blue-dot-download/',
+  'quote-clarke-dinosaurs-adapt': 'https://books.google.com/books?id=H118kM3MECEC&pg=PR10&dq=dinosaurs+disappeared',
+  'quote-clarke-unstable-combination': 'https://books.google.com/books?id=6tAyAAAAMAAJ&pg=PA183&dq=%22superior+science%22',
+  'quote-asimov-knowledge-wisdom': 'https://archive.org/details/isaacasimovsbook0000unse',
+  'quote-gould-stewards-of-nothing': 'https://books.google.com/books?id=_kOoVw0SIhUC&pg=PA48&dq=stewards',
+  'quote-gould-fight-to-save': 'https://books.google.com/books?id=_kOoVw0SIhUC&pg=PA40&dq=We+cannot+win+this+battle',
+  'quote-goodall-every-individual-matters': 'https://books.google.com/books?id=4ETSewwhUiEC&pg=PP47&dq=Every+individual+matters',
+  'quote-goodall-nature-resilient': 'https://janegoodall.ca/our-stories/protecting-the-tapestry-of-life/',
 }
 
 function requiredMetadata(record: LoreRecord, field: 'title' | 'timestamp'): string {

@@ -75,7 +75,7 @@ describe('wolves lore records', () => {
     const laura = records.find(record => record.id === 'laura-sherman-robert')
     const openssf = records.find(record => record.id === 'openssf-reinforcements')
 
-    expect(records).toHaveLength(55)
+    expect(records).toHaveLength(64)
     expect(records.flatMap(record => record.diagnostics)).toEqual([])
     expect(artifact).toMatchObject({
       chapterId: 'prologue',
@@ -126,7 +126,7 @@ describe('wolves lore records', () => {
   it('loads every quote with authored identity and no diagnostics', () => {
     const quotes = loadAllLoreRecords().filter(record => record.kind === 'quote')
 
-    expect(quotes).toHaveLength(8)
+    expect(quotes).toHaveLength(17)
     for (const quote of quotes) {
       expect(quote.metadata.attribution, quote.relativePath).toEqual(expect.any(String))
       expect(quote.metadata.attribution?.trim(), quote.relativePath).not.toBe('')
@@ -143,6 +143,57 @@ describe('wolves lore records', () => {
     const record = loadAllLoreRecords().find(item => item.id === id)
 
     expect(record?.metadata).toMatchObject({ attribution, context })
+  })
+
+  it.each([
+    ['quote-sagan-extinction-forever', 'Carl Sagan', 'Extinction is forever.', 'The Varieties of Scientific Experience: A Personal View of the Search for God, p. 204'],
+    ['quote-sagan-pale-blue-dot', 'Carl Sagan', 'Look again at that dot. That\'s here. That\'s home. That\'s us.', 'Pale Blue Dot: A Vision of the Human Future in Space, chapter "You Are Here," p. 6'],
+    ['quote-clarke-dinosaurs-adapt', 'Arthur C. Clarke', 'The dinosaurs disappeared because they could not adapt to their changing environment.', 'Foreword, The Collected Stories of Arthur C. Clarke, p. x'],
+    ['quote-clarke-unstable-combination', 'Arthur C. Clarke', 'The combination is unstable and self-destroying.', 'Voices from the Sky, p. 183'],
+    ['quote-asimov-knowledge-wisdom', 'Isaac Asimov', 'Science gathers knowledge faster than society gathers wisdom.', 'Isaac Asimov\'s Book of Science and Nature Quotations, p. 281'],
+    ['quote-gould-stewards-of-nothing', 'Stephen Jay Gould', 'We are one among millions of species, stewards of nothing.', '"The Golden Rule," Eight Little Piggies, p. 48'],
+    ['quote-gould-fight-to-save', 'Stephen Jay Gould', 'We will not fight to save what we do not love.', '"The Golden Rule," Eight Little Piggies, p. 40'],
+    ['quote-goodall-every-individual-matters', 'Jane Goodall', 'Every individual matters.', 'With Love; first Scholastic printing preview PP47'],
+    ['quote-goodall-nature-resilient', 'Jane Goodall', 'Fortunately nature is amazingly resilient.', '"Protecting the Tapestry of Life," May 2019'],
+  ])('parses the Director\'s Cut science-quote panel record for %s with exact wording and provenance', (id, attribution, body, context) => {
+    const record = loadAllLoreRecords().find(item => item.id === id)
+
+    expect(record, id).toMatchObject({
+      chapterId: 'directors-cut',
+      kind: 'quote',
+      body: `${body}\n`,
+      diagnostics: [],
+      metadata: { attribution, context },
+    })
+    expect(record?.metadata.timestamp, id).toEqual(expect.any(String))
+  })
+
+  it('keeps the Director\'s Cut science-quote panel excluded from the standard show', () => {
+    const directorsCutQuotes = loadAllLoreRecords().filter(record => record.chapterId === 'directors-cut')
+
+    expect(directorsCutQuotes.map(record => record.id)).toEqual([
+      'quote-sagan-extinction-forever',
+      'quote-sagan-pale-blue-dot',
+      'quote-clarke-dinosaurs-adapt',
+      'quote-clarke-unstable-combination',
+      'quote-asimov-knowledge-wisdom',
+      'quote-gould-stewards-of-nothing',
+      'quote-gould-fight-to-save',
+      'quote-goodall-every-individual-matters',
+      'quote-goodall-nature-resilient',
+    ])
+    expect(new Set(directorsCutQuotes.map(record => record.id)).size).toBe(directorsCutQuotes.length)
+  })
+
+  it('publishes a source URL for every Director\'s Cut science-quote panel record', () => {
+    const directorsCutQuoteIds = loadAllLoreRecords()
+      .filter(record => record.chapterId === 'directors-cut')
+      .map(record => record.id)
+
+    for (const id of directorsCutQuoteIds) {
+      const artifact = wolvesRelease.artifacts.find(item => item.id === id)
+      expect(artifact?.sourceUrl, id).toMatch(/^https:\/\//)
+    }
   })
 
   it('preserves every loaded record body from its authored Markdown, including terminal newlines', () => {

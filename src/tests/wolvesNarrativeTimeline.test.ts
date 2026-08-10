@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { estimatePageSeconds } from '../components/wolves/lore/lore-pages'
+import {
+  DIRECTORS_CUT_BULLETIN_ARTIFACT_ID,
+  DIRECTORS_CUT_QUOTE_IDS,
+  getDirectorsCutNarrativeSlotForTime,
+  wolvesDirectorsCutNarrativeTimeline,
+} from '../data/wolves-directors-cut-timeline'
 import { loadAllLoreRecords } from '../data/wolves-lore-records'
-import { CHAT_COMPLETION_PAUSE_SECONDS, loreRecordPages } from '../data/wolves-lore-timing'
+import { CHAT_COMPLETION_PAUSE_SECONDS, estimateLoreReadDuration, loreRecordPages } from '../data/wolves-lore-timing'
 import {
   getNarrativeSlotForTime,
   lockedNarrativeSlots,
@@ -150,5 +156,104 @@ describe('wolves narrative timeline', () => {
     for (const slot of wolvesNarrativeTimeline.filter(slot => slot.startTime > 0 && slot.endTime < 398)) {
       expect(slot.endTime - slot.startTime).toBeGreaterThan(0)
     }
+  })
+})
+
+describe('wolves director\'s cut narrative timeline', () => {
+  it('contains exactly the nine approved quotes in their authored order, then the bulletin', () => {
+    const ids = wolvesDirectorsCutNarrativeTimeline.map(slot => slot.artifactId)
+
+    expect(DIRECTORS_CUT_QUOTE_IDS).toEqual([
+      'quote-sagan-extinction-forever',
+      'quote-sagan-pale-blue-dot',
+      'quote-clarke-dinosaurs-adapt',
+      'quote-clarke-unstable-combination',
+      'quote-asimov-knowledge-wisdom',
+      'quote-gould-stewards-of-nothing',
+      'quote-gould-fight-to-save',
+      'quote-goodall-every-individual-matters',
+      'quote-goodall-nature-resilient',
+    ])
+    expect(ids).toEqual([...DIRECTORS_CUT_QUOTE_IDS, DIRECTORS_CUT_BULLETIN_ARTIFACT_ID])
+  })
+
+  it('never repeats an artifact', () => {
+    const ids = wolvesDirectorsCutNarrativeTimeline.map(slot => slot.artifactId)
+
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('keeps every Director-only quote id out of the standard show', () => {
+    const standardIds = new Set(wolvesNarrativeTimeline.map(slot => slot.artifactId))
+
+    for (const id of DIRECTORS_CUT_QUOTE_IDS) {
+      expect(standardIds.has(id), id).toBe(false)
+    }
+  })
+
+  it('shows only quotes and the bulletin, never a chatlog or invented dialogue', () => {
+    const records = new Map(loadAllLoreRecords().map(record => [record.id, record] as const))
+
+    for (const slot of wolvesDirectorsCutNarrativeTimeline) {
+      const record = records.get(slot.artifactId)
+      expect(record, slot.artifactId).toBeDefined()
+      expect(record?.kind, slot.artifactId).not.toBe('chatlog')
+      expect(['quote', 'news']).toContain(record?.kind)
+    }
+  })
+
+  it('holds every record for at least its full estimateLoreReadDuration() cost', () => {
+    const records = new Map(loadAllLoreRecords().map(record => [record.id, record] as const))
+
+    for (const slot of wolvesDirectorsCutNarrativeTimeline) {
+      const record = records.get(slot.artifactId)!
+      const ideal = estimateLoreReadDuration({
+        kind: record.kind === 'quote' ? 'quote' : 'prose',
+        body: record.body,
+        attribution: record.metadata.attribution,
+      })
+
+      expect(slot.endTime - slot.startTime, slot.artifactId).toBeGreaterThanOrEqual(ideal - 1e-8)
+    }
+  })
+
+  it('derives quote windows from approved musical sections rather than equal slices', () => {
+    const durations = wolvesDirectorsCutNarrativeTimeline.map(slot => slot.endTime - slot.startTime)
+    const distinctDurations = new Set(durations.map(duration => duration.toFixed(3)))
+
+    // An equal-slice scheduler would give every quote an identical share of the
+    // range; the section-derived allocator does not.
+    expect(distinctDurations.size).toBeGreaterThan(1)
+  })
+
+  it('places the missing-scientist bulletin last, in an early-finale window at least its full reading cost', () => {
+    const bulletinSlot = wolvesDirectorsCutNarrativeTimeline[wolvesDirectorsCutNarrativeTimeline.length - 1]!
+    const bulletinRecord = loadAllLoreRecords().find(record => record.id === DIRECTORS_CUT_BULLETIN_ARTIFACT_ID)!
+    const idealBulletinDuration = estimateLoreReadDuration({ kind: 'prose', body: bulletinRecord.body })
+
+    expect(bulletinSlot.artifactId).toBe(DIRECTORS_CUT_BULLETIN_ARTIFACT_ID)
+    expect(bulletinSlot.endTime).toBe(TRACK_ZERO_SECTIONS.finaleStart)
+    expect(bulletinSlot.startTime).toBeLessThan(TRACK_ZERO_SECTIONS.finaleStart)
+    expect(bulletinSlot.startTime).toBeGreaterThanOrEqual(TRACK_ZERO_SECTIONS.buildStart)
+    expect(bulletinSlot.endTime - bulletinSlot.startTime).toBeGreaterThanOrEqual(idealBulletinDuration - 1e-8)
+  })
+
+  it('keeps the full quote-and-bulletin timeline contiguous from the opening beat to the finale beat', () => {
+    expect(wolvesDirectorsCutNarrativeTimeline[0]?.startTime).toBe(0)
+    for (const [index, slot] of wolvesDirectorsCutNarrativeTimeline.entries()) {
+      if (index === 0) {
+        continue
+      }
+      expect(slot.startTime).toBeCloseTo(wolvesDirectorsCutNarrativeTimeline[index - 1]!.endTime, 8)
+    }
+    expect(wolvesDirectorsCutNarrativeTimeline[wolvesDirectorsCutNarrativeTimeline.length - 1]?.endTime)
+      .toBe(TRACK_ZERO_SECTIONS.finaleStart)
+  })
+
+  it('resolves the correct slot for a given elapsed time, holding the bulletin at and after the finale beat', () => {
+    expect(getDirectorsCutNarrativeSlotForTime(0).artifactId).toBe(DIRECTORS_CUT_QUOTE_IDS[0])
+    expect(getDirectorsCutNarrativeSlotForTime(TRACK_ZERO_SECTIONS.finaleStart).artifactId)
+      .toBe(DIRECTORS_CUT_BULLETIN_ARTIFACT_ID)
+    expect(getDirectorsCutNarrativeSlotForTime(1_000).artifactId).toBe(DIRECTORS_CUT_BULLETIN_ARTIFACT_ID)
   })
 })

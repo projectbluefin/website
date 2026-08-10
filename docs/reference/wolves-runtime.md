@@ -199,3 +199,12 @@ proportional-bonus branch and into silent compression — and the caller
 nothing downstream can detect it. Which records play is an owner decision, not
 an agent decision. Do not "fix" a shortfall by shrinking type, speeding the
 typewriter, or lowering the readability minimum.
+
+`hiddenFromWolvesVideoArtifactIds` now also carries a second, unrelated
+category beneath the eleven oversubscription cuts: the Director's Cut nine-
+quote panel (`src/data/wolves-directors-cut-timeline.ts`), labeled "Director's
+Cut only" in a separate comment block. Those records were never authored for
+the standard show at all — excluding them is not evidence of a new
+oversubscription cut, and restoring the count of "eleven" oversubscribed
+artifacts to explain the set's full length would be wrong. Read each labeled
+block for its own reason before assuming the whole set shares one cause.

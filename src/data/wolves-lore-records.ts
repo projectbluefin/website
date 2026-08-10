@@ -401,6 +401,19 @@ const loreManifest = [
   { id: 'katie-neomuna', chapterId: 'awakening', relativePath: './lore/katie-neomuna.md' },
   { id: 'rafael-bluefin', chapterId: 'awakening', relativePath: './lore/rafael-bluefin.md' },
   { id: 'subjectprofile/chris-aniszczyk', chapterId: 'awakening', relativePath: './lore/chris-aniszczyk.md' },
+  // Director's Cut only: the nine-quote panel (Task 6). Never shown in the
+  // standard timeline; see hiddenFromWolvesVideoArtifactIds in
+  // wolves-narrative-timeline.ts and the Director timeline in
+  // wolves-directors-cut-timeline.ts.
+  { id: 'quote-sagan-extinction-forever', chapterId: 'directors-cut', relativePath: './lore/quote-sagan-extinction-forever.md' },
+  { id: 'quote-sagan-pale-blue-dot', chapterId: 'directors-cut', relativePath: './lore/quote-sagan-pale-blue-dot.md' },
+  { id: 'quote-clarke-dinosaurs-adapt', chapterId: 'directors-cut', relativePath: './lore/quote-clarke-dinosaurs-adapt.md' },
+  { id: 'quote-clarke-unstable-combination', chapterId: 'directors-cut', relativePath: './lore/quote-clarke-unstable-combination.md' },
+  { id: 'quote-asimov-knowledge-wisdom', chapterId: 'directors-cut', relativePath: './lore/quote-asimov-knowledge-wisdom.md' },
+  { id: 'quote-gould-stewards-of-nothing', chapterId: 'directors-cut', relativePath: './lore/quote-gould-stewards-of-nothing.md' },
+  { id: 'quote-gould-fight-to-save', chapterId: 'directors-cut', relativePath: './lore/quote-gould-fight-to-save.md' },
+  { id: 'quote-goodall-every-individual-matters', chapterId: 'directors-cut', relativePath: './lore/quote-goodall-every-individual-matters.md' },
+  { id: 'quote-goodall-nature-resilient', chapterId: 'directors-cut', relativePath: './lore/quote-goodall-nature-resilient.md' },
 ] as const satisfies readonly LoreManifestEntry[]
 
 const loreFiles = import.meta.glob('./lore/*.md', { query: '?raw', import: 'default', eager: true }) as Record<string, string>

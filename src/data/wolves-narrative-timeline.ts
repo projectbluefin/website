@@ -117,6 +117,19 @@ const hiddenFromWolvesVideoArtifactIds = new Set([
   'ishtar-patternfall',
   'ishtar-the-wager',
   'reckoning-of-the-three',
+  // Director's Cut only: the nine-quote panel (Task 6) and its dedicated
+  // timeline in wolves-directors-cut-timeline.ts. These records are never
+  // authored for the standard show and must stay excluded from it regardless
+  // of oversubscription math.
+  'quote-sagan-extinction-forever',
+  'quote-sagan-pale-blue-dot',
+  'quote-clarke-dinosaurs-adapt',
+  'quote-clarke-unstable-combination',
+  'quote-asimov-knowledge-wisdom',
+  'quote-gould-stewards-of-nothing',
+  'quote-gould-fight-to-save',
+  'quote-goodall-every-individual-matters',
+  'quote-goodall-nature-resilient',
 ])
 const authoredArtifactIds = wolvesRelease.artifacts
   .map(artifact => artifact.id)
