@@ -623,76 +623,80 @@ function buildOpeningTitleCardSegment(): IntroTextSegment {
   }
 }
 
+function buildDestinyTrailerSegment(): IntroVideoSpec {
+  return {
+    // The Destiny segment now defaults to the unvoiced source and carries an optional voiced
+    // toggle. Guardian window timings below were re-verified frame-by-frame
+    // against the real embed (Playwright + the YouTube IFrame API, screenshotting every
+    // ~1-2s) per the Wolves content verification checklist, replacing the
+    // original automated hue/brightness pass that had mismatched two of the six windows:
+    // - Bob Killen's Void Warlock (the first purple, a crystalline void-arm close-up) runs
+    //   5-17.5s footage-wise; the whip-pan cut to a Titan Ward of Dawn bubble forming happens
+    //   at ~17.5s (confirmed via 0.5s-resolution frame capture — 17.0s is still clearly the
+    //   Warlock's caped back, 18.5s is already the Titan crouched inside the bubble).
+    // - Kat Cosgrove's plate is deliberately cued ahead of the frame-verified footage cut,
+    //   at 14.5s (explicit user request, 2026-07-18: her plate replaces Bob's with a quick
+    //   fade instead of overlapping). Bob Killen's window is shortened to match (5-14.5s) —
+    //   neither has a `position`, so two simultaneous cues here would stack on top of each
+    //   other instead of rendering side-by-side. Her plate now runs 14.5-24.5s. This is an
+    //   intentional exception to frame-accurate cueing — do not "fix" the boundary back to
+    //   17.5 without a fresh user request.
+    // - Kaslin Fields' Arc Warlock lightning duel runs 40-48s, beginning on her visible
+    //   electric reveal (previously cut off at
+    //   40s, well before the footage itself ends).
+    // - Laura Santamaria's Solar Hunter window (70.5-77s) was already correct.
+    // - Christoph Blecker (Strand, green) and Natali Vlatko (Behemoth Titan, icy blue) share
+    //   the same shot from ~89.5-90s onward, so their windows overlap (85-95s and
+    //   89.5-96s) with `position` anchoring each to its own side of the frame instead of one
+    //   caption overwriting the other. Christoph's plate ends a second before Natali's so
+    //   the two nameplates do not linger together after his shot has settled. His complete leader plate is gold, while its
+    //   trustee label remains authoritative. His title line carries two segments joined the same way
+    //   ("First Among Equals — The North Star"), rendered on one `wolves-guardian-plate-title`
+    //   line with identical styling so both read with equal visual weight. "Uncompromising
+    //   Purity" and "Platinum Member" (added 2026-07-15, the latter with a `blingTitle`
+    //   shimmer) were removed the same day per a follow-up explicit user request to drop back
+    //   to just the original two titles — do not re-add either without a fresh user request.
+    // - Natali Vlatko's title line is "Punch first, document later.", per explicit user request.
+    // - The default unvoiced source (`BV3BZKbpBns`) runs ~124.0s naturally. Real-player frame
+    //   verification (Playwright + `.wolves-intro-overlay-player` screenshots, 0.1s steps)
+    //   showed its own authored black-frame outro beginning at ~119.0s: 118.8s still carries
+    //   the previous bright frame, 119.0s is fully black and stays there through the end card.
+    //   Cut both sources at 118.8s so YouTube's end-screen layer never becomes visible.
+    id: 'wolves-intro',
+    kind: 'video',
+    youtubeVideoId: 'BV3BZKbpBns',
+    alternateYoutubeVideoId: 'BKm0TPqeOjY',
+    alternateYoutubeVideoLabel: 'Ikora voice over',
+    // The source video opens on Bungie's own ESRB "TEEN" rating card (visible ~0-1.5s,
+    // confirmed frame-by-frame), which isn't part of the Guardian content we want to show.
+    // Starting 2s in skips past it entirely without touching any of the cue windows below,
+    // since those are keyed to the video's absolute/native timeline, not this offset.
+    startOffset: 2,
+    // Stop before YouTube's end-screen layer appears over the final source frames.
+    // Destiny dialogue captions are intentionally disabled; the Comic Hero Shots title card remains timed.
+    maxDuration: 118.8,
+    alternateMaxDuration: 118.8,
+    burnedInCaptions: buildDestinyCaptionCues(),
+    overlays: [
+      { text: 'Voidwalker Warlock — Bob Killen — Reconciler of the Plane', start: 5, end: 14.5, trustee: true },
+      { text: 'Sentinel Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 },
+      { text: 'Stormcaller Warlock — Kaslin Fields — Rage of the Paradox', start: 40, end: 48 },
+      // #nova4ever easter egg: the default "fighting for something greater than themselves" status briefly
+      // glitches out to the hashtag a few times during the 48-70.5 montage, then snaps back.
+      { text: '#nova4ever', start: 52, end: 52.45, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
+      { text: '#nova4ever', start: 60.6, end: 61.05, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
+      { text: '#nova4ever', start: 68.1, end: 68.55, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
+      { text: 'Gunslinger Hunter — Laura Santamaria — The Order of Seven', start: 70.5, end: 77 },
+      { text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 85, end: 95, position: 'left', trustee: true, leader: true },
+      { text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 89.5, end: 96, position: 'right', raised: true },
+      { text: 'Follow the path, we\'ve got your back', start: 106.5, end: 118.8, nameplateDetail: 'Legends Sought', nameplateTitle: 'Follow the path, we\'ve got your back', statusOnly: true },
+    ],
+  }
+}
+
 export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
   return [
     buildOpeningTitleCardSegment(),
-    {
-      // The Destiny segment now defaults to the unvoiced source and carries an optional voiced
-      // toggle. Guardian window timings below were re-verified frame-by-frame
-      // against the real embed (Playwright + the YouTube IFrame API, screenshotting every
-      // ~1-2s) per the Wolves content verification checklist, replacing the
-      // original automated hue/brightness pass that had mismatched two of the six windows:
-      // - Bob Killen's Void Warlock (the first purple, a crystalline void-arm close-up) runs
-      //   5-17.5s footage-wise; the whip-pan cut to a Titan Ward of Dawn bubble forming happens
-      //   at ~17.5s (confirmed via 0.5s-resolution frame capture — 17.0s is still clearly the
-      //   Warlock's caped back, 18.5s is already the Titan crouched inside the bubble).
-      // - Kat Cosgrove's plate is deliberately cued ahead of the frame-verified footage cut,
-      //   at 14.5s (explicit user request, 2026-07-18: her plate replaces Bob's with a quick
-      //   fade instead of overlapping). Bob Killen's window is shortened to match (5-14.5s) —
-      //   neither has a `position`, so two simultaneous cues here would stack on top of each
-      //   other instead of rendering side-by-side. Her plate now runs 14.5-24.5s. This is an
-      //   intentional exception to frame-accurate cueing — do not "fix" the boundary back to
-      //   17.5 without a fresh user request.
-      // - Kaslin Fields' Arc Warlock lightning duel runs 40-48s, beginning on her visible
-      //   electric reveal (previously cut off at
-      //   40s, well before the footage itself ends).
-      // - Laura Santamaria's Solar Hunter window (70.5-77s) was already correct.
-      // - Christoph Blecker (Strand, green) and Natali Vlatko (Behemoth Titan, icy blue) share
-      //   the same shot from ~89.5-90s onward, so their windows overlap (85-95s and
-      //   89.5-96s) with `position` anchoring each to its own side of the frame instead of one
-      //   caption overwriting the other. Christoph's plate ends a second before Natali's so
-      //   the two nameplates do not linger together after his shot has settled. His complete leader plate is gold, while its
-      //   trustee label remains authoritative. His title line carries two segments joined the same way
-      //   ("First Among Equals — The North Star"), rendered on one `wolves-guardian-plate-title`
-      //   line with identical styling so both read with equal visual weight. "Uncompromising
-      //   Purity" and "Platinum Member" (added 2026-07-15, the latter with a `blingTitle`
-      //   shimmer) were removed the same day per a follow-up explicit user request to drop back
-      //   to just the original two titles — do not re-add either without a fresh user request.
-      // - Natali Vlatko's title line is "Punch first, document later.", per explicit user request.
-      // - The default unvoiced source (`BV3BZKbpBns`) runs ~124.0s naturally. Real-player frame
-      //   verification (Playwright + `.wolves-intro-overlay-player` screenshots, 0.1s steps)
-      //   showed its own authored black-frame outro beginning at ~119.0s: 118.8s still carries
-      //   the previous bright frame, 119.0s is fully black and stays there through the end card.
-      //   Cut both sources at 118.8s so YouTube's end-screen layer never becomes visible.
-      id: 'wolves-intro',
-      kind: 'video',
-      youtubeVideoId: 'BV3BZKbpBns',
-      alternateYoutubeVideoId: 'BKm0TPqeOjY',
-      alternateYoutubeVideoLabel: 'Ikora voice over',
-      // The source video opens on Bungie's own ESRB "TEEN" rating card (visible ~0-1.5s,
-      // confirmed frame-by-frame), which isn't part of the Guardian content we want to show.
-      // Starting 2s in skips past it entirely without touching any of the cue windows below,
-      // since those are keyed to the video's absolute/native timeline, not this offset.
-      startOffset: 2,
-      // Stop before YouTube's end-screen layer appears over the final source frames.
-      // Destiny dialogue captions are intentionally disabled; the Comic Hero Shots title card remains timed.
-      maxDuration: 118.8,
-      alternateMaxDuration: 118.8,
-      burnedInCaptions: buildDestinyCaptionCues(),
-      overlays: [
-        { text: 'Voidwalker Warlock — Bob Killen — Reconciler of the Plane', start: 5, end: 14.5, trustee: true },
-        { text: 'Sentinel Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 },
-        { text: 'Stormcaller Warlock — Kaslin Fields — Rage of the Paradox', start: 40, end: 48 },
-        // #nova4ever easter egg: the default "fighting for something greater than themselves" status briefly
-        // glitches out to the hashtag a few times during the 48-70.5 montage, then snaps back.
-        { text: '#nova4ever', start: 52, end: 52.45, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
-        { text: '#nova4ever', start: 60.6, end: 61.05, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
-        { text: '#nova4ever', start: 68.1, end: 68.55, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
-        { text: 'Gunslinger Hunter — Laura Santamaria — The Order of Seven', start: 70.5, end: 77 },
-        { text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 85, end: 95, position: 'left', trustee: true, leader: true },
-        { text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 89.5, end: 96, position: 'right', raised: true },
-        { text: 'Follow the path, we\'ve got your back', start: 106.5, end: 118.8, nameplateDetail: 'Legends Sought', nameplateTitle: 'Follow the path, we\'ve got your back', statusOnly: true },
-      ],
-    },
+    buildDestinyTrailerSegment(),
   ] as const
 }

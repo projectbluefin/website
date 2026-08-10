@@ -369,6 +369,30 @@ describe('wolvesIntroOverlay video segments', () => {
     expect(wrapper.emitted('complete')).toHaveLength(1)
   })
 
+  it('advances when the video is stuck near its opening frame for too long', async () => {
+    const stuckSequence = [
+      { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BV3BZKbpBns', maxDuration: 120 },
+    ]
+    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: stuckSequence } })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+    players[0].triggerReady()
+    await flushPromises()
+
+    // The mock player never reports a time change, simulating a blocked autoplay.
+    expect(players[0].getCurrentTime()).toBe(0)
+
+    await vi.advanceTimersByTimeAsync(15_000)
+    await flushPromises()
+    expect(wrapper.emitted('complete')).toBeUndefined()
+
+    await vi.advanceTimersByTimeAsync(1_500)
+    await flushPromises()
+
+    expect(wrapper.emitted('complete')).toHaveLength(1)
+  })
+
   it('shows the active overlay text cue synced to playback time', async () => {
     const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
     await flushPromises()
@@ -1133,6 +1157,39 @@ surrounded by predators`)
     await vi.advanceTimersByTimeAsync(1000)
     await flushPromises()
 
+    expect(wrapper.emitted('complete')).toHaveLength(1)
+  })
+
+  it('falls back to wall-clock pacing when the scored audio embed is blocked at 0s', async () => {
+    // The authored duration has to clear TEXT_SEGMENT_END_SLACK_SECONDS for this test to mean
+    // anything. On a 1s card the whole card is inside the track-end window, so the stall
+    // backstop completes it at the 3s grace and the wall-clock fallback never gets to run —
+    // the test passes without exercising the thing it names.
+    const textSequence = [
+      { id: 'wolves-prologue', kind: 'text' as const, duration: 8, audioYoutubeVideoId: 'EB3IokHelRk' },
+    ]
+    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+
+    // The mock player reports 0s forever, simulating a browser that blocked autoplay.
+    expect(players[0].getCurrentTime()).toBe(0)
+
+    // Still inside the blocked-audio grace: the card is waiting for music that may yet arrive,
+    // and its own clock has not started, so nothing has advanced.
+    await vi.advanceTimersByTimeAsync(5000)
+    await flushPromises()
+    expect(wrapper.emitted('complete')).toBeUndefined()
+
+    // Past the grace the clock is released and the card paces itself from that moment, so it
+    // still gets its full authored 8s of reading time rather than being cut short.
+    await vi.advanceTimersByTimeAsync(5000)
+    await flushPromises()
+    expect(wrapper.emitted('complete')).toBeUndefined()
+
+    await vi.advanceTimersByTimeAsync(4000)
+    await flushPromises()
     expect(wrapper.emitted('complete')).toHaveLength(1)
   })
 

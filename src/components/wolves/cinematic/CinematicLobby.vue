@@ -4,6 +4,7 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 import WolvesBackCatalogue from '@/components/wolves/WolvesBackCatalogue.vue'
 import WolvesCharacterGallery from '@/components/wolves/WolvesCharacterGallery.vue'
 import WolvesQrCodes from '@/components/wolves/WolvesQrCodes.vue'
+import { DIRECTORS_CUT_ENABLED } from '@/config/wolves-directors-cut-gate'
 
 const emit = defineEmits<{ enter: [], enterDirectorsCut: [], launchExperience: [manifest: ExperienceManifest], watchGuardian: [name: string] }>()
 
@@ -104,7 +105,7 @@ onBeforeUnmount(() => {
           <p>If you don't like the metal then that's your problem.</p>
         </div>
       </blockquote>
-      <div class="wc-lobby-directors-cut">
+      <div v-if="DIRECTORS_CUT_ENABLED" class="wc-lobby-directors-cut">
         <p class="wc-lobby-directors-cut-copy">
           Bluefin's universe is just beginning, and its future is bleaker than presented here. Enjoy the longer original vision as it comes together:
         </p>

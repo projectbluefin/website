@@ -455,6 +455,11 @@ describe('theater experience lore column narrative timeline wiring', () => {
 
     store.updateTime(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd, 425, DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
     await nextTick()
-    expect(probe().attributes('data-artifact-id')).toBe('')
+    // The bulletin's end *is* the finale's start — `bulletinEnd` and `finaleStart` are the same
+    // beat — and the finale unmounts the ordinary grid rather than covering it. So the handoff
+    // clears the bulletin by taking the whole lore column off the stage, which is a stronger
+    // guarantee than blanking its id: nothing is left mounted to keep running behind the frame.
+    // Asserting an empty id here instead would demand the column survive its own handoff.
+    expect(wrapper.find('.wolves-lore-column-probe').exists()).toBe(false)
   })
 })

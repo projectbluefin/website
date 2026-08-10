@@ -574,6 +574,25 @@ let pollTimer: ReturnType<typeof setInterval> | null = null
 let textTimer: ReturnType<typeof setInterval> | null = null
 /** Resolution of a text card's own tick, and the unit the stall watchdog counts in. */
 const TEXT_CLOCK_TICK_MS = 100
+/**
+ * How long the background audio's clock may sit pinned at 0 before the card gives up on it.
+ *
+ * Short, because releasing is cheap and reversible: the recovery check hands the card straight
+ * back to the music the instant the player's clock moves, so a false positive on a slow cold
+ * buffer costs a brief desync and nothing else. A pre-roll ad does not look like this — during
+ * an ad the embed reports the ad's own advancing time, so it never sits frozen on exactly 0.
+ * A clock still pinned to the origin this long is a player the browser refused to start.
+ */
+const BLOCKED_AUDIO_SECONDS = 5
+
+/**
+ * How long a video segment may sit on its opening frame before the show skips it.
+ *
+ * Three times the audio threshold, because this decision cannot be taken back: advancing
+ * discards the segment, so it must outlast a cold buffer on a bad conference network rather
+ * than merely a hesitation. The audio side can afford to be twitchy; this side cannot.
+ */
+const BLOCKED_VIDEO_SECONDS = 15
 /** performance.now() corresponding to elapsed 0 on a silent text card. */
 let textClockOriginMs = 0
 /** The background audio embed published its own `ENDED` state for the active scored card. */
@@ -886,6 +905,16 @@ function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
       audioClockStalledMs = audioClock === lastAudioClockReading ? audioClockStalledMs + TEXT_CLOCK_TICK_MS : 0
       lastAudioClockReading = audioClock
       currentTime.value = audioClock
+      // Blocked autoplay, which is the one stall that is not an ad and never recovers on its
+      // own. A pre-roll ad or a buffering stream freezes the clock somewhere inside the piece
+      // and resumes; a player the browser refused to start never leaves 0 at all, and the
+      // stall backstop above cannot save it because that only fires inside the track's end
+      // window. Left alone, the cold open holds its first card in front of the room forever.
+      // Releasing hands the card to its own wall clock so the show still plays; the recovery
+      // check above snaps it back the instant the music actually starts.
+      if (audioClock === 0 && audioClockStalledMs / 1000 > BLOCKED_AUDIO_SECONDS) {
+        releaseAudioClock()
+      }
     }
     else {
       // A silent card (the presenter's welcome slide) has no player to read, so it
@@ -953,10 +982,35 @@ function beginSegmentPlayback(
   activeSegmentDuration.value = activeVideoCutoffDuration(segment) ?? player?.getDuration?.() ?? 0
   segmentDurations.value[sequenceState.value.index] = activeSegmentDuration.value
   stopPolling()
+  let lastVideoTime = -1
+  let lastVideoAdvanceMs = performance.now()
   pollTimer = setInterval(() => {
     currentTime.value = player?.getCurrentTime?.() ?? 0
     updateHandoffFade()
-    if (activeVideoCutoffDuration(segment) != null && currentTime.value >= activeSegmentDuration.value && !isPaused.value) {
+    const now = performance.now()
+    if (currentTime.value !== lastVideoTime) {
+      lastVideoTime = currentTime.value
+      lastVideoAdvanceMs = now
+    }
+    if (isPaused.value) {
+      // A paused player is held, not stalled. Trailing the mark here is what stops a deliberate
+      // pause from accumulating into a blocked-autoplay verdict and skipping the segment.
+      lastVideoAdvanceMs = now
+      return
+    }
+    if (activeVideoCutoffDuration(segment) == null) {
+      return
+    }
+    if (currentTime.value >= activeSegmentDuration.value) {
+      advance()
+      return
+    }
+    // Unattended fallback, the video-segment twin of the audio clock's blocked-autoplay
+    // release: a player still sitting on its opening frame this long was never allowed to
+    // start, and there is nobody in the room who can click it. Advancing costs one segment;
+    // waiting costs the rest of the show, in front of everyone.
+    const nearStart = currentTime.value <= Math.min(10, activeSegmentDuration.value / 2)
+    if (nearStart && (now - lastVideoAdvanceMs) / 1000 > BLOCKED_VIDEO_SECONDS) {
       advance()
     }
   }, 200)

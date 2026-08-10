@@ -604,4 +604,23 @@ describe('wolvesApp intro status handling', () => {
     expect(store.segmentCount).toBe(WOLVES_EXPERIENCE.segments.length)
     expect(store.presentationProfile).toBe(WOLVES_STANDARD_PROFILE_ID)
   })
+
+  it('auto-starts the Director\'s Cut when the URL carries ?directors-cut', async () => {
+    const store = useCinematicStore()
+    const originalSearch = window.location.search
+    vi.stubGlobal('location', { ...window.location, search: '?directors-cut' })
+
+    shallowMount(WolvesApp, {
+      global: { stubs: stubs() },
+    })
+    await flushPromises()
+
+    expect(store.phase).toBe('intro')
+    // The Director's Cut (prologue + Destiny) is longer than the standard
+    // title-card + Destiny intro, so the live binding confirms the right list
+    // was published.
+    expect(store.sequenceDuration).toBeGreaterThan(180)
+
+    vi.stubGlobal('location', { ...window.location, search: originalSearch })
+  })
 })

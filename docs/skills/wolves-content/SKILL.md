@@ -28,6 +28,46 @@ player synchronization, or generated manifests.
 5. Regenerate generated files with their scripts.
 6. Run the relevant tests, build, and browser checks.
 
+Director's Cut keep ranges in `buildDirectorsCutVideoSequence()` stay on the
+source video's native clock. `startOffset` is the exact source start timestamp
+in seconds, `maxDuration` is the exact source end timestamp in seconds, and any
+overlay cue windows on those segments stay absolute too — do not rebase them to
+segment-relative `0`, or the authored source timing and tests drift.
+Use `~/Videos/` as the shared local scratch space for source clips and previews
+the owner needs to review. Keep future video work together there, use the
+owner-requested tag, and do not invent a repository media directory or a
+separate scratch location. Treat owner-renamed filenames as storyboard IDs:
+preserve them verbatim and use them when referring to the corresponding clip.
+
+When an owner asks to maximize a storyboard clip's quality, use its filename's
+YouTube ID and embedded keep range as the index. First list the available
+formats, then download the highest native video stream into the existing
+`sources/` directory; do not upscale the low-resolution storyboard derivative
+or replace it:
+
+```bash
+yt-dlp -F "https://www.youtube.com/watch?v=<storyboard-id>"
+yt-dlp -f <selected-video-format> \
+  -o "sources/<storyboard-id>.%(ext)s" \
+  "https://www.youtube.com/watch?v=<storyboard-id>"
+```
+
+Trim the downloaded source with the original, absolute keep ranges. A
+constrained social output should downscale from that native source, while a
+master retains its native dimensions.
+
+Before rendering an H.264 review artifact, verify the selected FFmpeg binary
+offers `libx264`:
+
+```bash
+ffmpeg -encoders | grep 'libx264'
+```
+
+Some system FFmpeg builds omit external encoders. If that probe is empty, list
+available FFmpeg binaries with `which -a ffmpeg` and use a binary that reports
+`libx264`; do not silently replace the requested codec with a different one.
+Use `-c:v libx264` explicitly in the render command.
+
 For a visible WebP quality regression, compare the optimized asset with its
 approved source at identical dimensions. Recover only demonstrated high-loss
 PNG or screenshot derivatives as lossless WebP; do not upscale assets whose
@@ -103,6 +143,32 @@ accessible-name/description fix, not a layout change.
 - A generated manifest is hand-edited.
 - Text moves between signal, thesis, lore, and chat layers.
 
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "These cut windows are short, so rebasing them from zero is simpler." | Director's Cut keep ranges are pinned to absolute YouTube source timestamps; rebasing them breaks playback timing and the intro timeline math. |
+| "This overlay text is obvious enough to paraphrase." | Wolves content surfaces use exact supplied wording only; changing even a short overlay changes authored content. |
+| "It is only intro data, so I don't need to update tests." | Intro segment ids and timestamps are contract data for store and overlay tests; pin them when they change. |
+
+## Director's Cut does not share the standard intro's title-card quote slide
+
+`buildIntroVideoSequence()` is the standard front-door intro: silent title-card
+quote slide, then the Destiny trailer. The Director's Cut replaces that opening
+with the Gayane Ballet Suite prologue, but it still ends with the same Destiny
+trailer.
+
+Do not build the Director's Cut by prepending the prologue to
+`...buildIntroVideoSequence()`. That places the standard title-card quote slide
+after the prologue, so the show appears to return to the opening after the first
+song has already played. Instead, compose the Director's Cut from its own
+opening segment plus the shared Destiny trailer segment, keeping the two intro
+variants as sibling lists rather than a prefix plus a spread.
+
+When either intro list changes, update the store tests that assert on segment
+identity and duration rather than on segment count, since both variants now have
+the same length.
+
 ## Verification
 
 - [ ] Diff contains only documented content surfaces.
@@ -117,6 +183,13 @@ accessible-name/description fix, not a layout change.
 - `../editorial-provenance/SKILL.md`
 - `../validation/SKILL.md`
 - `../wolves-runtime-engineering/SKILL.md`
+
+## Sources
+
+- Context7: `/addyosmani/agent-skills` (skill file structure and required sections)
+- Context7: `/websites/ffmpeg_documentation` (encoder discovery and `-c:v libx264`)
+- Context7: `/yt-dlp/yt-dlp` (format selection and output templates)
+
 ## Pages break at thoughts, not at character counts
 
 `splitReadableBeats()` splits on sentence punctuation and then on a character
