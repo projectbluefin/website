@@ -63,13 +63,13 @@ For a dinosaur addition, use the registry, supplied artwork, and supplied lore
 record. Do not invent names, scientific facts, pairings, or provenance.
 
 Approved third-party intro art ships as an explicit allowlist, not as ad-hoc
-URLs inside `buildDirectorsCutVideoSequence()`. Store the files locally at
+URLs inside a sequence builder. Store the files locally at
 source geometry under `public/wolves-intro/<collection>/`, then register every
 approved image in a data ledger with its stable id, local path, artist, work
 title, authoritative source URL, exact upstream asset URL, retrieval date,
-policy URL, and usage basis. The scheduling task consumes that registry later;
-until then, keep the standard intro free of those ids and local paths with a
-test.
+policy URL, and usage basis. `src/data/wolves-directors-cut-intro.ts` consumes
+that registry in its own order, and a test keeps the standard intro free of
+those ids and local paths.
 
 Registry entries, not ad-hoc cue literals, own accessible provenance for
 approved intro art. Store a `backgroundFigure` object on each registered

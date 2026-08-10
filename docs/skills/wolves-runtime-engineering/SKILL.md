@@ -48,6 +48,21 @@ an unidentified player request.
 - Browser bounds and player states are not checked.
 - A musical moment is scheduled with a round number instead of the measured
   beat in `TRACK_ZERO_SECTIONS`.
+- A cue window on a scored segment is picked by dividing the track evenly, or by
+  ear, instead of from measured section boundaries. Measure the source: the
+  Director's Cut Gayane grid in `wolves-directors-cut-intro.ts` is the agreement
+  between a voted Laplacian structural segmentation (k = 4..10) and an
+  independent MFCC-novelty peak pick.
+- An authored window on one video source is transposed to a second upload of the
+  same footage without re-measuring that upload's own frames. A content offset
+  transposes; a cutoff does not, because two uploads can end differently. See
+  `../../reference/wolves-intro-and-overlay.md`.
+- A long text beat is given `emphasis: 'dominant'` on the strength of what it
+  says rather than how tall it renders. Dominant is priced in frame height, and
+  overflows a 1280x720 projector frame past `DOMINANT_EMPHASIS_MAX_WORDS`.
+- A browser harness samples an intro cue without waiting out the 3.9s scene
+  dissolve and 7.8s somber fade, which both restart on a clock jump, and then
+  reports the previous cue's element as the current one.
 - A page ends on a title such as `Dr.`, orphaning the name it introduces, or on
   a preposition or article, making the audience wait a page turn for the rest of
   the phrase.

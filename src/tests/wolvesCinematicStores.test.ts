@@ -1,7 +1,8 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { CINEMATIC_SEGMENTS } from '@/config/wolves-cinematic'
-import { buildDirectorsCutVideoSequence, buildIntroVideoSequence } from '@/data/wolves-intro-sequence'
+import { buildDirectorsCutVideoSequence } from '@/data/wolves-directors-cut-intro'
+import { buildIntroVideoSequence } from '@/data/wolves-intro-sequence'
 import {
   INTRO_SEQUENCE_DURATION,
   resolveOverallRatioTarget,
@@ -220,7 +221,10 @@ describe('cinematic store', () => {
     // Cut duration, index clamp, and TOTAL readout described the wrong list.
     const standard = buildIntroVideoSequence()
     const directorsCut = buildDirectorsCutVideoSequence()
-    expect(directorsCut.length).toBeGreaterThan(standard.length)
+    // Both cuts are two segments now; what differs is their runtime, so compare that
+    // rather than a segment count that no longer distinguishes them.
+    const runtime = (sequence: readonly { id: string }[]) => JSON.stringify(sequence)
+    expect(runtime(directorsCut)).not.toBe(runtime(standard))
 
     const store = useCinematicStore()
 

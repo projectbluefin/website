@@ -8,6 +8,15 @@ import {
   DIRECTORS_CUT_DESTINY_CONCEPT_CREDIT,
   DIRECTORS_CUT_DESTINY_CONCEPTS,
 } from '../data/wolves-directors-cut-artwork'
+import {
+  buildDirectorsCutPrologueSegment,
+  buildDirectorsCutVideoSequence,
+  DIRECTORS_CUT_DESTINY_SEGMENT_ID,
+  GAYANE_TRACK_SECONDS,
+  IKORA_LAST_CONTENT_SECOND,
+  IKORA_RATING_CARD_SECONDS,
+  IKORA_SOURCE_VIDEO_ID,
+} from '../data/wolves-directors-cut-intro'
 
 const { default: WolvesIntroOverlay } = await import('../components/wolves/WolvesIntroOverlay.vue')
 
@@ -1289,5 +1298,92 @@ describe('wolvesIntroOverlay guardian plate', () => {
 
     expect(wrapper.text()).toContain('Laura Santamaria')
     expect(wrapper.find('.wolves-companion-plate').exists()).toBe(false)
+  })
+})
+
+describe('wolvesIntroOverlay director\'s cut', () => {
+  const directorsCut = buildDirectorsCutVideoSequence()
+
+  async function mountDirectorsCut() {
+    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: directorsCut } })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+    return wrapper
+  }
+
+  /** Drive the scored prologue's own clock, which reads the background audio embed. */
+  async function seekPrologue(seconds: number) {
+    players[0].setCurrentTime(seconds)
+    await vi.advanceTimersByTimeAsync(200)
+    await flushPromises()
+  }
+
+  it('renders every montage painting image-only, with its provenance and the authored motion', async () => {
+    const wrapper = await mountDirectorsCut()
+    const montage = buildDirectorsCutPrologueSegment().overlays!.filter(cue => cue.backgroundImage?.startsWith('wolves-intro/destiny-concepts/'))
+    expect(montage).toHaveLength(DIRECTORS_CUT_DESTINY_CONCEPTS.length)
+
+    for (const [index, cue] of montage.entries()) {
+      const record = DIRECTORS_CUT_DESTINY_CONCEPTS[index]
+      // Sample inside the cue, past its dissolve, so the painting is fully on stage.
+      await seekPrologue(cue.start + (cue.end - cue.start) / 2)
+
+      const scene = wrapper.get('.wolves-intro-overlay-scene')
+      const image = scene.get('img.wolves-intro-overlay-background')
+      expect(image.attributes('src')).toContain(record.localPath)
+      expect(scene.attributes('role')).toBe('figure')
+      expect(scene.attributes('aria-label')).toBe(record.backgroundFigure.label)
+      expect(scene.attributes('aria-description')).toBe(DIRECTORS_CUT_DESTINY_CONCEPT_CREDIT)
+      // No caption is painted over a painting.
+      expect(wrapper.find('.wolves-intro-overlay-text').exists()).toBe(false)
+
+      const hasKenBurns = image.classes().includes('wolves-intro-overlay-background-kenburns')
+      expect(hasKenBurns).toBe(index < 5)
+      if (hasKenBurns) {
+        // The drift is paced by the cue's own measured musical window.
+        expect(image.attributes('style')).toContain(`animation-duration: ${cue.end - cue.start}s`)
+      }
+    }
+  })
+
+  it('opens dark on the silent lead-in and closes on the authored title', async () => {
+    const wrapper = await mountDirectorsCut()
+
+    await seekPrologue(1)
+    expect(wrapper.find('.wolves-intro-overlay-text').exists()).toBe(false)
+    expect(wrapper.find('img.wolves-intro-overlay-background').exists()).toBe(false)
+
+    await seekPrologue(GAYANE_TRACK_SECONDS - 1)
+    expect(wrapper.get('.wolves-intro-overlay-text').text()).toContain('seven days to the wolves')
+  })
+
+  it('plays the Ikora source at its measured cutoff with no voice-over toggle offered', async () => {
+    const wrapper = await mountDirectorsCut()
+
+    wrapper.vm.next()
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+
+    const destiny = players[players.length - 1]
+    expect(destiny.videoId).toBe(IKORA_SOURCE_VIDEO_ID)
+    expect(destiny.config.playerVars.start).toBe(IKORA_RATING_CARD_SECONDS)
+
+    const status = wrapper.emitted('status') as Array<[{ segmentId: string, showVoiceOverToggle?: boolean }]>
+    const latest = status[status.length - 1][0]
+    expect(latest.segmentId).toBe(DIRECTORS_CUT_DESTINY_SEGMENT_ID)
+    expect(latest.showVoiceOverToggle).toBe(false)
+
+    destiny.triggerReady()
+    destiny.setCurrentTime(IKORA_LAST_CONTENT_SECOND - 0.2)
+    await vi.advanceTimersByTimeAsync(200)
+    await flushPromises()
+    expect(wrapper.emitted('complete')).toBeUndefined()
+
+    destiny.setCurrentTime(IKORA_LAST_CONTENT_SECOND)
+    await vi.advanceTimersByTimeAsync(200)
+    await flushPromises()
+    expect(wrapper.emitted('complete')).toHaveLength(1)
   })
 })

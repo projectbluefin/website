@@ -4,7 +4,8 @@ import { flushPromises, shallowMount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick } from 'vue'
-import { buildDirectorsCutVideoSequence, buildIntroVideoSequence } from '@/data/wolves-intro-sequence'
+import { buildDirectorsCutVideoSequence, IKORA_SOURCE_VIDEO_ID } from '@/data/wolves-directors-cut-intro'
+import { buildIntroVideoSequence } from '@/data/wolves-intro-sequence'
 import {
   INTRO_SEQUENCE_DURATION,
   useCinematicStore,
@@ -534,6 +535,45 @@ describe('wolvesApp intro status handling', () => {
         0,
       ),
     )
+  })
+
+  it('publishes the Director\'s Cut plaque metadata for its own two segments', async () => {
+    const store = useCinematicStore()
+    const [prologue, destiny] = buildDirectorsCutVideoSequence()
+
+    const wrapper = shallowMount(WolvesApp, {
+      global: { stubs: stubs() },
+    })
+
+    wrapper.getComponent(CinematicLobbyStub).vm.$emit('enter-directors-cut')
+    await flushPromises()
+
+    // The Director's Cut opens on the scored prologue, so its music plaque is the
+    // Gayane track, not the standard cut's Destiny trailer.
+    expect(wrapper.getComponent(MediaWidgetStub).props('title')).toBe('PROLOGUE — Gayane Ballet Suite')
+
+    const intro = wrapper.getComponent(WolvesIntroOverlayStub)
+    intro.vm.$emit('status', {
+      currentTime: 10,
+      duration: prologue.kind === 'text' ? prologue.duration : 0,
+      paused: false,
+      segmentId: prologue.id,
+      canGoPrevious: false,
+    })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.get('.nameplate-stub').text()).toBe('PROLOGUE|Gayane Ballet Suite (Adagio)')
+
+    // And the Destiny handoff plaque names the Ikora source it actually plays.
+    intro.vm.$emit('status', {
+      currentTime: 10,
+      duration: 120,
+      paused: false,
+      segmentId: destiny.id,
+      canGoPrevious: true,
+    })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|a project to bring their stories to life')
+    expect(store.display.artwork).toContain(IKORA_SOURCE_VIDEO_ID)
   })
 
   it('restores the standard seven-part experience when Enter is used after a Director\'s Cut run', async () => {

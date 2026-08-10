@@ -26,9 +26,13 @@ instead. **Do not reintroduce literal clock strings in intro tests** — they ro
 silently the next time the sequence changes, which is the same failure mode that
 already bit the `119.5` / `1952.5` duration literals.
 
-`buildDirectorsCutVideoSequence()` is a second, separate list. A segment meant to
-open the show must be prepended to **both** or the Director's Cut will not have
-it.
+`buildDirectorsCutVideoSequence()` is a second, separate list, and it now lives in
+its own module, `src/data/wolves-directors-cut-intro.ts`. It is **not** the standard
+list with extra segments: it is two segments (the full-length scored Gayane prologue
+and the Ikora-voiced Destiny handoff) with no opening title card at all, because the
+Director's Cut is a one-song cinematic rather than the presenter's slide deck. A
+segment meant to open the show therefore belongs in whichever list actually opens
+that show — adding it to both is a decision, not a default.
 
 **The store must be told which list is on stage.** `src/stores/cinematic.ts`
 used to build `INTRO_TIMELINE` once at module load from the standard sequence
@@ -75,6 +79,67 @@ left active. See
 for the typed `isWolvesPresentation` replacement for raw
 `experienceId === WOLVES_EXPERIENCE.id` checks this required across the
 runtime.
+
+## Two uploads of the same trailer do not share an outro
+
+The standard intro's Destiny segment defaults to an unvoiced re-upload
+(`BV3BZKbpBns`) and offers Bungie's own Ikora-voiced upload (`BKm0TPqeOjY`) as a
+toggle. The Director's Cut plays the Ikora upload as its *primary*. Transposing the
+authored cue windows between them is a two-line change and one of those lines is a
+trap.
+
+Frame measurement, not assumption, settles it. Sampling both sources at 10 fps into
+normalised luma signatures and cross-correlating puts the content offset at
+**2.10s** (similarity 0.635, against 0.609 at 2.00s and 0.565 at 2.20s), and paired
+frames confirm it: Ikora 12.40s is unvoiced 14.50s, 13.70 is 15.80, 87.40 is 89.50.
+Every guardian window therefore shifts by −2.10s, which is why the Director's Cut
+derives them from `buildIntroVideoSequence()` rather than retyping them.
+
+The cutoff does **not** transpose. The two uploads end differently:
+
+- The unvoiced re-upload dissolves its last shot to black across ~115.7–119.1s and
+  then holds black to its end, so `maxDuration: 118.8` lands on its last lit frame.
+- Bungie's upload hard-cuts (113.50s is the last content frame, 113.55s is fully
+  black) and fades up a **"SEASON OF THE WISH" promotional card** from ~114.5s that
+  holds to the end of the video.
+
+`118.8 − 2.10 = 116.7` is inside that promo card. Reusing the standard cutoff would
+have put a Destiny seasonal advert on the theater screen. The Ikora cutoff is
+`113.5`, measured at 0.05s resolution.
+
+Two more measured differences worth knowing: Bungie's upload carries its own ESRB
+"TEEN" card from 0.00–1.99s (so it needs the same `startOffset: 2`), and it is
+**full-frame 16:9**, while the unvoiced re-upload has 2.39:1 letterbox bars baked in
+(active picture rows 92–627 of 720). On a projector the official upload is simply
+the better source.
+
+## `emphasis: 'dominant'` is priced in frame height, not just words
+
+`dominant` is an ~81px display treatment, and the cue comment that introduced it
+names the Arthur C. Clarke quote as its exemplar. That is true of the quote as a
+*line* and false of it as a *page*. The Director's Cut restored the quote to one
+unsplit cue — a quote is never split across pages — and at 35 words in dominant type
+it renders **878px tall**: cut off at the top of a 1280×720 frame, and colliding with
+the top nameplate at 1440×900. Both measured in Chromium.
+
+The fix is the treatment, never the words: the quote drops to the standard somber
+size, where it renders 268px at 720p and 161px at 1080p and reads cleanly. The
+measured ceiling is recorded as `DOMINANT_EMPHASIS_MAX_WORDS` (13 words, which
+renders 488px of a 720p frame) and a unit test holds it, so the next long beat cannot
+quietly acquire the treatment and overflow the screen.
+
+Related trap when verifying any of this in a browser: the scene layer cross-dissolves
+for `PROLOGUE_SCENE_CROSSFADE_SECONDS` (3.9s) and the somber text fade runs up to
+`PROLOGUE_TEXT_FADE_SECONDS` (7.8s), and **both restart from the DOM update when a
+harness jumps the clock** rather than playing linearly. Sampling ~200ms after a seek
+reads the *previous* cue's scene element and an opacity around 0.05, and polling for
+"one `.wolves-intro-overlay-scene` element" resolves instantly because the incoming
+element has not been inserted yet. Wait out the fade (8.4s) before asserting, and read
+the *last* matching element, not the first.
+
+Do not read a black frame below 641px as a defect either:
+`@media (max-width: 640px)` sets `.wolves-intro-overlay-text { display: none }` on
+purpose — "Mobile keeps the footage and the app-level playback widget only."
 
 ## Silent card windows are derived, not hand-picked
 

@@ -7,7 +7,8 @@ import CinematicStage from '@/components/wolves/cinematic/CinematicStage.vue'
 import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import Nameplate from '@/components/wolves/cinematic/Nameplate.vue'
 import WolvesIntroOverlay from '@/components/wolves/WolvesIntroOverlay.vue'
-import { buildDirectorsCutVideoSequence, buildIntroVideoSequence, guardianIntroStartTime, isTextSegment } from '@/data/wolves-intro-sequence'
+import { buildDirectorsCutVideoSequence, DIRECTORS_CUT_DESTINY_SEGMENT_ID, IKORA_SOURCE_VIDEO_ID } from '@/data/wolves-directors-cut-intro'
+import { buildIntroVideoSequence, guardianIntroStartTime, isTextSegment } from '@/data/wolves-intro-sequence'
 import { INTRO_SEQUENCE_DURATION, useCinematicStore, WOLVES_DIRECTORS_CUT_EXPERIENCE, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
 const store = useCinematicStore()
@@ -117,8 +118,29 @@ const INTRO_DISPLAY: Record<string, { chapter: string, title: string, mediaTitle
     artist: 'Bungie',
     artwork: 'https://i.ytimg.com/vi/BV3BZKbpBns/hqdefault.jpg',
   },
+  // Same authored segment, different source: the Director's Cut plays Bungie's own
+  // Ikora-voiced upload as its primary rather than the unvoiced re-upload, so its
+  // plaque artwork has to come from that video too.
+  [DIRECTORS_CUT_DESTINY_SEGMENT_ID]: {
+    chapter: 'Meet your Fireteam',
+    title: 'a project to bring their stories to life',
+    mediaTitle: 'The Wolves are Coming',
+    artist: 'Bungie',
+    artwork: `https://i.ytimg.com/vi/${IKORA_SOURCE_VIDEO_ID}/hqdefault.jpg`,
+  },
 }
 const introMediaTitle = ref(INTRO_DISPLAY['wolves-intro'].mediaTitle)
+
+/**
+ * Display metadata for whichever cut's opening segment is on stage.
+ *
+ * Back-navigation into the intro used to publish the standard Destiny plaque unconditionally,
+ * so a Director's Cut run showed the wrong chapter, artist and artwork the moment the
+ * audience stepped back into it.
+ */
+function openingIntroDisplay() {
+  return INTRO_DISPLAY[introVideos.value[0].id] ?? INTRO_DISPLAY['wolves-intro']
+}
 
 /**
  * Native start time forwarded to the intro overlay when a gallery thumbnail deep-links
@@ -142,7 +164,7 @@ async function enterIntro(startAtNativeTime: number | null = null, directorsCut 
   // index clamping, and TOTAL readout describe the intro actually playing.
   store.setIntroSequence(introVideos.value)
   store.enterIntro()
-  introMediaTitle.value = INTRO_DISPLAY[directorsCut ? 'wolves-prologue' : 'wolves-intro'].mediaTitle
+  introMediaTitle.value = openingIntroDisplay().mediaTitle
   await nextTick()
   if (unmounted || token !== handoffToken || store.phase !== 'intro') {
     return
@@ -256,7 +278,7 @@ async function restoreIntroForNavigation(): Promise<number | null> {
   if (unmounted || token !== handoffToken) {
     return null
   }
-  const meta = INTRO_DISPLAY['wolves-intro']
+  const meta = openingIntroDisplay()
   store.setDisplayOverride({
     ...meta,
     canPrevious: false,
