@@ -310,6 +310,11 @@ The general lesson: if a change adds a way for the runtime to *start audio* or
 *put something on air*, ask what stops that path running before the show has
 started. Then check that phase, not just the one you were working in.
 
+Lobby CTA edits need a lighter check: stub `WolvesCharacterGallery`,
+`WolvesQrCodes`, and `WolvesBackCatalogue` in the component test, then verify
+the teaser/button block still renders before the QR/back-catalogue stack and
+measure its bounds in Chromium at fixed desktop and mobile viewports.
+
 ### These harnesses need real playback, and CI Chromium has none
 
 Playwright's bundled Chromium ships without proprietary codecs, so YouTube answers
