@@ -42,6 +42,19 @@ window: `origin` identifies the IFrame API caller, `widget_referrer` identifies
 the embedding page and prevents an otherwise playable track from being treated as
 an unidentified player request.
 
+## Common Rationalizations
+
+- "The player reported the right time in a mock." Real IFrame readiness,
+  buffering, end-state, and error ordering still need a codec-capable browser
+  release check.
+- "A hidden iframe is prewarmed." `display: none` can prevent composition; keep
+  a pre-armed visual player rendered but invisible until its authored reveal.
+- "The final clock will finish the fade." The last-segment transport can stop
+  before another useful tick; terminal transitions need an explicit finished
+  state backstop.
+- "The standard profile test covers the Director's Cut." Profile-specific data
+  must be wired through the live component path and exercised in Chromium.
+
 ## Red Flags
 
 - Content work is used to justify component or style changes.

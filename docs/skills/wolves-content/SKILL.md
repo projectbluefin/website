@@ -79,6 +79,15 @@ of retyping it in the sequence. If an approved source does not name an
 individual artist, set `artist: null` and record an explicit uncredited state
 with the rights holder/source rather than inventing a name.
 
+## Common Rationalizations
+
+- "It is in an official press kit, so it is freely licensed." Availability is
+  not a reuse license; record the governing policy and approved usage basis.
+- "The audience will not notice one missing image." A late or failed image is a
+  visible broken beat in an unattended theater show; validate every local asset.
+- "A short quote can be paraphrased safely." Quotes and attribution are
+  authored content; preserve exact verified wording or omit them.
+
 ## Red Flags
 
 - A `.vue`, style, or runtime synchronization file changes.
@@ -100,7 +109,6 @@ with the rights holder/source rather than inventing a name.
 - `../editorial-provenance/SKILL.md`
 - `../validation/SKILL.md`
 - `../wolves-runtime-engineering/SKILL.md`
-
 ## Pages break at thoughts, not at character counts
 
 `splitReadableBeats()` splits on sentence punctuation and then on a character
