@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { estimatePageSeconds } from '../components/wolves/lore/lore-pages'
+import { DIRECTORS_CUT_DESTINY_CONCEPTS } from '../data/wolves-directors-cut-artwork'
 import {
   activeOverlayCue,
   activeOverlayText,
@@ -248,6 +249,15 @@ describe('wolves intro overlay sequence', () => {
       alternateYoutubeVideoId: 'BKm0TPqeOjY',
       alternateYoutubeVideoLabel: 'Ikora voice over',
     }))
+  })
+
+  it('keeps the standard intro free of the Director\'s Cut concept-art montage registry', () => {
+    const standardIntro = JSON.stringify(buildIntroVideoSequence())
+
+    for (const record of DIRECTORS_CUT_DESTINY_CONCEPTS) {
+      expect(standardIntro).not.toContain(record.id)
+      expect(standardIntro).not.toContain(record.localPath)
+    }
   })
 
   it('renames Robert Killen to Bob Killen without moving the authored guardian windows', () => {

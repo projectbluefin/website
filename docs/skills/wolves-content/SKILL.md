@@ -62,6 +62,20 @@ the existing filename so the generated wallpaper manifest stays unchanged.
 For a dinosaur addition, use the registry, supplied artwork, and supplied lore
 record. Do not invent names, scientific facts, pairings, or provenance.
 
+Approved third-party intro art ships as an explicit allowlist, not as ad-hoc
+URLs inside `buildDirectorsCutVideoSequence()`. Store the files locally at
+source geometry under `public/wolves-intro/<collection>/`, then register every
+approved image in a data ledger with its stable id, local path, artist, work
+title, authoritative source URL, exact upstream asset URL, retrieval date,
+policy URL, and usage basis. The scheduling task consumes that registry later;
+until then, keep the standard intro free of those ids and local paths with a
+test.
+
+When an intro beat is image-led and must carry provenance without painting a
+new caption over the frame, use `IntroOverlayTextCue.backgroundFigure` to
+publish accessible figure metadata (`label` + `credit`) instead of adding new
+visible chrome.
+
 ## Red Flags
 
 - A `.vue`, style, or runtime synchronization file changes.

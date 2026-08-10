@@ -935,6 +935,35 @@ AN4-ChK-12: Potential. Unlimited. Solution. Imagination. Probability? Most certa
 
     expect(wrapper.get('.wolves-intro-overlay-text').text()).toBe('and this one. The Blue Delivers. Buckle up, nerds —')
   })
+
+  it('publishes background figure metadata without painting a caption over the image', async () => {
+    const textSequence = [
+      {
+        id: 'wolves-prologue',
+        kind: 'text' as const,
+        duration: 5,
+        overlays: [{
+          text: '',
+          start: 0,
+          end: 5,
+          backgroundImage: 'wolves-intro/destiny-concepts/Destiny_2_Beyond_Light_Europa_Environment_01.jpg',
+          backgroundFigure: {
+            label: 'Europa environment by Bungie',
+            credit: 'Destiny 2 and related artwork © Bungie, Inc. Environment concept art by the credited artists.',
+          },
+        }],
+      },
+    ]
+    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    await flushPromises()
+
+    const scene = wrapper.get('.wolves-intro-overlay-scene')
+    expect(scene.attributes('role')).toBe('figure')
+    expect(scene.attributes('aria-label')).toBe('Europa environment by Bungie')
+    expect(scene.attributes('aria-description')).toBe('Destiny 2 and related artwork © Bungie, Inc. Environment concept art by the credited artists.')
+    expect(scene.find('.wolves-intro-overlay-burned-caption').exists()).toBe(false)
+  })
+
   it('still strips periods and commas for normal Gayane cues', async () => {
     const textSequence = [
       {

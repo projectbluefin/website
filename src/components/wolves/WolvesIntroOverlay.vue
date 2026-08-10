@@ -986,6 +986,9 @@ defineExpose({
             <div
               :key="activeSceneKey"
               class="wolves-intro-overlay-scene"
+              :role="activeCue?.backgroundFigure ? 'figure' : undefined"
+              :aria-label="activeCue?.backgroundFigure?.label"
+              :aria-description="activeCue?.backgroundFigure?.credit"
               :style="{ transitionDuration: `${PROLOGUE_SCENE_CROSSFADE_SECONDS}s` }"
             >
               <img

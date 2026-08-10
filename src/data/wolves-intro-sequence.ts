@@ -21,6 +21,13 @@ export interface IntroBackgroundCrossfade {
   readonly night: string
 }
 
+export interface IntroOverlayFigureMetadata {
+  /** Accessible figure label for an image-led cue. */
+  readonly label: string
+  /** Provenance or credit carried in assistive metadata, not painted on-screen. */
+  readonly credit: string
+}
+
 export interface IntroOverlayTextCue {
   readonly text: string
   readonly start: number
@@ -44,6 +51,8 @@ export interface IntroOverlayTextCue {
   readonly requiresCaptionToggle?: boolean
   /** Static background image shown behind the text for this cue only (e.g. a single hero photo). */
   readonly backgroundImage?: string
+  /** Accessible figure metadata for a background-led cue, without adding a visible caption. */
+  readonly backgroundFigure?: IntroOverlayFigureMetadata
   /** Renders a full-screen comic title card instead of the standard overlay treatment. */
   readonly comicHeroTitleCard?: boolean
   /**
