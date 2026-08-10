@@ -973,6 +973,43 @@ describe('director\'s cut finale companion styling', () => {
     const clauseRule = source.match(/\.wc-dcf-clause-text\s*\{[^}]*\}/)?.[0] ?? ''
     expect(clauseRule).toContain('var(--wc-dcf-clause-fade')
   })
+
+  it('sets the closing quote in the prologue\'s type, legibly over artwork', () => {
+    // The clause is the prologue's voice arriving at its conclusion, so it is
+    // set in the prologue's type rather than a treatment of its own. It shipped
+    // as sentence case in a heavy blue neon glow, which read as another show's
+    // caption dropped on the last beat.
+    const clauseRule = source.match(/\.wc-dcf-clause-text\s*\{[^}]*\}/)?.[0] ?? ''
+    const introSource = readFileSync(
+      resolve(process.cwd(), 'src/components/wolves/WolvesIntroOverlay.vue'),
+      'utf8',
+    )
+    const introCueRule = introSource.match(/\.wolves-intro-overlay-text\s*\{[^}]*\}/)?.[0] ?? ''
+    expect(introCueRule).not.toBe('')
+
+    // Family, weight, case and letter spacing are the prologue cue's, read from
+    // the prologue itself so the two cannot drift apart silently.
+    for (const declaration of [
+      'font-family: var(--wc-font-weyland',
+      'font-weight: 400',
+      'letter-spacing: 0.05em',
+      'text-transform: uppercase',
+    ]) {
+      expect(introCueRule, `prologue cue lost ${declaration}`).toContain(declaration)
+      expect(clauseRule, `clause lost ${declaration}`).toContain(declaration)
+    }
+
+    // …and the blue glow is gone.
+    expect(clauseRule).not.toMatch(/rgb\(125 211 252/)
+    expect(clauseRule).not.toContain('#dbeafe')
+
+    // The prologue cue sits on a black card and needs only a soft shadow. This
+    // sits on the Collapse painting, where light-on-mid-grey is the
+    // low-contrast defect a projector punishes, so it takes the hard black
+    // outline the intro uses for its own type over artwork.
+    expect(clauseRule).toContain('-webkit-text-stroke')
+    expect(clauseRule).toMatch(/3px 3px 0 #000/)
+  })
 })
 
 describe('director\'s cut finale chrome suppression', () => {

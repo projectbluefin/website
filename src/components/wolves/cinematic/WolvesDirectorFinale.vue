@@ -810,17 +810,40 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
 
 .wc-dcf-clause-text {
   margin: 0;
-  font-family: var(--wc-font-weyland);
-  font-size: clamp(4.4rem, 7vw, 9rem);
+  /* The closing quote is the prologue's voice arriving at its conclusion, so it
+     is set in the prologue's type: same Weyland-era family, same single weight,
+     same uppercase, same letter spacing. It previously carried a heavy blue
+     neon glow in sentence case, which read as a different show's caption
+     dropped on the last beat.
+
+     The *legibility* treatment is the intro's other one. `.wolves-intro-overlay-text`
+     gets away with a soft drop shadow because it sits on a black card; this sits
+     on the Collapse painting, where light grey on mid-grey is exactly the
+     low-contrast defect a projector punishes. So it takes the hard black
+     outline the intro uses for its own type over artwork
+     (`.wolves-intro-overlay-title-card-line`): the letterform stays Michroma,
+     and the frame behind it stops competing with it.
+
+     Size differs from the prologue cue deliberately: that is a full sentence low
+     in the frame, this is three words centred on the climax. Michroma is a very
+     wide face, so the uppercase clause is verified in Chromium at 1600x900 and
+     390x844 rather than assumed to fit. */
+  font-family: var(--wc-font-weyland, 'Michroma', 'Arial Narrow', sans-serif);
+  font-size: clamp(3.2rem, 5vw, 6.4rem);
   font-weight: 400;
-  line-height: 1.12;
-  letter-spacing: 0.1em;
-  color: #dbeafe;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #f4f6f8;
   text-shadow:
-    0 0 14px rgb(125 211 252 / 100%),
-    0 0 38px rgb(59 130 246 / 92%),
-    0 0 82px rgb(37 99 235 / 68%),
-    0 0 24px rgb(8 9 12 / 90%);
+    -3px -3px 0 #000,
+    3px -3px 0 #000,
+    -3px 3px 0 #000,
+    3px 3px 0 #000,
+    0 0 28px rgb(0 0 0 / 92%),
+    0 0 64px rgb(0 0 0 / 70%);
+  -webkit-text-stroke: 2.8px #000;
+  paint-order: stroke fill;
   opacity: 1;
   transition: opacity var(--wc-dcf-clause-fade, 1.1s) linear;
 }
@@ -882,7 +905,10 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
   }
 
   .wc-dcf-clause-text {
-    font-size: clamp(3.2rem, 9vw, 5.6rem);
+    // Uppercase Michroma is far wider than the sentence-case treatment this
+    // replaced, so the narrow band drops a step rather than inheriting a size
+    // that wraps to four lines on a phone.
+    font-size: clamp(2.4rem, 6.4vw, 4rem);
   }
 }
 </style>
