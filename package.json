@@ -17,6 +17,7 @@
     "update:wolves-playlist": "node scripts/update-wolves-playlist.js",
     "update:back-catalogue": "node scripts/update-back-catalogue.js",
     "record:wolves": "node record-wolves.cjs",
+    "render:wolves-scenes": "node scripts/wolves-scenes/render-scenes.js",
     "generate:wolves-qrs": "node scripts/generate-qrs.js",
     "check:docs": "node scripts/check-docs.mjs"
   },

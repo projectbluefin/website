@@ -77,12 +77,39 @@ record. Do not invent names, scientific facts, pairings, or provenance.
 - [ ] Affected player timestamps were checked when applicable.
 - [ ] `../validation/SKILL.md` is complete.
 
+## Reusable scene masters
+
+Use `../../reference/wolves-scene-library.md` when the owner asks for video
+scenes that will be assembled later.
+
+- Record every retained window against the source video's native clock.
+- Keep source media outside git under `/var/tmp/website-agent/`.
+- Resolve face, person, logo, or title-card exclusions at complete camera-shot
+  boundaries and generate a contact sheet for review.
+- Keep reusable masters silent and preserve source dimensions and frame rate.
+- Store title replacements and Guardian nameplates as timed metadata unless the
+  owner explicitly requests a burned-in derivative.
+- Probe every output for one video stream, zero audio streams, expected
+  duration, and codec before staging it.
+- Confirm every MP4 is covered by Git LFS.
+
+FFmpeg input `-ss` seeking remains accurate while transcoding because FFmpeg
+decodes and discards frames between the preceding seek point and the requested
+timestamp. Use `-t` for the retained duration, `-map 0:v:0` with `-an` for a
+video-only output, and verify the resulting streams independently.
+
 ## References
 
 - `../../reference/wolves-runtime.md`
+- `../../reference/wolves-scene-library.md`
 - `../editorial-provenance/SKILL.md`
 - `../validation/SKILL.md`
 - `../wolves-runtime-engineering/SKILL.md`
+
+## Sources
+
+- FFmpeg CLI options and accurate input seeking:
+  Context7 `/websites/ffmpeg_documentation`
 
 ## Pages break at thoughts, not at character counts
 

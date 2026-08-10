@@ -97,5 +97,6 @@ roles separate.
 - [`reference/wolves-lore-timing.md`](reference/wolves-lore-timing.md)
 - [`reference/wolves-slide-scheduling.md`](reference/wolves-slide-scheduling.md)
 - [`reference/wolves-test-harnesses.md`](reference/wolves-test-harnesses.md)
+- [`reference/wolves-scene-library.md`](reference/wolves-scene-library.md)
 - [`architecture/application-map.md`](architecture/application-map.md)
 - [`architecture/runtime-data-flow.md`](architecture/runtime-data-flow.md)

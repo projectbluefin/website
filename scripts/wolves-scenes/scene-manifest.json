@@ -1,0 +1,183 @@
+{
+  "version": 1,
+  "audio": "none",
+  "sources": [
+    {
+      "id": "destiny-final-shape-archive",
+      "youtubeId": "Bq-tjhfSLQA",
+      "title": "Destiny 2: Cutscene Archive | The Final Shape",
+      "inputFile": "Bq-tjhfSLQA.mp4",
+      "selections": [
+        { "id": "destiny-final-shape-archive-001", "start": 26, "end": 31, "label": "Final Shape archive 00:26-00:31" },
+        { "id": "destiny-final-shape-archive-002", "start": 177, "end": 371, "label": "Final Shape archive 02:57-06:11" },
+        { "id": "destiny-final-shape-archive-003", "start": 1411, "end": 1428, "label": "Final Shape archive 23:31-23:48" },
+        { "id": "destiny-final-shape-archive-004", "start": 2130, "end": 2161, "label": "Final Shape archive 35:30-36:01" }
+      ],
+      "overlays": [
+        {
+          "sceneId": "destiny-final-shape-archive-002",
+          "kind": "replace-title",
+          "start": 62,
+          "endRule": "next-hard-cut",
+          "text": "Project Bluefin"
+        },
+        {
+          "sceneId": "destiny-final-shape-archive-002",
+          "kind": "guardian-nameplate",
+          "start": 89,
+          "endRule": "next-hard-cut",
+          "text": "Ahmed Adan",
+          "role": "Warlock"
+        }
+      ]
+    },
+    {
+      "id": "laura-factory-intro",
+      "youtubeId": "h-5S82ETKvI",
+      "title": "Destiny 2: Beyond Light - Reveal Trailer",
+      "inputFile": "h-5S82ETKvI.mp4",
+      "selections": [
+        { "id": "laura-factory-intro-001", "start": 0, "end": 15, "label": "Laura factory intro 00:00-00:15" },
+        { "id": "laura-factory-intro-002", "start": 19, "end": 27, "label": "Laura factory intro 00:19-00:27" },
+        { "id": "laura-factory-intro-003", "start": 30, "end": 55, "label": "Laura factory intro 00:30-00:55" },
+        { "id": "laura-factory-intro-004", "start": 60, "end": 66, "label": "Laura factory intro 01:00-01:06" },
+        { "id": "laura-factory-intro-005", "start": 69, "end": 75, "label": "Laura factory intro 01:09-01:15" },
+        { "id": "laura-factory-intro-006", "start": 82, "end": 88, "label": "Laura factory intro 01:22-01:28" },
+        { "id": "laura-factory-intro-007", "start": 91, "end": 94, "label": "Laura factory intro 01:31-01:34" },
+        { "id": "laura-factory-intro-008", "start": 104, "end": 108, "label": "Laura factory intro 01:44-01:48" }
+      ]
+    },
+    {
+      "id": "europa-gameplay",
+      "youtubeId": "Ms90okhAbTw",
+      "title": "Destiny 2: Beyond Light - Gameplay Trailer",
+      "inputFile": "Ms90okhAbTw.mp4",
+      "selections": [
+        { "id": "europa-gameplay-001", "start": 11, "end": 12, "label": "Europa gameplay 00:11-00:12" },
+        { "id": "europa-gameplay-002", "start": 13, "end": 17, "label": "Europa gameplay 00:13-00:17" },
+        { "id": "europa-gameplay-003", "start": 18, "end": 19, "label": "Europa gameplay 00:18-00:19" },
+        { "id": "europa-gameplay-004", "start": 31, "end": 35, "label": "Europa gameplay 00:31-00:35" }
+      ]
+    },
+    {
+      "id": "europa-solar-system",
+      "youtubeId": "buh6WERf-zY",
+      "title": "Destiny 2: The Edge of Fate | Cinematic Trailer",
+      "inputFile": "buh6WERf-zY.mp4",
+      "selections": [
+        { "id": "europa-solar-system-001", "start": 25, "end": 31, "label": "Europa 00:25-00:31" },
+        { "id": "europa-solar-system-002", "start": 39, "end": 53, "label": "Solar system 00:39-00:53" }
+      ]
+    },
+    {
+      "id": "europa-mars-prologue",
+      "youtubeId": "YLWhu20p-KQ",
+      "title": "Destiny 2 Expansion II: Warmind Prologue Cinematic",
+      "inputFile": "YLWhu20p-KQ.mp4",
+      "selections": [],
+      "reviewPolicy": {
+        "kind": "exclude-face-shots",
+        "start": 0,
+        "end": 94
+      }
+    },
+    {
+      "id": "crypt",
+      "youtubeId": "2vnx-ifWJyw",
+      "title": "Clovis Bray, Deep Stone Crypt, Beyond Light Raid Teaser",
+      "inputFile": "2vnx-ifWJyw.mp4",
+      "selections": [
+        { "id": "crypt-001", "start": 0, "end": 30, "label": "Deep Stone Crypt teaser" }
+      ]
+    },
+    {
+      "id": "crypt-echoes",
+      "youtubeId": "cMtE1and3ug",
+      "title": "Destiny 2: Echoes | Act 3 Trailer",
+      "inputFile": "cMtE1and3ug.mp4",
+      "selections": [
+        { "id": "crypt-echoes-001", "start": 0, "end": 4, "label": "Echoes opening" }
+      ]
+    },
+    {
+      "id": "final-shape-guardians",
+      "youtubeId": "UchfadQhX7w",
+      "title": "Destiny 2: The Final Shape | Gameplay Trailer",
+      "inputFile": "UchfadQhX7w.mp4",
+      "selections": [
+        { "id": "final-shape-guardians-cortney", "start": 45, "end": 54, "label": "Cortney Nickerson" },
+        { "id": "final-shape-guardians-kat", "start": 77, "end": 82, "label": "Kat Cosgrove" },
+        { "id": "final-shape-guardians-kaslin", "start": 83, "end": 87, "label": "Kaslin Fields" },
+        { "id": "final-shape-guardians-laura", "start": 91, "end": 97, "label": "Laura Santamaria" }
+      ]
+    },
+    {
+      "id": "saint-14",
+      "youtubeId": "0B9v8VoZrMU",
+      "title": "Destiny 2: Season of the Splicer - The Saint Bedtime Story",
+      "inputFile": "0B9v8VoZrMU.mp4",
+      "selections": [
+        { "id": "saint-14-001", "start": 13, "end": "source-end", "label": "Saint-14 from 00:13" }
+      ]
+    },
+    {
+      "id": "gardener-winnower",
+      "youtubeId": "Z0CKckjryVI",
+      "title": "Destiny 2: Season of the Deep - The Witness Origins Cinematic",
+      "inputFile": "Z0CKckjryVI.mp4",
+      "selections": [
+        { "id": "gardener-winnower-001", "start": 18, "end": 68, "label": "Gardener and Winnower 00:18-01:08" },
+        { "id": "gardener-winnower-002", "start": 81, "end": 143, "label": "Gardener and Winnower 01:21-02:23" }
+      ]
+    },
+    {
+      "id": "dredgen",
+      "youtubeId": "esFPGaptCdg",
+      "title": "Destiny 2: Renegades | Cinematic Trailer",
+      "inputFile": "esFPGaptCdg.mp4",
+      "selections": [
+        { "id": "dredgen-001", "start": 13, "end": "source-end", "label": "Dredgen from 00:13" }
+      ]
+    },
+    {
+      "id": "edge-of-fate",
+      "youtubeId": "Pjcdp6QohWg",
+      "title": "Destiny 2: Heresy | Following The Trail Cinematic",
+      "inputFile": "Pjcdp6QohWg.mp4",
+      "selections": [
+        { "id": "edge-of-fate-001", "start": 0, "end": 53, "label": "Edge of Fate full source" }
+      ]
+    },
+    {
+      "id": "final-shape-launch",
+      "youtubeId": "6Gm5mbwrqSA",
+      "title": "Destiny 2: The Final Shape | Launch Trailer",
+      "inputFile": "6Gm5mbwrqSA.mp4",
+      "selections": [
+        { "id": "final-shape-launch-002", "start": 53, "end": 66, "label": "Final Shape launch 00:53-01:06" },
+        { "id": "final-shape-launch-003", "start": 69, "end": 70, "label": "Final Shape launch 01:09-01:10" },
+        { "id": "final-shape-launch-004", "start": 74, "end": 79, "label": "Final Shape launch 01:14-01:19" },
+        { "id": "final-shape-launch-005", "start": 89, "end": 90, "label": "Final Shape launch 01:29-01:30" },
+        { "id": "final-shape-launch-006", "start": 101, "end": 118, "label": "Final Shape launch 01:41-01:58" },
+        { "id": "final-shape-launch-007", "start": 121, "end": 132, "label": "Final Shape launch 02:01-02:12" }
+      ],
+      "reviewPolicy": {
+        "kind": "exclude-title-card",
+        "start": 0,
+        "end": 53
+      }
+    },
+    {
+      "id": "beyond-the-infinite",
+      "youtubeId": "LobB2UX1nKw",
+      "title": "2001: A Space Odyssey (1968) - Jupiter and Beyond the Infinite",
+      "inputFile": "LobB2UX1nKw.mp4",
+      "selections": [],
+      "reviewPolicy": {
+        "kind": "exclude-astronaut-shots",
+        "start": 0,
+        "end": "source-end"
+      }
+    }
+  ]
+}
