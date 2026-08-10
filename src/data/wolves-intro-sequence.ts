@@ -421,22 +421,32 @@ export const TEXT_SEGMENT_END_SLACK_SECONDS = 1
 export const TEXT_SEGMENT_STALL_GRACE_SECONDS = 3
 
 /**
+ * Whether an end-of-track signal arriving at this elapsed time can be believed.
+ *
+ * `ENDED` and a frozen clock both claim "the track is over", and both are only credible inside
+ * the source's measured silent tail. A YouTube embed also publishes state changes around ad
+ * breaks, and a mid-roll ad freezes the main video's clock at a nonzero time — so an `ENDED`
+ * from the body of the piece is an ad or a dead upload, and believing it would cut the scored
+ * act short in front of a live room. The caller hands the card back to its own clock instead.
+ */
+export function isInsideTrackEndWindow(segment: IntroTextSegment, elapsed: number): boolean {
+  return elapsed >= segment.duration - TEXT_SEGMENT_END_SLACK_SECONDS
+}
+
+/**
  * Whether a `text` segment should auto-advance, given its elapsed clock and whatever the real
  * background audio player is reporting.
  *
- * Three ways a card ends, in order of authority:
+ * Two ways a card ends:
  *
  * 1. Its authored duration elapsed — the normal path, unchanged.
- * 2. The player published `ENDED`. Authoritative even below the authored duration, because the
- *    music is demonstrably over. Trusted only once the clock has actually started: a pre-roll
- *    ad holds the main video's clock at 0, and reading an ad's end as the track's end would
- *    skip the entire scored act on the cold open.
- * 3. The clock froze inside the track's silent tail for longer than the stall grace — the
- *    bounded backstop for a player that plateaus short of its own duration and never fires
- *    `ENDED` at all.
+ * 2. Inside the track's measured silent tail, the player either published `ENDED` or its clock
+ *    froze for longer than the stall grace. This is the backstop for a player that plateaus
+ *    short of the duration it reports, and it is deliberately the *only* window in which an
+ *    end-of-track claim is believed.
  *
- * A silent card (no audio embed) drives `elapsed` from its own origin, never stalls, and so
- * only ever ends via (1).
+ * A silent card (no audio embed) drives `elapsed` from its own origin, never stalls and never
+ * publishes a player state, so it only ever ends via (1).
  */
 export function isTextSegmentComplete(
   segment: IntroTextSegment,
@@ -446,11 +456,10 @@ export function isTextSegmentComplete(
   if (elapsed >= segment.duration) {
     return true
   }
-  if (clock.ended && elapsed > 0) {
-    return true
+  if (!isInsideTrackEndWindow(segment, elapsed)) {
+    return false
   }
-  return elapsed >= segment.duration - TEXT_SEGMENT_END_SLACK_SECONDS
-    && (clock.stalledSeconds ?? 0) >= TEXT_SEGMENT_STALL_GRACE_SECONDS
+  return Boolean(clock.ended) || (clock.stalledSeconds ?? 0) >= TEXT_SEGMENT_STALL_GRACE_SECONDS
 }
 
 /**

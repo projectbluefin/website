@@ -57,9 +57,14 @@ an unidentified player request.
   `getCurrentTime()` routinely plateaus below the duration it reports for the
   same upload, so a card authored to its source's full container hangs on its
   last cue with no way to recover live. Take the completion signal from the
-  player: its `ENDED` state, its `onError`, and a bounded stall watchdog scoped
-  to the track's measured silent tail — never by shortening the authored music,
-  and never by running a wall clock alongside the audio clock.
+  player: its `ENDED` state, its `onError`, and a bounded stall watchdog — never
+  by shortening the authored music, and never by running a wall clock alongside
+  the audio clock.
+- An `ENDED` from the background audio embed is trusted outside the track's
+  measured silent tail. A YouTube embed publishes state around ad breaks and a
+  mid-roll ad freezes the clock at a *nonzero* time, so believing that signal
+  mid-piece trades a hang for a truncation — it ends the scored act in front of
+  the room. Scope every end-of-track claim to the same measured window.
 - A background audio embed is constructed with `events: {}`. That embed is the
   scored card's clock; with no `onStateChange`/`onError` the card has no way to
   learn the clock died.

@@ -103,30 +103,39 @@ duration it reports — a routine YouTube behaviour. The failure is not a glitch
 closing title sits on a theater screen forever, unattended, with no way to recover
 live.
 
-`isTextSegmentComplete()` takes the player's own signals and ends the card three
-ways, in order of authority:
+`isTextSegmentComplete()` takes the player's own signals and ends the card two ways:
 
 1. **Authored duration elapsed** — the normal path.
-2. **The embed published `ENDED`** — authoritative wherever the clock got to, because
-   the music is demonstrably over. Trusted only once `elapsed > 0`, so an ad's end
-   cannot be read as the track's end and skip the entire scored act on the cold open.
-3. **The clock froze inside the track's silent tail** for longer than
-   `TEXT_SEGMENT_STALL_GRACE_SECONDS` (3s), within `TEXT_SEGMENT_END_SLACK_SECONDS`
-   (1s) of the authored end. This is the bounded backstop for a plateau that never
-   fires `ENDED`, and its whole window sits after the Gayane source's last audible
-   sample (321.34s), so it can only ever give back silence — never a note.
+2. **Inside the track's measured silent tail**, the embed either published `ENDED`
+   or its clock froze for longer than `TEXT_SEGMENT_STALL_GRACE_SECONDS` (3s). That
+   window is `TEXT_SEGMENT_END_SLACK_SECONDS` (1s) wide, and it is deliberately the
+   *only* place an end-of-track claim is believed.
 
-Two rules this encodes:
+Scoping both signals to the same window matters, and the asymmetry is a trap worth
+naming: a YouTube embed publishes state changes around ad breaks, and a mid-roll ad
+freezes the main video's clock at a **nonzero** time. A rule that trusted `ENDED`
+anywhere the clock had started would end a 325.6s scored act at, say, 120s — live,
+unrecoverably — trading a hang for a truncation. An `ENDED` from the body of the
+piece is therefore not believed; the card is handed back to its own clock instead.
+
+The window itself sits entirely after the Gayane source's last audible sample
+(321.34s, against a 325.6s container), so the backstop can only ever give back
+silence, never a note.
+
+Three rules this encodes:
 
 - **The handlers raise flags; the 100ms tick decides.** `onStateChange` and `onError`
   never call `advance()` themselves. One decision point is what makes "advances
   exactly once" true no matter which signals arrive, in which order, or how late.
-- **A dead clock is replaced, not raced.** On `onError`, or on an `ENDED` that lands
-  before the track ever started, `releaseAudioClock()` rebases the card's own origin
-  clock to the current elapsed and the card plays its authored windows out in silence.
-  That is not a second clock running alongside the music; the clock it replaces has
-  stopped existing. Advancing instead would throw away the whole narrated act, and
-  waiting would freeze on whichever cue was on screen.
+- **A dead clock is replaced, not raced.** On `onError`, or on an `ENDED` outside the
+  end window, `releaseAudioClock()` rebases the card's own origin clock to the current
+  elapsed and the card plays its authored windows out in silence. Advancing instead
+  would throw away the whole narrated act, and waiting would freeze on whichever cue
+  was on screen.
+- **A released clock is watched, not abandoned.** The tick keeps reading the real
+  clock, and the moment it moves past where it stopped the card snaps back to it and
+  clears the end flag. An ad break therefore costs the music, not the synchronisation:
+  the player's clock is still the only thing this show is ever in sync with.
 
 Constructing a background audio embed with `events: {}` is the defect this section
 exists for.

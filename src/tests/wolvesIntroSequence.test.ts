@@ -9,6 +9,7 @@ import {
   buildIntroVideoSequence,
   buildOverlayTextParts,
   createIntroSequenceState,
+  isInsideTrackEndWindow,
   isTextSegment,
   isTextSegmentComplete,
   isVideoCutoffReached,
@@ -95,16 +96,27 @@ describe('wolves intro overlay sequence', () => {
     expect(isTextSegmentComplete(segment, 45)).toBe(true)
   })
 
-  it('completes a scored card on the real player\'s ENDED state even when its clock plateaus short', () => {
+  it('completes a scored card on the real player\'s ENDED state when its clock plateaus short', () => {
     const segment = { id: 'wolves-prologue', kind: 'text' as const, duration: 325.6, audioYoutubeVideoId: 'EB3IokHelRk' }
 
     // The hang this exists to prevent: a real player whose clock stops below the authored end.
     expect(isTextSegmentComplete(segment, 325.58)).toBe(false)
     expect(isTextSegmentComplete(segment, 325.58, { ended: true })).toBe(true)
-    // ENDED is authoritative wherever the clock got to, not only at the very end.
-    expect(isTextSegmentComplete(segment, 120, { ended: true })).toBe(true)
-    // ...but never before the track started: a pre-roll ad's end must not skip the whole act.
+    expect(isTextSegmentComplete(segment, segment.duration - TEXT_SEGMENT_END_SLACK_SECONDS, { ended: true })).toBe(true)
+  })
+
+  it('refuses an ENDED from outside the silent tail, so an ad break cannot cut the act short', () => {
+    const segment = { id: 'wolves-prologue', kind: 'text' as const, duration: 325.6, audioYoutubeVideoId: 'EB3IokHelRk' }
+
+    // A YouTube embed publishes state around ad breaks, and a mid-roll ad freezes the main
+    // video's clock at a nonzero time. Believing an ENDED there would end a 325.6s scored act
+    // in the middle of the piece, in front of a live room.
+    expect(isTextSegmentComplete(segment, 120, { ended: true })).toBe(false)
     expect(isTextSegmentComplete(segment, 0, { ended: true })).toBe(false)
+    expect(isTextSegmentComplete(segment, segment.duration - TEXT_SEGMENT_END_SLACK_SECONDS - 0.01, { ended: true })).toBe(false)
+    // The window an end-of-track claim is believed in is the same for both signals.
+    expect(isInsideTrackEndWindow(segment, 120)).toBe(false)
+    expect(isInsideTrackEndWindow(segment, segment.duration - TEXT_SEGMENT_END_SLACK_SECONDS)).toBe(true)
   })
 
   it('completes a scored card whose clock freezes inside the track\'s silent tail', () => {

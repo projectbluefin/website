@@ -14,6 +14,7 @@ import {
   advanceIntroSequence,
   buildOverlayTextParts,
   createIntroSequenceState,
+  isInsideTrackEndWindow,
   isTextSegment,
   isTextSegmentComplete,
   isVideoSegment,
@@ -605,15 +606,15 @@ function advance() {
 }
 
 /**
- * Hand a scored card back to its own origin clock after the background audio dies — a player
- * error, or an `ENDED` that lands before the track ever started (a pre-roll ad, a dead or
- * region-blocked upload).
+ * Hand a scored card back to its own origin clock when the background audio stops being one — a
+ * player error, or an `ENDED` that arrives outside the track's measured silent tail (an ad
+ * break, a dead or region-blocked upload).
  *
- * This is not a second clock running alongside the music: it replaces a clock that has stopped
- * existing. Without it the card would freeze on whichever cue was on screen, because every
- * later cue keys off an audio clock that will never move again. With it, the authored windows
- * still play out in silence and the card still ends where it was written to end — which is the
- * only outcome a live room can survive.
+ * This is not a second clock running alongside the music. It is provisional: the tick keeps
+ * watching the real clock, and the moment it moves again the card snaps straight back to it.
+ * Without it the card would freeze on whichever cue was on screen, because every later cue keys
+ * off an audio clock that will never move again; with it, the authored windows still play out
+ * and the card still ends where it was written to end — the only outcome a live room survives.
  */
 function releaseAudioClock() {
   audioClockReleased = true
@@ -660,11 +661,6 @@ async function loadAudioTrack(youtubeVideoId: string | undefined, token: number)
         if (token !== loadToken || event.data !== getYoutubePlayerState().ENDED) {
           return
         }
-        if (currentTime.value <= 0) {
-          // The track never started, so this is an ad's end or a dead upload, not the music's.
-          releaseAudioClock()
-          return
-        }
         audioTrackEnded = true
       },
       onError: () => {
@@ -697,14 +693,23 @@ function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
     // Ad resilience: when a background audio embed exists, cues key off the
     // audio's real getCurrentTime(). Pre-roll ads hold it at 0 and mid-roll ads
     // freeze it, so the cold open waits for the music instead of desyncing.
-    if (audioPlayer && !audioClockReleased && typeof audioPlayer.getCurrentTime === 'function') {
-      const reading = audioPlayer.getCurrentTime() ?? 0
+    const audioClock = audioPlayer && typeof audioPlayer.getCurrentTime === 'function'
+      ? (audioPlayer.getCurrentTime() ?? 0)
+      : null
+    // A released clock is watched, not abandoned. The moment the player's own clock moves again
+    // — an ad finished, a stalled stream recovered — the card snaps back to the music, which is
+    // the only thing it is ever allowed to synchronise with.
+    if (audioClock != null && audioClockReleased && audioClock > (lastAudioClockReading ?? 0)) {
+      audioClockReleased = false
+      audioTrackEnded = false
+    }
+    if (audioClock != null && !audioClockReleased) {
       // Watchdog only, never a cue source: how long the player's own clock has sat on the
       // identical reading. A playing player reports a new value every tick, so any repeat is
       // buffering, an ad, or the end of the track — `isTextSegmentComplete` decides which.
-      audioClockStalledMs = reading === lastAudioClockReading ? audioClockStalledMs + TEXT_CLOCK_TICK_MS : 0
-      lastAudioClockReading = reading
-      currentTime.value = reading
+      audioClockStalledMs = audioClock === lastAudioClockReading ? audioClockStalledMs + TEXT_CLOCK_TICK_MS : 0
+      lastAudioClockReading = audioClock
+      currentTime.value = audioClock
     }
     else {
       // A silent card (the presenter's welcome slide) has no player to read, so it
@@ -714,6 +719,11 @@ function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
       // played in 29.5s and nobody in the back row finished a paragraph — and never
       // accumulate deltas, which drifts over a card this long.
       currentTime.value = (now - textClockOriginMs) / 1000
+    }
+    // An `ENDED` from outside the source's measured silent tail is an ad break or a dead
+    // upload, not the end of the music: believing it would cut the scored act short mid-piece.
+    if (audioTrackEnded && !audioClockReleased && !isInsideTrackEndWindow(segment, currentTime.value)) {
+      releaseAudioClock()
     }
     // Authored musical fade: ramp the audio down across the excerpt's final
     // seconds so it ends on the phrase's own decay instead of a hard cut. The

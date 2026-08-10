@@ -1467,7 +1467,7 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     expect(afterAsking.captionsEnabled).toBe(false)
   })
 
-  it('waits for the music when the audio clock freezes mid-piece, then advances exactly once on the real ENDED signal', async () => {
+  it('refuses a mid-piece ENDED and plays the act out on its own clock, advancing exactly once', async () => {
     const wrapper = await mountDirectorsCut()
     const audio = players[0]
 
@@ -1480,16 +1480,50 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     expect(latestStatus(wrapper).currentTime).toBeCloseTo(GAYANE_TRACK_SECONDS - 5)
     expect(players).toHaveLength(1)
 
-    // The real player's own end state is what releases it. Without this backstop the closing
-    // title sits on a theater screen forever, because the clock never reaches 325.6s.
+    // An ENDED from outside the measured silent tail is an ad break, not the music ending.
+    // Believing it would cut a 325.6s scored act short in front of a live room.
     audio.triggerEnded()
-    await vi.advanceTimersByTimeAsync(200)
+    await vi.advanceTimersByTimeAsync(1000)
+    await flushPromises()
+    expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
+    // The card took its own clock over from where the music stopped rather than freezing,
+    // and did not restart it from zero.
+    expect(latestStatus(wrapper).currentTime).toBeGreaterThan(GAYANE_TRACK_SECONDS - 5)
+    expect(latestStatus(wrapper).currentTime).toBeLessThan(GAYANE_TRACK_SECONDS - 3.5)
+
+    await vi.advanceTimersByTimeAsync(5000)
     await flushPromises()
 
     expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_DESTINY_SEGMENT_ID)
     expect(players[players.length - 1].videoId).toBe(IKORA_SOURCE_VIDEO_ID)
     // Exactly once: a second advance would run off the end of this two-segment cut and
     // complete the intro, dropping the audience straight into Track 0.
+    expect(wrapper.emitted('complete')).toBeUndefined()
+  })
+
+  it('snaps back to the music when the audio clock starts moving again after an ad', async () => {
+    const wrapper = await mountDirectorsCut()
+    const audio = players[0]
+
+    audio.setCurrentTime(100)
+    await vi.advanceTimersByTimeAsync(200)
+    await flushPromises()
+
+    // Ad break: the embed publishes ENDED with the track's clock frozen mid-piece.
+    audio.triggerEnded()
+    await vi.advanceTimersByTimeAsync(2000)
+    await flushPromises()
+    expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
+    expect(latestStatus(wrapper).currentTime).toBeGreaterThan(101)
+
+    // The ad finishes and the music resumes. The card must go straight back to the player's
+    // clock — the only thing it is allowed to synchronise with — not keep its own.
+    audio.setCurrentTime(100.4)
+    await vi.advanceTimersByTimeAsync(300)
+    await flushPromises()
+
+    expect(latestStatus(wrapper).currentTime).toBeCloseTo(100.4)
+    expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
     expect(wrapper.emitted('complete')).toBeUndefined()
   })
 
