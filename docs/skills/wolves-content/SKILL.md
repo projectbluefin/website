@@ -33,9 +33,10 @@ source video's native clock. `startOffset` is the exact source start timestamp
 in seconds, `maxDuration` is the exact source end timestamp in seconds, and any
 overlay cue windows on those segments stay absolute too — do not rebase them to
 segment-relative `0`, or the authored source timing and tests drift.
-When the owner asks to retain a clip with no text edit, put it in its
-`~/Videos/<collection>/` folder and use the owner-requested tag. Do not invent
-a repository media directory or a tagging workflow.
+Use `~/Videos/` as the shared local scratch space for source clips and previews
+the owner needs to review. Keep future video work together there, use the
+owner-requested tag, and do not invent a repository media directory or a
+separate scratch location.
 
 For a visible WebP quality regression, compare the optimized asset with its
 approved source at identical dimensions. Recover only demonstrated high-loss
