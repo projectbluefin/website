@@ -150,6 +150,17 @@ function installMockIframeApi() {
 
     getVideoData = vi.fn(() => ({ video_id: this.videoId }))
 
+    /**
+     * Modules the overlay asked the player to tear out. The real embed exposes
+     * `unloadModule` for this; a double without it would let a regression that
+     * stops suppressing YouTube's captions pass silently.
+     */
+    unloadedModules: string[] = []
+
+    unloadModule = vi.fn((module: string) => {
+      this.unloadedModules.push(module)
+    })
+
     cuedAt: number | null = null
     muted = false
     muteLog: boolean[] = []
@@ -202,6 +213,15 @@ function installMockIframeApi() {
 
     triggerReady() {
       this.config.events?.onReady?.({ target: this })
+    }
+
+    /**
+     * The real player fires this when it loads or unloads a module — which is
+     * how the caption module arrives, well after `onReady`, once the stream's
+     * own caption track resolves.
+     */
+    triggerApiChange() {
+      this.config.events?.onApiChange?.({ target: this })
     }
 
     triggerEnded() {
@@ -342,6 +362,32 @@ describe('wolvesIntroOverlay video segments', () => {
 
     expect(players[0].config.playerVars.cc_load_policy).toBe(0)
     expect(players[0].config.playerVars.controls).toBe(0)
+  })
+
+  it('unloads the caption module, because cc_load_policy is only a default', async () => {
+    mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
+    await flushPromises()
+    resolveIframeApi()
+    await flushPromises()
+
+    // A viewer whose YouTube account prefers captions gets them regardless of
+    // `cc_load_policy`, and there is nobody in the theater to dismiss them.
+    players[0].triggerReady()
+    await flushPromises()
+
+    expect(players[0].unloadedModules).toContain('captions')
+    expect(players[0].unloadedModules).toContain('cc')
+
+    // The module can arrive after `onReady`, when the stream's own caption
+    // track resolves. `onApiChange` is the event for exactly that, so the
+    // suppression has to be re-applied there or it only held for a player that
+    // never had captions in the first place.
+    players[0].unloadedModules.length = 0
+    players[0].triggerApiChange()
+    await flushPromises()
+
+    expect(players[0].unloadedModules).toContain('captions')
+    expect(players[0].unloadedModules).toContain('cc')
   })
 
   it('advances to done and emits complete when the video ends', async () => {

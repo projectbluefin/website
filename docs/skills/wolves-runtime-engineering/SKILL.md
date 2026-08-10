@@ -194,6 +194,13 @@ an unidentified player request.
   holding the *next* segment is discarded.
 - A prewarm is silenced with `setVolume(0)` instead of `mute()`, or a path that
   puts a side on air forgets to lift the mute.
+- YouTube's own captions are suppressed with `cc_load_policy: 0` alone. That is a
+  default a viewer preference overrides; the module has to be unloaded, on
+  `onApiChange` as well as `onReady`. See
+  `../../reference/wolves-intro-and-overlay.md`.
+- A background layer's progress is derived from a hardcoded segment count, or
+  animated with a curve that returns to where it started. See
+  `../../reference/wolves-slide-scheduling.md` on the wallpaper ramp.
 - A warmed player is promoted with `loadVideoById()` or a second `seekTo()`. The
   warm buffer is already cued to its opening frame; reloading it discards the
   warm and reintroduces the stutter the prewarm existed to remove. Promote by

@@ -7,6 +7,7 @@ import {
   getYoutubePlayerState,
   invalidateYoutubeIframeApiLoad,
   loadYoutubeIframeApi,
+  suppressYoutubeCaptions,
 } from '@/composables/useYoutubeIframeApi'
 import {
   PRE_END_THRESHOLD_S,
@@ -717,7 +718,16 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
         height: '100%',
         playerVars: getChromeFreeYoutubePlayerVars(),
         events: {
-          onReady: () => resolveReady(player),
+          // The cinematic tracks are music videos with their own caption
+          // tracks. Suppressed here for the same reason as the intro: a viewer
+          // preference for captions otherwise paints YouTube's own subtitles
+          // over the projection. `onApiChange` is when the module actually
+          // arrives; `onReady` covers a player that already had it.
+          onApiChange: () => suppressYoutubeCaptions(player),
+          onReady: () => {
+            suppressYoutubeCaptions(player)
+            resolveReady(player)
+          },
           onStateChange: (event: { data: number }) => handleStateChange(side, event.data),
           onError: () => {
             if (rejectBeforeReady(new Error('YouTube player failed before readiness'))) {

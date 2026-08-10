@@ -34,6 +34,7 @@ import {
   getYoutubePlayerConstructor,
   getYoutubePlayerState,
   loadYoutubeIframeApi,
+  suppressYoutubeCaptions,
 } from '@/composables/useYoutubeIframeApi'
 import {
   COMPANION_SOURCE_PARK_SECONDS,
@@ -342,6 +343,7 @@ function buildCompanion(): Promise<YoutubePlayer | null> {
             return
           }
           silence(player)
+          suppressYoutubeCaptions(player)
           player.cueVideoById?.({
             videoId: DIRECTORS_CUT_COMPANION_VIDEO_ID,
             startSeconds: COMPANION_SOURCE_PARK_SECONDS,
@@ -368,7 +370,16 @@ function buildCompanion(): Promise<YoutubePlayer | null> {
             loop: 0,
             start: Math.floor(COMPANION_SOURCE_PARK_SECONDS),
           }),
-          events: { onReady: handleReady, onError: handleError, onStateChange: handleStateChange },
+          events: {
+            // The corner is a lit frame on a projector; YouTube's own caption
+            // track landing in it would be as visible as the film. `instance`
+            // rather than a captured local: `onApiChange` fires long after this
+            // object literal is built.
+            onApiChange: () => suppressYoutubeCaptions(instance),
+            onReady: handleReady,
+            onError: handleError,
+            onStateChange: handleStateChange,
+          },
         })
         disposeFailed()
       })

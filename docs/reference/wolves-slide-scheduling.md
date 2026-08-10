@@ -217,6 +217,43 @@ pinned for the back catalogue only; on Wolves it carries authored meaning
 the later tracks after the blur change, that is the next lever — not a silent
 one to pull.
 
+## One wallpaper scene per song, dawn to nightfall
+
+`TheaterExperience.vue` owns the full-screen monthly day/night plates behind the
+reader. The scene is a function of `store.segmentIndex` and the night blend is a
+function of progress *within* that segment, so a song owns exactly one wallpaper
+and takes it from full day to full night. The next song cuts to the next scene
+and starts its own dawn.
+
+It used to be `sin(frac(totalProgress * 12 + 6) * PI)` over a
+`(segmentIndex + trackProgress) / 7` clock, and that was wrong three ways:
+
+- **The sine came back.** It ran day -> night -> *day again* inside every slot,
+  so the background pulsed under slides that were not changing. Read from a
+  theater seat that is not "progress across the show", it is a light flickering
+  behind the picture — which is what "the changing wallpaper jacks up the
+  slides" was describing.
+- **Twelve slots do not fit seven songs.** A scene change could land anywhere
+  inside a song, including under a locked slide window.
+- **The `/ 7` was hardcoded.** The one-segment Director's Cut therefore only
+  ever reached 1/7 of the curve and got a fragment of a single dissolve.
+
+Two consequences worth keeping in mind when touching this:
+
+- **The outgoing buffer does not share the incoming buffer's opacity.** At a
+  boundary the new song's ramp is at dawn, so a shared value snapped the
+  departing scene from night back to day for the whole 1.5 s fade-out. The
+  outgoing plate belongs to a song that just finished; it leaves at full night.
+- **The first dissolve is now guaranteed.** Deriving the ramp from the segment
+  means segment 0 starts at a real `opacity: 0` day state and climbs. Under the
+  old clock the show opened at exactly `frac == 0` and the opening dissolve was
+  whatever fraction of a slot happened to be left.
+
+Pinned by `describe('cinematic wallpaper transitions')` in
+`src/tests/wolvesHeroTypography.test.ts`, which asserts both that the scene does
+*not* change inside a song and that the night blend rises monotonically across
+one.
+
 ## Nulling both slide buffers is a hard cut
 
 `WolvesComicReader`'s slide watcher has a cold-start branch, taken when

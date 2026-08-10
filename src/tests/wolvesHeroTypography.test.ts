@@ -275,11 +275,48 @@ describe('cinematic wallpaper transitions', () => {
     store.updateTime(258, 347, 258)
     const wrapper = mountTheater()
 
+    // One scene per song: the wallpaper changes on the segment boundary, not at
+    // a twelfth of overall progress. Advancing inside a song must not swap it.
     store.updateTime(262, 347, 262)
+    await nextTick()
+
+    expect(wrapper.find('.wc-wallpaper-buffer.fading-out').exists()).toBe(false)
+    expect(wrapper.find('.wc-wallpaper-buffer.is-transitioning').exists()).toBe(false)
+
+    store.jumpToSegment(2)
+    store.updateTime(0, 347, 0)
     await nextTick()
 
     expect(wrapper.find('.wc-wallpaper-buffer.fading-out').exists()).toBe(true)
     expect(wrapper.find('.wc-wallpaper-buffer.is-transitioning').exists()).toBe(true)
+  })
+
+  it('ramps each song from full day to full night exactly once', async () => {
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_EXPERIENCE)
+    store.enterCinematic()
+    store.jumpToSegment(0)
+    store.updateTime(0, 400, 0)
+    const wrapper = mountTheater()
+    await nextTick()
+
+    const nightOpacityAt = async (elapsed: number) => {
+      store.updateTime(elapsed, 400, elapsed)
+      await nextTick()
+      const night = wrapper.find('[data-wallpaper-night]')
+      return Number.parseFloat((night.attributes('style') ?? '').match(/opacity:\s*([\d.]+)/)?.[1] ?? 'NaN')
+    }
+
+    // Monotonic dawn-to-dusk across the song. The old sine returned to day at
+    // the end of every slot, which read as a pulse rather than as nightfall.
+    const opening = await nightOpacityAt(0)
+    const middle = await nightOpacityAt(200)
+    const close = await nightOpacityAt(400)
+
+    expect(opening).toBeCloseTo(0, 5)
+    expect(middle).toBeGreaterThan(opening)
+    expect(close).toBeGreaterThan(middle)
+    expect(close).toBeCloseTo(1, 5)
   })
 })
 

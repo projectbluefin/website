@@ -8,7 +8,7 @@ import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import Nameplate from '@/components/wolves/cinematic/Nameplate.vue'
 import WolvesIntroOverlay from '@/components/wolves/WolvesIntroOverlay.vue'
 import { DIRECTORS_CUT_ENABLED } from '@/config/wolves-directors-cut-gate'
-import { buildDirectorsCutVideoSequence, DIRECTORS_CUT_DESTINY_SEGMENT_ID, IKORA_SOURCE_VIDEO_ID } from '@/data/wolves-directors-cut-intro'
+import { buildDirectorsCutVideoSequence, DIRECTORS_CUT_DESTINY_SEGMENT_ID, DIRECTORS_CUT_PROLOGUE_SEGMENT_ID, IKORA_SOURCE_VIDEO_ID } from '@/data/wolves-directors-cut-intro'
 import { buildIntroVideoSequence, guardianIntroStartTime, isTextSegment } from '@/data/wolves-intro-sequence'
 import { INTRO_SEQUENCE_DURATION, useCinematicStore, WOLVES_DIRECTORS_CUT_EXPERIENCE, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
@@ -229,7 +229,7 @@ function handleIntroStatus(payload: IntroStatusPayload) {
       canPrevious: payload.canGoPrevious,
     })
   }
-  introNameplateVisible.value = true
+  introNameplateVisible.value = payload.segmentId !== DIRECTORS_CUT_PROLOGUE_SEGMENT_ID
   introNameplateGlitch.value = payload.nameplateGlitch ?? false
   introShowVoiceOverToggle.value = payload.showVoiceOverToggle ?? false
   introVoiceOverEnabled.value = payload.voiceOverEnabled ?? false
@@ -368,6 +368,11 @@ onBeforeUnmount(() => {
           @status="handleIntroStatus"
           @complete="handleIntroComplete"
         />
+        <!-- The Director's Cut prologue is a scored cold open: no title card,
+             and no chapter plaque either. The plate is suppressed for that one
+             segment rather than blanked, because empty strings would still lay
+             out the crest and horizon rules over the top-left of the frame. The
+             Destiny segment that follows keeps it. -->
         <div v-if="introNameplateVisible" class="wc-intro-nameplate">
           <Nameplate :detail="store.display.chapter" :label="store.display.title" :glitch="introNameplateGlitch" />
         </div>

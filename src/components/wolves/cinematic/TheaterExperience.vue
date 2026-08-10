@@ -134,13 +134,37 @@ const showTrackZeroSidecar = computed(() => store.phase === 'cinematic'
   && sidecarReady.value
   && !store.directorFinaleActive)
 
-// Background wallpaper layers, carried over from the original immersive
-// theater: monthly Bluefin day/night pairs crossfade over 1.5s as soundtrack
-// progress advances, with a sine-modulated night blend. Progress spans the
-// whole seven-part show, matching the original (trackIndex + trackProgress)/7.
-const totalProgress = computed(() => {
-  const trackProgress = store.segmentDuration > 0 ? store.segmentElapsed / store.segmentDuration : 0
-  return Math.min(1, Math.max(0, (store.segmentIndex + trackProgress) / 7))
+// Background wallpaper layers: monthly Bluefin day/night pairs, one scene per
+// song, dissolving from day to night across that song.
+//
+// The scene is a function of `segmentIndex` and the night blend is a function
+// of progress *within* the segment, so the two cannot disagree: a song owns
+// exactly one wallpaper and takes it from full day to full night, and the next
+// song cuts to the next scene and starts its own dawn.
+//
+// This replaced `sin(frac(totalProgress * 12 + 6) * PI)` over a
+// `(segmentIndex + trackProgress) / 7` clock. That was wrong twice over. The
+// sine ran day -> night -> *back to day* inside every slot, so the background
+// pulsed underneath slides that were not changing rather than progressing; and
+// the twelve slots did not line up with the seven songs, so a scene change
+// could land anywhere inside a song. The hardcoded `/ 7` was wrong a third
+// time: the one-segment Director's Cut only ever reached 1/7 of the curve, so
+// its single song got a fragment of one dissolve instead of a whole one.
+//
+// Deriving both from the segment is what makes the first song's dissolve run.
+// Under the old clock the show opened at exactly `frac == 0`, and the opening
+// dissolve was whatever fraction of a slot happened to remain.
+const WALLPAPER_OPENING_PAIR_INDEX = 6
+// December (index 11) is out of rotation, so the show cycles the eleven pairs
+// below it. Wrapping keeps a scene per song for any segment count without
+// repeating a scene until the pool is exhausted.
+const WALLPAPER_PAIR_COUNT = 11
+
+const segmentProgress = computed(() => {
+  if (store.segmentDuration <= 0) {
+    return 0
+  }
+  return Math.min(1, Math.max(0, store.segmentElapsed / store.segmentDuration))
 })
 
 const wallpaperNightOpacity = computed(() => {
@@ -150,8 +174,7 @@ const wallpaperNightOpacity = computed(() => {
   if (thesis.value.dayPulse) {
     return 0
   }
-  const wallpaperIndexFloat = totalProgress.value * 12 + 6
-  return Math.sin((wallpaperIndexFloat - Math.floor(wallpaperIndexFloat)) * Math.PI)
+  return segmentProgress.value
 })
 
 const currentPairIndex = computed(() => {
@@ -159,12 +182,9 @@ const currentPairIndex = computed(() => {
   // full-screen month wallpaper dissolve underneath at the same time compounds
   // decode/compositor work into a visible hitch, so their backdrop stays fixed.
   if (!isWolvesPresentation.value) {
-    return 6
+    return WALLPAPER_OPENING_PAIR_INDEX
   }
-  const wallpaperIndexFloat = totalProgress.value * 12 + 6
-  const pairIndex = Math.floor(wallpaperIndexFloat) % 12
-  // December is intentionally out of rotation; November holds through its slot.
-  return pairIndex === 11 ? 10 : pairIndex
+  return (WALLPAPER_OPENING_PAIR_INDEX + store.segmentIndex) % WALLPAPER_PAIR_COUNT
 })
 
 const activeMonth = ref(6)
@@ -247,11 +267,22 @@ onBeforeUnmount(() => {
     <div class="wc-wallpaper-container">
       <div v-if="previousMonth !== null" class="wc-wallpaper-buffer fading-out">
         <div class="wc-wallpaper-layer" :style="{ backgroundImage: getDayWallpaperUrl(previousMonth) }" />
-        <div class="wc-wallpaper-layer" :style="{ backgroundImage: getNightWallpaperUrl(previousMonth), opacity: wallpaperNightOpacity }" />
+        <!-- The outgoing scene belongs to the song that just ended, so it leaves
+             at full night. Sharing the incoming buffer's opacity would snap it
+             back to day for its whole 1.5s fade-out, because the new song's ramp
+             starts at dawn. -->
+        <div
+          class="wc-wallpaper-layer wc-wallpaper-layer--night"
+          :style="{ backgroundImage: getNightWallpaperUrl(previousMonth), opacity: 1 }"
+        />
       </div>
       <div class="wc-wallpaper-buffer" :class="{ 'is-transitioning': isTransitioning }">
         <div class="wc-wallpaper-layer" :style="{ backgroundImage: getDayWallpaperUrl(activeMonth) }" />
-        <div class="wc-wallpaper-layer" :style="{ backgroundImage: getNightWallpaperUrl(activeMonth), opacity: wallpaperNightOpacity }" />
+        <div
+          class="wc-wallpaper-layer wc-wallpaper-layer--night"
+          data-wallpaper-night
+          :style="{ backgroundImage: getNightWallpaperUrl(activeMonth), opacity: wallpaperNightOpacity }"
+        />
       </div>
     </div>
 

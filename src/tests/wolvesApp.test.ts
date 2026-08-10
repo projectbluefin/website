@@ -561,7 +561,11 @@ describe('wolvesApp intro status handling', () => {
       canGoPrevious: false,
     })
     await wrapper.vm.$nextTick()
-    expect(wrapper.get('.nameplate-stub').text()).toBe('PROLOGUE|Gayane Ballet Suite (Adagio)')
+    // The scored prologue carries no chapter plaque at all: it is a cold open,
+    // and a "PROLOGUE / Gayane Ballet Suite (Adagio)" card in the top-left
+    // corner of the frame is the slide-deck chrome it exists to avoid. The
+    // media widget still names the track.
+    expect(wrapper.find('.nameplate-stub').exists()).toBe(false)
 
     // And the Destiny handoff plaque names the Ikora source it actually plays.
     intro.vm.$emit('status', {

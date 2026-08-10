@@ -316,3 +316,47 @@ Two further traps when adding an overlay layer:
   pointer inactivity (`auto-hide` in `WolvesApp.vue`), which is why the collision
   is easy to miss — assert `getBoundingClientRect()` overlap between `.wc-widget`
   and the new element rather than trusting a single screenshot.
+
+## `cc_load_policy: 0` does not turn YouTube's captions off
+
+It is a *default*, not a switch. A viewer whose YouTube account or browser
+prefers captions gets them anyway — and this show burns in its own authored
+subtitles, so YouTube's track lands on top of ours, in a different typeface, on
+a projector, with nobody in the room able to dismiss it.
+
+`suppressYoutubeCaptions()` in `useYoutubeIframeApi.ts` is the fix, and it is
+applied at every player the show builds: the intro overlay, `useDualBufferPlayer`
+and the Director's Cut finale companion. Three things about it are load-bearing:
+
+- **It calls `unloadModule`, not a player var.** Unloading the module is what
+  actually holds. `unloadModule` survives from the older JS Player API and is not
+  in the current IFrame reference, so it is typed optional and every call is
+  guarded.
+- **Both `captions` and `cc` are unloaded.** The module name has differed across
+  player versions. Unloading one the player does not have is a no-op; missing the
+  one in use costs the show a caption bar across the projection.
+- **It runs on `onApiChange`, not only `onReady`.** That event fires precisely
+  when the player loads or unloads a module, which is how the caption module
+  arrives — after the stream's own caption track resolves, well after the player
+  is otherwise ready. Suppressing only at `onReady` protects a player that never
+  had captions in the first place, which is exactly the case that never needed
+  protecting.
+
+Pinned by `unloads the caption module, because cc_load_policy is only a default`
+in `src/tests/wolvesIntroOverlay.test.ts`. The mock player records
+`unloadedModules` and exposes `triggerApiChange()`; a double without them lets
+the regression pass silently.
+
+## The Director's Cut prologue carries no chapter plaque
+
+`.wc-intro-nameplate` in `WolvesApp.vue` is `position: fixed` at `top: 3rem;
+left: 3rem`, and it renders `store.display.chapter` / `store.display.title` for
+whichever intro segment is on stage. For the scored Gayane prologue that was
+"PROLOGUE" / "Gayane Ballet Suite (Adagio)" — a slide-deck caption in the corner
+of a cold open that is deliberately title-card-free.
+
+It is suppressed for `DIRECTORS_CUT_PROLOGUE_SEGMENT_ID` specifically, by
+`introNameplateVisible`. Note the two ways not to do this: blanking the strings
+still lays out the crest and horizon rules, and removing the plate wholesale
+takes it from the Destiny segment that follows, which still uses it. The media
+widget keeps naming the track.

@@ -4,7 +4,7 @@ import type { WolvesComicHeroShot } from '@/data/wolves-comic-hero-shots'
 import type { IntroOverlayTextCue, IntroStatusPayload, IntroVideoSpec } from '@/data/wolves-intro-sequence'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue'
 import qrMakeMeAComic from '@/assets/svg/qr-makemeacomic.svg'
-import { getChromeFreeYoutubePlayerVars, getYoutubePlayerConstructor, getYoutubePlayerState, loadYoutubeIframeApi } from '@/composables/useYoutubeIframeApi'
+import { getChromeFreeYoutubePlayerVars, getYoutubePlayerConstructor, getYoutubePlayerState, loadYoutubeIframeApi, suppressYoutubeCaptions } from '@/composables/useYoutubeIframeApi'
 import { getActiveComicHeroShot, wolvesComicHeroShots } from '@/data/wolves-comic-hero-shots'
 import { dinosaurSpecies } from '@/data/wolves-dinosaur-species'
 import { DIRECTORS_CUT_DESTINY_CONCEPTS } from '@/data/wolves-directors-cut-artwork'
@@ -1054,7 +1054,15 @@ function buildSegmentPlayer(
     videoId: activeVideoId(segment),
     playerVars,
     events: {
+      // YouTube's caption module can arrive long after `onReady`, when the
+      // stream's own caption track resolves. `onApiChange` is the event that
+      // fires on exactly that, so it is where the suppression has to hold — the
+      // burned-in subtitles below are the only captions this show projects.
+      onApiChange: () => {
+        suppressYoutubeCaptions(self)
+      },
       onReady: () => {
+        suppressYoutubeCaptions(self)
         if (!isShowPlayer()) {
           parkPrewarmedPlayer(self!, segment, options.startTime)
           return
