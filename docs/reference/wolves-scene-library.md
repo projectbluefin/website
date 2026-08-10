@@ -22,6 +22,10 @@ Source videos are local production inputs. Keep them outside git under
 The repository records their provenance and edits, not browser cookies,
 credentials, or source-download machinery.
 
+The selected FFmpeg binary must decode H.264 and AV1 and encode `libx264`.
+Set `WOLVES_FFMPEG_BIN=/path/to/ffmpeg` when the host's default FFmpeg omits
+patent-encumbered codecs.
+
 ## Boundary model
 
 All timestamps in the manifest use the source video's native clock. Each
@@ -63,6 +67,9 @@ node scripts/wolves-scenes/analyze-scenes.js \
   --analysis-dir /var/tmp/website-agent/wolves-scenes/analysis
 ```
 
+Prefix the command with `WOLVES_FFMPEG_BIN=/path/to/ffmpeg` when using an
+alternate codec-complete binary.
+
 Review:
 
 ```text
@@ -77,6 +84,8 @@ npm run render:wolves-scenes -- \
   --output-dir recordings/wolves-scenes \
   --dry-run
 ```
+
+`WOLVES_FFMPEG_BIN` applies to both dry runs and real renders.
 
 Render and verify every master:
 

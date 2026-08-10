@@ -1,4 +1,4 @@
-import { execFileSync, spawnSync } from 'node:child_process'
+import { execFileSync, spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
@@ -9,6 +9,7 @@ const SCRIPT_DIR = dirname(MODULE_PATH)
 const ROOT_DIR = resolve(SCRIPT_DIR, '../..')
 const DEFAULT_MANIFEST_PATH = join(SCRIPT_DIR, 'scene-manifest.json')
 const DEFAULT_LOCK_PATH = join(SCRIPT_DIR, 'scene-lock.json')
+const FFMPEG_BIN = process.env.WOLVES_FFMPEG_BIN ?? 'ffmpeg'
 const VALID_REVIEW_POLICIES = new Set([
   'exclude-face-shots',
   'exclude-astronaut-shots',
@@ -247,6 +248,8 @@ function formatSeconds(value) {
 export function buildFfmpegArgs(job, outputPath = job.outputPath) {
   return [
     '-hide_banner',
+    '-loglevel',
+    'error',
     '-y',
     '-ss',
     formatSeconds(job.startSeconds),
@@ -261,6 +264,8 @@ export function buildFfmpegArgs(job, outputPath = job.outputPath) {
     'libx264',
     '-preset',
     'slow',
+    '-threads',
+    '4',
     '-crf',
     '18',
     '-pix_fmt',
@@ -344,17 +349,26 @@ function parseArgs(argv) {
   return args
 }
 
+async function runFfmpeg(args) {
+  await new Promise((resolvePromise, reject) => {
+    const child = spawn(FFMPEG_BIN, args, { stdio: 'inherit' })
+    child.once('error', reject)
+    child.once('exit', (status) => {
+      if (status === 0) {
+        resolvePromise()
+      }
+      else {
+        reject(new Error(`ffmpeg exited with status ${status}`))
+      }
+    })
+  })
+}
+
 async function renderJob(job) {
   await mkdir(dirname(job.outputPath), { recursive: true })
   const partialPath = job.outputPath.replace(/\.mp4$/u, '.partial.mp4')
   await rm(partialPath, { force: true })
-  const result = spawnSync('ffmpeg', buildFfmpegArgs(job, partialPath), { stdio: 'inherit' })
-  if (result.error) {
-    throw result.error
-  }
-  if (result.status !== 0) {
-    throw new Error(`ffmpeg failed for ${job.id} with status ${result.status}`)
-  }
+  await runFfmpeg(buildFfmpegArgs(job, partialPath))
   const metadata = readRenderedMetadata(probe(partialPath))
   verifyDuration(metadata.duration, job.durationSeconds, metadata.frameRate)
   if (metadata.codec !== 'h264') {
@@ -379,6 +393,25 @@ async function renderJob(job) {
   }
 }
 
+async function mapConcurrent(items, concurrency, operation) {
+  const results = Array.from({ length: items.length })
+  let nextIndex = 0
+
+  async function worker() {
+    while (nextIndex < items.length) {
+      const index = nextIndex
+      nextIndex++
+      results[index] = await operation(items[index])
+    }
+  }
+
+  await Promise.all(Array.from(
+    { length: Math.min(concurrency, items.length) },
+    () => worker(),
+  ))
+  return results
+}
+
 export async function main(argv = process.argv.slice(2)) {
   const args = parseArgs(argv)
   const manifestPath = resolve(args.manifest ?? DEFAULT_MANIFEST_PATH)
@@ -396,10 +429,11 @@ export async function main(argv = process.argv.slice(2)) {
     return
   }
 
-  const records = []
-  for (const job of jobs) {
-    records.push(await renderJob(job))
+  const concurrency = Number.parseInt(args.jobs ?? '2', 10)
+  if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 8) {
+    throw new Error('--jobs must be an integer from 1 through 8')
   }
+  const records = await mapConcurrent(jobs, concurrency, renderJob)
   await writeFile(join(outputDir, 'index.json'), `${JSON.stringify({ version: 1, scenes: records }, null, 2)}\n`)
 
   if (args.verify) {

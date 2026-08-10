@@ -92,6 +92,10 @@ scenes that will be assembled later.
 - Probe every output for one video stream, zero audio streams, expected
   duration, and codec before staging it.
 - Confirm every MP4 is covered by Git LFS.
+- Before analysis or rendering, confirm the selected FFmpeg binary can decode
+  H.264 and AV1 and encode `libx264`. Fedora's codec-limited system FFmpeg can
+  probe an H.264 file but fail to decode it; set `WOLVES_FFMPEG_BIN` to a
+  codec-complete binary instead of changing the authored cut.
 
 FFmpeg input `-ss` seeking remains accurate while transcoding because FFmpeg
 decodes and discards frames between the preceding seek point and the requested

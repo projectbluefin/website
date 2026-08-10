@@ -13,6 +13,7 @@ const SCRIPT_DIR = dirname(MODULE_PATH)
 const DEFAULT_MANIFEST_PATH = join(SCRIPT_DIR, 'scene-manifest.json')
 const DEFAULT_DECISIONS_PATH = join(SCRIPT_DIR, 'scene-decisions.json')
 const DEFAULT_LOCK_PATH = join(SCRIPT_DIR, 'scene-lock.json')
+const FFMPEG_BIN = process.env.WOLVES_FFMPEG_BIN ?? 'ffmpeg'
 
 function parseArgs(argv) {
   const args = {}
@@ -61,7 +62,7 @@ function formatSeconds(value) {
 }
 
 function captureFrame(sourcePath, timestamp, outputPath) {
-  execFileSync('ffmpeg', [
+  execFileSync(FFMPEG_BIN, [
     '-hide_banner',
     '-loglevel',
     'error',
