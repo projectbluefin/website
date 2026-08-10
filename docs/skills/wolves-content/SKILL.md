@@ -117,6 +117,24 @@ record. Do not invent names, scientific facts, pairings, or provenance.
 | "This overlay text is obvious enough to paraphrase." | Wolves content surfaces use exact supplied wording only; changing even a short overlay changes authored content. |
 | "It is only intro data, so I don't need to update tests." | Intro segment ids and timestamps are contract data for store and overlay tests; pin them when they change. |
 
+## Director's Cut does not share the standard intro's title-card quote slide
+
+`buildIntroVideoSequence()` is the standard front-door intro: silent title-card
+quote slide, then the Destiny trailer. The Director's Cut replaces that opening
+with the Gayane Ballet Suite prologue, but it still ends with the same Destiny
+trailer.
+
+Do not build the Director's Cut by prepending the prologue to
+`...buildIntroVideoSequence()`. That places the standard title-card quote slide
+after the prologue, so the show appears to return to the opening after the first
+song has already played. Instead, compose the Director's Cut from its own
+opening segment plus the shared Destiny trailer segment, keeping the two intro
+variants as sibling lists rather than a prefix plus a spread.
+
+When either intro list changes, update the store tests that assert on segment
+identity and duration rather than on segment count, since both variants now have
+the same length.
+
 ## Verification
 
 - [ ] Diff contains only documented content surfaces.

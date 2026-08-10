@@ -213,7 +213,11 @@ describe('cinematic store', () => {
     // Cut duration, index clamp, and TOTAL readout described the wrong list.
     const standard = buildIntroVideoSequence()
     const directorsCut = buildDirectorsCutVideoSequence()
-    expect(directorsCut.length).toBeGreaterThan(standard.length)
+    // Both sequences end with the same Destiny trailer; they differ in their
+    // opening segment (silent title card vs. Gayane prologue) and runtime.
+    expect(directorsCut[0]?.id).not.toBe(standard[0]?.id)
+    expect(directorsCut[directorsCut.length - 1]?.id)
+      .toBe(standard[standard.length - 1]?.id)
 
     const store = useCinematicStore()
 
