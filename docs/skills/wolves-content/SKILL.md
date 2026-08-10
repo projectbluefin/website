@@ -277,6 +277,36 @@ elements, and scaling"). Format conversion at identical geometry (PNG -> WebP,
 `calibreapp/image-actions` recompresses added images ~25% with no dimension
 loss, which is expected.
 
+## Bungie fan-content guidelines are not an open asset license
+
+Bungie's official policy supports some non-commercial fan-created media using
+game imagery, but explicitly says the guidelines are not permission to use
+Bungie intellectual property:
+
+<https://help.bungie.net/hc/en-us/articles/360049201911-Intellectual-Property-and-Trademarks>
+
+Do not describe Destiny press-kit downloads, screenshots, or concept art as
+freely licensed. Bungie retains rights in game scenery and related assets, may
+remove fan work, treats donation or monetary-support solicitation as
+commercial, and requires permission for commercial use.
+
+When the owner approves the fan-content-guidelines basis for a non-commercial
+Wolves use:
+
+- use an official Bungie source or the credited Bungie artist's primary
+  portfolio;
+- record the exact upstream URL, artist, work title, retrieval date, and policy
+  URL in the owning source ledger;
+- keep the source geometry and visible content; do not redraw, recolor, upscale,
+  remove signatures, or substitute generated approximations;
+- credit Bungie and the named artist without implying endorsement;
+- stop if the presentation becomes monetized, donation-supported, merchandise,
+  or otherwise commercial until written Bungie permission is recorded.
+
+A download button proves availability, not redistribution rights. If an asset
+has no authoritative source or the proposed use falls outside the approved
+non-commercial fan-content scope, do not add it.
+
 
 ## `wolves/people/` is hand-picked, and two thirds of it is CNCF photography
 
