@@ -88,14 +88,33 @@ const terminalFading = computed(() => covering.value && directorsCutTerminalFade
 const terminalBlack = computed(() => store.directorTerminalBlack)
 const terminalFadeStyle = { '--wc-dcf-terminal-fade': `${DIRECTORS_CUT_TERMINAL_FADE_SECONDS}s` } as Record<string, string>
 
-const companionVisible = computed(() => covering.value && directorsCutCompanionVisible(time.value))
+/**
+ * Whether the companion is known to be dead — a failed API load, a missing
+ * constructor, or an embed that reported a fatal error.
+ *
+ * Reactive, and ANDed into visibility, because the corner is a lit frame: an
+ * opaque black fill, a blue ring and a drop shadow. A dead companion that still
+ * takes the stage paints an empty box on the projector for the whole reveal
+ * window, which from the back row is indistinguishable from a broken slide.
+ * Nothing must paint if nothing can play.
+ */
+const companionUnavailable = ref(false)
+const companionVisible = computed(() => covering.value
+  && !companionUnavailable.value
+  && directorsCutCompanionVisible(time.value))
 const companionHost = ref<HTMLElement | null>(null)
 let companionPlayer: YoutubePlayer | null = null
 let companionBuild: Promise<YoutubePlayer | null> | null = null
-let companionUnavailable = false
 let companionRolling = false
 let lastCorrectionAt = Number.NEGATIVE_INFINITY
 let destroyed = false
+/**
+ * Players already torn down. `YT.Player.destroy()` is not idempotent — the
+ * second call throws inside the API's own teardown — and the current player and
+ * a memoised build result are routinely the same instance, so disposal is
+ * identity-guarded rather than counted.
+ */
+const disposedPlayers = new WeakSet<YoutubePlayer>()
 
 /**
  * Warm both Collapse plates while the finale is still invisible.
@@ -120,6 +139,31 @@ function silence(player: YoutubePlayer) {
   player.setVolume?.(0)
 }
 
+/** Tear a player down at most once, whichever path gets there first. */
+function disposeCompanion(player: YoutubePlayer | null | undefined) {
+  if (!player || disposedPlayers.has(player)) {
+    return
+  }
+  disposedPlayers.add(player)
+  player.pauseVideo?.()
+  player.destroy?.()
+}
+
+/** The corner is dead: hide it and stop driving it, but keep the finale running. */
+function markCompanionUnavailable() {
+  companionUnavailable.value = true
+  companionRolling = false
+}
+
+/** Drop a player the finale is holding, and dispose of it. */
+function releaseCompanion(player: YoutubePlayer) {
+  if (companionPlayer === player) {
+    companionPlayer = null
+    companionRolling = false
+  }
+  disposeCompanion(player)
+}
+
 /**
  * Build the companion player once, muted, and park it on the measured lead
  * frame. Called at the pre-arm anchor, tens of seconds before the corner is
@@ -134,11 +178,64 @@ function buildCompanion(): Promise<YoutubePlayer | null> {
       await loadYoutubeIframeApi()
       const PlayerCtor = getYoutubePlayerConstructor()
       const host = companionHost.value
-      if (!PlayerCtor || !host || destroyed) {
+      if (destroyed) {
         return null
       }
-      return await new Promise<YoutubePlayer | null>((resolve) => {
-        const player: YoutubePlayer = new PlayerCtor(host, {
+      if (!PlayerCtor || !host) {
+        markCompanionUnavailable()
+        return null
+      }
+
+      // `onError` can arrive from inside `new PlayerCtor(...)`, before the
+      // expression returns and before anything can hold the instance — but the
+      // instance is already real, with an iframe, a window message listener and
+      // a media element behind it. `failed`/`disposeFailed` exist so the
+      // constructor's own return can finish the teardown the handler could not.
+      let instance: YoutubePlayer | null = null
+      let failed = false
+      const disposeFailed = () => {
+        if (!failed || !instance) {
+          return
+        }
+        const target = instance
+        instance = null
+        releaseCompanion(target)
+      }
+      const built = await new Promise<YoutubePlayer | null>((resolve) => {
+        const handleReady = (event?: { target?: YoutubePlayer }) => {
+          const player = event?.target ?? instance
+          if (!player) {
+            resolve(null)
+            return
+          }
+          // The build takes seconds; a backward seek across the pre-arm anchor
+          // in that window unmounts this component while the player is still on
+          // its way. Without this check the player arrives after the teardown
+          // that was supposed to dispose of it, is assigned to a component
+          // nobody is rendering, and leaks once per seek across the anchor.
+          if (destroyed) {
+            disposeCompanion(player)
+            resolve(null)
+            return
+          }
+          silence(player)
+          player.cueVideoById?.({
+            videoId: DIRECTORS_CUT_COMPANION_VIDEO_ID,
+            startSeconds: COMPANION_SOURCE_PARK_SECONDS,
+          })
+          player.seekTo?.(COMPANION_SOURCE_PARK_SECONDS, true)
+          player.pauseVideo?.()
+          resolve(player)
+        }
+        // A dead companion must never take the finale down with it: the
+        // Collapse frame, the bulletin and the closing quote are the show.
+        const handleError = () => {
+          failed = true
+          markCompanionUnavailable()
+          disposeFailed()
+          resolve(null)
+        }
+        instance = new PlayerCtor(host, {
           width: '100%',
           height: '100%',
           videoId: DIRECTORS_CUT_COMPANION_VIDEO_ID,
@@ -148,41 +245,27 @@ function buildCompanion(): Promise<YoutubePlayer | null> {
             loop: 0,
             start: Math.floor(COMPANION_SOURCE_PARK_SECONDS),
           }),
-          events: {
-            onReady: () => {
-              // The build takes seconds; a backward seek across the pre-arm
-              // anchor in that window unmounts this component while the player
-              // is still on its way. Without this check the player arrives
-              // after the teardown that was supposed to dispose of it, is
-              // assigned to a component nobody is rendering, and leaks — with
-              // its message listener and a buffering media element — once per
-              // seek across the anchor.
-              if (destroyed) {
-                player.destroy?.()
-                resolve(null)
-                return
-              }
-              silence(player)
-              player.cueVideoById?.({
-                videoId: DIRECTORS_CUT_COMPANION_VIDEO_ID,
-                startSeconds: COMPANION_SOURCE_PARK_SECONDS,
-              })
-              player.seekTo?.(COMPANION_SOURCE_PARK_SECONDS, true)
-              player.pauseVideo?.()
-              resolve(player)
-            },
-            // A dead companion must never take the finale down with it: the
-            // Collapse frame, the bulletin and the closing quote are the show.
-            onError: () => resolve(null),
-          },
+          events: { onReady: handleReady, onError: handleError },
         })
+        disposeFailed()
       })
+      if (failed) {
+        // The embed reported the error between `onReady` and here: the player
+        // resolved, but it is already disposed of and must not be handed over.
+        disposeCompanion(built)
+        return null
+      }
+      if (!built && !destroyed) {
+        markCompanionUnavailable()
+      }
+      return built
     }
     catch {
       // `loadYoutubeIframeApi()` rejects on a failed script load and the
       // constructor can throw. The memoised promise must still RESOLVE, or
       // every clock tick for the rest of the finale re-awaits a rejected
       // promise and throws through Vue's async watcher handler.
+      markCompanionUnavailable()
       return null
     }
   })()
@@ -243,7 +326,7 @@ function syncCompanion(now: number) {
 watch(
   () => [store.directorFinalePrearmed, time.value] as const,
   async ([prearmed, now]) => {
-    if (destroyed || companionUnavailable) {
+    if (destroyed || companionUnavailable.value) {
       return
     }
     if (!prearmed) {
@@ -251,16 +334,19 @@ watch(
       return
     }
     if (!companionPlayer) {
-      companionPlayer = await buildCompanion()
+      const built = await buildCompanion()
       if (destroyed) {
         return
       }
-      if (!companionPlayer) {
-        // The API never produced a player. Stop asking on every clock tick and
+      if (!built || companionUnavailable.value) {
+        // The API never produced a usable player, or the one it produced died
+        // before it could be handed over. Stop asking on every clock tick and
         // play the rest of the finale without a corner video.
-        companionUnavailable = true
+        companionPlayer = null
+        markCompanionUnavailable()
         return
       }
+      companionPlayer = built
     }
     syncCompanion(store.nativeTime ?? now)
   },
@@ -269,16 +355,17 @@ watch(
 
 onBeforeUnmount(async () => {
   destroyed = true
-  companionPlayer?.pauseVideo?.()
-  companionPlayer?.destroy?.()
+  const current = companionPlayer
   companionPlayer = null
+  companionRolling = false
+  disposeCompanion(current)
   // A build still in flight resolves after this hook. Its `onReady` disposes of
   // the player itself once `destroyed` is set; awaiting here covers the window
-  // where it resolved between the two.
+  // where it resolved between the two, and the identity guard covers the far
+  // more common case where the pending build is the very player just disposed.
   const pending = companionBuild
   companionBuild = null
-  const late = await pending
-  late?.destroy?.()
+  disposeCompanion(await pending)
 })
 </script>
 

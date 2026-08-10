@@ -70,6 +70,31 @@ The show side is anchored twice over. The blast lands on beat 970, and the
 source's own black lands 0.372 s before the Become Legend cue. Everything
 between is the film's own edit, not ours.
 
+## A dead companion paints nothing
+
+The corner is a lit frame — opaque black fill, a blue ring, a drop shadow. An
+empty one held for the 17 s reveal window reads from the back row as a broken
+slide, so companion availability is **reactive state ANDed into visibility**,
+not a side note. `companionUnavailable` is set on every failure path — the
+shared API loader rejecting, no player constructor or host, and the embed's own
+`onError`, whenever it arrives — and the corner is `display: none` from that
+moment. The Collapse frame, the bulletin and the closing quote play on.
+
+Teardown is identity-guarded, because `YT.Player.destroy()` is not idempotent
+and the same instance is reachable from two places at once:
+
+- the player the finale is holding **is** the memoised build result, so an
+  unmount that destroys both destroys one player twice — a throw inside
+  YouTube's own teardown, on every backward seek across the pre-arm anchor;
+- `onError` can fire from **inside** `new YT.Player(...)`, before the expression
+  returns and before anything can hold the instance — which is already a live
+  iframe, a window message listener and a media element. The constructor's own
+  return finishes the teardown the handler could not.
+
+Both are pinned by per-instance destroy counting in
+`src/tests/wolvesDirectorsCutFinaleStage.test.ts`; aggregate call counts cannot
+tell "two players destroyed once" from "one player destroyed twice".
+
 ## Track 0's outro is measured too
 
 From the same `track0.m4a` the beat grid came from (librosa 0.11, 22050 Hz, hop

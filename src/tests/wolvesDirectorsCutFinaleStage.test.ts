@@ -5,7 +5,7 @@ import { nextTick, ref } from 'vue'
 import CinematicStage from '@/components/wolves/cinematic/CinematicStage.vue'
 import TheaterExperience from '@/components/wolves/cinematic/TheaterExperience.vue'
 import WolvesDirectorFinale from '@/components/wolves/cinematic/WolvesDirectorFinale.vue'
-import { companionSourceTimeAt, DIRECTORS_CUT_COMPANION_DRIFT_TOLERANCE_S, DIRECTORS_CUT_FINALE_ANCHORS } from '@/data/wolves-directors-cut-finale'
+import { companionSourceTimeAt, DIRECTORS_CUT_COMPANION_DRIFT_INTERVAL_S, DIRECTORS_CUT_COMPANION_DRIFT_TOLERANCE_S, DIRECTORS_CUT_FINALE_ANCHORS } from '@/data/wolves-directors-cut-finale'
 import { DIRECTORS_CUT_BULLETIN_ARTIFACT_ID, DIRECTORS_CUT_FINALE_START } from '@/data/wolves-directors-cut-timeline'
 import { useCinematicStore, WOLVES_DIRECTORS_CUT_EXPERIENCE, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
@@ -36,6 +36,24 @@ let capturedConfig: Record<string, any> | null = null
 let loaderFails = false
 /** Hold `onReady` so a test can unmount while the build is still in flight. */
 let deferReady: (() => void) | null = null
+/**
+ * Make the constructed player report a fatal embed error.
+ *
+ * `before-assignment` fires `onError` from inside `new PlayerCtor(...)`, before
+ * the expression returns — the order a real embed uses when the video itself is
+ * undecodable, and the order in which the caller does not yet hold the instance
+ * it has to dispose of.
+ */
+let playerFails: 'before-assignment' | 'after-ready' | null = null
+
+/**
+ * Per-instance view of every player the finale constructed. Aggregate call
+ * counting cannot tell "two players destroyed once" from "one player destroyed
+ * twice", and `YT.Player.destroy()` on an already-destroyed player throws
+ * inside the API's own teardown.
+ */
+interface FakeCompanionPlayer { destroyCalls: number, currentTime: number }
+const constructedInstances: FakeCompanionPlayer[] = []
 
 function record(method: string) {
   return (...args: unknown[]) => {
@@ -52,10 +70,24 @@ vi.mock('@/composables/useYoutubeIframeApi', async (importOriginal) => {
       : Promise.resolve()),
     getYoutubePlayerConstructor: () => class FakePlayer {
       currentTime = 0
+      destroyCalls = 0
       constructor(_element: Element, config: Record<string, any>) {
         constructedPlayers += 1
+        constructedInstances.push(this)
         capturedConfig = config
         const ready = () => config.events?.onReady?.({ target: this })
+        const fail = () => config.events?.onError?.({ target: this, data: 150 })
+        if (playerFails === 'before-assignment') {
+          fail()
+          return
+        }
+        if (playerFails === 'after-ready') {
+          Promise.resolve().then(() => {
+            ready()
+            fail()
+          })
+          return
+        }
         if (deferReady === null) {
           Promise.resolve().then(ready)
         }
@@ -68,7 +100,11 @@ vi.mock('@/composables/useYoutubeIframeApi', async (importOriginal) => {
       setVolume = record('setVolume')
       pauseVideo = record('pauseVideo')
       playVideo = record('playVideo')
-      destroy = record('destroy')
+      destroy = (...args: unknown[]) => {
+        this.destroyCalls += 1
+        companionCalls.push({ method: 'destroy', args })
+      }
+
       cueVideoById = (...args: unknown[]) => {
         companionCalls.push({ method: 'cueVideoById', args })
       }
@@ -121,9 +157,11 @@ describe('director\'s cut finale composition', () => {
     setActivePinia(createPinia())
     companionCalls.length = 0
     constructedPlayers = 0
+    constructedInstances.length = 0
     capturedConfig = null
     loaderFails = false
     deferReady = null
+    playerFails = null
     handledErrors.length = 0
   })
 
@@ -240,6 +278,41 @@ describe('director\'s cut finale composition', () => {
     expect(calls('seekTo').length).toBe(seeksBefore)
   })
 
+  it('rate limits drift corrections to one per suppression interval', async () => {
+    const { store } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    const reveal = DIRECTORS_CUT_FINALE_ANCHORS.companionReveal
+    const seekTargets = () => calls('seekTo').map(entry => entry.args[0] as number)
+    const advance = async (offset: number) => {
+      const now = reveal + offset
+      store.updateTime(now, 424, now)
+      await nextTick()
+      return now
+    }
+
+    // The fake's own clock only moves when it is seeked, so from here every
+    // tick is material drift — a stalled embed, the case the limiter exists
+    // for. Without the interval guard each of these polls costs a rebuffer and
+    // the corner becomes a stutter loop in front of the room.
+    companionCalls.length = 0
+    const firstCorrection = await advance(DIRECTORS_CUT_COMPANION_DRIFT_INTERVAL_S + 0.1)
+    expect(seekTargets()).toHaveLength(1)
+    expect(seekTargets()[0]).toBeCloseTo(companionSourceTimeAt(firstCorrection), 3)
+
+    // Three more polls, each drifting well past tolerance, all inside the same
+    // suppression interval: none of them may seek.
+    for (const offset of [0.7, 1.4, DIRECTORS_CUT_COMPANION_DRIFT_INTERVAL_S - 0.1]) {
+      const now = await advance(DIRECTORS_CUT_COMPANION_DRIFT_INTERVAL_S + 0.1 + offset)
+      expect(Math.abs(companionSourceTimeAt(now) - companionSourceTimeAt(firstCorrection)))
+        .toBeGreaterThan(DIRECTORS_CUT_COMPANION_DRIFT_TOLERANCE_S)
+      expect(seekTargets()).toHaveLength(1)
+    }
+
+    // Once the interval has elapsed the next material drift is corrected again.
+    const secondCorrection = await advance(2 * DIRECTORS_CUT_COMPANION_DRIFT_INTERVAL_S + 0.2)
+    expect(seekTargets()).toHaveLength(2)
+    expect(seekTargets()[1]).toBeCloseTo(companionSourceTimeAt(secondCorrection), 3)
+  })
+
   it('shows the two clauses one at a time, never together', async () => {
     const { store, wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart)
     expect(wrapper.find('[data-director-finale-clause="extinction"]').text()).toBe('Extinction is the rule.')
@@ -303,6 +376,99 @@ describe('director\'s cut finale composition', () => {
     expect(handledErrors).toEqual([])
   })
 
+  it('paints no corner at all when the companion never became available', async () => {
+    loaderFails = true
+    const { store, wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    await nextTick()
+
+    // The corner is a lit frame: an opaque black fill, a blue ring and a drop
+    // shadow. Rendering an empty one for the whole 17 s reveal window reads
+    // from the back row as a broken slide, so an unavailable companion has to
+    // be `display: none` — not merely a box with nothing in it.
+    const corner = wrapper.find('[data-director-finale-companion]')
+    expect(corner.attributes('data-companion-visible')).toBe('false')
+    expect(corner.attributes('style')).toContain('display: none')
+
+    // And it must stay dark for the rest of the window rather than flicker in
+    // on the next clock tick.
+    for (const time of [DIRECTORS_CUT_FINALE_ANCHORS.companionReveal + 5, DIRECTORS_CUT_FINALE_ANCHORS.companionEnd - 0.1]) {
+      store.updateTime(time, 424, time)
+      await nextTick()
+      await Promise.resolve()
+      await nextTick()
+      expect(wrapper.find('[data-director-finale-companion]').attributes('style')).toContain('display: none')
+    }
+    expect(handledErrors).toEqual([])
+    wrapper.unmount()
+
+    // Control at the same anchor with a healthy loader: the corner is on
+    // stage, so the assertions above discriminate a dead companion from a
+    // corner that is simply never shown.
+    loaderFails = false
+    const healthy = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    expect(healthy.wrapper.find('[data-director-finale-companion]').attributes('style') ?? '').not.toContain('display: none')
+    healthy.wrapper.unmount()
+  })
+
+  it('destroys a player that fails before the constructor even returns', async () => {
+    playerFails = 'before-assignment'
+    const { wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    await nextTick()
+
+    // `onError` inside `new YT.Player(...)` arrives before the caller holds
+    // the instance, but the instance is already real: an iframe, a window
+    // message listener and a media element. Discarding it leaks all three.
+    expect(constructedPlayers).toBe(1)
+    expect(constructedInstances[0]?.destroyCalls).toBe(1)
+    expect(wrapper.find('[data-director-finale-companion]').attributes('style')).toContain('display: none')
+
+    wrapper.unmount()
+    await nextTick()
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(constructedInstances[0]?.destroyCalls).toBe(1)
+    expect(handledErrors).toEqual([])
+  })
+
+  it('clears and disposes a companion that dies after it was handed over', async () => {
+    playerFails = 'after-ready'
+    const { store, wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    await nextTick()
+    await Promise.resolve()
+    await nextTick()
+    expect(constructedInstances[0]?.destroyCalls).toBe(1)
+    expect(wrapper.find('[data-director-finale-companion]').attributes('style')).toContain('display: none')
+
+    // A dead player must not be driven for the rest of the window, and must
+    // not be rebuilt on every tick either.
+    companionCalls.length = 0
+    for (const time of [DIRECTORS_CUT_FINALE_ANCHORS.companionReveal + 4, DIRECTORS_CUT_FINALE_ANCHORS.companionReveal + 9]) {
+      store.updateTime(time, 424, time)
+      await nextTick()
+      await Promise.resolve()
+    }
+    expect(constructedPlayers).toBe(1)
+    expect(calls('seekTo')).toHaveLength(0)
+    expect(calls('playVideo')).toHaveLength(0)
+    expect(handledErrors).toEqual([])
+  })
+
+  it('destroys the companion exactly once when the finale unmounts', async () => {
+    const { wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionPrearm)
+    expect(constructedPlayers).toBe(1)
+
+    wrapper.unmount()
+    await nextTick()
+    await Promise.resolve()
+    await Promise.resolve()
+
+    // The current player and the memoised build result are the same instance.
+    // `YT.Player.destroy()` throws inside the API's own teardown the second
+    // time, which on a backward seek is an uncaught error mid-show.
+    expect(constructedInstances[0]?.destroyCalls).toBe(1)
+    expect(calls('destroy')).toHaveLength(1)
+  })
+
   it('destroys a companion that arrives after the finale was seeked away from', async () => {
     // Hold the build in flight, then unmount, then let the player arrive.
     deferReady = () => {}
@@ -315,6 +481,7 @@ describe('director\'s cut finale composition', () => {
     await Promise.resolve()
     await Promise.resolve()
     expect(calls('destroy').length).toBeGreaterThan(0)
+    expect(constructedInstances[0]?.destroyCalls).toBe(1)
   })
 
   it('warms both Collapse plates during the pre-arm window', async () => {

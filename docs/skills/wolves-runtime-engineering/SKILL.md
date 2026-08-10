@@ -95,6 +95,24 @@ an unidentified player request.
   There is one clock, the soundtrack player's; a companion's time is read only
   to detect drift, corrected only when the drift is material, and rate limited
   on the *magnitude* of the gap so a backward seek is corrected too.
+- A drift or retry rate limiter has no test that drives *repeated* out-of-
+  tolerance polls inside one suppression interval. Assert one corrective seek
+  across the burst and another after the interval, or deleting the guard —
+  which turns the corner into a stutter loop in front of the room — stays green.
+- An optional embed's availability is a plain `let`, not reactive state ANDed
+  into its visibility. A dead player still paints its lit frame — black fill,
+  ring, shadow — for the whole reveal window, which from the back row is a
+  broken slide. Mark unavailable on every failure path: loader rejection,
+  missing constructor or host, and `onError`.
+- `destroy()` is reachable twice for the same player, typically the handle the
+  component holds and the memoised build result it came from. `YT.Player`
+  teardown is not idempotent; guard disposal by instance identity and count
+  destroys *per instance* in tests, because aggregate counts cannot tell two
+  players destroyed once from one player destroyed twice.
+- A player whose `onError` fires from inside `new YT.Player(...)` is discarded
+  without teardown. The instance is already a live iframe, a window message
+  listener and a media element, and the handler runs before the expression
+  returns — so the constructor's own return has to finish the disposal.
 - A page ends on a title such as `Dr.`, orphaning the name it introduces, or on
   a preposition or article, making the audience wait a page turn for the rest of
   the phrase.
