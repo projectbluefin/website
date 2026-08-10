@@ -243,6 +243,44 @@ an unidentified player request.
   does not exist. Poll until the stage settles and take the highest-opacity
   layer. Related: a `type: 'daynight'` slide renders `dayName`/`nightName`,
   never `path`.
+- A set of large assets is predecoded by firing every `new Image()` at once
+  "because there is idle time". There is no idle network in this show: the
+  Track 0 slide preloader and the scored audio embed are on the same connection
+  pool. Warming the ten Director's Cut concept paintings ten-wide starved the
+  gallery hard enough that `tests/wolves-directors-cut-slides.mjs` found the
+  previous slide still on stage at the measured 35.666s cut — the harness saw
+  it, no unit test could. Chain the warms on `decode()` so exactly one is in
+  flight, warm in the order the assets are displayed so the chain stays ahead of
+  the cue that needs each one, and abandon the chain in `onBeforeUnmount` so a
+  skipped intro stops taking bandwidth from the show that replaced it.
+- A predecode is keyed to a *kind* of segment ("any text card") rather than to
+  the authored segment id that owns the assets. The standard intro then pays for
+  assets it never shows. Assert the negative: mount the other sequence and
+  require zero requests for those URLs.
+- A surface with a sub-second hidden lead is hidden with `v-show`. `display:
+  none` licenses a browser to skip layout, paint and compositing for the whole
+  subtree, so the element can be asked for its first composite on the exact
+  frame it was supposed to be already playing — the Director's Cut companion's
+  lead is one measured beat, 0.395s. Keep it rendered and make it invisible
+  (`opacity: 0`, `pointer-events: none`, `aria-hidden`, `inert`, and
+  `will-change: opacity` to force the layer up front); reserve removal from the
+  DOM for the surface being genuinely unavailable. Note that `visibility:
+  hidden` is not a substitute — it suppresses paint for the subtree too.
+- A browser harness computes `visible` from `display`/`visibility` and bounds
+  only. Once anything is deliberately rendered-but-transparent, that helper
+  scores a warming surface as on stage. Read `opacity` too, and expose
+  `rendered` as its own field so "hidden" and "not there" stay separable.
+- A per-segment treatment is gated on position (`trackIndex !== 0`) when a
+  second presentation runs a different schedule at the same position. The
+  backdrop blur was excluded from Track 0 because the *standard* cut does not
+  crossfade rapidly there; the Director's Cut runs 190 lock-free cuts at the
+  same index and put blur work back on the slide-change path. Gate treatments
+  on what the segment actually does — the profile — not on where it sits.
+- A trust boundary that validates only *structure* lets a generated file carry
+  *authority*. `parseBackCatalogue()` checks ids, titles and segments, but
+  `presentationProfile` selects the authored Wolves intro, timeline, slide
+  schedule and finale — the generator never writes it, so anything but
+  absent/`'generic'` is refused at the boundary rather than trusted.
 
 ## Verification
 

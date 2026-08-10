@@ -7,6 +7,8 @@ import qrMakeMeAComic from '@/assets/svg/qr-makemeacomic.svg'
 import { getChromeFreeYoutubePlayerVars, getYoutubePlayerConstructor, getYoutubePlayerState, loadYoutubeIframeApi } from '@/composables/useYoutubeIframeApi'
 import { getActiveComicHeroShot, wolvesComicHeroShots } from '@/data/wolves-comic-hero-shots'
 import { dinosaurSpecies } from '@/data/wolves-dinosaur-species'
+import { DIRECTORS_CUT_DESTINY_CONCEPTS } from '@/data/wolves-directors-cut-artwork'
+import { DIRECTORS_CUT_PROLOGUE_SEGMENT_ID } from '@/data/wolves-directors-cut-intro'
 import { wolvesGuardianDinosaurBonds } from '@/data/wolves-guardian-dinosaur-bonds'
 import {
   activeOverlayCue,
@@ -306,9 +308,72 @@ function predecodeGuardianCompanionArtwork() {
   }
 }
 
+let directorsCutConceptArtworkPredecoded = false
+let directorsCutConceptWarmAbandoned = false
+/**
+ * Warm every approved Destiny concept painting the moment the Director's Cut
+ * prologue takes the stage.
+ *
+ * The montage cuts on measured section marks from 133.58 s onward, and its
+ * later holds are under ten seconds. A cue transition that opens on an
+ * undecoded 4K painting spends that hold on an empty scene layer — on a
+ * projector that reads as a dropped slide, and the cut cannot be replayed.
+ *
+ * **One at a time, in montage order.** Firing all ten at once is what the
+ * prologue's idle minutes appear to invite, and it is wrong: the ten paintings
+ * are the largest assets in the show, and ten parallel fetches saturate the
+ * connection pool that the Track 0 slide preloader and the scored audio embed
+ * are also using. Measured with `tests/wolves-directors-cut-slides.mjs`, a
+ * ten-wide burst starved the gallery hard enough that the 35.666 s cut still
+ * had the previous slide on stage. Chaining on `decode()` keeps exactly one
+ * painting in flight, and because the registry order *is* the montage order,
+ * the chain naturally stays ahead of the cue that needs each painting.
+ *
+ * Failures are swallowed on purpose: a painting that cannot be predecoded still
+ * loads normally from its own `<img>`, and nothing here may hold up the scored
+ * intro.
+ */
+async function predecodeDirectorsCutConceptArtwork() {
+  if (directorsCutConceptArtworkPredecoded) {
+    return
+  }
+  directorsCutConceptArtworkPredecoded = true
+
+  const requested = new Set<string>()
+  for (const record of DIRECTORS_CUT_DESTINY_CONCEPTS) {
+    if (directorsCutConceptWarmAbandoned) {
+      return
+    }
+    const url = `${baseUrl}${record.localPath}`
+    if (requested.has(url)) {
+      continue
+    }
+    requested.add(url)
+    const image = new Image()
+    image.decoding = 'async'
+    image.src = url
+    try {
+      await image.decode?.()
+    }
+    catch (error: unknown) {
+      console.warn(`Unable to predecode Destiny concept artwork: ${url}`, error)
+    }
+  }
+}
+
 onMounted(() => {
   predecodeGuardianCompanionArtwork()
 })
+
+/**
+ * Keyed to the Director's Cut prologue by segment id, not to "any text
+ * segment": the standard intro must not fetch a single concept painting.
+ */
+watch(currentSegment, (segment) => {
+  if (segment?.id === DIRECTORS_CUT_PROLOGUE_SEGMENT_ID) {
+    void predecodeDirectorsCutConceptArtwork()
+  }
+}, { immediate: true })
 
 watch(activeComicTitleCardCue, (cue) => {
   if (cue) {
@@ -1012,6 +1077,10 @@ function handleTogglePlayback() {
 }
 
 onBeforeUnmount(() => {
+  // The intro is over (skipped, or handed off to Track 0): stop warming
+  // paintings nobody is going to see, so the chain cannot keep taking
+  // bandwidth from the show that replaced it.
+  directorsCutConceptWarmAbandoned = true
   destroyPlayer()
   stopTextTimer()
   destroyAudioPlayer()

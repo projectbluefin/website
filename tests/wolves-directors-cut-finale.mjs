@@ -240,6 +240,7 @@ try {
         }
         const rect = element.getBoundingClientRect()
         const style = getComputedStyle(element)
+        const laidOut = style.display !== 'none' && rect.width > 0 && rect.height > 0
         return {
           x: Math.round(rect.x),
           y: Math.round(rect.y),
@@ -247,7 +248,12 @@ try {
           height: Math.round(rect.height),
           display: style.display,
           opacity: Number.parseFloat(style.opacity),
-          visible: style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0,
+          // Rendered but invisible is a real and deliberate state here: the
+          // companion is kept in the layout and compositing tree through its
+          // hidden play lead and merely made transparent, so `visible` has to
+          // read opacity too or a warming corner scores as on stage.
+          rendered: laidOut,
+          visible: laidOut && style.visibility !== 'hidden' && Number.parseFloat(style.opacity) > 0,
         }
       }
       const finale = document.querySelector('[data-director-finale]')
@@ -445,6 +451,13 @@ try {
     { iframes: prearmed.companionIframes, host: prearmed.companionHostPresent, built: prearmed.companionPlayerBuilt },
   )
   assert('the companion is hidden while it warms up', prearmed.companion?.visible === false, prearmed.companion)
+  // …but hidden is not unrendered. `display: none` licenses a browser to skip
+  // layout, paint and compositing for the whole subtree, and the reveal is a
+  // hard cut only 0.395 s after the companion starts rolling — far too short to
+  // gamble on a first paint in front of the room.
+  assert('the companion is rendered and laid out while it warms up',
+    prearmed.companion?.rendered === true && prearmed.companion?.display !== 'none' && prearmed.companion?.opacity === 0,
+    prearmed.companion)
   if (!REAL_MEDIA) {
     assert('the companion is cued and parked, never played', (prearmed.companionCalls ?? []).includes('cueVideoById') && !(prearmed.companionCalls ?? []).includes('playVideo'), prearmed.companionCalls)
     assert('the companion is muted before it is revealed', prearmed.companionMuted === true, prearmed.companionMuted)
@@ -508,6 +521,11 @@ try {
 
   // ---- the companion window ---------------------------------------------
   assert('the companion is still hidden while it rolls up to the reveal', byLabel['companion play start'].companion?.visible === false, byLabel['companion play start'].companion)
+  assert('the companion is still rendered while it rolls up to the reveal',
+    byLabel['companion play start'].companion?.rendered === true
+    && byLabel['companion play start'].companion?.width === byLabel['companion reveal'].companion?.width
+    && byLabel['companion play start'].companion?.height === byLabel['companion reveal'].companion?.height,
+    { lead: byLabel['companion play start'].companion, reveal: byLabel['companion reveal'].companion })
   assert('the companion is on stage from its reveal', byLabel['companion reveal'].companion?.visible === true, byLabel['companion reveal'].companion)
   assert('the companion is on stage across the from-space impact', byLabel['from-space impact'].companion?.visible === true, byLabel['from-space impact'].companion)
   assert('the companion is cleared on the Become Legend cue', byLabel['become legend cue'].companion?.visible === false, byLabel['become legend cue'].companion)

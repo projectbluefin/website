@@ -1623,4 +1623,189 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_DESTINY_SEGMENT_ID)
     expect(wrapper.emitted('complete')).toBeUndefined()
   })
+
+  /**
+   * The montage cuts on measured section marks from 133.58 s, and its later
+   * holds are under ten seconds. A cue that opens on an undecoded painting
+   * spends its whole hold on an empty scene layer, and the cut cannot be
+   * replayed in front of the room. The narrated opening is the only place in
+   * the show with spare network and decode budget, so every painting is warmed
+   * there — and the standard intro, which ships none of them, must not pay for
+   * a single one.
+   */
+  describe('concept-art predecode', () => {
+    class RecordingImage {
+      static requested: string[] = []
+      decoding = ''
+      #src = ''
+      get src(): string {
+        return this.#src
+      }
+
+      set src(value: string) {
+        this.#src = value
+        RecordingImage.requested.push(value)
+      }
+
+      decode() {
+        return Promise.resolve()
+      }
+    }
+
+    async function recordPredecodedUrls(videos: readonly any[]): Promise<string[]> {
+      RecordingImage.requested = []
+      const realImage = window.Image
+      const realGlobalImage = globalThis.Image
+      ;(window as any).Image = RecordingImage
+      ;(globalThis as any).Image = RecordingImage
+      try {
+        mountOverlay(WolvesIntroOverlay, { props: { videos } })
+        await flushPromises()
+      }
+      finally {
+        ;(window as any).Image = realImage
+        ;(globalThis as any).Image = realGlobalImage
+      }
+      return [...RecordingImage.requested]
+    }
+
+    const conceptPaths = DIRECTORS_CUT_DESTINY_CONCEPTS.map(record => record.localPath)
+
+    it('warms all ten paintings exactly once when the prologue takes the stage', async () => {
+      const requested = await recordPredecodedUrls(directorsCut)
+      const concepts = requested.filter(url => url.includes('wolves-intro/destiny-concepts/'))
+
+      expect(concepts).toHaveLength(DIRECTORS_CUT_DESTINY_CONCEPTS.length)
+      expect(new Set(concepts).size).toBe(concepts.length)
+      for (const path of conceptPaths) {
+        expect(concepts.filter(url => url.endsWith(path))).toHaveLength(1)
+      }
+    })
+
+    /**
+     * The paintings are the largest assets in the show. Ten parallel fetches
+     * saturate the same connection pool the Track 0 slide preloader and the
+     * scored audio embed use — measured in the browser, a ten-wide burst left
+     * the previous slide on stage at the 35.666 s Director cut. Exactly one may
+     * be in flight, and the order must be the montage order so the chain stays
+     * ahead of the cue that needs each painting.
+     */
+    function gatedImageClass(pending: Array<{ url: string, resolve: () => void }>) {
+      return class GatedImage extends RecordingImage {
+        override decode() {
+          return new Promise<void>((resolve) => {
+            pending.push({ url: this.src, resolve: () => resolve() })
+          })
+        }
+      }
+    }
+
+    /** Release the next warm still waiting on a concept painting's decode. */
+    function releaseNextConceptDecode(pending: Array<{ url: string, resolve: () => void }>) {
+      const index = pending.findIndex(entry => entry.url.includes('destiny-concepts/'))
+      if (index === -1) {
+        throw new Error('Expected a concept painting to be warming')
+      }
+      pending.splice(index, 1)[0].resolve()
+    }
+
+    async function withGatedImages(run: (pending: Array<{ url: string, resolve: () => void }>) => Promise<void>) {
+      const pending: Array<{ url: string, resolve: () => void }> = []
+      RecordingImage.requested = []
+      const realImage = window.Image
+      const realGlobalImage = globalThis.Image
+      ;(window as any).Image = gatedImageClass(pending)
+      ;(globalThis as any).Image = gatedImageClass(pending)
+      try {
+        await run(pending)
+      }
+      finally {
+        ;(window as any).Image = realImage
+        ;(globalThis as any).Image = realGlobalImage
+      }
+    }
+
+    const conceptsSoFar = () => RecordingImage.requested.filter(url => url.includes('destiny-concepts/'))
+
+    it('warms them one at a time, in montage order', async () => {
+      await withGatedImages(async (pending) => {
+        mountOverlay(WolvesIntroOverlay, { props: { videos: directorsCut } })
+        await flushPromises()
+
+        // Only the first painting may be in flight: the other nine are still
+        // queued behind its decode.
+        expect(conceptsSoFar()).toHaveLength(1)
+        expect(conceptsSoFar()[0]).toContain(conceptPaths[0])
+
+        for (let index = 1; index < DIRECTORS_CUT_DESTINY_CONCEPTS.length; index += 1) {
+          releaseNextConceptDecode(pending)
+          await flushPromises()
+          expect(conceptsSoFar()).toHaveLength(index + 1)
+          expect(conceptsSoFar()[index]).toContain(conceptPaths[index])
+        }
+      })
+    })
+
+    it('abandons the warm chain when the intro is left', async () => {
+      await withGatedImages(async (pending) => {
+        const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: directorsCut } })
+        await flushPromises()
+        expect(conceptsSoFar()).toHaveLength(1)
+
+        // Skipped to Track 0: the show that replaced the intro must not have to
+        // share its bandwidth with paintings nobody will see.
+        wrapper.unmount()
+        releaseNextConceptDecode(pending)
+        await flushPromises()
+
+        expect(conceptsSoFar()).toHaveLength(1)
+      })
+    })
+
+    it('never asks the standard intro to load a Destiny painting', async () => {
+      const requested = await recordPredecodedUrls(buildIntroVideoSequence())
+
+      // The standard intro warms its own guardian companion artwork, so a
+      // non-empty list is what proves this recorded anything at all.
+      expect(requested.length).toBeGreaterThan(0)
+      expect(requested.some(url => url.includes('wolves-intro/destiny-concepts/'))).toBe(false)
+      for (const path of conceptPaths) {
+        expect(requested.some(url => url.endsWith(path))).toBe(false)
+      }
+    })
+
+    it('keeps the scored prologue running when a painting cannot be predecoded', async () => {
+      class FailingImage extends RecordingImage {
+        override decode() {
+          return Promise.reject(new Error('decode unavailable'))
+        }
+      }
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      RecordingImage.requested = []
+      const realImage = window.Image
+      const realGlobalImage = globalThis.Image
+      ;(window as any).Image = FailingImage
+      ;(globalThis as any).Image = FailingImage
+      let wrapper: any
+      try {
+        wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: directorsCut } })
+        await flushPromises()
+        resolveIframeApi()
+        await flushPromises()
+      }
+      finally {
+        ;(window as any).Image = realImage
+        ;(globalThis as any).Image = realGlobalImage
+      }
+
+      // A rejected decode is a warning, never a thrown error inside the intro:
+      // the music is already playing and nothing may stop it.
+      expect(RecordingImage.requested.filter(url => url.includes('destiny-concepts/')))
+        .toHaveLength(DIRECTORS_CUT_DESTINY_CONCEPTS.length)
+      await seekPrologue(GAYANE_TRACK_SECONDS - 1)
+      expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
+      expect(wrapper.get('.wolves-intro-overlay-text').text()).toContain('seven days to the wolves')
+      warn.mockRestore()
+    })
+  })
 })

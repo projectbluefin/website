@@ -403,16 +403,27 @@ onBeforeUnmount(async () => {
     </aside>
 
     <!-- The companion video. The host is mounted from the pre-arm anchor so the
-         player can load, cue and park behind the frame; `v-show` reveals it.
+         player can load, cue and park behind the frame, and it now stays
+         *rendered* through the hidden play lead: `display: none` gives a
+         browser licence to skip layout, paint and compositing for the whole
+         subtree, and the lead is 0.395 s — far too short to gamble a scored
+         beat on a first paint. It is made invisible instead (zero opacity, no
+         hit testing, out of the accessibility tree) and revealed on exactly the
+         same authored beat as before, as a hard cut.
+         A companion that never became available is removed from the DOM
+         entirely: the corner is a lit frame, and an empty one on a projector is
+         indistinguishable from a broken slide.
          Kept out of the flow at every viewport: on a projector it sits in the
          corner, and below the theater's own 1024px breakpoint it becomes a
          centred band across the foot of the frame rather than being dropped. -->
     <section
-      v-show="companionVisible"
+      v-if="!companionUnavailable"
       class="wc-dcf-companion"
+      :class="{ 'wc-dcf-companion--hidden': !companionVisible }"
       data-director-finale-companion
       :data-companion-visible="companionVisible ? 'true' : 'false'"
       aria-hidden="true"
+      inert
     >
       <div ref="companionHost" class="wc-dcf-companion-host" />
     </section>
@@ -512,6 +523,18 @@ onBeforeUnmount(async () => {
   box-shadow:
     0 0 0 1px rgb(147 197 253 / 35%),
     0 1.6rem 4rem rgb(0 0 0 / 55%);
+  // The corner is rendered from the pre-arm anchor and only made invisible, so
+  // promote its layer up front: the reveal is a hard cut on a measured beat and
+  // must not wait on a first composite.
+  will-change: opacity;
+}
+
+// Invisible, not unrendered. Everything below the compositor stays live — the
+// embed keeps decoding and the layer keeps its raster — while nothing reaches
+// the audience, the pointer or assistive technology.
+.wc-dcf-companion--hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .wc-dcf-companion-host,

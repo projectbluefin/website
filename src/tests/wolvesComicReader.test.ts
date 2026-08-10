@@ -679,19 +679,22 @@ describe('wolvesComicReader', () => {
   })
 
   // Blurring a surface that repaints a full-size image on every slide change is
-  // what produced the hitch on Ghosts In The Mist onward. Track 0 is the one
-  // segment whose look is locked, so it keeps its authored blur.
+  // what produced the hitch on Ghosts In The Mist onward. The standard show's
+  // Track 0 is the one segment whose look is locked, so it keeps its authored
+  // blur; the Director's Cut Track 0 cuts 190 lock-free slides off the beat grid
+  // and takes the static-background treatment with the later tracks.
   describe('slide crossfade blur', () => {
-    function crossfadeClass(trackIndex: number, wolvesExperience: boolean) {
+    function crossfadeClass(trackIndex: number, wolvesExperience: boolean, presentationProfile?: PresentationProfile) {
       mockGalleryData()
       const wrapper = mount(WolvesComicReader, {
-        props: { trackIndex, trackId: '1', playlistCurrentTime: 1, wolvesExperience },
+        props: { trackIndex, trackId: '1', playlistCurrentTime: 1, wolvesExperience, presentationProfile },
       })
       return wrapper.get('#comic-reader').classes()
     }
 
     it('keeps the authored blur on the primary song', () => {
       expect(crossfadeClass(0, true)).not.toContain('comic-reader-section--fast-crossfade')
+      expect(crossfadeClass(0, true, WOLVES_STANDARD_PROFILE_ID)).not.toContain('comic-reader-section--fast-crossfade')
     })
 
     it('drops the blur from Ghosts In The Mist onward', () => {
@@ -703,6 +706,26 @@ describe('wolvesComicReader', () => {
     it('drops the blur across every back-catalogue segment', () => {
       for (const trackIndex of [0, 1, 2]) {
         expect(crossfadeClass(trackIndex, false)).toContain('comic-reader-section--fast-crossfade')
+        expect(crossfadeClass(trackIndex, false, 'generic')).toContain('comic-reader-section--fast-crossfade')
+      }
+    })
+
+    // The blur was excluded from Track 0 because the standard cut does not run
+    // a rapid gallery crossfade there. The Director's Cut does — its Track 0 is
+    // the fastest schedule in the show — so the exclusion cannot be keyed to
+    // `trackIndex !== 0` alone without putting blur work back on the slide
+    // change path for 190 cuts.
+    it('drops the blur on the director\'s cut Track 0', () => {
+      expect(crossfadeClass(0, true, WOLVES_DIRECTORS_CUT_PROFILE_ID))
+        .toContain('comic-reader-section--fast-crossfade')
+    })
+
+    it('leaves the director\'s cut later tracks and the standard show alone', () => {
+      for (const trackIndex of [1, 2, 3]) {
+        expect(crossfadeClass(trackIndex, true, WOLVES_DIRECTORS_CUT_PROFILE_ID))
+          .toContain('comic-reader-section--fast-crossfade')
+        expect(crossfadeClass(trackIndex, true, WOLVES_STANDARD_PROFILE_ID))
+          .toContain('comic-reader-section--fast-crossfade')
       }
     })
   })

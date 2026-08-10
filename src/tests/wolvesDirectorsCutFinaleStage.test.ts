@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -123,6 +125,26 @@ function calls(method: string) {
   return companionCalls.filter(entry => entry.method === method)
 }
 
+/**
+ * What the corner is doing right now.
+ *
+ * Three states, not two. `absent` is a companion that never became available —
+ * removed from the DOM entirely, because the corner is a lit frame and an empty
+ * one on a projector reads as a broken slide. `hidden` is the pre-arm and play
+ * lead: rendered, laid out and composited, but transparent and untouchable, so
+ * the reveal is a hard cut rather than a first paint. `revealed` is on stage.
+ */
+function companionState(wrapper: any): 'absent' | 'hidden' | 'revealed' {
+  const corner = wrapper.find('[data-director-finale-companion]')
+  if (!corner.exists()) {
+    return 'absent'
+  }
+  // A rendered-but-hidden corner must never fall back to `display: none`: that
+  // is exactly the composite the play lead is too short to pay for.
+  expect(corner.attributes('style') ?? '').not.toContain('display: none')
+  return corner.classes().includes('wc-dcf-companion--hidden') ? 'hidden' : 'revealed'
+}
+
 const STAGE_STUBS = {
   TheaterExperience: { template: '<div class="theater-experience-stub" />' },
   WolvesOrgAds: { template: '<div class="org-ads-stub" />' },
@@ -187,7 +209,11 @@ describe('director\'s cut finale composition', () => {
     expect(calls('cueVideoById')[0]?.args[0]).toMatchObject({ videoId: 'PjryN2F6fF0' })
     expect(calls('pauseVideo').length).toBeGreaterThan(0)
     expect(calls('playVideo')).toHaveLength(0)
-    expect(wrapper.find('[data-director-finale-companion]').attributes('style')).toContain('display: none')
+    expect(companionState(wrapper)).toBe('hidden')
+    // The host has to exist for the player to be built into, and it has to be
+    // in a rendered subtree for the embed to warm up behind the frame.
+    expect(wrapper.find('[data-director-finale-companion] .wc-dcf-companion-host').exists()).toBe(true)
+    expect(wrapper.find('[data-director-finale-companion]').attributes('aria-hidden')).toBe('true')
   })
 
   it('takes the frame on the finale beat with the Collapse day plate', async () => {
@@ -225,11 +251,39 @@ describe('director\'s cut finale composition', () => {
   it('starts the companion rolling hidden, then reveals it on the impact beat', async () => {
     const { store, wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionPlayStart)
     expect(calls('playVideo').length).toBeGreaterThan(0)
-    expect(wrapper.find('[data-director-finale-companion]').attributes('style')).toContain('display: none')
+    expect(companionState(wrapper)).toBe('hidden')
 
     store.updateTime(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal, 424, DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
     await nextTick()
-    expect(wrapper.find('[data-director-finale-companion]').attributes('style') ?? '').not.toContain('display: none')
+    expect(companionState(wrapper)).toBe('revealed')
+  })
+
+  // The hidden play lead is one measured beat — 0.395 s. `display: none` gives
+  // a browser licence to skip layout, paint and compositing for the subtree, so
+  // a corner hidden that way can be asked for its first composite at the exact
+  // frame it is meant to be already playing. It stays rendered instead, and the
+  // same DOM node carries through the reveal without re-creating the embed.
+  it('keeps the corner rendered and composited across the whole hidden lead', async () => {
+    const { store, wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionPrearm)
+    const hostBeforeReveal = wrapper.find('[data-director-finale-companion] .wc-dcf-companion-host').element
+
+    for (const time of [
+      DIRECTORS_CUT_FINALE_ANCHORS.coverStart,
+      DIRECTORS_CUT_FINALE_ANCHORS.companionPlayStart,
+      DIRECTORS_CUT_FINALE_ANCHORS.companionReveal - 0.001,
+    ]) {
+      store.updateTime(time, 424, time)
+      await nextTick()
+      expect(companionState(wrapper)).toBe('hidden')
+      expect(wrapper.find('[data-director-finale-companion]').element).toBeTruthy()
+    }
+
+    store.updateTime(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal, 424, DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    await nextTick()
+    expect(companionState(wrapper)).toBe('revealed')
+    // Same host, same player: the reveal is a visibility change, not a remount.
+    expect(wrapper.find('[data-director-finale-companion] .wc-dcf-companion-host').element).toBe(hostBeforeReveal)
+    expect(constructedPlayers).toBe(1)
   })
 
   it('seeks the companion to its measured source frame, never to zero', async () => {
@@ -383,11 +437,9 @@ describe('director\'s cut finale composition', () => {
 
     // The corner is a lit frame: an opaque black fill, a blue ring and a drop
     // shadow. Rendering an empty one for the whole 17 s reveal window reads
-    // from the back row as a broken slide, so an unavailable companion has to
-    // be `display: none` — not merely a box with nothing in it.
-    const corner = wrapper.find('[data-director-finale-companion]')
-    expect(corner.attributes('data-companion-visible')).toBe('false')
-    expect(corner.attributes('style')).toContain('display: none')
+    // from the back row as a broken slide, so an unavailable companion is
+    // removed from the DOM — not merely a transparent box with nothing in it.
+    expect(companionState(wrapper)).toBe('absent')
 
     // And it must stay dark for the rest of the window rather than flicker in
     // on the next clock tick.
@@ -396,7 +448,7 @@ describe('director\'s cut finale composition', () => {
       await nextTick()
       await Promise.resolve()
       await nextTick()
-      expect(wrapper.find('[data-director-finale-companion]').attributes('style')).toContain('display: none')
+      expect(companionState(wrapper)).toBe('absent')
     }
     expect(handledErrors).toEqual([])
     wrapper.unmount()
@@ -406,7 +458,7 @@ describe('director\'s cut finale composition', () => {
     // corner that is simply never shown.
     loaderFails = false
     const healthy = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
-    expect(healthy.wrapper.find('[data-director-finale-companion]').attributes('style') ?? '').not.toContain('display: none')
+    expect(companionState(healthy.wrapper)).toBe('revealed')
     healthy.wrapper.unmount()
   })
 
@@ -420,7 +472,7 @@ describe('director\'s cut finale composition', () => {
     // message listener and a media element. Discarding it leaks all three.
     expect(constructedPlayers).toBe(1)
     expect(constructedInstances[0]?.destroyCalls).toBe(1)
-    expect(wrapper.find('[data-director-finale-companion]').attributes('style')).toContain('display: none')
+    expect(companionState(wrapper)).toBe('absent')
 
     wrapper.unmount()
     await nextTick()
@@ -437,7 +489,7 @@ describe('director\'s cut finale composition', () => {
     await Promise.resolve()
     await nextTick()
     expect(constructedInstances[0]?.destroyCalls).toBe(1)
-    expect(wrapper.find('[data-director-finale-companion]').attributes('style')).toContain('display: none')
+    expect(companionState(wrapper)).toBe('absent')
 
     // A dead player must not be driven for the rest of the window, and must
     // not be rebuilt on every tick either.
@@ -519,6 +571,41 @@ describe('director\'s cut finale composition', () => {
     store.updateTime(120, 424, 120)
     await nextTick()
     expect(wrapper.find('[data-director-finale]').exists()).toBe(false)
+  })
+})
+
+/**
+ * A DOM-less environment resolves no media query and no cascade, so the
+ * companion's hiding mechanism and its narrow-viewport treatment are asserted
+ * against the component's own stylesheet. `tests/wolves-directors-cut-finale.mjs`
+ * measures the resulting bounds in a real browser at both viewports.
+ */
+describe('director\'s cut finale companion styling', () => {
+  const source = readFileSync(
+    resolve(process.cwd(), 'src/components/wolves/cinematic/WolvesDirectorFinale.vue'),
+    'utf8',
+  )
+  const hiddenRule = source.match(/\.wc-dcf-companion--hidden\s*\{[^}]*\}/)?.[0] ?? ''
+  const narrowBlock = source.slice(source.indexOf('@media (max-width: 1023px)'))
+  const narrowCompanionRule = narrowBlock.match(/\.wc-dcf-companion\s*\{[^}]*\}/)?.[0] ?? ''
+
+  it('hides the warming corner without taking it out of the render tree', () => {
+    expect(hiddenRule).toContain('opacity: 0')
+    expect(hiddenRule).toContain('pointer-events: none')
+    // Either of these would defeat the whole point: a `display: none` subtree
+    // may skip layout, paint and compositing, and `visibility: hidden`
+    // suppresses paint for the subtree too.
+    expect(hiddenRule).not.toContain('display: none')
+    expect(hiddenRule).not.toContain('visibility: hidden')
+    expect(source).toMatch(/\.wc-dcf-companion\s*\{[^}]*will-change: opacity/)
+  })
+
+  it('still re-places the corner on a narrow viewport instead of dropping it', () => {
+    expect(narrowCompanionRule).toContain('translateX(-50%)')
+    expect(narrowCompanionRule).not.toContain('display: none')
+    // The bulletin is the surface that stands down here; the companion is a
+    // scored beat and is re-placed as a centred band.
+    expect(narrowBlock).toMatch(/\.wc-dcf-bulletin\s*\{[^}]*display: none/)
   })
 })
 

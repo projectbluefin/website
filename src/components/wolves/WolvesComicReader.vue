@@ -106,11 +106,17 @@ const isDirectorsCut = computed(() => props.presentationProfile === WOLVES_DIREC
  * change is what produced the hitch: profiling the 3:27-3:35 window measured
  * 66-83 ms frames with the blur and compositor-paced frames without it.
  *
- * Track 0 of the Wolves show is deliberately excluded. Its blur is authored
+ * The *standard* show's Track 0 is deliberately excluded. Its blur is authored
  * treatment, it is the one segment whose look is locked, and it does not run
  * the same rapid gallery crossfade the later tracks and the catalogue do.
+ *
+ * The Director's Cut is the opposite case: its Track 0 runs 190 lock-free cuts
+ * off the measured beat grid — a faster slide rate than any later track — so it
+ * takes the static-background treatment with them. Only the profile decides
+ * this; standard Track 0 and generic albums keep exactly the behaviour they had.
  */
-const usesFastCrossfade = computed(() => !isWolvesExperience.value || props.trackIndex !== 0)
+const usesFastCrossfade = computed(() =>
+  !isWolvesExperience.value || props.trackIndex !== 0 || isDirectorsCut.value)
 
 // PDF source ───────────────────────────────────────────────────────────────
 const pdfUrl = `${import.meta.env.BASE_URL}color-with-bluefin.pdf`
@@ -2303,7 +2309,8 @@ onBeforeUnmount(() => {
 // Gallery slides crossfade full-size images. Backdrop filtering those surfaces
 // forces a large repaint on every opacity transition and produces a visible
 // hitch; the static translucent backgrounds preserve contrast without putting
-// blur work on the slide-change path. Track 0 keeps its authored blur.
+// blur work on the slide-change path. The standard show's Track 0 keeps its
+// authored blur; the Director's Cut Track 0 cuts far faster and does not.
 .comic-reader-section--fast-crossfade {
   .comic-viewport,
   .flickr-caption,

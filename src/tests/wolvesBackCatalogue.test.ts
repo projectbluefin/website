@@ -1,4 +1,6 @@
+import { readFileSync } from 'node:fs'
 import https from 'node:https'
+import { resolve } from 'node:path'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -78,6 +80,35 @@ describe('back catalogue experiences', () => {
     expect(() => parseBackCatalogue({})).toThrow('experiences array')
     expect(() => parseBackCatalogue({ experiences: [{ id: 'x' }] })).toThrow('bad experience entry')
     expect(parseBackCatalogue({ experiences: [ALBUM] }).experiences).toHaveLength(1)
+  })
+
+  // `presentationProfile` is authority, not structure: it selects the authored
+  // Wolves intro, timeline, slide schedule and finale. The generator never
+  // writes it, so a catalogue card that declares one is a corrupt or tampered
+  // file trying to launch the authored show, and it is refused at the boundary.
+  it('refuses a catalogue entry that declares a Wolves presentation profile', () => {
+    for (const presentationProfile of ['wolves-standard', 'wolves-directors-cut', 'anything-else']) {
+      expect(() => parseBackCatalogue({
+        experiences: [{ ...ALBUM, presentationProfile }],
+      })).toThrow('non-generic presentation profile')
+    }
+
+    // Absent and explicit `generic` are the two shapes the generator can emit.
+    expect(parseBackCatalogue({ experiences: [ALBUM] }).experiences[0].presentationProfile).toBeUndefined()
+    expect(parseBackCatalogue({
+      experiences: [{ ...ALBUM, presentationProfile: 'generic' }],
+    }).experiences).toHaveLength(1)
+  })
+
+  it('keeps every shipped catalogue entry generic', () => {
+    const catalogue = parseBackCatalogue(JSON.parse(
+      readFileSync(resolve(process.cwd(), 'public/experiences/catalogue.json'), 'utf8'),
+    ))
+
+    expect(catalogue.experiences.length).toBeGreaterThan(0)
+    for (const experience of catalogue.experiences) {
+      expect(experience.presentationProfile ?? 'generic').toBe('generic')
+    }
   })
 
   it('maps yt-dlp entries to manifest segments', () => {
