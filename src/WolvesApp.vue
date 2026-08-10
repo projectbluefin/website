@@ -55,6 +55,7 @@ async function startCinematicStage() {
     // drift out of date and leave the harness stuck in the intro.
     ;(window as any).__wolvesCinematic = {
       seekTo: (s: number) => stage.value?.seekTo(s),
+      nativeTime: () => store.nativeTime,
       introDuration: () => INTRO_SEQUENCE_DURATION,
       overallDuration: () => store.overallDuration,
       // What each YouTube buffer is really holding versus what the runtime thinks

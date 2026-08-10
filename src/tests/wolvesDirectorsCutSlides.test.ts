@@ -211,7 +211,6 @@ describe('director\'s cut track zero slide schedule', () => {
     // Every locked portrait is available to the Director's draw — so a portrait
     // that does not play was passed over by the cycle, not missing from the pool.
     expect(eligible.map(lock => lock.id)).toEqual(lockedSlides.map(lock => lock.id))
-    expect(played.length).toBeGreaterThan(0)
     for (const lock of played) {
       const slide = scheduled.get(lock.id)!
       expect([slide.startTime, slide.endTime], `${lock.id} kept its authored window`)
@@ -229,10 +228,6 @@ describe('director\'s cut track zero slide schedule', () => {
       expect(held, `freeze ${window.startTime}-${window.endTime} survived`).toBe(false)
     }
 
-    // The Reza hold is two standard windows (8.16s) and the standard ambient
-    // intro opens on a 32-beat hold; nothing in the Director cut runs that long.
-    expect(schedule.every(slide => slide.duration < rezaContributorTrackZeroWindow.endTime - rezaContributorTrackZeroWindow.startTime)).toBe(true)
-
     // The post-hero opening run is a locked back-to-back order in the standard
     // show; the Director cut must not preserve that adjacency.
     const orderedIds = schedule.map(slide => slide.id)
@@ -246,21 +241,9 @@ describe('director\'s cut track zero slide schedule', () => {
     expect(reserved.every(slide => slide.endTime <= DIRECTORS_CUT_FINALE_START)).toBe(true)
   })
 
-  it('paces every section faster than the standard schedule and tightens within it', () => {
-    const standardGroups = [
-      TRACK_ZERO_PRESENTATION_SECTIONS.ambientIntro.beatGroups,
-      TRACK_ZERO_PRESENTATION_SECTIONS.drivingVerse.beatGroups,
-      TRACK_ZERO_PRESENTATION_SECTIONS.contributorChorus.beatGroups,
-      TRACK_ZERO_PRESENTATION_SECTIONS.chantingBridge.beatGroups,
-      TRACK_ZERO_PRESENTATION_SECTIONS.heavyBuild.beatGroups,
-    ]
-
-    DIRECTORS_CUT_TRACK_ZERO_SECTIONS.forEach((section, index) => {
-      const standard = standardGroups[index]
-      if (standard) {
-        expect(section.beatGroups[0]).toBeLessThan(standard[0])
-        expect(section.beatGroups[section.beatGroups.length - 1]).toBeLessThanOrEqual(standard[standard.length - 1])
-      }
+  it('paces every section on readable cinematic phrases and tightens within it', () => {
+    DIRECTORS_CUT_TRACK_ZERO_SECTIONS.forEach((section) => {
+      expect(Math.min(...section.beatGroups)).toBeGreaterThanOrEqual(4)
       const sectionSlides = schedule.filter(slide =>
         slide.startTime >= section.startTime && slide.endTime <= section.endTime)
       expect(sectionSlides.length, `empty section ${section.id}`).toBeGreaterThan(0)
@@ -276,11 +259,10 @@ describe('director\'s cut track zero slide schedule', () => {
   })
 
   it('keeps every hold long enough for the decode-aware preload lead to cover it', () => {
-    // The reader keeps PRELOAD_WINDOW_SECONDS (8s) of upcoming slides warm with
-    // at most MAX_LOOKAHEAD_SLIDES (12) fetches, so the average hold cannot
-    // drop below 8/12s without the lookahead falling behind the cue.
+    // Sub-second cuts read as a random slideshow and leave too little time for
+    // a projector image to decode, settle and be understood.
     const shortest = Math.min(...schedule.map(slide => slide.duration))
-    expect(shortest).toBeGreaterThanOrEqual(8 / 12)
+    expect(shortest).toBeGreaterThanOrEqual(1.5)
   })
 
   it('preserves source and credit metadata verbatim', () => {

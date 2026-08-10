@@ -1894,7 +1894,8 @@ describe('pending segment preload of the authored opening slide', () => {
       const director = await mountCut(WOLVES_DIRECTORS_CUT_PROFILE_ID)
       const slides = scheduleOf(director, 'trackZeroSlides')
 
-      expect(slides.length).toBeGreaterThan(scheduleOf(director, 'timelineSlides').length)
+      expect(slides.length).toBeLessThan(scheduleOf(director, 'timelineSlides').length)
+      expect(Math.min(...slides.map(slide => slide.duration))).toBeGreaterThanOrEqual(1.5)
       expect(slides[0].startTime).toBe(0)
       expect(slides[slides.length - 1].endTime).toBe(DIRECTORS_CUT_FINALE_START)
       expect(new Set(slides.map(slide => slide.id)).size).toBe(slides.length)

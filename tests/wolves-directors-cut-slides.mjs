@@ -205,8 +205,13 @@ try {
   await page.waitForFunction(() => typeof window.__wolvesCinematic?.seekTo === 'function', null, { timeout: 20_000 })
   log('  Director\'s Cut stage started\n')
 
-  async function slideAt(seconds) {
+  async function slideAt(seconds, expected = []) {
     await page.evaluate(time => window.__wolvesCinematic.seekTo(time), seconds)
+    await page.waitForFunction(
+      target => Math.abs((window.__wolvesCinematic?.nativeTime?.() ?? -1) - target) < 0.35,
+      seconds,
+      { timeout: 10_000 },
+    )
     // The swap is gated on fetching and decoding a full-size image and then on
     // the crossfade, so a fixed wait either samples the previous frame or wastes
     // time. Poll until the stage settles instead.
@@ -221,7 +226,9 @@ try {
       if (settled.finaleCovering === 'true') {
         return settled
       }
-      if (settled.src && settled.src === previous?.src && settled.opacity >= 0.99) {
+      const decoded = decodeURIComponent(settled.src ?? '')
+      const expectedOnStage = expected.length === 0 || expected.some(file => decoded.endsWith(file))
+      if (expectedOnStage && settled.src && settled.src === previous?.src && settled.opacity >= 0.99) {
         return settled
       }
       previous = settled
@@ -280,7 +287,7 @@ try {
   const seen = new Map()
   for (const [label, slide] of probes) {
     const midpoint = slide.startTime + (slide.endTime - slide.startTime) / 2
-    const observed = await slideAt(midpoint)
+    const observed = await slideAt(midpoint, expectedFiles(slide))
     const decoded = decodeURIComponent(observed.src ?? '')
     assert(
       `${label} cut ${slide.startTime.toFixed(3)}-${slide.endTime.toFixed(3)} shows ${slide.id}`,
@@ -381,7 +388,7 @@ try {
   await page.waitForSelector('.wc-trackzero-grid', { state: 'attached', timeout: 20_000 })
   await page.waitForFunction(() => typeof window.__wolvesCinematic?.seekTo === 'function', null, { timeout: 20_000 })
 
-  const standardHeroLock = await slideAt(169.8)
+  const standardHeroLock = await slideAt(169.8, ['interview-jono-bacon-cult-psychology-kubernetes.webp'])
   assert(
     'the standard show still holds Jono Bacon across his authored 167.8-171.88 window',
     decodeURIComponent(standardHeroLock.src ?? '').endsWith('interview-jono-bacon-cult-psychology-kubernetes.webp'),

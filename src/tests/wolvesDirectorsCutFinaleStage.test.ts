@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
@@ -71,9 +71,12 @@ vi.mock('@/composables/useYoutubeIframeApi', async (importOriginal) => {
       ? Promise.reject(new Error('YouTube IFrame API failed to load'))
       : Promise.resolve()),
     getYoutubePlayerConstructor: () => class FakePlayer {
+      config: Record<string, any>
+
       currentTime = 0
       destroyCalls = 0
       constructor(_element: Element, config: Record<string, any>) {
+        this.config = config
         constructedPlayers += 1
         constructedInstances.push(this)
         capturedConfig = config
@@ -101,7 +104,11 @@ vi.mock('@/composables/useYoutubeIframeApi', async (importOriginal) => {
       mute = record('mute')
       setVolume = record('setVolume')
       pauseVideo = record('pauseVideo')
-      playVideo = record('playVideo')
+      playVideo = (...args: unknown[]) => {
+        companionCalls.push({ method: 'playVideo', args })
+        this.config.events?.onStateChange?.({ data: 1, target: this })
+      }
+
       destroy = (...args: unknown[]) => {
         this.destroyCalls += 1
         companionCalls.push({ method: 'destroy', args })
@@ -169,7 +176,7 @@ async function mountFinaleAt(time: number) {
     },
   })
   await nextTick()
-  await Promise.resolve()
+  await flushPromises()
   await nextTick()
   return { store, wrapper }
 }
@@ -256,6 +263,25 @@ describe('director\'s cut finale composition', () => {
     store.updateTime(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal, 424, DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
     await nextTick()
     expect(companionState(wrapper)).toBe('revealed')
+  })
+
+  it('keeps a cold fast-forward hidden until the companion player is ready', async () => {
+    deferReady = () => {}
+    const { wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    const release = deferReady
+
+    expect(companionState(wrapper)).toBe('hidden')
+
+    release?.()
+    await flushPromises()
+    await nextTick()
+
+    expect(companionState(wrapper)).toBe('revealed')
+    const seeks = calls('seekTo')
+    expect(seeks[seeks.length - 1]?.args[0]).toBeCloseTo(
+      companionSourceTimeAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal),
+      3,
+    )
   })
 
   // The hidden play lead is one measured beat — 0.395 s. `display: none` gives

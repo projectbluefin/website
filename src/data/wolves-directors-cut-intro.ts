@@ -19,6 +19,8 @@ import { buildIntroVideoSequence, isVideoSegment } from './wolves-intro-sequence
 
 export const DIRECTORS_CUT_PROLOGUE_SEGMENT_ID = 'wolves-prologue' as const
 export const DIRECTORS_CUT_DESTINY_SEGMENT_ID = 'wolves-directors-destiny' as const
+/** Short reveal followed by a real reading hold; the shared 7.8s fade hid most short cues. */
+export const DIRECTORS_CUT_TEXT_FADE_SECONDS = 1.6
 
 /** Aram Khachaturian — Gayane Ballet Suite (Adagio), the prologue's scored source. */
 export const GAYANE_SOURCE_VIDEO_ID = 'EB3IokHelRk' as const
@@ -87,11 +89,8 @@ export const GAYANE_PROLOGUE_MARKS = [
 ] as const
 
 const NARRATION_FIRST_MARK = 1
-const MONTAGE_FIRST_MARK = 9
-const HANDOFF_FIRST_MARK = 19
-
-/** Ken Burns is restrained to the Europa movement (E1-C4), where the compositions carry it. */
-const MONTAGE_KENBURNS_COUNT = 5
+const MONTAGE_FIRST_MARK = 8
+const HANDOFF_FIRST_MARK = 18
 
 const COLLAPSE_BACKGROUND = 'wolves-intro/bluefin-collapse-night.webp'
 
@@ -105,16 +104,6 @@ const COLLAPSE_BACKGROUND = 'wolves-intro/bluefin-collapse-night.webp'
  * dominant for the singular high-impact lines it was invented for.
  */
 export const DOMINANT_EMPHASIS_MAX_WORDS = 13
-
-/**
- * The Arthur C. Clarke fragment, verbatim from `src/data/lore/arthur-c-clarke-4.md`.
- *
- * The prologue used to break this one sentence across three cues, which re-rendered the beat
- * three times and lower-cased-to-capitalised "Broken" along the way. A quote is never split
- * across pages, so it is one cue with the source's own wording restored.
- */
-export const DIRECTORS_CUT_CLARKE_QUOTE
-  = 'In the space of a few days, humanity had lost its future, for the heart of any race is destroyed, and its will to survive is utterly broken, when its children are taken from it.'
 
 /** Bungie's official "Destiny 2: Into the Light Cinematic" upload — the Ikora-voiced source. */
 export const IKORA_SOURCE_VIDEO_ID = 'BKm0TPqeOjY' as const
@@ -161,9 +150,9 @@ function round(seconds: number): number {
  * The narrated opening: the existing authored prologue lines, in their authored order, each
  * given a window bounded by two measured section marks.
  *
- * Nothing here is new writing. The only restructuring is that the Clarke quote's three former
- * fragments are one complete thought again, which frees the windows the remaining lines needed
- * to clear their theater reading cost — several of the old ones (5.0 s, 5.625 s) sat under it.
+ * Nothing here is new writing. The long Clarke sentence is deliberately omitted from this
+ * projected sequence: keeping a quote whole turned it into a 35-word wall, while splitting it
+ * would violate the show's quote rule. The sourced quote remains available in the lore corpus.
  */
 function buildNarrationCues(): IntroOverlayTextCue[] {
   const texts: IntroOverlayTextCue[] = [
@@ -211,19 +200,6 @@ And then, a threat.`,
       backgroundImage: COLLAPSE_BACKGROUND,
     },
     { text: 'Others came to claim a bountiful and unprotected Garden.', start: 0, end: 0 },
-    {
-      text: DIRECTORS_CUT_CLARKE_QUOTE,
-      start: 0,
-      end: 0,
-      // Deliberately *not* `emphasis: 'dominant'`, even though the dominant treatment was
-      // invented for this quote. Dominant is a 81px display size reserved for a singular
-      // high-impact *line*; whole again, this is a 35-word page, and at that size it renders
-      // 878px tall — it overflows the top of the frame at 1280x720 and collides with the
-      // nameplate at 1440x900 (both measured in Chromium). A quote nobody can finish reading
-      // is worse than a quote set one size down, and the beat still owns the screen for 25s.
-      textPosition: 'bottom',
-      nameplateTitle: 'From the Age of Dinosaurs to the Pinnacle of Humanity',
-    },
   ]
 
   return texts.map((cue, index) => ({
@@ -235,24 +211,39 @@ And then, a threat.`,
 
 /**
  * The approved Destiny concept-art montage, in registry order (E1, C1, C2, C3, C4, C9, C6,
- * C5, C7, C10), one cue per painting, image-only.
+ * C5, C7, C10), one cue per painting.
  *
- * The shape is the design's hybrid crescendo, snapped onto the measured marks: the five Europa
- * paintings hold longest (14.82-22.92 s) and are the only cues carrying Ken Burns motion; C9
- * (Mars Farm Collapse) starts the acceleration at 13.50 s; C6, C5 and C7 tighten to 10.55,
- * 9.95 and 9.10 s; and C10 (Crash) is a 5.90 s hammer immediately before the final crescendo.
+ * Complete authored thoughts recur across the instrumental movement, so the full song keeps
+ * advancing the prologue instead of becoming a 142-second silent slideshow. The recurrence is
+ * deliberate: it gives the score motifs without inventing connective lore. Every painting is
+ * static; the former 1.15 -> 1.65 Ken Burns crop made source art soft and unreadable.
  *
- * No caption is painted over any painting. The registry's figure metadata carries the artist
- * and the Bungie credit into assistive technology instead.
+ * The registry's figure metadata carries the artist and the Bungie credit into assistive
+ * technology.
  */
 function buildMontageCues(): IntroOverlayTextCue[] {
+  const refrains = [
+    'A Gardener and a Winnower walked among the stars.',
+    `One to spread life,
+and one to cull the dross
+to shape the Garden of Earth.`,
+    'One day changed the Garden forever.',
+    'New Children arose and filled the pattern.',
+    'For eons, Maintainer-Guardians cultivated the Garden...',
+    'An AI-fueled Society deemed Guardians unnecessary.',
+    'And then, a threat.',
+    'Others came to claim a bountiful and unprotected Garden.',
+    `Now, what's left of a proud order fights for survival,
+surrounded by predators.`,
+    'One day changed the Garden forever.',
+  ] as const
+
   return DIRECTORS_CUT_DESTINY_CONCEPTS.map((record, index) => ({
-    text: '',
+    text: refrains[index]!,
     start: mark(MONTAGE_FIRST_MARK + index),
     end: mark(MONTAGE_FIRST_MARK + index + 1),
     backgroundImage: record.localPath,
     backgroundFigure: record.backgroundFigure,
-    ...(index < MONTAGE_KENBURNS_COUNT ? { backgroundMotion: 'kenburns' as const } : {}),
   }))
 }
 
@@ -275,11 +266,10 @@ surrounded by predators.`,
     { text: 'PROJECT BLUEFIN\nseven days to the wolves', start: 0, end: 0, slim: true },
   ]
 
-  return texts.map((cue, index) => ({
-    ...cue,
-    start: mark(HANDOFF_FIRST_MARK + index),
-    end: mark(HANDOFF_FIRST_MARK + index + 1),
-  }))
+  return [
+    { ...texts[0]!, start: mark(HANDOFF_FIRST_MARK), end: mark(HANDOFF_FIRST_MARK + 2) },
+    { ...texts[1]!, start: mark(HANDOFF_FIRST_MARK + 2), end: mark(HANDOFF_FIRST_MARK + 3) },
+  ]
 }
 
 export function buildDirectorsCutPrologueSegment(): IntroTextSegment {

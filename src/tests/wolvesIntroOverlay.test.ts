@@ -822,6 +822,21 @@ describe('wolvesIntroOverlay track 0 handoff fade', () => {
 })
 
 describe('wolvesIntroOverlay text segments', () => {
+  it('gives the Director prologue a short reveal followed by a real reading hold', () => {
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: {
+        videos: [{
+          id: 'wolves-prologue',
+          kind: 'text' as const,
+          duration: 10,
+          overlays: [{ text: 'A complete thought.', start: 0, end: 10 }],
+        }],
+      },
+    })
+
+    expect(wrapper.get('.wolves-intro-overlay-text').attributes('style')).toContain('animation-duration: 1.6s')
+  })
+
   it('emits a cue-level nameplate title through status and restores the segment title outside that cue', async () => {
     const textSequence = [
       {
@@ -1367,7 +1382,7 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     await flushPromises()
   }
 
-  it('renders every montage painting image-only, with its provenance and the authored motion', async () => {
+  it('renders every montage painting with its complete thought, provenance and no crop motion', async () => {
     const wrapper = await mountDirectorsCut()
     const montage = buildDirectorsCutPrologueSegment().overlays!.filter(cue => cue.backgroundImage?.startsWith('wolves-intro/destiny-concepts/'))
     expect(montage).toHaveLength(DIRECTORS_CUT_DESTINY_CONCEPTS.length)
@@ -1383,15 +1398,10 @@ describe('wolvesIntroOverlay director\'s cut', () => {
       expect(scene.attributes('role')).toBe('figure')
       expect(scene.attributes('aria-label')).toBe(record.backgroundFigure.label)
       expect(scene.attributes('aria-description')).toBe(DIRECTORS_CUT_DESTINY_CONCEPT_CREDIT)
-      // No caption is painted over a painting.
-      expect(wrapper.find('.wolves-intro-overlay-text').exists()).toBe(false)
-
-      const hasKenBurns = image.classes().includes('wolves-intro-overlay-background-kenburns')
-      expect(hasKenBurns).toBe(index < 5)
-      if (hasKenBurns) {
-        // The drift is paced by the cue's own measured musical window.
-        expect(image.attributes('style')).toContain(`animation-duration: ${cue.end - cue.start}s`)
-      }
+      expect(wrapper.get('.wolves-intro-overlay-text').text())
+        .toContain(cue.text.split('\n')[0]!.replace(/[.,]/g, ''))
+      expect(image.classes()).not.toContain('wolves-intro-overlay-background-kenburns')
+      expect(image.attributes('style') ?? '').not.toContain('animation-duration')
     }
   })
 

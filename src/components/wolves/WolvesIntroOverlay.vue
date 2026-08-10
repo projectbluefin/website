@@ -8,7 +8,10 @@ import { getChromeFreeYoutubePlayerVars, getYoutubePlayerConstructor, getYoutube
 import { getActiveComicHeroShot, wolvesComicHeroShots } from '@/data/wolves-comic-hero-shots'
 import { dinosaurSpecies } from '@/data/wolves-dinosaur-species'
 import { DIRECTORS_CUT_DESTINY_CONCEPTS } from '@/data/wolves-directors-cut-artwork'
-import { DIRECTORS_CUT_PROLOGUE_SEGMENT_ID } from '@/data/wolves-directors-cut-intro'
+import {
+  DIRECTORS_CUT_PROLOGUE_SEGMENT_ID,
+  DIRECTORS_CUT_TEXT_FADE_SECONDS,
+} from '@/data/wolves-directors-cut-intro'
 import { wolvesGuardianDinosaurBonds } from '@/data/wolves-guardian-dinosaur-bonds'
 import {
   activeOverlayCue,
@@ -396,6 +399,9 @@ const somberFadeDuration = computed(() => {
     return PROLOGUE_TEXT_FADE_SECONDS
   }
   const cueWindow = activeCue.value.end - activeCue.value.start
+  if (currentSegment.value?.id === DIRECTORS_CUT_PROLOGUE_SEGMENT_ID) {
+    return Math.min(DIRECTORS_CUT_TEXT_FADE_SECONDS, cueWindow * 0.2)
+  }
   return Math.min(PROLOGUE_TEXT_FADE_SECONDS, cueWindow * 0.85)
 })
 

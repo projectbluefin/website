@@ -11,9 +11,9 @@ The standard Wolves intro remains unchanged.
 
 ## Editorial Direction
 
-The montage is mostly image-only. Existing authored prologue text introduces
-the devastation and returns for the handoff into Destiny, but no caption is
-placed over every painting and no new lore is written.
+The montage carries recurring complete thoughts from the existing authored
+prologue. No new lore is written, no sentence is split across cards, and no
+painting is left inside a long textless middle movement.
 
 The selected order is:
 
@@ -39,8 +39,8 @@ not an overlap with the Ikora audio.
 
 Use a hybrid crescendo:
 
-- Images 1-5 form the Europa movement. They receive the longest holds, slow
-  dissolves, and restrained existing Ken Burns motion.
+- Images 1-5 form the Europa movement. They receive the longest holds and slow
+  dissolves, with no crop motion.
 - Image 6, Mars Farm Collapse, begins the acceleration from natural desolation
   into destroyed civilization.
 - Images 7-9 tighten on measured musical phrases.
@@ -57,9 +57,8 @@ Keep the sequence in the Director-specific intro data surface. Reuse the
 existing `IntroOverlayTextCue` capabilities:
 
 - `backgroundImage` for each painting;
-- an empty text value for image-only holds;
-- `backgroundMotion: 'kenburns'` only where the source composition can tolerate
-  the crop and motion;
+- a complete recurring authored thought for each painting;
+- no `backgroundMotion`; preserve source sharpness and framing;
 - the existing background transition rather than a new gallery component.
 
 The montage must not add controls, input requirements, scrolling, or a new
@@ -130,7 +129,8 @@ Automated checks must assert:
 - the standard intro contains none of them;
 - every local path is unique and loads successfully;
 - every asset has artist, source, and policy metadata;
-- montage cues are image-only except for the authored transition beats;
+- every montage cue carries a complete authored thought and no cue exceeds the
+  projector text ceiling;
 - cue windows tile their assigned Gayane interval without gaps or overlaps;
 - the sequence hands off to the Ikora source without a black flash or audio
   overlap.

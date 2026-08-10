@@ -6,6 +6,8 @@ metadata:
     - https://developer.mozilla.org/en-US/docs/Web/CSS/text-wrap (text-wrap balance six-line cap)
   context7-sources:
     - /websites/developers_google_youtube
+  context7-sources:
+    - /websites/developers_google_youtube
 ---
 
 # Wolves runtime engineering
@@ -49,6 +51,13 @@ an unidentified player request.
   release check.
 - "A hidden iframe is prewarmed." `display: none` can prevent composition; keep
   a pre-armed visual player rendered but invisible until its authored reveal.
+- "The clock is on the reveal beat, so the iframe is ready." A fast-forward can
+  skip the whole pre-arm window. Keep the visual player hidden until the cold
+  build has completed, the runtime has issued its source-alignment seek, and
+  the player reports `PLAYING`.
+  The IFrame API documents that `cueVideoById()` does not request the video
+  until `playVideo()` or `seekTo()` is called, so a cued player is not proof
+  that the reveal frame has loaded.
 - "The final clock will finish the fade." The last-segment transport can stop
   before another useful tick; terminal transitions need an explicit finished
   state backstop.
@@ -102,9 +111,12 @@ an unidentified player request.
 - A long text beat is given `emphasis: 'dominant'` on the strength of what it
   says rather than how tall it renders. Dominant is priced in frame height, and
   overflows a 1280x720 projector frame past `DOMINANT_EMPHASIS_MAX_WORDS`.
-- A browser harness samples an intro cue without waiting out the 3.9s scene
-  dissolve and 7.8s somber fade, which both restart on a clock jump, and then
-  reports the previous cue's element as the current one.
+- A Director prologue cue uses the shared 7.8s somber fade. That consumes most
+  of a short musical window and makes a seek look blank; the Director's Cut has
+  its own short reveal followed by a real reading hold.
+- A browser seek probe declares success because the outgoing image stayed
+  stable twice. Wait for the transport to publish the target time **and** for
+  the intended image to decode and take the active layer.
 - A closing animation is computed per clock tick. The transport stops publishing
   time in the final `PRE_END_THRESHOLD_S` of a segment and a YouTube clock
   plateaus before that anyway, so `(time - start) / span` freezes the show

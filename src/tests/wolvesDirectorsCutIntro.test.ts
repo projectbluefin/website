@@ -3,7 +3,6 @@ import { estimatePageSeconds } from '@/components/wolves/lore/lore-pages'
 import { DIRECTORS_CUT_DESTINY_CONCEPTS } from '@/data/wolves-directors-cut-artwork'
 import {
   buildDirectorsCutVideoSequence,
-  DIRECTORS_CUT_CLARKE_QUOTE,
   DIRECTORS_CUT_DESTINY_SEGMENT_ID,
   DIRECTORS_CUT_PROLOGUE_SEGMENT_ID,
   DOMINANT_EMPHASIS_MAX_WORDS,
@@ -24,8 +23,9 @@ const APPROVED_PROLOGUE_TEXT = new Set([
   'New Children arose and filled the pattern.',
   'For eons, Maintainer-Guardians cultivated the Garden...',
   'Until an AI-fueled Society deemed Guardians unnecessary.\nAnd then, a threat.',
+  'An AI-fueled Society deemed Guardians unnecessary.',
+  'And then, a threat.',
   'Others came to claim a bountiful and unprotected Garden.',
-  DIRECTORS_CUT_CLARKE_QUOTE,
   'Now, what\'s left of a proud order fights for survival,\nsurrounded by predators.',
   'PROJECT BLUEFIN\nseven days to the wolves',
 ])
@@ -118,15 +118,13 @@ describe('director\'s cut intro sequence', () => {
     }
   })
 
-  it('keeps the Clarke quote whole on one page instead of three split fragments', () => {
+  it('omits the Clarke paragraph instead of splitting it or painting a wall of text', () => {
     const cues = prologue().overlays!
     const clarke = cues.filter(cue => cue.text.includes('humanity had lost its future'))
 
-    expect(clarke).toHaveLength(1)
-    expect(clarke[0].text).toBe(
-      'In the space of a few days, humanity had lost its future, for the heart of any race is destroyed, and its will to survive is utterly broken, when its children are taken from it.',
-    )
+    expect(clarke).toHaveLength(0)
     expect(cues.some(cue => cue.text === 'When its children are taken from it')).toBe(false)
+    expect(Math.max(...cues.map(cue => cue.text.trim().split(/\s+/).length))).toBeLessThanOrEqual(18)
   })
 
   it('keeps the dominant display treatment on beats that fit a 720p projector frame', () => {
@@ -139,14 +137,10 @@ describe('director\'s cut intro sequence', () => {
       expect(cue.text.trim().split(/\s+/).length).toBeLessThanOrEqual(DOMINANT_EMPHASIS_MAX_WORDS)
     }
 
-    // The Clarke quote is the beat dominant was invented for, but whole again it is a page,
-    // not a line: at 81px it overflows the top of a 1280x720 frame.
-    const clarke = cues.find(cue => cue.text === DIRECTORS_CUT_CLARKE_QUOTE)
-    expect(clarke?.emphasis).toBeUndefined()
     expect(cues.some(cue => cue.emphasis === 'dominant')).toBe(true)
   })
 
-  it('plays the ten approved paintings in registry order, image-only, with their provenance', () => {
+  it('plays the ten approved paintings in registry order with complete recurring thoughts', () => {
     const cues = montageCues()
 
     expect(cues).toHaveLength(DIRECTORS_CUT_DESTINY_CONCEPTS.length)
@@ -155,9 +149,10 @@ describe('director\'s cut intro sequence', () => {
     )
     for (const [index, cue] of cues.entries()) {
       const record = DIRECTORS_CUT_DESTINY_CONCEPTS[index]
-      // No caption is painted over a painting: the montage is image-only.
-      expect(cue.text).toBe('')
+      expect(cue.text.trim().length).toBeGreaterThan(0)
+      expect(cue.text.trim().split(/\s+/).length).toBeLessThanOrEqual(18)
       expect(cue.backgroundFigure).toEqual(record.backgroundFigure)
+      expect(cue.backgroundMotion).toBeUndefined()
     }
     expect(DIRECTORS_CUT_DESTINY_CONCEPTS.map(record => record.referenceId)).toEqual(
       ['E1', 'C1', 'C2', 'C3', 'C4', 'C9', 'C6', 'C5', 'C7', 'C10'],
@@ -169,14 +164,9 @@ describe('director\'s cut intro sequence', () => {
     const europa = holds.slice(0, 5)
     const [c9, c6, c5, c7, c10] = holds.slice(5)
 
-    // E1-C4 are the long Europa movement, and the only cues carrying Ken Burns motion.
-    expect(Math.min(...europa)).toBeGreaterThan(c9)
-    for (const cue of montageCues().slice(0, 5)) {
-      expect(cue.backgroundMotion).toBe('kenburns')
-    }
-    for (const cue of montageCues().slice(5)) {
-      expect(cue.backgroundMotion).toBeUndefined()
-    }
+    // E1-C4 remain the slower movement overall; C9 starts a strict acceleration.
+    const average = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length
+    expect(average(europa)).toBeGreaterThan(average([c9, c6, c5, c7, c10]))
 
     // C9 begins the acceleration, C6/C5/C7 tighten, C10 is the shortest hold of the ten.
     expect(c9).toBeGreaterThan(c6)

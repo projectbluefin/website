@@ -32,6 +32,7 @@ import WolvesLoreColumn from '@/components/wolves/WolvesLoreColumn.vue'
 import {
   getChromeFreeYoutubePlayerVars,
   getYoutubePlayerConstructor,
+  getYoutubePlayerState,
   loadYoutubeIframeApi,
 } from '@/composables/useYoutubeIframeApi'
 import {
@@ -99,8 +100,10 @@ const terminalFadeStyle = { '--wc-dcf-terminal-fade': `${DIRECTORS_CUT_TERMINAL_
  * Nothing must paint if nothing can play.
  */
 const companionUnavailable = ref(false)
+const companionSynchronized = ref(false)
 const companionVisible = computed(() => covering.value
   && !companionUnavailable.value
+  && companionSynchronized.value
   && directorsCutCompanionVisible(time.value))
 const companionHost = ref<HTMLElement | null>(null)
 let companionPlayer: YoutubePlayer | null = null
@@ -152,6 +155,7 @@ function disposeCompanion(player: YoutubePlayer | null | undefined) {
 /** The corner is dead: hide it and stop driving it, but keep the finale running. */
 function markCompanionUnavailable() {
   companionUnavailable.value = true
+  companionSynchronized.value = false
   companionRolling = false
 }
 
@@ -202,6 +206,11 @@ function buildCompanion(): Promise<YoutubePlayer | null> {
         releaseCompanion(target)
       }
       const built = await new Promise<YoutubePlayer | null>((resolve) => {
+        const handleStateChange = (event: { data: number }) => {
+          if (event.data === getYoutubePlayerState().PLAYING) {
+            companionSynchronized.value = true
+          }
+        }
         const handleReady = (event?: { target?: YoutubePlayer }) => {
           const player = event?.target ?? instance
           if (!player) {
@@ -245,7 +254,7 @@ function buildCompanion(): Promise<YoutubePlayer | null> {
             loop: 0,
             start: Math.floor(COMPANION_SOURCE_PARK_SECONDS),
           }),
-          events: { onReady: handleReady, onError: handleError },
+          events: { onReady: handleReady, onError: handleError, onStateChange: handleStateChange },
         })
         disposeFailed()
       })
@@ -274,6 +283,7 @@ function buildCompanion(): Promise<YoutubePlayer | null> {
 
 /** Put the companion back on its measured lead frame, paused and silent. */
 function parkCompanion() {
+  companionSynchronized.value = false
   if (!companionPlayer || !companionRolling) {
     return
   }
@@ -357,6 +367,7 @@ onBeforeUnmount(async () => {
   destroyed = true
   const current = companionPlayer
   companionPlayer = null
+  companionSynchronized.value = false
   companionRolling = false
   disposeCompanion(current)
   // A build still in flight resolves after this hook. Its `onReady` disposes of

@@ -184,29 +184,28 @@ room with no input device and its only burned-in cue is the Comic Hero title car
 which renders switch or no switch. Both are asserted in `wolvesIntroOverlay.test.ts`,
 from both directions — the standard cut still publishes both switches.
 
-## `emphasis: 'dominant'` is priced in frame height, not just words
+## Director prologue text must hold, not spend its window appearing
 
-`dominant` is an ~81px display treatment, and the cue comment that introduced it
-names the Arthur C. Clarke quote as its exemplar. That is true of the quote as a
-*line* and false of it as a *page*. The Director's Cut restored the quote to one
-unsplit cue — a quote is never split across pages — and at 35 words in dominant type
-it renders **878px tall**: cut off at the top of a 1280×720 frame, and colliding with
-the top nameplate at 1440×900. Both measured in Chromium.
+The shared somber treatment can fade for 7.8s. Applied to the Director's Cut, that
+left a 9–15s musical cue blank or translucent for most of its life, especially
+after a seek restarted the keyed element. The Director prologue now caps its own
+reveal at `DIRECTORS_CUT_TEXT_FADE_SECONDS` (1.6s); the rest of each measured
+window is a stable reading hold.
 
-The fix is the treatment, never the words: the quote drops to the standard somber
-size, where it renders 268px at 720p and 161px at 1080p and reads cleanly. The
-measured ceiling is recorded as `DOMINANT_EMPHASIS_MAX_WORDS` (13 words, which
-renders 488px of a 720p frame) and a unit test holds it, so the next long beat cannot
-quietly acquire the treatment and overflow the screen.
+The former 35-word Clarke sentence is not split—the presentation rule still
+forbids splitting a quote—but it is also not painted as one projected paragraph.
+It remains in the sourced lore corpus and is omitted from this intro sequence.
+Every displayed prologue cue is at most 18 words.
 
-Related trap when verifying any of this in a browser: the scene layer cross-dissolves
-for `PROLOGUE_SCENE_CROSSFADE_SECONDS` (3.9s) and the somber text fade runs up to
-`PROLOGUE_TEXT_FADE_SECONDS` (7.8s), and **both restart from the DOM update when a
-harness jumps the clock** rather than playing linearly. Sampling ~200ms after a seek
-reads the *previous* cue's scene element and an opacity around 0.05, and polling for
-"one `.wolves-intro-overlay-scene` element" resolves instantly because the incoming
-element has not been inserted yet. Wait out the fade (8.4s) before asserting, and read
-the *last* matching element, not the first.
+The ten concept paintings no longer form a 142.42s textless interval. Complete
+authored thoughts recur across that movement, and the paintings are static.
+The former shared Ken Burns treatment enlarged them from 115% to 165%, which
+made already-cropped source art soft and over-framed on projection.
+
+For browser seek probes, wait for two independent conditions: the transport has
+published the requested native time, and the intended incoming image has decoded
+and become the active layer. "The previous image stayed stable twice" is not a
+settle condition.
 
 Do not read a black frame below 641px as a defect either:
 `@media (max-width: 640px)` sets `.wolves-intro-overlay-text { display: none }` on

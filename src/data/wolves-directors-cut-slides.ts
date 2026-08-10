@@ -79,17 +79,13 @@ export interface DirectorsCutTrackZeroSection {
 }
 
 /**
- * Every group here is shorter than the standard show's group for the same
- * section (`TRACK_ZERO_PRESENTATION_SECTIONS`), and the groups shorten as the
- * song moves: 12/8 beats under the ambient intro down to 3/2 beats under the
- * solo climax.
+ * The groups shorten as the song moves, but never below a four-beat phrase.
+ * The previous 3/2-beat climax produced 0.79-second random-pool cuts: technically
+ * on beat, but visually indistinguishable from an unpolished slideshow.
  *
- * Two beats is the floor, and it is not a taste call. The reader keeps
- * `PRELOAD_WINDOW_SECONDS` (8s) of upcoming slides fetched and decoded using at
- * most `MAX_LOOKAHEAD_SLIDES` (12) parallel preloads, so holds shorter than
- * 8/12s put the lookahead behind the cue and the show starts waiting on decode
- * instead of on the music. Two measured beats is 0.74-0.88s across this track's
- * tempo range, which clears that floor with margin.
+ * Four beats is the floor: roughly 1.6 seconds at the track's fastest passage.
+ * That is still a rapid montage, but a projected image has time to decode,
+ * settle and register before the next cut.
  *
  * The first tier is a target, not a ceiling: `trackZeroBeatCuts` adds each
  * section's leftover beats to its opening hold, so slide 0 of a section can run
@@ -102,42 +98,42 @@ export const DIRECTORS_CUT_TRACK_ZERO_SECTIONS: readonly DirectorsCutTrackZeroSe
     id: 'ambientIntro',
     startTime: 0,
     endTime: TRACK_ZERO_SECTIONS.verseStart,
-    beatGroups: [12, 8],
+    beatGroups: [16, 12],
     pools: ['dayNight', 'showcase', 'people', 'cncf'],
   },
   {
     id: 'drivingVerse',
     startTime: TRACK_ZERO_SECTIONS.verseStart,
     endTime: TRACK_ZERO_SECTIONS.chorusStart,
-    beatGroups: [8, 6],
+    beatGroups: [12, 8],
     pools: ['showcase', 'dayNight', 'people', 'cncf'],
   },
   {
     id: 'contributorChorus',
     startTime: TRACK_ZERO_SECTIONS.chorusStart,
     endTime: TRACK_ZERO_SECTIONS.bridgeStart,
-    beatGroups: [6, 4],
+    beatGroups: [10, 6],
     pools: ['people', 'cncf', 'showcase'],
   },
   {
     id: 'chantingBridge',
     startTime: TRACK_ZERO_SECTIONS.bridgeStart,
     endTime: TRACK_ZERO_SECTIONS.buildStart,
-    beatGroups: [4, 3],
+    beatGroups: [8, 6],
     pools: ['people', 'cncf', 'showcase'],
   },
   {
     id: 'heavyBuild',
     startTime: TRACK_ZERO_SECTIONS.buildStart,
     endTime: TRACK_ZERO_SECTIONS.pivotalStart,
-    beatGroups: [4, 2],
+    beatGroups: [6, 4],
     pools: ['people', 'cncf', 'showcase'],
   },
   {
     id: 'soloClimax',
     startTime: TRACK_ZERO_SECTIONS.pivotalStart,
     endTime: DIRECTORS_CUT_FINALE_START,
-    beatGroups: [3, 2],
+    beatGroups: [6, 4],
     pools: ['people', 'cncf', 'showcase'],
   },
 ] as const
