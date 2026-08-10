@@ -37,6 +37,7 @@ import {
   topheeTrackZeroWindow,
   trackZeroFastFinalePhotoIds,
 } from '../data/wolves-track-zero-slides'
+import { isShowcaseSlide, slideAspectFromNaturalSize } from '../utils/slide-showcase'
 
 const source = {
   provider: 'youtube',
@@ -1723,5 +1724,42 @@ describe('pending segment preload of the authored opening slide', () => {
     await flushImageLoads()
     expect(activeTimelineImage(wrapper)).toBe(featuredOpeningUrl)
     expect((wrapper.vm as any).crossfadeActive).toBe(true)
+  })
+})
+
+describe('showcase slide predicate', () => {
+  it('always qualifies hero art regardless of measured aspect', () => {
+    // The character art is square-to-landscape RGBA (measured 2026-08: ratios
+    // 0.94-1.62, mostly exactly 1:1), so a measured-portrait rule alone would
+    // miss the dinosaurs the showcase treatment exists for.
+    expect(isShowcaseSlide('hero', null)).toBe(true)
+    expect(isShowcaseSlide('hero', 1)).toBe(true)
+    expect(isShowcaseSlide('hero', 1.62)).toBe(true)
+  })
+
+  it('qualifies photographs narrower than the 3:2 portal', () => {
+    expect(isShowcaseSlide('cncf', 2 / 3)).toBe(true) // portrait
+    expect(isShowcaseSlide('curated', 1)).toBe(true) // square
+    expect(isShowcaseSlide('showcase', 4 / 3)).toBe(true) // pillarboxes at 3:2
+    expect(isShowcaseSlide('mascot', 1.49)).toBe(true)
+  })
+
+  it('keeps the frosted surface for portal-filling or wider slides', () => {
+    expect(isShowcaseSlide('cncf', 3 / 2)).toBe(false)
+    expect(isShowcaseSlide('cncf', 16 / 9)).toBe(false)
+    expect(isShowcaseSlide('curated', 2.39)).toBe(false)
+  })
+
+  it('keeps the frosted surface until a non-hero slide is measured', () => {
+    expect(isShowcaseSlide('cncf', null)).toBe(false)
+    expect(isShowcaseSlide(undefined, undefined)).toBe(false)
+    expect(isShowcaseSlide('cncf', Number.NaN)).toBe(false)
+    expect(isShowcaseSlide('cncf', 0)).toBe(false)
+  })
+
+  it('derives aspect only from usable natural sizes', () => {
+    expect(slideAspectFromNaturalSize(3000, 2000)).toBeCloseTo(1.5)
+    expect(slideAspectFromNaturalSize(0, 2000)).toBeNull()
+    expect(slideAspectFromNaturalSize(3000, 0)).toBeNull()
   })
 })

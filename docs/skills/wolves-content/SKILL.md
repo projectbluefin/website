@@ -283,6 +283,38 @@ naive camel-case split mangles (`KuberTENes` becoming `Kuber TENes`), and room
 codes (`BreakoutsB206`).
 
 
+## Hero shot labels name the species, ids stay filenames
+
+`wolves-comic-hero-shots.ts` renders each `label` as the slide title in the
+back-catalogue reader (`WolvesComicReader.vue` maps `title: shot.label`) and as
+`alt` text in the intro overlay, so a pose-derived label like "Youre Holding It
+Wrong Post 1" projects a filename onto a theater screen. Labels are the
+depicted species' scientific name from `wolves-dinosaur-species.ts`, falling
+back to the genus alone when no epithet is recorded in the registry or the
+source filename (`Dakosaurus`, `Dromaeosaurus`). Duplicate labels across poses
+are expected — the label describes the animal, not the file.
+
+Do **not** rename the `id` fields to match: ids must stay unique for slide
+identity and dedupe, and ten of the 23 shots depict *Deinonychus antirrhopus*,
+so species-derived ids would collide. Ids are pinned by
+`src/tests/wolvesIntroOverlay.test.ts` (full set), `tests/wolves-intro-segments.mjs`
+(`youre-holding-it-wrong-post1`, `nest`), and `tests/wolves-movie-flow.mjs`.
+
+Identifying pose-named art (`angry`, `intrigued`, `leaping`, `nest`, `pride`,
+`roaring`, the "You're Holding It Wrong" bookends, the PivotRaptor commission):
+all of it is the Bluefin mascot. Git history says so (`331867c3` "Add
+black-outlined bluefin nest", `3e033b7b` "Resize bluefins" touching
+intrigued/leaping/roaring) and a visual check against `bluefin.webp` confirms
+the shared design. View the WebP directly; files that fail the viewer
+(>~300 KB) can be downscaled with `dwebp <file> -scale 512 512 -o out.png` into
+a scratch dir you delete afterwards.
+
+Relabeling exposes the authored order's same-species runs — slots 16–20 are
+five consecutive *D. antirrhopus*, slots 10–12 all contain *A. giganticus*, and
+22→23→(wrap)→1 is an all-*D. antirrhopus* run across the loop. The id-keyed
+adjacency test cannot see this. Reordering is a design decision: report it,
+never reshuffle the array to fix it.
+
 ## `shuffleWolvesGalleryPhotos` is a primitive, not a diversity mechanism
 
 It is a bare Fisher-Yates. The event-diversity logic lives in

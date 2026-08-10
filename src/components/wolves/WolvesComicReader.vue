@@ -15,7 +15,7 @@ is a no-op kept only for the download link.
 <script setup lang="ts">
 import type { SoundtrackTrack, WolvesSoundtrackManifest } from '@/data/wolves-soundtrack'
 
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { classifyCuratedSlide, isCncfSlide, orderBackCatalogueSlides } from '@/data/back-catalogue-order'
 import { formatGalleryCaption, getGalleryCaptionLabel } from '@/data/gallery-captions'
 import { wolvesComicHeroShots } from '@/data/wolves-comic-hero-shots'
@@ -47,6 +47,7 @@ import {
   topheeSlideId,
   topheeTrackZeroWindow,
 } from '@/data/wolves-track-zero-slides'
+import { isShowcaseSlide, slideAspectFromNaturalSize } from '@/utils/slide-showcase'
 import { wallpapers } from './wallpapers-list'
 
 const props = withDefaults(defineProps<{
@@ -153,6 +154,57 @@ const trackChangeSerial = ref(0)
 
 const activePhoto = computed(() => {
   return activeBuffer.value === 'A' ? photoA.value : photoB.value
+})
+
+/**
+ * Measured slide aspects (`naturalWidth / naturalHeight`), keyed by photo id.
+ * Filled by the slide preloader and by the rendered `<img>` load events;
+ * either source alone leaves a gap — the cold-start slide is never preloaded,
+ * and nothing renders until the preload decodes.
+ *
+ * Keyed by id, not URL: `handleImageError` rewrites a failing Flickr src
+ * through several sizes, so the rendered URL can diverge from the preloaded
+ * one. Keying by id also means a slide change never has to reset anything —
+ * each photo carries its own measurement, so a stale aspect can never leak
+ * onto the incoming slide. String+number entries only — trivial next to the
+ * decoded bitmaps the preloader deliberately avoids retaining.
+ */
+const measuredSlideAspects = reactive(new Map<string, number>())
+
+function recordSlideAspect(photoId: string | undefined, naturalWidth: number, naturalHeight: number) {
+  const aspect = slideAspectFromNaturalSize(naturalWidth, naturalHeight)
+  if (photoId && aspect !== null) {
+    measuredSlideAspects.set(photoId, aspect)
+  }
+}
+
+function handleSlideImgLoad(photo: any, event: Event) {
+  const img = event.target as HTMLImageElement | null
+  if (img?.naturalWidth) {
+    recordSlideAspect(photo?.id, img.naturalWidth, img.naturalHeight)
+  }
+}
+
+const activeSlideAspect = computed(() => {
+  const photo = activePhoto.value
+  if (!photo) {
+    return null
+  }
+  return measuredSlideAspects.get(photo.id) ?? null
+})
+
+/**
+ * True while the slide on stage qualifies for the showcase treatment: the
+ * frosted viewport surface is dropped so the artwork behind the portal shows
+ * through around the image. Gated on gallery mode so the cover/back-cover
+ * pages keep their authored surface.
+ */
+const showcaseSlideActive = computed(() => {
+  const galleryActive = (props.trackIndex ?? 0) > 0 || (props.trackIndex === 0 && isExperimental.value)
+  if (!galleryActive) {
+    return false
+  }
+  return isShowcaseSlide(activePhoto.value?.kind, activeSlideAspect.value)
 })
 
 const currentTrack = computed<SoundtrackTrack | null>(() => {
@@ -877,14 +929,15 @@ function beginCrossfade(duration: number) {
 // size costs real memory across a thirty-minute unattended run, and measuring it
 // against the movie-flow harness showed no improvement that could be told apart
 // from run-to-run noise.
-function preloadUrl(url: string, priority: 'high' | 'low'): Promise<void> {
-  return new Promise<void>((resolve) => {
+function preloadUrl(url: string, priority: 'high' | 'low'): Promise<number | null> {
+  return new Promise((resolve) => {
     const image = new Image()
     image.fetchPriority = priority
     image.onload = () => {
-      void image.decode().catch(() => undefined).then(() => resolve())
+      const aspect = slideAspectFromNaturalSize(image.naturalWidth, image.naturalHeight)
+      void image.decode().catch(() => undefined).then(() => resolve(aspect))
     }
-    image.onerror = () => resolve()
+    image.onerror = () => resolve(null)
     image.src = url
   })
 }
@@ -893,7 +946,13 @@ function preloadPhoto(photo: any, priority: 'high' | 'low' = 'low'): Promise<voi
   const urls = photo?.type === 'daynight'
     ? [`${baseUrl}img/wallpapers/${photo.dayName}`, `${baseUrl}img/wallpapers/${photo.nightName}`]
     : [getFlickrPhotoUrl(photo)]
-  return Promise.all(urls.map(url => preloadUrl(url, priority))).then(() => undefined)
+  return Promise.all(urls.map(url => preloadUrl(url, priority))).then((aspects) => {
+    // Day/night halves share an aspect; take whichever half measured.
+    const aspect = aspects.find(candidate => candidate !== null)
+    if (photo?.id && aspect != null) {
+      measuredSlideAspects.set(photo.id, aspect)
+    }
+  })
 }
 
 let slideChangeToken = 0
@@ -1309,7 +1368,11 @@ onBeforeUnmount(() => {
     :class="{ 'comic-reader-section--fast-crossfade': usesFastCrossfade }"
   >
     <div class="page-flip-comic-layout">
-      <div ref="flipViewport" class="comic-viewport">
+      <div
+        ref="flipViewport"
+        class="comic-viewport"
+        :class="{ 'comic-viewport--showcase': showcaseSlideActive }"
+      >
         <div class="comic-content-area">
           <!-- Live Gallery Mode (Tracks 1-6) -->
           <div
@@ -1333,6 +1396,7 @@ onBeforeUnmount(() => {
                     class="flickr-img"
                     :style="{ objectFit: photoObjectFit(photoA) }"
                     alt="Bluefin Dusk - Day"
+                    @load="handleSlideImgLoad(photoA, $event)"
                   >
                   <img
                     :src="`${baseUrl}img/wallpapers/${photoA.nightName}`"
@@ -1349,6 +1413,7 @@ onBeforeUnmount(() => {
                   :style="{ objectFit: photoObjectFit(photoA), objectPosition: photoObjectPosition(photoA) }"
                   :alt="photoA.title"
                   @error="(e) => handleImageError(e, photoA)"
+                  @load="handleSlideImgLoad(photoA, $event)"
                 >
               </template>
             </div>
@@ -1369,6 +1434,7 @@ onBeforeUnmount(() => {
                     class="flickr-img"
                     :style="{ objectFit: photoObjectFit(photoB) }"
                     alt="Bluefin Dusk - Day"
+                    @load="handleSlideImgLoad(photoB, $event)"
                   >
                   <img
                     :src="`${baseUrl}img/wallpapers/${photoB.nightName}`"
@@ -1385,6 +1451,7 @@ onBeforeUnmount(() => {
                   :style="{ objectFit: photoObjectFit(photoB), objectPosition: photoObjectPosition(photoB) }"
                   :alt="photoB.title"
                   @error="(e) => handleImageError(e, photoB)"
+                  @load="handleSlideImgLoad(photoB, $event)"
                 >
               </template>
             </div>
@@ -1637,7 +1704,8 @@ onBeforeUnmount(() => {
   max-height: min(74dvh, 760px);
   margin: 0 auto;
   // Translucent surface: when a slide still letterboxes, the bars reveal the
-  // blurred wallpaper behind the portal instead of solid black.
+  // blurred wallpaper behind the portal instead of solid black. Showcase
+  // slides (see below) drop this surface entirely.
   background-color: rgba(16, 21, 31, 0.55);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -1697,6 +1765,19 @@ onBeforeUnmount(() => {
   height: auto;
   max-width: 100%;
   max-height: 100%;
+}
+
+// Showcase slides — portrait photographs and the character hero art — cannot
+// fill the 3:2 portal, so the frosted surface reads as a grey slab flanking
+// the image. Drop the surface and let the stage artwork behind the portal
+// show through; the border stays so the portal keeps its frame. Composes
+// with `.comic-reader-section--fast-crossfade` below: both set
+// `backdrop-filter: none`, so neither contradicts the other. Background and
+// backdrop changes are paint-only — no layout shift when the class toggles.
+.comic-viewport--showcase {
+  background-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .comic-status-wrap {

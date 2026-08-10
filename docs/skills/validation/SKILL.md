@@ -324,6 +324,38 @@ Two intro harnesses, `tests/wolves-intro-segments.mjs` and
 `tests/wolves-intro-destiny-toggle.mjs`, **fail on `main`** in that environment.
 Baseline them with a worktree before treating either as a regression.
 
+### Probing the comic reader without Chrome DevTools MCP
+
+When the chrome-devtools MCP has no browser (no Chrome stable on the box), drive
+the repo's own `playwright` package from a script in `/var/tmp/website-agent/`
+instead — do not install a browser. The working pattern (learned 2026-10):
+
+- Copy the `window.YT.Player` mock `addInitScript` from
+  `tests/wolves-movie-flow.mjs` (auto-advancing `getCurrentTime` via
+  `performance.now`) and pin `Math.random = () => 0`; the app gates playback on
+  the YT player, so without the mock nothing advances.
+- From the lobby: click the first `.wc-back-catalogue-card` for a back-catalogue
+  album (where portrait art and `kind: 'hero'` slides live); for the authored
+  show click JOIN, then `__wolvesDurations.skipIntro()`, then
+  `__wolvesCinematic.seekTo(seconds)` to land on a specific slide.
+- The active crossfade layer is the one with `zIndex === 2`; read slide state
+  from that layer, not from DOM order.
+- Authored-show slide windows live in `src/data/wolves-track-zero-slides.ts` —
+  seek inside a named window rather than guessing timestamps.
+
+Two facts that bite when asserting on rendered slides:
+
+- **Key per-image measurements by `photo.id`, never by URL.**
+  `handleImageError` in `WolvesComicReader.vue` rewrites failing Flickr srcs
+  through a fallback chain (`_b` → `_z` → plain → local png), so the rendered
+  `<img>` URL can diverge from the preloaded URL; URL-keyed maps silently miss
+  exactly the slides that needed fallback.
+- **Character art is square RGBA, not portrait.** Everything in
+  `public/characters/` measures ~1:1 (0.94–1.62) with an alpha silhouette, so a
+  `naturalHeight > naturalWidth` "portrait" rule never fires for the dinosaurs —
+  any orientation treatment must be `kind: 'hero'`-aware (see
+  `src/utils/slide-showcase.ts`).
+
 
 ## A cache path list is part of the cache key
 
