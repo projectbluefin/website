@@ -80,3 +80,44 @@ already exists elsewhere, integrate that work rather than re-authoring it: the
 branch version carries measurement evidence that a fresh implementation cannot
 reconstruct from the rendered result.
 
+## A matching subject line is not matching work
+
+The same archaeology cuts the other way once the work *has* been integrated. Four
+Wolves worktrees carried commits whose subjects were identical to commits already
+in the Director's Cut line — `complete Director's Cut finale remediation`,
+`finish Director's Cut Track 0 remediation`, `add curated silent scene masters` —
+because they had been cherry-picked or re-authored, so the subject matched while
+the SHA did not.
+
+Ask git, not the subject line:
+
+```bash
+git cherry -v <integrated-branch> <old-branch>   # '-' already applied, '+' unique
+git diff --stat <integrated-branch> <old-branch>
+```
+
+`git cherry` compares patch ids, so it answers "is this content already in" for
+a cherry-pick that a SHA comparison calls unique. Where it still reports `+`,
+diff the trees before believing it: two of the three "unique" branches were
+simply old snapshots, tens of commits behind, whose one commit had been redone
+in the live line.
+
+Retire the checkout, not the commits. `git worktree remove` deletes the working
+copy and leaves the branch ref, so the history survives even for a local-only
+branch — and `git branch -d` refuses anything unmerged, which makes it the safe
+way to sweep the leftovers.
+
+## Worktrees are expensive here, and the expense is not git
+
+This repository tracks `*.mp4` through LFS, so **every worktree materialises its
+own copy of the video payload** on top of `public/` and its own `node_modules`.
+Six worktrees reached 8.4G, of which `.worktrees` was ~6.2G; removing three
+reclaimed 3.6G without losing a single commit.
+
+Do not reach for history surgery to fix that. Measure first — `du -sh .git/*`
+separates the LFS cache from the object store — and expect both to be **live
+data rather than junk**: `git lfs prune` reclaimed nothing here because every
+object was still referenced, and the pack is concept-art history that only a
+history rewrite could shrink, which would break every open PR. The reclaimable
+space is duplicated checkouts, not the repository.
+
