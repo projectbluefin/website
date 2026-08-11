@@ -409,3 +409,35 @@ asserting on a timer — a genuine regression still fails, it just takes the
 timeout to get there. When adding a boundary assertion to
 `tests/wolves-movie-flow.mjs`, wait for the transition rather than trusting the
 settle time.
+
+## Component test patterns
+
+### Singleton-cached composables (`getDakotaVersions`)
+
+`getDakotaVersions()` caches its result in a module-level promise. Once any
+test triggers it, all subsequent tests in the same file receive the cached
+value regardless of how `fetch` is stubbed. Stubbing `fetch` globally does not
+help because the cache is above the network call.
+
+Fix: use `vi.mock('../composables', ...)` to replace `getDakotaVersions` with a
+per-test mock function. Reset it in `afterEach`. Import the component **after**
+the mock is set up via `await import(...)`.
+
+### Section components that inject `visibleSection`
+
+Components using `SceneVisibilityChecker` inject a `visibleSection` writable
+computed. Provide it when mounting:
+
+```ts
+global: { provide: { visibleSection: { value: '' } } }
+```
+
+### Components with child data-fetching
+
+When a parent composes a child that fetches (e.g. `SectionNews` → `RssFeed`),
+stub `fetch` globally so the child's `onMounted` does not hit the network.
+
+### CSS pseudo-selectors in test-utils
+
+`wrapper.findAll('.parent:first-of-type .child')` does not work in jsdom.
+Instead, query `.findAll('.parent')` and index into the result.
