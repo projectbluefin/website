@@ -263,6 +263,36 @@ function readStage(page) {
       textRendered: Boolean(text),
       textVisible: isVisible(text, textStyle),
       textContent: text?.textContent?.trim() ?? null,
+      // Authored newlines survive (`white-space: pre-line`), but a line wider than
+      // the box still wraps — and the browser breaks it mid-phrase, which is the
+      // one thing the narration's lining exists to prevent. Counting authored
+      // `\n` is therefore not a measurement. One client rect per rendered line
+      // box is.
+      textLines: text
+        ? (() => {
+            const range = document.createRange()
+            range.selectNodeContents(text)
+            const rows = []
+            for (const rect of range.getClientRects()) {
+              if (rect.width <= 1 || rect.height <= 1) {
+                continue
+              }
+              const row = rows.find(candidate => Math.abs(candidate.top - rect.top) < 4)
+              if (row) {
+                row.right = Math.max(row.right, rect.right)
+                row.left = Math.min(row.left, rect.left)
+              }
+              else {
+                rows.push({ top: rect.top, left: rect.left, right: rect.right })
+              }
+            }
+            return {
+              authored: (text.textContent ?? '').trim().split('\n').length,
+              rendered: rows.length,
+              widest: Math.round(Math.max(0, ...rows.map(row => row.right - row.left))),
+            }
+          })()
+        : null,
       textFontSize: textStyle ? Math.round(Number.parseFloat(textStyle.fontSize)) : 0,
       textRect: text ? (() => {
         const rect = text.getBoundingClientRect()
@@ -388,6 +418,50 @@ try {
       { observed: stage.sceneCrossfade, expected: `${cut.crossfadeSeconds}s` },
     )
     log(`        painted ${painted?.width}x${painted?.height} (scale ${painted?.scale.toFixed(3)}) in ${PROJECTOR_VIEWPORT.width}x${PROJECTOR_VIEWPORT.height}, source ${record.sourceWidth}x${record.sourceHeight}`)
+  }
+
+  log('\n  Line breaks hold — the audience reads the lines that were authored')
+  for (const cue of cut.cues.filter(candidate => candidate.text && candidate.textHoldSeconds != null)) {
+    await seekPrologue(page, cue.start + Math.min(2.5, cue.textHoldSeconds / 2))
+    // `seekPrologue` settles on the *image*. The caption is a separately keyed
+    // element with its own 1.6s reveal, so sampling on an image settle reads
+    // whichever thought was on screen before this one — every cue "passed" at an
+    // identical 1111px until this wait was added.
+    // The overlay renders the display type without its punctuation, so compare
+    // on letters alone; this is a settle condition, not a provenance check.
+    const normalize = value => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+    const expected = normalize(cue.text)
+    const arrived = await page
+      .waitForFunction(
+        (want) => {
+          const node = document.querySelector('.wolves-intro-overlay-text')
+          if (!node) {
+            return false
+          }
+          const style = getComputedStyle(node)
+          if (style.display === 'none' || Number.parseFloat(style.opacity || '1') < 0.99) {
+            return false
+          }
+          return (node.textContent ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() === want
+        },
+        expected,
+        { timeout: 8000 },
+      )
+      .then(() => true, () => false)
+
+    if (!assert(`"${cue.text.split('\n')[0].slice(0, 30)}..." reaches the screen`, arrived, expected)) {
+      continue
+    }
+
+    const lines = (await readStage(page)).textLines
+    if (!assert(
+      `"${cue.text.split('\n')[0].slice(0, 30)}..." renders the lines it authored`,
+      Boolean(lines) && lines.rendered === lines.authored,
+      lines,
+    )) {
+      continue
+    }
+    log(`        ${lines.authored} lines, widest ${lines.widest}px`)
   }
 
   log('\n  Reading holds — a thought clears, its shot plays on')

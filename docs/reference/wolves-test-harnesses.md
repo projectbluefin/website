@@ -350,11 +350,10 @@ stale unnoticed. All of them take `WOLVES_BASE_URL` (default
 | `wolves-trackzero-sidecar-real-player.mjs` | Track 0 against a real player; source of the canonical mock. |
 | `wolves-directors-cut-slides.mjs` | Director's Cut Track 0 cut boundaries, the covered finale interval, the warm final pre-finale window, and the standard cut's hero locks. |
 | `wolves-directors-cut-finale.mjs` | Director's Cut finale: every named anchor, the companion player's source seconds, chrome suppression, narrow-viewport placement and the terminal black. |
-| `wolves-directors-cut-prologue.mjs` | Director's Cut scored prologue: every painting framed whole at source geometry, full brightness plus scrim, the reading hold clearing while its shot runs, the warm-silent-promoted Ikora handoff, and the narration surviving a 390px viewport. |
+| `wolves-directors-cut-prologue.mjs` | Director's Cut scored prologue: every painting framed whole at source geometry, full brightness plus scrim, every cue rendering the lines it authored, the reading hold clearing while its shot runs, the warm-silent-promoted Ikora handoff, and the narration surviving a 390px viewport. |
 | `navbar-visual.mjs` | Main-site navbar, not Wolves. |
 
 ## Answering "what is on screen at m:ss" without a browser
-
 The harnesses above seek and screenshot. That is the right tool for *how it
 looks* and the wrong one for *what is scheduled*: a probe only sees the seconds
 it was told to visit, and a timestamp the owner reported can sit in the gap
@@ -387,3 +386,19 @@ Two intro harnesses, `wolves-intro-segments.mjs` and
 first times out waiting for `.wolves-intro-overlay-player`, the second reports the
 widget out of viewport bounds. Confirm against a baseline worktree before blaming a
 change for either.
+
+## A settle on the image is not a settle on the caption
+
+`seekPrologue()` settles on a stable, fully-opaque *scene*. The caption is a
+separately keyed element with its own 1.6s reveal, so a measurement taken on an
+image settle reads whichever thought was on screen before the seek.
+
+This is not hypothetical: the first version of the line-break assertion reported
+every cue as two lines, 1111px wide — the opening cue's geometry, repeated
+thirteen times, all passing. Wait for the expected caption to be on screen at
+full opacity before measuring it.
+
+Compare captions on letters alone when doing that. The overlay renders its
+display type without punctuation, so an exact string match never settles. That
+comparison is a settle condition, not a provenance check — wording is guarded in
+`wolvesDirectorsCutIntro.test.ts`.

@@ -203,30 +203,43 @@ under the same rule, and survives in `src/data/lore/chris-aniszczyk.md` and
 
 ### Measured state of the projected narration (2026-08-10)
 
-`node scripts/wolves-cue-at.mjs prologue --all` reports the whole sequence. As of
-this audit the prologue is 20 shots over 5:25.60, six wordless. Every cue is at
-most 35 characters on its longest line, and all but two are two lines:
+The overlay sets Michroma, uppercase, `letter-spacing: 0.05em`, in a box inset
+5% each side — 1152px at a 1280px projector. **That type measures about 25
+characters to the line at 45px.** A character budget is not a substitute for
+measuring it: `A Gardener and a Winnower` is 25 characters and 1111px, while the
+26-character `Until an AI-fueled Society` is 1003px.
 
-| Cue | Shots | Words | Lines |
-|---|---|---|---|
-| "Until an AI-fueled Society / deemed Guardians unnecessary. / And then, a threat." | 1:23.38, 3:31.16 | 11 | **3** |
-| "Now, what's left of a proud order / fights for survival, / surrounded by predators." | 4:36.00 | 13 | **3** |
-| all others | — | 6–9 | 2 |
+`white-space: pre-line` preserves authored newlines, but a line wider than the
+box still wraps — and Chromium breaks it mid-phrase, which is exactly what the
+authored lining exists to prevent. Counting authored `\n` therefore measures
+nothing. The browser harness counts **rendered line boxes** (one client rect per
+line) and fails when a cue renders more lines than it authored.
 
-The second of those is the cue the owner reports as unreadable at 4:41, and it is
-the hardest moment in the show to read: the longest text in the prologue, at
-`dominant` size, over the Collapse day→night crossfade, on the piece's biggest
-musical event. It is *within* every rule this file documents — which is the
-finding. `DIRECTORS_CUT_MAX_CUE_WORDS` (13) was derived by measuring rendered
-pixel height in a 720p frame, so it bounds whether a cue *fits*, not whether the
-back row can *read* it. Film practice for projected narration is two lines and
-roughly seven words. Nothing in the code expresses a line ceiling at all.
+Four authored lines used to overflow and wrap into fragments:
 
-Changing that ceiling is a decision about the show, not a repair an agent makes
-on its own: the authored wording is fixed (see `editorial-provenance`), so fewer
-words per cue means either re-lining the same words or cutting a thought from the
-projected sequence, and the presentation rules forbid splitting one thought
-across two shots.
+| Line | Rendered at 45px |
+|---|---|
+| `For eons, Maintainer-Guardians` | 1245px — wrapped |
+| `deemed Guardians unnecessary.` | 1285px — wrapped |
+| `a bountiful and unprotected Garden.` | 1479px — wrapped |
+| `Now, what's left of a proud order` | 1350px — wrapped |
+
+They are re-lined at constituent boundaries (adverbial, subject, predicate;
+coordination at the conjunction) so every line now holds. No wording changed —
+`wolvesDirectorsCutIntro.test.ts` checks wording independently of lining, on a
+whitespace-normalized form, precisely so re-lining stays a projection decision.
+
+**`emphasis: 'dominant'` is retired from this prologue, and that is a
+measurement rather than a taste.** It renders at 81px, leaving ~1075px of usable
+box, and *every* line of this narration is wider than that at 81px —
+`New Children arose` alone is 1417px. A dominant cue therefore cannot honour its
+own line breaks; it is re-wrapped mid-phrase and the beat lands as a ragged
+block. The 4:41 crescendo cue was the worst case: 13 words at 81px over the
+Collapse crossfade. It now plays at 45px in four authored lines, widest 1048px.
+
+`DIRECTORS_CUT_MAX_CUE_WORDS` (13) still bounds a cue's total words. It was
+derived from rendered *pixel height* in a 720p frame, so it answers whether a
+cue fits the frame, not whether its lines fit the measure. Both limits apply.
 
 A cue's window is how long its *shot* runs, not how long its *words* stay up.
 Text now carries its own `textHoldSeconds`, priced at

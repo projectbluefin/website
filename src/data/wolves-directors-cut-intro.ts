@@ -287,14 +287,18 @@ const ONE_DAY = `One day changed
 the Garden forever.`
 const NEW_CHILDREN = `New Children arose
 and filled the pattern.`
-const FOR_EONS = `For eons, Maintainer-Guardians
+const FOR_EONS = `For eons,
+Maintainer-Guardians
 cultivated the Garden...`
 const A_THREAT = `Until an AI-fueled Society
-deemed Guardians unnecessary.
+deemed Guardians
+unnecessary.
 And then, a threat.`
 const OTHERS_CAME = `Others came to claim
-a bountiful and unprotected Garden.`
-const WHAT_IS_LEFT = `Now, what's left of a proud order
+a bountiful
+and unprotected Garden.`
+const WHAT_IS_LEFT = `Now, what's left
+of a proud order
 fights for survival,
 surrounded by predators.`
 const CLOSING_TITLE = 'PROJECT BLUEFIN\nseven days to the wolves'
@@ -311,7 +315,14 @@ const PROLOGUE_SHOTS: readonly PrologueShot[] = [
   { mark: 2, text: ONE_DAY, textPosition: 'bottom-right', highlightSubstring: 'Garden' },
   // One wordless beat before the dominant line, so the silence still sets it up.
   { mark: 3 },
-  { mark: 4, text: NEW_CHILDREN, emphasis: 'dominant', textPosition: 'bottom' },
+  // Sized to the frame, not to the sentiment. `emphasis: 'dominant'` renders at
+  // 81px, where the overlay's Michroma caps measure ~1075px of usable box and
+  // *every* line of this narration is wider than that — "New Children arose"
+  // alone measures 1417px. A dominant cue therefore cannot honour its authored
+  // line breaks; the browser re-wraps it mid-phrase and the beat arrives as a
+  // ragged block. Measured in Chromium at 1280x720 against the loaded font, not
+  // a fallback: see `docs/reference/wolves-intro-and-overlay.md`.
+  { mark: 4, text: NEW_CHILDREN, textPosition: 'bottom' },
   { mark: 5, text: FOR_EONS },
   { mark: 6, text: A_THREAT },
   { mark: 7, text: OTHERS_CAME },
@@ -338,7 +349,6 @@ const PROLOGUE_SHOTS: readonly PrologueShot[] = [
   {
     mark: 19,
     text: WHAT_IS_LEFT,
-    emphasis: 'dominant',
     textPosition: 'bottom',
     highlightSubstring: 'fights',
     // The Collapse, once, on the final crescendo — and as the day-to-night fade

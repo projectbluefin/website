@@ -36,10 +36,10 @@ const APPROVED_PROLOGUE_TEXT = new Set([
   'A Gardener and a Winnower\nwalked among the stars.',
   'One day changed\nthe Garden forever.',
   'New Children arose\nand filled the pattern.',
-  'For eons, Maintainer-Guardians\ncultivated the Garden...',
-  'Until an AI-fueled Society\ndeemed Guardians unnecessary.\nAnd then, a threat.',
-  'Others came to claim\na bountiful and unprotected Garden.',
-  'Now, what\'s left of a proud order\nfights for survival,\nsurrounded by predators.',
+  'For eons,\nMaintainer-Guardians\ncultivated the Garden...',
+  'Until an AI-fueled Society\ndeemed Guardians\nunnecessary.\nAnd then, a threat.',
+  'Others came to claim\na bountiful\nand unprotected Garden.',
+  'Now, what\'s left\nof a proud order\nfights for survival,\nsurrounded by predators.',
   'PROJECT BLUEFIN\nseven days to the wolves',
 ])
 
@@ -300,14 +300,25 @@ describe('director\'s cut intro sequence', () => {
       .toBe(DIRECTORS_CUT_FINAL_CRESCENDO_SECOND)
   })
 
-  it('lands the dominant handoff on the measured final crescendo', () => {
-    const dominant = cues().filter(cue => cue.emphasis === 'dominant')
-    const crescendo = dominant.find(cue => cue.text.startsWith('Now, what\'s left'))
+  it('lands the handoff on the measured final crescendo, at a size that can hold its lines', () => {
+    const crescendo = cues().find(cue => cue.text.startsWith('Now, what\'s left'))
 
     expect(DIRECTORS_CUT_FINAL_CRESCENDO_SECOND).toBe(276)
     expect(GAYANE_PROLOGUE_MARKS).toContain(DIRECTORS_CUT_FINAL_CRESCENDO_SECOND)
     expect(crescendo?.start).toBe(DIRECTORS_CUT_FINAL_CRESCENDO_SECOND)
-    for (const cue of dominant) {
+
+    // No prologue cue is `dominant`, and this is a measurement, not a taste.
+    // `emphasis: 'dominant'` renders at 81px, where the overlay's Michroma caps
+    // leave ~1075px of usable box. Every line of this narration is wider than
+    // that at 81px — "New Children arose" alone measures 1417px — so a dominant
+    // cue cannot honour its authored line breaks: Chromium re-wraps it
+    // mid-phrase and the beat lands as a ragged block. Measured at 1280x720
+    // against the loaded font; the browser harness asserts the invariant that
+    // every cue renders exactly the lines it authored.
+    for (const cue of cues()) {
+      expect(cue.emphasis, cue.text).not.toBe('dominant')
+    }
+    for (const cue of textCues()) {
       expect(wordCount(cue.text), cue.text).toBeLessThanOrEqual(DIRECTORS_CUT_MAX_CUE_WORDS)
     }
   })
