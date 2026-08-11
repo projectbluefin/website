@@ -399,7 +399,12 @@ shipped:
 - **It measures inside the settle predicate**, not in a second call after it. The
   show clock keeps running against a live player, so anything measured after the
   wait resolves is a *different frame* than the one that satisfied it. That drift
-  made a correct cut report the wrong plate on two shots.
+  made a correct cut report the wrong plate on two shots. This works because
+  `page.waitForFunction` resolves to a **`JSHandle` of the truthy value** the
+  predicate returned, so the predicate can return its measurements and the caller
+  reads them with `.jsonValue()` — verified against current Playwright docs
+  (`source: /microsoft/playwright`), which use the same
+  `waitForFunction(...).then(h => h.jsonValue())` shape in their own suite.
 - **A wordless shot is not a shot with no text on screen.** A cue's words outlive
   its shot by a fade, so the previous line is still clearing at the start of the
   next one. Demanding an empty caption stalls past the end of a short window and
