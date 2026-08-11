@@ -268,28 +268,50 @@ function readStage(page) {
       // one thing the narration's lining exists to prevent. Counting authored
       // `\n` is therefore not a measurement. One client rect per rendered line
       // box is.
+      //
+      // Two traps are baked into the shape of this function:
+      //
+      // 1. Do not read the authored count back out of the DOM. The `slim` title
+      //    card renders its two authored lines as two sibling `<span>`s and no
+      //    newline character, so `textContent.split('\n')` called it one authored
+      //    line and the check could never fail. Authored shape is a property of
+      //    the cue, so the caller supplies it from `cue.text`.
+      // 2. Do not range over an element that has block children. A range yields a
+      //    rect for each block child's *box* (always full box width) on top of a
+      //    rect per text line, so the two-line title card counted four rows at a
+      //    flat 1152px and was reported as catastrophically wrapped when a
+      //    screenshot shows it setting cleanly on two lines. Recurse into blocks
+      //    and only range over the leaves that actually hold text.
       textLines: text
         ? (() => {
-            const range = document.createRange()
-            range.selectNodeContents(text)
-            const rows = []
-            for (const rect of range.getClientRects()) {
-              if (rect.width <= 1 || rect.height <= 1) {
-                continue
+            const rowsOf = (node) => {
+              const blocks = [...node.children].filter(child => getComputedStyle(child).display === 'block')
+              if (blocks.length > 0) {
+                return blocks.flatMap(child => rowsOf(child))
               }
-              const row = rows.find(candidate => Math.abs(candidate.top - rect.top) < 4)
-              if (row) {
-                row.right = Math.max(row.right, rect.right)
-                row.left = Math.min(row.left, rect.left)
+              const range = document.createRange()
+              range.selectNodeContents(node)
+              const rows = []
+              for (const rect of range.getClientRects()) {
+                if (rect.width <= 1 || rect.height <= 1) {
+                  continue
+                }
+                const row = rows.find(candidate => Math.abs(candidate.top - rect.top) < 4)
+                if (row) {
+                  row.right = Math.max(row.right, rect.right)
+                  row.left = Math.min(row.left, rect.left)
+                }
+                else {
+                  rows.push({ top: rect.top, left: rect.left, right: rect.right })
+                }
               }
-              else {
-                rows.push({ top: rect.top, left: rect.left, right: rect.right })
-              }
+              return rows
             }
+            const rows = rowsOf(text)
             return {
-              authored: (text.textContent ?? '').trim().split('\n').length,
               rendered: rows.length,
               widest: Math.round(Math.max(0, ...rows.map(row => row.right - row.left))),
+              boxWidth: Math.round(text.getBoundingClientRect().width),
             }
           })()
         : null,
@@ -421,8 +443,13 @@ try {
   }
 
   log('\n  Line breaks hold — the audience reads the lines that were authored')
-  for (const cue of cut.cues.filter(candidate => candidate.text && candidate.textHoldSeconds != null)) {
-    await seekPrologue(page, cue.start + Math.min(2.5, cue.textHoldSeconds / 2))
+  // Every cue that puts words on screen, not just the ones that clear. The
+  // closing title card holds its shot to the end (`textHoldSeconds == null`) and
+  // was filtered out here — so the last frame the audience sees was the one
+  // frame this check never looked at.
+  for (const cue of cut.cues.filter(candidate => candidate.text)) {
+    const window = cue.textHoldSeconds ?? cue.end - cue.start
+    await seekPrologue(page, cue.start + Math.min(2.5, window / 2))
     // `seekPrologue` settles on the *image*. The caption is a separately keyed
     // element with its own 1.6s reveal, so sampling on an image settle reads
     // whichever thought was on screen before this one — every cue "passed" at an
@@ -442,7 +469,25 @@ try {
           if (style.display === 'none' || Number.parseFloat(style.opacity || '1') < 0.99) {
             return false
           }
-          return (node.textContent ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() === want
+          // Two render paths live under this one element. Narration cues emit
+          // one `<span>` *per character*, so joining children on a space spells
+          // the line out letter by letter. `slim` cues emit one block `<span>`
+          // per authored line with no whitespace between them, so *not*
+          // separating them welds "BLUEFIN" to "seven". Separate on block
+          // display, which is the thing that actually distinguishes them.
+          const read = (node) => {
+            let out = ''
+            for (const child of node.childNodes) {
+              if (child.nodeType === Node.ELEMENT_NODE && getComputedStyle(child).display === 'block') {
+                out += ` ${child.textContent ?? ''} `
+              }
+              else {
+                out += child.textContent ?? ''
+              }
+            }
+            return out
+          }
+          return read(node).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() === want
         },
         expected,
         { timeout: 8000 },
@@ -453,15 +498,16 @@ try {
       continue
     }
 
+    const authored = cue.text.split('\n').length
     const lines = (await readStage(page)).textLines
     if (!assert(
       `"${cue.text.split('\n')[0].slice(0, 30)}..." renders the lines it authored`,
-      Boolean(lines) && lines.rendered === lines.authored,
-      lines,
+      Boolean(lines) && lines.rendered === authored,
+      { authored, ...lines },
     )) {
       continue
     }
-    log(`        ${lines.authored} lines, widest ${lines.widest}px`)
+    log(`        ${authored} lines, widest ${lines.widest}px of ${lines.boxWidth}px box`)
   }
 
   log('\n  Reading holds — a thought clears, its shot plays on')

@@ -315,13 +315,20 @@ const PROLOGUE_SHOTS: readonly PrologueShot[] = [
   { mark: 2, text: ONE_DAY, textPosition: 'bottom-right', highlightSubstring: 'Garden' },
   // One wordless beat before the dominant line, so the silence still sets it up.
   { mark: 3 },
-  // Sized to the frame, not to the sentiment. `emphasis: 'dominant'` renders at
-  // 81px, where the overlay's Michroma caps measure ~1075px of usable box and
-  // *every* line of this narration is wider than that — "New Children arose"
-  // alone measures 1417px. A dominant cue therefore cannot honour its authored
-  // line breaks; the browser re-wraps it mid-phrase and the beat arrives as a
-  // ragged block. Measured in Chromium at 1280x720 against the loaded font, not
-  // a fallback: see `docs/reference/wolves-intro-and-overlay.md`.
+  // The crescendo is the only cue in the prologue that leaves the lower third
+  // and takes the centre of the frame. `emphasis: 'dominant'` was retired here
+  // once, because the shared dominant rule is capped at `8rem` and at that size
+  // *nothing* in this narration fits its ~1075px box — the browser re-wrapped
+  // the authored lines mid-phrase and the beat arrived as a ragged block.
+  //
+  // The cap was the bug, not the emphasis. Every other caption in this show is
+  // capped at `4.4rem`, so on the 1920-wide projector the prologue is actually
+  // performed on, they all render at the same ~45px no matter how big the screen
+  // gets. The prologue's dominant rule is sized in `vw` instead, so it grows with
+  // the frame: ~51px at 1280 and ~77px at 1920, where it is 71% larger than
+  // everything around it. Because the size is proportional to the box, the fit
+  // holds at every width rather than at the one width it was measured at.
+  // See `.wolves-intro-overlay-text-director.wolves-intro-overlay-text-dominant`.
   { mark: 4, text: NEW_CHILDREN, textPosition: 'bottom' },
   { mark: 5, text: FOR_EONS },
   { mark: 6, text: A_THREAT },
@@ -349,7 +356,7 @@ const PROLOGUE_SHOTS: readonly PrologueShot[] = [
   {
     mark: 19,
     text: WHAT_IS_LEFT,
-    textPosition: 'bottom',
+    emphasis: 'dominant',
     highlightSubstring: 'fights',
     // The Collapse, once, on the final crescendo — and as the day-to-night fade
     // it is, rather than a static night plate. This is the image the whole

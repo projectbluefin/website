@@ -2576,6 +2576,33 @@ defineExpose({
   opacity: 0;
 }
 
+/* The Director's Cut prologue's own crescendo treatment (4:36, "Now, what's left...").
+   Scoped so the shared `dominant` rule, and the Clarke quote it was written for, do not
+   move. It sits above the narrow-viewport block on purpose: that block carries a rule of
+   exactly this specificity, and CSS breaks the tie on source order, so putting this after
+   it would silently undo the phone treatment.
+
+   Two things this fixes. The shared rule tops out at `8rem`, which at 1280 is 81px in a
+   1075px box — wider than every authored line in this narration, so the browser re-wrapped
+   the lining mid-phrase and `dominant` had to be abandoned here. And its `font-weight: 700`
+   is synthetic bold on Michroma, which ships one weight; the base caption rule already says
+   so.
+
+   Sizing in `vw` rather than `rem` is the point. Every other caption is capped at `4.4rem`,
+   so on the 1920-wide projector this show is performed on they all still render ~45px
+   however large the screen gets. This one tracks the frame — ~51px at 1280, ~77px at 1920 —
+   so the biggest musical event in the piece is also the biggest type in the show, and the
+   fit is proportional to the box instead of being true only at the one width it was
+   measured at. Verified in Chromium with Michroma loaded: four rendered line boxes against
+   four authored, at both 1280x720 and 1920x1080. */
+.wolves-intro-overlay-text-director.wolves-intro-overlay-text-dominant {
+  left: 3%;
+  right: 3%;
+  font-size: clamp(2.6rem, 4vw, 7.5rem);
+  font-weight: 400;
+  line-height: 1.25;
+}
+
 @media (max-width: 640px) {
   .wolves-guardian-plate-row {
     bottom: max(18%, 12rem);

@@ -307,17 +307,21 @@ describe('director\'s cut intro sequence', () => {
     expect(GAYANE_PROLOGUE_MARKS).toContain(DIRECTORS_CUT_FINAL_CRESCENDO_SECOND)
     expect(crescendo?.start).toBe(DIRECTORS_CUT_FINAL_CRESCENDO_SECOND)
 
-    // No prologue cue is `dominant`, and this is a measurement, not a taste.
-    // `emphasis: 'dominant'` renders at 81px, where the overlay's Michroma caps
-    // leave ~1075px of usable box. Every line of this narration is wider than
-    // that at 81px — "New Children arose" alone measures 1417px — so a dominant
-    // cue cannot honour its authored line breaks: Chromium re-wraps it
-    // mid-phrase and the beat lands as a ragged block. Measured at 1280x720
-    // against the loaded font; the browser harness asserts the invariant that
-    // every cue renders exactly the lines it authored.
-    for (const cue of cues()) {
-      expect(cue.emphasis, cue.text).not.toBe('dominant')
-    }
+    // The crescendo is the one dominant cue in the prologue, and it is the only
+    // one. `dominant` was retired from here once, on the grounds that it renders
+    // at 81px where the overlay's Michroma caps leave ~1075px of usable box and
+    // every line of this narration is wider than that — so the browser re-wrapped
+    // the authored lining mid-phrase.
+    //
+    // That was a fact about the *shared* dominant rule's `8rem` cap, not about
+    // this beat. The prologue now carries its own dominant rule sized in `vw`
+    // (`.wolves-intro-overlay-text-director.wolves-intro-overlay-text-dominant`),
+    // so it scales with the box instead of against it: ~51px at 1280 and ~77px at
+    // 1920, versus the 4.4rem cap that pins every other caption to ~45px at any
+    // screen size. The browser harness holds the invariant that actually matters —
+    // every cue renders exactly the lines it authored — at 1280x720 and 1920x1080.
+    expect(crescendo?.emphasis).toBe('dominant')
+    expect(cues().filter(cue => cue.emphasis === 'dominant')).toHaveLength(1)
     for (const cue of textCues()) {
       expect(wordCount(cue.text), cue.text).toBeLessThanOrEqual(DIRECTORS_CUT_MAX_CUE_WORDS)
     }
