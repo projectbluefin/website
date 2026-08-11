@@ -753,10 +753,19 @@ describe('director\'s cut finale composition', () => {
     expect(wrapper.find('[data-director-finale-black]').classes()).toContain('wc-dcf-black--fading')
   })
 
-  it('completes the fade from the finished state, not from a future tick', async () => {
+  it('completes the fade on Track 0\'s terminal beat, not on a finish that now ends Ghosts', async () => {
+    // The fade-complete pin lands on Track 0's clock reaching terminalFadeEnd,
+    // authored ahead of the final PRE_END_THRESHOLD_S the transport never
+    // publishes — a tick that arrives, not a future one that never does. In the
+    // multi-song cut finish() belongs to the end of Ghosts and can no longer
+    // stand in for it.
     const { store, wrapper } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeStart)
     expect(wrapper.find('[data-director-finale-black]').classes()).not.toContain('wc-dcf-black--done')
-    store.finish()
+    store.updateTime(
+      DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeEnd,
+      424,
+      DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeEnd,
+    )
     await nextTick()
     expect(wrapper.find('[data-director-finale-black]').classes()).toContain('wc-dcf-black--done')
   })

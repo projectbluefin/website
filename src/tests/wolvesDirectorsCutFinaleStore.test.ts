@@ -73,12 +73,26 @@ describe('director\'s cut finale store state', () => {
     expect(directorsCutAt(DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeEnd).directorTerminalBlack).toBe(true)
   })
 
-  it('goes black from the finished state even if the clock stopped short', () => {
+  it('lands terminal black on Track 0\'s clock, not on the finish that now ends Ghosts', () => {
+    // terminalFadeEnd (422.301s) is authored 1.699s before the 424s segment
+    // end — ahead of the final PRE_END_THRESHOLD_S the transport never
+    // publishes — so Track 0's black lands on a tick that actually arrives.
     const store = directorsCutAt(DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeStart)
     expect(store.directorTerminalBlack).toBe(false)
+    store.updateTime(
+      DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeEnd,
+      424,
+      DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeEnd,
+    )
+    expect(store.directorTerminalBlack).toBe(true)
+
+    // finish() now lands on the last segment (Ghosts), well past Track 0's
+    // finale, so it must never stand in for the finale's terminal black.
+    directorsCutAt(DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeStart)
     store.finish()
     expect(store.finished).toBe(true)
-    expect(store.directorTerminalBlack).toBe(true)
+    expect(store.segment.id).toBe('ghosts-in-the-mist')
+    expect(store.directorTerminalBlack).toBe(false)
   })
 
   it('clears the finished latch when the transport publishes an earlier time', () => {
@@ -90,11 +104,12 @@ describe('director\'s cut finale store state', () => {
     expect(store.directorTerminalBlack).toBe(false)
   })
 
-  it('keeps the one-song transport on its final segment', () => {
+  it('finishes the multi-song transport on its final Ghosts segment', () => {
     const store = directorsCutAt(420)
     store.finish()
-    expect(store.segmentIndex).toBe(0)
-    expect(store.segments).toHaveLength(1)
+    expect(store.segments).toHaveLength(2)
+    expect(store.segmentIndex).toBe(1)
+    expect(store.segment.id).toBe('ghosts-in-the-mist')
     expect(store.isLastSegment).toBe(true)
     expect(store.playing).toBe(false)
   })

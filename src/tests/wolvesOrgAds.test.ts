@@ -91,22 +91,26 @@ describe('wolvesOrgAds component', () => {
     expect(wrapper.find('.wc-org-ads').exists()).toBe(false)
   })
 
-  it('stays hidden for the whole Director\'s Cut Track 0, even past a failed advance attempt', async () => {
+  it('stays hidden for the whole Director\'s Cut Track 0, then resumes for Ghosts', async () => {
     const store = useCinematicStore()
     store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
     store.enterCinematic()
 
     const wrapper = mount(WolvesOrgAds)
 
+    // Hidden across all of Track 0, from its opening frame deep into the finale.
+    expect(wrapper.find('.wc-org-ads').exists()).toBe(false)
+    store.updateTime(420, 424, 420)
+    await wrapper.vm.$nextTick()
     expect(wrapper.find('.wc-org-ads').exists()).toBe(false)
 
-    // The Director's Cut has only one segment, so this can never advance —
-    // ads must stay hidden rather than appear once `segmentIndex` failed to
-    // clamp.
+    // Track 0 now hands off to Ghosts, a real second song that takes the
+    // ordinary later-part ad treatment (the standard show shows ads from Part
+    // II on); CinematicStage keeps them off Track 0 via `directorFinaleActive`.
     store.advanceSegment()
     await wrapper.vm.$nextTick()
 
-    expect(store.segmentIndex).toBe(0)
-    expect(wrapper.find('.wc-org-ads').exists()).toBe(false)
+    expect(store.segmentIndex).toBe(1)
+    expect(wrapper.find('.wc-org-ads').exists()).toBe(true)
   })
 })

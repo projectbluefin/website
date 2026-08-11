@@ -509,10 +509,10 @@ describe('wolvesApp intro status handling', () => {
     expect(store.sequenceDuration).toBeGreaterThan(standardDuration)
     expect(INTRO_SEQUENCE_DURATION).toBeCloseTo(store.sequenceDuration)
 
-    // The Director CTA also loads the one-song cinematic manifest, not just
+    // The Director CTA also loads the multi-song cinematic manifest, not just
     // the longer intro list: the audience must not hand off into the full
     // seven-part show after choosing the Director's Cut.
-    expect(store.segmentCount).toBe(1)
+    expect(store.segmentCount).toBe(2)
     expect(store.presentationProfile).toBe(WOLVES_DIRECTORS_CUT_PROFILE_ID)
 
     // Resolution follows the Director's Cut list: its last index exists and is
@@ -590,7 +590,7 @@ describe('wolvesApp intro status handling', () => {
     wrapper.getComponent(CinematicLobbyStub).vm.$emit('enter-directors-cut')
     await flushPromises()
 
-    expect(store.segmentCount).toBe(1)
+    expect(store.segmentCount).toBe(2)
     expect(store.presentationProfile).toBe(WOLVES_DIRECTORS_CUT_PROFILE_ID)
 
     // No live in-app "return to lobby" navigation exists yet (see
