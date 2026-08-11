@@ -1615,6 +1615,14 @@ describe('wolvesIntroOverlay director\'s cut', () => {
 
     await seekPrologue(unframed.start + 1)
     expect(wrapper.find('.wolves-intro-overlay-scrim').exists()).toBe(false)
+
+    // And it exists only while a caption does: on a wordless shot the gradient
+    // is haze over the painting with no text to buy contrast for. The montage
+    // breathes through its wordless shots, so they must stand clean.
+    const wordless = buildDirectorsCutPrologueSegment().overlays!.find(cue => cue.backgroundFraming && !cue.text.trim())!
+
+    await seekPrologue(wordless.start + 1)
+    expect(wrapper.find('.wolves-intro-overlay-scrim').exists()).toBe(false)
   })
 
   it('clears a thought once it has been read, while its shot keeps running', async () => {

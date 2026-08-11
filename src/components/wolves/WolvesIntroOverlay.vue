@@ -1713,9 +1713,11 @@ defineExpose({
               </template>
               <!-- Legibility is bought here, over the text region only, rather than by dimming
                    the whole painting: a concept painting is the subject of its shot, and a
-                   global dim spends the artwork to pay for the caption. -->
+                   global dim spends the artwork to pay for the caption. And the scrim exists
+                   only while a caption does — on a wordless shot it is haze with nothing to
+                   buy, so the condition mirrors the caption's own exactly. -->
               <div
-                v-if="sceneCue?.backgroundFraming"
+                v-if="sceneCue?.backgroundFraming && overlayText && overlayTextVisible"
                 class="wolves-intro-overlay-scrim"
                 :class="{ 'wolves-intro-overlay-scrim-top': sceneCue.textPosition === 'top' }"
                 :style="framedBoxStyle"
@@ -2041,9 +2043,12 @@ defineExpose({
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Dims still images behind the overlaid text; the day/night crossfade beats override this
-     via their own animated opacity below, and framed paintings override it entirely. */
-  opacity: 0.55;
+  /* Full brightness: legibility is bought by the scrim over the text region only, not by a
+     global dim that spends the artwork. The one unframed still left in the show — the
+     Collapse night plate — is a wordless beat, so there is no caption for a dim to pay for.
+     The day/night crossfade beats override this via their own animated opacity below, and
+     framed paintings override it entirely. */
+  opacity: 1;
 }
 
 /* A painting, not a backdrop.
