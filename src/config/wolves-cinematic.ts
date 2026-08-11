@@ -333,6 +333,39 @@ export const CINEMATIC_SEGMENTS: CinematicSegment[] = [
   },
 ]
 
+/**
+ * The Europa intro, and the only segment that is not one of the seven parts.
+ *
+ * It is deliberately NOT in `CINEMATIC_SEGMENTS`: that list is the authored
+ * seven-part soundtrack the standard show plays, and this piece belongs to the
+ * Director's Cut alone. It is referenced by name from the Director's Cut
+ * manifest instead, so the standard show and every index into the seven parts
+ * are untouched.
+ *
+ * This one has to be a single upload rather than an embed of its sources.
+ * Frame-matching the finished film (correlation 0.98-1.0000) showed it is a
+ * twelve-span edit across three different videos — the Earth departure re-orders
+ * three sub-clips of one trailer, Europa runs a second, the outro is a third —
+ * joined by an authored dissolve. No combination of `startSeconds`/`endSeconds`
+ * on the sources reproduces that, so the cut is published as one video and the
+ * show plays it like any other segment.
+ *
+ * `durationSeconds` is 95 because the master is exactly 95.000s, measured off
+ * the render rather than read off YouTube's rounded duration.
+ */
+export const DIRECTORS_CUT_EUROPA_INTRO_SEGMENT: CinematicSegment = {
+  id: 'europa-intro',
+  youtubeId: 'Q14xrfjx9iE',
+  chapter: 'INTERLUDE',
+  title: 'Europa Intro',
+  artist: 'Nightwish',
+  artwork: 'wolves-artwork/Q14xrfjx9iE.jpg',
+  // Hits the instant Track 0's finale reaches black. The piece opens on its own
+  // fade up, so a crossfade here would dissolve one black frame into another and
+  // read as a stall rather than a cut.
+  crossfadeMs: 0,
+}
+
 export function segmentCrossfadeMs(index: number): number {
   return CINEMATIC_SEGMENTS[index]?.crossfadeMs ?? DEFAULT_CROSSFADE_MS
 }

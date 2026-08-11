@@ -1,7 +1,7 @@
 import type { ExperienceManifest, ExperienceSegment, PresentationProfile } from '@/config/experience-manifest'
 import type { IntroVideoSpec } from '@/data/wolves-intro-sequence'
 import { defineStore } from 'pinia'
-import { CINEMATIC_SEGMENTS, DEFAULT_CROSSFADE_MS, PRE_END_THRESHOLD_S } from '@/config/wolves-cinematic'
+import { CINEMATIC_SEGMENTS, DEFAULT_CROSSFADE_MS, DIRECTORS_CUT_EUROPA_INTRO_SEGMENT, PRE_END_THRESHOLD_S } from '@/config/wolves-cinematic'
 import { DIRECTORS_CUT_FINALE_ANCHORS } from '@/data/wolves-directors-cut-finale'
 import { buildIntroVideoSequence, isTextSegment } from '@/data/wolves-intro-sequence'
 
@@ -70,6 +70,12 @@ let INTRO_SEGMENTS: readonly IntroVideoSpec[] = buildIntroVideoSequence()
  */
 const CINEMATIC_AUTHORED_DURATIONS = [424, 347, 251, 384, 193, 234, 271] as const
 
+/**
+ * Measured off the finished render (exactly 95.000s), not read off YouTube's
+ * rounded duration, because the seek-bar timeline is derived from it.
+ */
+const DIRECTORS_CUT_EUROPA_INTRO_SECONDS = 95
+
 /** `presentationProfile` value for the standard, seven-part Wolves show. */
 export const WOLVES_STANDARD_PROFILE_ID: PresentationProfile = 'wolves-standard'
 /** `presentationProfile` value for the Director's Cut. */
@@ -110,11 +116,15 @@ export const WOLVES_EXPERIENCE: ExperienceManifest = {
 
 /**
  * The Director's Cut cinematic: 7 Days to the Wolves runs its full authored
- * length into its finale, then Ghosts In The Mist follows with `crossfadeMs: 0`
- * so it hits the instant Track 0 ends — out of the finale's terminal black, with
- * no title slide (`CinematicTransition.vue` already skips the overlay for
- * `ghosts-in-the-mist`) and no fade-in delay. It is a multi-song show, not the
- * single 7 Days segment it once shipped as.
+ * length into its finale, then the Europa intro, then Ghosts In The Mist. Both
+ * followers carry `crossfadeMs: 0` so each hits the instant the one before it
+ * ends — out of black, with no title slide (`CinematicTransition.vue` already
+ * skips the overlay for `ghosts-in-the-mist`) and no fade-in delay. It is a
+ * multi-song show, not the single 7 Days segment it once shipped as.
+ *
+ * The Europa intro sits between them rather than in `CINEMATIC_SEGMENTS`
+ * because it belongs to this cut alone; see the segment's own note for why it
+ * has to be one upload instead of an embed of its three sources.
  *
  * The Director's Cut *intro* (prologue + Destiny trailer,
  * `buildDirectorsCutVideoSequence()`) is published separately through
@@ -131,6 +141,10 @@ export const WOLVES_DIRECTORS_CUT_EXPERIENCE: ExperienceManifest = {
     {
       ...CINEMATIC_SEGMENTS[0],
       durationSeconds: CINEMATIC_AUTHORED_DURATIONS[0],
+    },
+    {
+      ...DIRECTORS_CUT_EUROPA_INTRO_SEGMENT,
+      durationSeconds: DIRECTORS_CUT_EUROPA_INTRO_SECONDS,
     },
     {
       ...CINEMATIC_SEGMENTS[1],

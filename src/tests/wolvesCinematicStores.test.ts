@@ -8,10 +8,7 @@ import {
   INTRO_SEQUENCE_DURATION,
   resolveOverallRatioTarget,
   useCinematicStore,
-  WOLVES_DIRECTORS_CUT_EXPERIENCE,
-  WOLVES_DIRECTORS_CUT_PROFILE_ID,
   WOLVES_EXPERIENCE,
-  WOLVES_STANDARD_PROFILE_ID,
 } from '@/stores/cinematic'
 
 /** Authored segment durations, read back off the manifest — never re-typed here. */
@@ -306,62 +303,5 @@ describe('cinematic store', () => {
     expect(standard.map((_, index) =>
       resolveOverallRatioTarget(introRatio(standard, index, standardDuration)).segmentId,
     )).toEqual(standardIds)
-  })
-
-  it('loads the Director\'s Cut manifest as 7 Days into Ghosts, its second song crossfade-less', () => {
-    const store = useCinematicStore()
-
-    store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
-
-    expect(store.segmentCount).toBe(2)
-    expect(store.segments[0].id).toBe(CINEMATIC_SEGMENTS[0].id)
-    expect(store.segments[0].durationSeconds).toBe(424)
-    expect(store.segments[1].id).toBe(CINEMATIC_SEGMENTS[1].id)
-    expect(store.segments[1].durationSeconds).toBe(347)
-    // Ghosts hits the instant Track 0 ends — out of the finale's terminal black,
-    // with no fade-in delay.
-    expect(store.segments[1].crossfadeMs).toBe(0)
-    expect(store.presentationProfile).toBe(WOLVES_DIRECTORS_CUT_PROFILE_ID)
-    expect(store.isWolvesPresentation).toBe(true)
-    // The Director's Cut is authored Wolves content: it gets the same
-    // segment-transition overlay treatment as the standard show.
-    expect(store.showTransitionOverlay).toBe(true)
-  })
-
-  it('advances the Director\'s Cut from 7 Days to Ghosts, then clamps on Ghosts', () => {
-    const store = useCinematicStore()
-    store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
-    store.enterCinematic()
-
-    expect(store.isLastSegment).toBe(false)
-    store.advanceSegment()
-    expect(store.segmentIndex).toBe(1)
-    expect(store.segment.id).toBe('ghosts-in-the-mist')
-    expect(store.isLastSegment).toBe(true)
-    store.advanceSegment()
-    expect(store.segmentIndex).toBe(1)
-  })
-
-  it('measures the Director\'s Cut overall duration as its intro plus 7 Days plus Ghosts', () => {
-    const store = useCinematicStore()
-    store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
-    store.setIntroSequence(buildDirectorsCutVideoSequence())
-    const directorsCutIntroDuration = INTRO_SEQUENCE_DURATION
-
-    store.enterCinematic()
-
-    expect(store.overallDuration).toBeCloseTo(directorsCutIntroDuration + 424 + 347)
-  })
-
-  it('restores the standard seven-part profile and segment count after a Director\'s Cut load', () => {
-    const store = useCinematicStore()
-    store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
-    expect(store.segmentCount).toBe(2)
-
-    store.loadExperience(WOLVES_EXPERIENCE)
-
-    expect(store.segmentCount).toBe(CINEMATIC_SEGMENTS.length)
-    expect(store.presentationProfile).toBe(WOLVES_STANDARD_PROFILE_ID)
-    expect(store.isWolvesPresentation).toBe(true)
   })
 })

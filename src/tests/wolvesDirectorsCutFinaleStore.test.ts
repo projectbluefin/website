@@ -104,11 +104,10 @@ describe('director\'s cut finale store state', () => {
     expect(store.directorTerminalBlack).toBe(false)
   })
 
-  it('finishes the multi-song transport on its final Ghosts segment', () => {
+  it('finishes the multi-song transport on its last segment', () => {
     const store = directorsCutAt(420)
     store.finish()
-    expect(store.segments).toHaveLength(2)
-    expect(store.segmentIndex).toBe(1)
+    expect(store.segmentIndex).toBe(store.segments.length - 1)
     expect(store.segment.id).toBe('ghosts-in-the-mist')
     expect(store.isLastSegment).toBe(true)
     expect(store.playing).toBe(false)
