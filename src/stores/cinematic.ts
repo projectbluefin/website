@@ -116,15 +116,20 @@ export const WOLVES_EXPERIENCE: ExperienceManifest = {
 
 /**
  * The Director's Cut cinematic: 7 Days to the Wolves runs its full authored
- * length into its finale, then the Europa intro, then Ghosts In The Mist. Both
- * followers carry `crossfadeMs: 0` so each hits the instant the one before it
- * ends — out of black, with no title slide (`CinematicTransition.vue` already
- * skips the overlay for `ghosts-in-the-mist`) and no fade-in delay. It is a
- * multi-song show, not the single 7 Days segment it once shipped as.
+ * length into its finale, then the Europa intro, which carries `crossfadeMs: 0`
+ * so it hits the instant Track 0 ends — out of black, with no title slide and no
+ * fade-in delay.
  *
- * The Europa intro sits between them rather than in `CINEMATIC_SEGMENTS`
- * because it belongs to this cut alone; see the segment's own note for why it
- * has to be one upload instead of an embed of its three sources.
+ * This cut is a **fork** of the Wolves show, not a re-edit of it. It keeps 7
+ * Days to the Wolves, which the show is named for, and everything after it is
+ * new material authored for this cut. That is why Ghosts In The Mist is no
+ * longer here: it belongs to the standard show, which still plays it and all
+ * seven of its authored tracks, unchanged. Adding a legacy track back to this
+ * list is the thing to stop and ask about.
+ *
+ * The Europa intro sits outside `CINEMATIC_SEGMENTS` because it belongs to this
+ * cut alone; see the segment's own note for why it has to be one upload instead
+ * of an embed of its three sources.
  *
  * The Director's Cut *intro* (prologue + Destiny trailer,
  * `buildDirectorsCutVideoSequence()`) is published separately through
@@ -145,11 +150,6 @@ export const WOLVES_DIRECTORS_CUT_EXPERIENCE: ExperienceManifest = {
     {
       ...DIRECTORS_CUT_EUROPA_INTRO_SEGMENT,
       durationSeconds: DIRECTORS_CUT_EUROPA_INTRO_SECONDS,
-    },
-    {
-      ...CINEMATIC_SEGMENTS[1],
-      durationSeconds: CINEMATIC_AUTHORED_DURATIONS[1],
-      crossfadeMs: 0,
     },
   ],
 }

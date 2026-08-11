@@ -86,12 +86,14 @@ describe('director\'s cut finale store state', () => {
     )
     expect(store.directorTerminalBlack).toBe(true)
 
-    // finish() now lands on the last segment (Ghosts), well past Track 0's
-    // finale, so it must never stand in for the finale's terminal black.
+    // finish() now lands on the cut's LAST segment, well past Track 0's finale,
+    // so it must never stand in for the finale's terminal black. The id is
+    // derived from the manifest rather than typed in: which song ends this cut
+    // is exactly the thing that changes when the running order is re-authored.
     directorsCutAt(DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeStart)
     store.finish()
     expect(store.finished).toBe(true)
-    expect(store.segment.id).toBe('ghosts-in-the-mist')
+    expect(store.segment.id).toBe(WOLVES_DIRECTORS_CUT_EXPERIENCE.segments[WOLVES_DIRECTORS_CUT_EXPERIENCE.segments.length - 1].id)
     expect(store.directorTerminalBlack).toBe(false)
   })
 
@@ -108,7 +110,7 @@ describe('director\'s cut finale store state', () => {
     const store = directorsCutAt(420)
     store.finish()
     expect(store.segmentIndex).toBe(store.segments.length - 1)
-    expect(store.segment.id).toBe('ghosts-in-the-mist')
+    expect(store.segment.id).toBe(WOLVES_DIRECTORS_CUT_EXPERIENCE.segments[WOLVES_DIRECTORS_CUT_EXPERIENCE.segments.length - 1].id)
     expect(store.isLastSegment).toBe(true)
     expect(store.playing).toBe(false)
   })

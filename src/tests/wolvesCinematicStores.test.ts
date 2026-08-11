@@ -8,6 +8,7 @@ import {
   INTRO_SEQUENCE_DURATION,
   resolveOverallRatioTarget,
   useCinematicStore,
+  WOLVES_DIRECTORS_CUT_EXPERIENCE,
   WOLVES_EXPERIENCE,
 } from '@/stores/cinematic'
 
@@ -303,5 +304,29 @@ describe('cinematic store', () => {
     expect(standard.map((_, index) =>
       resolveOverallRatioTarget(introRatio(standard, index, standardDuration)).segmentId,
     )).toEqual(standardIds)
+  })
+
+  /**
+   * The Director's Cut is a FORK of the Wolves show, not a re-edit of it: it keeps
+   * 7 Days to the Wolves, which the show is named for, and everything after it is
+   * material authored for this cut. The standard show keeps all seven of its
+   * tracks, unchanged.
+   *
+   * This is pinned as a test because it is a decision an agent cannot infer from
+   * the code — reusing a legacy track here would look like a reasonable way to
+   * lengthen the cut, and would silently undo the fork.
+   */
+  it('keeps the Director\'s Cut a fork: no legacy track but 7 Days to the Wolves', () => {
+    const directorsCutIds = WOLVES_DIRECTORS_CUT_EXPERIENCE.segments.map(segment => segment.id)
+    const standardIds = CINEMATIC_SEGMENTS.map(segment => segment.id)
+    const reusedLegacy = directorsCutIds.filter(id => standardIds.includes(id))
+
+    expect(reusedLegacy).toEqual(['seven-days-to-the-wolves'])
+    expect(directorsCutIds).toContain('europa-intro')
+
+    // And the fork does not reach back into the standard show, which still plays
+    // every one of its authored parts.
+    expect(standardIds).toHaveLength(7)
+    expect(standardIds).toContain('ghosts-in-the-mist')
   })
 })

@@ -79,7 +79,11 @@ watch(
       return
     }
     const targetIndex = store.pendingSegmentIndex ?? store.segmentIndex
-    if (targetIndex === 0 || incomingSegment.value?.id === 'ghosts-in-the-mist') {
+    // Index 0 has the intro in front of it, and a segment that authors its own
+    // entrance says so in its data — see `skipTransitionOverlay`. Keying this on
+    // the segment rather than on a song id means a cut that reuses the segment,
+    // or adds a new one, gets the right answer without editing this component.
+    if (targetIndex === 0 || incomingSegment.value?.skipTransitionOverlay) {
       return
     }
     active.value = true
