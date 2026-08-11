@@ -262,18 +262,19 @@ describe('director\'s cut intro sequence', () => {
         sourceHeight: record.sourceHeight,
       })
     }
-    // Off-16:9 paintings are exactly what a global `cover` crop destroys, and
-    // what `contain` letterboxes. The registry no longer holds the 2.66:1
-    // panorama this used to point at - it was cut for showing the threat - but
-    // the spread that makes framing matter is still here: measured against a
-    // 1920x1080 frame, the 1.40:1 record paints 1515px wide and leaves a 203px
-    // bar down each side, against a caption inset of 96px. That is the
-    // "words colliding with the letterbox" defect, and the caption offsets
-    // itself by the measured bar precisely because records like this exist.
-    const ratios = DIRECTORS_CUT_DESTINY_CONCEPTS.map(record => record.sourceWidth / record.sourceHeight)
-
-    expect(Math.min(...ratios)).toBeLessThan(1.5)
-    expect(Math.max(...ratios)).toBeGreaterThan(1.9)
+    // Every record is stored at exactly 16:9 now, so the montage fills the frame
+    // and nothing letterboxes. Sources arrived at nine different ratios, from
+    // 1.40:1 to 2.35:1, and because the runtime frames paintings whole rather
+    // than cropping them, the off-ratio ones painted inside black bars - 47% of
+    // a 1080p screen on the invasion plate, 56% on the atrium. They are cropped
+    // to 16:9 on the way into the registry instead.
+    //
+    // The caption still offsets itself by the measured bar. That code is not
+    // dead: it is what makes a future off-ratio record safe rather than a
+    // silent regression, and it is asserted in the browser probe.
+    for (const record of DIRECTORS_CUT_DESTINY_CONCEPTS) {
+      expect(record.sourceWidth / record.sourceHeight, record.id).toBeCloseTo(16 / 9, 2)
+    }
   })
 
   it('shapes the montage as a descent through Earth, then the cold arrival', () => {

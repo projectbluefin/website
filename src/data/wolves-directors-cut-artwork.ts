@@ -182,159 +182,168 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
   // Registry order IS montage order - the shot list schedules by index - so this
   // array is the running order of the prologue, not bookkeeping.
   //
-  // Two rules govern what may be in it.
+  // **Every record is stored at exactly 1920x1080.** Sources arrived at nine
+  // different aspect ratios, from 1.40:1 to 2.35:1, and the runtime frames
+  // paintings whole rather than cropping them, so an off-ratio record painted
+  // inside black bars: the 2.35:1 invasion plate left 47% of a 1080p screen
+  // black and the 1280x705 atrium 56%. On owner instruction (2026-08-10) each
+  // one is now cropped to the largest centred 16:9 rectangle and resampled to
+  // 1920x1080, so the montage fills the frame edge to edge with no bars at all.
+  //
+  // `sourceWidth` / `sourceHeight` therefore describe the **stored** file, which
+  // is what the geometry test decodes and compares. Each record's original
+  // dimensions are recorded in its provenance note, so the crop is visible in
+  // the ledger rather than silently lost.
+  //
+  // Two rules govern what may be in here.
   //
   // **The threat is never seen.** No Traveler, no aliens, no alien architecture,
   // nothing an audience can name as Destiny on sight. Six records were cut under
-  // this on 2026-08-10 and a test fails if any of their ids returns. Ships are
-  // the one admitted exception, added on owner instruction the same day: the
-  // narration already says others came to claim the Garden, so distant dropships
-  // over a ruined skyline illustrate a line the audience is being told rather
-  // than revealing a threat it was promised it would not see. Creatures remain
-  // out.
+  // this and a test fails if any of their ids returns. Ships are the one
+  // admitted exception, on owner instruction: the narration already says others
+  // came to claim the Garden, so distant craft illustrate a line the audience is
+  // being told rather than revealing a threat it was promised it would not see.
+  // Creatures stay out. So do the Darkness pyramids, which a curation pass
+  // scored highly before being overruled here - they are as nameable as the
+  // Traveler.
   //
-  // **Cityscapes and skyboxes.** Owner instruction: the montage is biased toward
-  // cities and sky rather than interiors and yards. A collapsed foundry hall and
-  // a scrapyard were dropped for that reason even though both were good pictures
-  // - they had no horizon, and on a projector this piece lives on its horizons.
-  //
-  // Not disqualifiers, both confirmed by the owner: a burned-in BUNGIE /
-  // DESTINY 2 corner watermark (Bungie's remix policy covers this use), and a
-  // small distant figure (a silhouette dwarfed by a ruin strengthens the scale).
-  // Only a prominent foreground character disqualifies a record - with one
-  // owner-approved exception, the Golden Age plate below, where the figure is
-  // the point.
+  // **Cityscapes and skyboxes.** Owner instruction: bias toward cities and sky
+  // rather than interiors and yards. A foundry hall, a scrapyard, a dust plain
+  // and a valley dam were all dropped on that basis despite being good
+  // pictures - they had no horizon, and this piece lives on its horizons.
 
-  // The world as it was. The prologue opens here so the ninety seconds of ruin
-  // that follow have something to be the loss of, and so the Collapse lands on
-  // an audience that has seen what is being collapsed.
+  // The universe first. The Gardener and the Winnower are cosmic beings, and
+  // every other record in this list is Earth *after* the Collapse, so opening on
+  // ruin put the show's first line - "walked among the stars" - over rubble.
+  ownerSuppliedRecord({
+    referenceId: 'SPACE-1',
+    id: 'destiny-concepts/space-asteroid-belt',
+    filename: 'space-asteroid-belt.jpg',
+    artist: null,
+    artistCreditState: 'unattributed',
+    provenanceNote: 'Supplied by the owner as `World 654.jpg`, an opaque filename with no recoverable source page. Artist unknown; not guessed. Stored as retrieved at 1920x1080; no crop was needed.',
+    workTitle: 'Asteroid belt against a gas giant',
+    sourceWidth: 1920,
+    sourceHeight: 1080,
+  }),
+
+  // The world as it was, so the ninety seconds of ruin that follow are the loss
+  // of something the audience has actually seen. The one record admitted with a
+  // prominent foreground figure, on owner approval: here the figure is the point.
   ownerSuppliedRecord({
     referenceId: 'EARTH-GOLD',
     id: 'destiny-concepts/earth-golden-age-city',
     filename: 'earth-golden-age-city-sung-choi.jpg',
     artist: 'Sung Choi',
     artistCreditState: 'filename-asserted',
-    provenanceNote: 'Supplied by the owner as `sung-choi-guardian-day-sung-choi-1600px.jpg` and approved by name for the Golden Age beat. The filename asserts Sung Choi; no upstream page was verified for this copy.',
+    provenanceNote: 'Supplied by the owner as `sung-choi-guardian-day-sung-choi-1600px.jpg` and approved by name for the Golden Age beat. The filename asserts Sung Choi; no upstream page was verified. Original 1600x900; upscaled to 1920x1080.',
     workTitle: 'Golden Age city under banners',
-    sourceWidth: 1600,
-    sourceHeight: 900,
+    sourceWidth: 1920,
+    sourceHeight: 1080,
   }),
 
-  // The descent: a city under storm light, then what a city becomes when nobody
-  // comes back to it.
+  // The descent.
   ownerSuppliedRecord({
     referenceId: 'EARTH-1',
-    id: 'destiny-concepts/earth-ruined-city-canyon',
-    filename: 'earth-ruined-city-canyon.jpg',
-    artist: null,
-    artistCreditState: 'unattributed',
-    provenanceNote: 'Supplied by the owner as `VvQ42JH.jpeg`, an opaque filename with no recoverable source page. Artist unknown; not guessed.',
-    workTitle: 'Ruined city canyon under storm light',
+    id: 'destiny-concepts/earth-overgrown-city',
+    filename: 'earth-overgrown-city-joseph-cross.jpg',
+    artist: 'Joseph Cross',
+    artistCreditState: 'filename-asserted',
+    provenanceNote: 'Supplied by the owner as `joseph-cross-jc-edz-2.jpg`. The filename asserts Joseph Cross; no upstream page was verified. Original 1728x987; cropped to 16:9 and resampled.',
+    workTitle: 'Overgrown city blocks',
     sourceWidth: 1920,
     sourceHeight: 1080,
   }),
   ownerSuppliedRecord({
     referenceId: 'EARTH-2',
-    id: 'destiny-concepts/earth-overgrown-city',
-    filename: 'earth-overgrown-city-joseph-cross.jpg',
-    artist: 'Joseph Cross',
-    artistCreditState: 'filename-asserted',
-    provenanceNote: 'Supplied by the owner as `joseph-cross-jc-edz-2.jpg`. The filename asserts Joseph Cross; no upstream page was verified for this copy.',
-    workTitle: 'Overgrown city blocks',
-    sourceWidth: 1728,
-    sourceHeight: 987,
-  }),
-  ownerSuppliedRecord({
-    referenceId: 'EARTH-3',
     id: 'destiny-concepts/earth-drowned-city',
     filename: 'earth-drowned-city-zombot-studio.jpg',
     artist: 'Zombot Studio',
     artistCreditState: 'filename-asserted',
-    provenanceNote: 'Supplied by the owner as `zombot-studio-downlox.jpg`. The filename asserts Zombot Studio; no upstream page was verified for this copy.',
+    provenanceNote: 'Supplied by the owner as `zombot-studio-downlox.jpg`. The filename asserts Zombot Studio; no upstream page was verified. Original 1862x1000; cropped to 16:9 and resampled.',
     workTitle: 'Drowned city behind dead trees',
-    sourceWidth: 1862,
-    sourceHeight: 1000,
+    sourceWidth: 1920,
+    sourceHeight: 1080,
   }),
   ownerSuppliedRecord({
-    referenceId: 'EARTH-4',
+    referenceId: 'EARTH-3',
     id: 'destiny-concepts/earth-storm-city',
     filename: 'earth-storm-city.jpg',
     artist: null,
     artistCreditState: 'unattributed',
-    provenanceNote: 'Supplied by the owner as `EjCq1IT.jpeg`, an opaque filename with no recoverable source page. Artist unknown; not guessed.',
+    provenanceNote: 'Supplied by the owner as `EjCq1IT.jpeg`, an opaque filename with no recoverable source page. Artist unknown; not guessed. Stored at 1920x1080.',
     workTitle: 'Overgrown towers in a rainstorm',
     sourceWidth: 1920,
     sourceHeight: 1080,
   }),
   ownerSuppliedRecord({
-    referenceId: 'EARTH-5',
-    id: 'destiny-concepts/earth-hydro-ruin',
-    filename: 'earth-hydro-ruin.jpg',
+    referenceId: 'EARTH-4',
+    id: 'destiny-concepts/earth-ruined-city-canyon',
+    filename: 'earth-ruined-city-canyon.jpg',
     artist: null,
     artistCreditState: 'unattributed',
-    provenanceNote: 'Supplied by the owner as `64uh1yh.jpeg`, an opaque filename with no recoverable source page. Artist unknown; not guessed.',
-    workTitle: 'Hydroelectric complex reclaimed by the valley',
+    provenanceNote: 'Supplied by the owner as `VvQ42JH.jpeg`, an opaque filename with no recoverable source page. Artist unknown; not guessed. Stored at 1920x1080.',
+    workTitle: 'Ruined city canyon under storm light',
+    sourceWidth: 1920,
+    sourceHeight: 1080,
+  }),
+  ownerSuppliedRecord({
+    referenceId: 'EARTH-5',
+    id: 'destiny-concepts/earth-shuttle-monolith',
+    filename: 'earth-shuttle-monolith.jpg',
+    artist: null,
+    artistCreditState: 'unattributed',
+    provenanceNote: 'Supplied by the owner under a base64-like filename with no recoverable source page. Artist unknown; not guessed. Original 1899x1068; cropped to 16:9 and resampled.',
+    workTitle: 'Grounded shuttle on a storm plain',
     sourceWidth: 1920,
     sourceHeight: 1080,
   }),
   ownerSuppliedRecord({
     referenceId: 'EARTH-6',
-    id: 'destiny-concepts/earth-shuttle-monolith',
-    filename: 'earth-shuttle-monolith.jpg',
-    artist: null,
-    artistCreditState: 'unattributed',
-    provenanceNote: 'Supplied by the owner under a base64-like filename with no recoverable source page. Artist unknown; not guessed.',
-    workTitle: 'Grounded shuttle on a storm plain',
-    sourceWidth: 1899,
-    sourceHeight: 1068,
-  }),
-  ownerSuppliedRecord({
-    referenceId: 'EARTH-7',
     id: 'destiny-concepts/earth-collapsed-arcology',
     filename: 'earth-collapsed-arcology-jesse-van-dijk.jpg',
     artist: 'Jesse van Dijk',
     artistCreditState: 'filename-asserted',
-    provenanceNote: 'Supplied by the owner as `jesse-van-dijk-e-010.jpg`. The filename asserts Jesse van Dijk; no upstream page was verified for this copy.',
+    provenanceNote: 'Supplied by the owner as `jesse-van-dijk-e-010.jpg`. The filename asserts Jesse van Dijk; no upstream page was verified. Original 1920x1369; cropped to 16:9 and resampled.',
     workTitle: 'Collapsed arcology above the lake',
     sourceWidth: 1920,
-    sourceHeight: 1369,
+    sourceHeight: 1080,
   }),
 
-  // The invasion, under the line that names it. Ships are admitted here on owner
-  // instruction because the narration is already saying this out loud.
+  // The invasion, under the line that names it.
   ownerSuppliedRecord({
-    referenceId: 'EARTH-8',
+    referenceId: 'EARTH-7',
     id: 'destiny-concepts/earth-invasion-city',
     filename: 'earth-invasion-city-sung-choi.jpg',
     artist: 'Sung Choi',
     artistCreditState: 'filename-asserted',
-    provenanceNote: 'Supplied by the owner as `destiny-2-concept-art-sung-choi-ruined-city-wide-01.jpg`. The filename asserts Sung Choi; no upstream page was verified for this copy.',
+    provenanceNote: 'Supplied by the owner as `destiny-2-concept-art-sung-choi-ruined-city-wide-01.jpg`. The filename asserts Sung Choi; no upstream page was verified. Original 1600x681; cropped to 16:9 and resampled.',
     workTitle: 'Ruined city wide, under descending craft',
-    sourceWidth: 1600,
-    sourceHeight: 681,
+    sourceWidth: 1920,
+    sourceHeight: 1080,
   }),
 
   // The aftermath. These two exist because three consecutive shots on the
   // Collapse night plate read as one still held for 27.75s - a stalled
   // projector, not a held beat.
   ownerSuppliedRecord({
-    referenceId: 'EARTH-9',
+    referenceId: 'EARTH-8',
     id: 'destiny-concepts/earth-flooded-atrium',
     filename: 'earth-flooded-atrium.jpg',
     artist: null,
     artistCreditState: 'unattributed',
-    provenanceNote: 'Supplied by the owner as `photo_2022-08-13_15-27-01.jpg`, a messaging-app export with no recoverable source page. Artist unknown; not guessed.',
+    provenanceNote: 'Supplied by the owner as `photo_2022-08-13_15-27-01.jpg`, a messaging-app export with no recoverable source page. Artist unknown; not guessed. Original 1280x705; cropped to 16:9 and upscaled.',
     workTitle: 'Vine-choked industrial atrium',
-    sourceWidth: 1280,
-    sourceHeight: 705,
+    sourceWidth: 1920,
+    sourceHeight: 1080,
   }),
   ownerSuppliedRecord({
-    referenceId: 'EARTH-10',
+    referenceId: 'EARTH-9',
     id: 'destiny-concepts/earth-storm-island',
     filename: 'earth-storm-island.jpg',
     artist: 'Dorje Bellbrook',
     artistCreditState: 'filename-asserted',
-    provenanceNote: 'Supplied by the owner as `dorje-bellbrook-db-destiny2-001.jpg`. The filename asserts Dorje Bellbrook; no upstream page was verified for this copy.',
+    provenanceNote: 'Supplied by the owner as `dorje-bellbrook-db-destiny2-001.jpg`. The filename asserts Dorje Bellbrook; no upstream page was verified. Stored at 1920x1080.',
     workTitle: 'Last lit settlement above the flood plain',
     sourceWidth: 1920,
     sourceHeight: 1080,
@@ -353,8 +362,9 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
     workTitle: 'Underneath the ice on Europa',
     authoritativeSourceUrl: JESSE_VAN_DIJK_ARTSTATION,
     upstreamAssetUrl: 'https://cdna.artstation.com/p/assets/images/images/032/810/504/large/jesse-van-dijk-destiny-2020-jessevandijk-030.jpg?1607533935',
+    // Retrieved at 1920x1200; cropped to 16:9 and stored at 1920x1080.
     sourceWidth: 1920,
-    sourceHeight: 1200,
+    sourceHeight: 1080,
   }),
   uncreditedRecord({
     referenceId: 'E1',

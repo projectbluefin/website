@@ -60,6 +60,7 @@ describe('director\'s cut Destiny concept-art registry', () => {
     // order of Act I, not bookkeeping. Earth devastation first, the Mars ruin
     // to close it out, then Europa as the cold arrival.
     expect(DIRECTORS_CUT_DESTINY_CONCEPTS.map(record => record.referenceId)).toEqual([
+      'SPACE-1',
       'EARTH-GOLD',
       'EARTH-1',
       'EARTH-2',
@@ -70,7 +71,6 @@ describe('director\'s cut Destiny concept-art registry', () => {
       'EARTH-7',
       'EARTH-8',
       'EARTH-9',
-      'EARTH-10',
       'C2',
       'E1',
     ])
@@ -168,7 +168,7 @@ describe('director\'s cut Destiny concept-art registry', () => {
 
   it('keeps gameplay and render picks out of the montage allowlist', () => {
     for (const record of DIRECTORS_CUT_DESTINY_CONCEPTS) {
-      expect(record.referenceId).toMatch(/^(E1|C\d+|EARTH-(\d+|GOLD))$/)
+      expect(record.referenceId).toMatch(/^(E1|C\d+|SPACE-\d+|EARTH-(\d+|GOLD))$/)
       expect(record.referenceId).not.toMatch(/^[GR]/)
       expect(record.id).not.toMatch(/gameplay|render/i)
       expect(record.localPath).not.toMatch(/gameplay|render/i)
