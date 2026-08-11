@@ -36,37 +36,46 @@ describe('serverHighlights.vue', () => {
   })
 
   it('renders no nvidia chips when fetch fails', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => {
+    const fetchMock = vi.fn(async () => {
       throw new Error('network error')
-    }))
+    })
+    vi.stubGlobal('fetch', fetchMock)
 
     const wrapper = mountHighlights()
     await flushPromises()
 
+    // Prove the failure path was actually entered — an absent .nvidia-chips
+    // is also the initial state, so without this the test could pass without
+    // the fetch ever happening.
+    expect(fetchMock).toHaveBeenCalledOnce()
     expect(wrapper.find('.nvidia-chips').exists()).toBe(false)
   })
 
   it('renders no nvidia chips when response has no nvidiaDrivers array', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({
+    const fetchMock = vi.fn(async () => ({
       ok: true,
       json: async () => ({ other: 'data' }),
-    })))
+    }))
+    vi.stubGlobal('fetch', fetchMock)
 
     const wrapper = mountHighlights()
     await flushPromises()
 
+    expect(fetchMock).toHaveBeenCalledOnce()
     expect(wrapper.find('.nvidia-chips').exists()).toBe(false)
   })
 
   it('renders no nvidia chips when HTTP response is not ok', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({
+    const fetchMock = vi.fn(async () => ({
       ok: false,
       status: 404,
-    })))
+    }))
+    vi.stubGlobal('fetch', fetchMock)
 
     const wrapper = mountHighlights()
     await flushPromises()
 
+    expect(fetchMock).toHaveBeenCalledOnce()
     expect(wrapper.find('.nvidia-chips').exists()).toBe(false)
   })
 

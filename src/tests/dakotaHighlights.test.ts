@@ -27,6 +27,8 @@ describe('dakotaHighlights.vue', () => {
     const wrapper = mountHighlights()
 
     const externalLinks = wrapper.findAll('a.brand-title[href]')
+    // Guard against the selector silently matching nothing
+    expect(externalLinks).toHaveLength(3)
     externalLinks.forEach((link) => {
       expect(link.attributes('target')).toBe('_blank')
       expect(link.attributes('rel')).toBe('noopener noreferrer')

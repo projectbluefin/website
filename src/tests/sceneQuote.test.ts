@@ -25,8 +25,11 @@ describe('sceneQuote.vue', () => {
 
     const cite = wrapper.get('cite')
     const authorLink = cite.get('a')
-    expect(authorLink.text()).toBeTruthy()
-    expect(authorLink.attributes('href')).toBeTruthy()
+    // t() must resolve the keys — a missing locale key would echo the raw
+    // key into the text and ship a literally broken href.
+    expect(authorLink.text()).toBe(i18n.global.t('SpreadQuote.Author'))
+    expect(authorLink.text()).not.toBe('SpreadQuote.Author')
+    expect(authorLink.attributes('href')).toMatch(/^https?:\/\//)
     expect(authorLink.attributes('target')).toBe('_blank')
   })
 
@@ -38,7 +41,8 @@ describe('sceneQuote.vue', () => {
     })
 
     const paragraph = wrapper.get('blockquote p')
-    // The paragraph text includes both the quote and the cited author
-    expect(paragraph.text().length).toBeGreaterThan(0)
+    // The paragraph text must contain the resolved quote, not the raw key
+    expect(paragraph.text()).toContain(i18n.global.t('SpreadQuote.Quote'))
+    expect(paragraph.text()).not.toContain('SpreadQuote.Quote')
   })
 })

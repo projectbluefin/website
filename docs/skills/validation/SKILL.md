@@ -420,8 +420,11 @@ value regardless of how `fetch` is stubbed. Stubbing `fetch` globally does not
 help because the cache is above the network call.
 
 Fix: use `vi.mock('../composables', ...)` to replace `getDakotaVersions` with a
-per-test mock function. Reset it in `afterEach`. Import the component **after**
-the mock is set up via `await import(...)`.
+per-test mock function. Reset it in `afterEach`. Vitest hoists `vi.mock` above
+all imports, so a plain static `import Component from ...` is fine — no
+`await import(...)` ordering dance is needed. Keep the factory's reference to
+the mock function inside a closure (`() => mockFn()`) so nothing touches the
+binding before the module body initialises it.
 
 ### Section components that inject `visibleSection`
 
@@ -436,6 +439,14 @@ global: { provide: { visibleSection: { value: '' } } }
 
 When a parent composes a child that fetches (e.g. `SectionNews` → `RssFeed`),
 stub `fetch` globally so the child's `onMounted` does not hit the network.
+Two moves keep that safe and meaningful:
+
+- Restore with `vi.unstubAllGlobals()` in `afterEach`, never as the last
+  statement of the test body — if an assertion throws, a body-level restore is
+  skipped and the stub leaks into every later test in the file.
+- `await flushPromises()` after `mount()` so the child's fetch settles inside
+  the test, then assert the resulting state (e.g. fallback posts or an error
+  message) rather than only stubbing and never checking the outcome.
 
 ### Components that fetch in `onMounted`
 
@@ -469,5 +480,9 @@ overrides cannot leak into the next test.
 
 ### CSS pseudo-selectors in test-utils
 
-`wrapper.findAll('.parent:first-of-type .child')` does not work in jsdom.
-Instead, query `.findAll('.parent')` and index into the result.
+This repo's tests run in **happy-dom** (`vite.config.ts` →
+`test.environment: 'happy-dom'`), not jsdom. Descendant selectors with
+structural pseudo-classes such as `.parent:first-of-type .child` resolve
+correctly there (verified 2026-08-10, vitest 4.1.7 + happy-dom: the selector
+matched exactly the first parent's child). Indexing into
+`.findAll('.parent')` remains a readability choice, not a workaround.

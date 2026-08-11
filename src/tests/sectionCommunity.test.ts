@@ -18,8 +18,14 @@ describe('sectionCommunity.vue', () => {
   it('renders the community tag and title from i18n', () => {
     const wrapper = mountCommunity()
 
-    expect(wrapper.get('.community-tag strong').text()).toBeTruthy()
-    expect(wrapper.get('.community-header h2').text()).toBeTruthy()
+    // Assert the resolved messages — a missing locale key would echo the raw
+    // key, which still passes a bare toBeTruthy().
+    const tag = wrapper.get('.community-tag strong').text()
+    const title = wrapper.get('.community-header h2').text()
+    expect(tag).toBe(i18n.global.t('Community.Tag'))
+    expect(title).toBe(i18n.global.t('Community.Title'))
+    expect(tag).not.toContain('Community.')
+    expect(title).not.toContain('Community.')
   })
 
   it('renders three action buttons with correct links', () => {

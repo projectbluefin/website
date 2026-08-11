@@ -1,16 +1,17 @@
 import type { DakotaVersions } from '../composables'
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import DakotaVersionCard from '../components/dakota/DakotaVersionCard.vue'
 
-// Mock getDakotaVersions to bypass the module-level singleton cache
+// Mock getDakotaVersions to bypass the module-level singleton cache.
+// vi.mock is hoisted above all imports, so the plain static import above is
+// fine — the factory's reference to the mock is inside a closure that only
+// runs when a test calls getDakotaVersions.
 const getDakotaVersionsMock = vi.fn<() => Promise<DakotaVersions>>()
 vi.mock('../composables', async (importOriginal) => {
   const orig = await importOriginal<typeof import('../composables')>()
   return { ...orig, getDakotaVersions: () => getDakotaVersionsMock() }
 })
-
-// Import after mock is set up
-const { default: DakotaVersionCard } = await import('../components/dakota/DakotaVersionCard.vue')
 
 const FULL_VERSIONS: DakotaVersions = {
   generatedAt: '2026-08-01T00:00:00Z',
@@ -44,7 +45,9 @@ describe('dakotaVersionCard.vue', () => {
     await flushPromises()
 
     const rows = wrapper.findAll('.version-row')
-    expect(rows.length).toBeGreaterThanOrEqual(4)
+    // The fixture has exactly 6 known packages — an exact count catches
+    // off-by-one and filter regressions that a loose bound would hide.
+    expect(rows).toHaveLength(6)
     expect(rows.map(r => r.get('.version-label').text())).toContain('Kernel')
     expect(rows.map(r => r.get('.version-label').text())).toContain('GNOME')
     expect(rows.find(r => r.get('.version-label').text() === 'Kernel')!
@@ -126,7 +129,12 @@ describe('dakotaVersionCard.vue', () => {
     const wrapper = mountCard()
     await flushPromises()
 
-    const labels = wrapper.findAll('.version-row').map(r => r.get('.version-label').text())
+    // Exactly the 6 known labels survive the filter — without the filter the
+    // unknown package would render a 7th row with an empty label.
+    const rows = wrapper.findAll('.version-row')
+    expect(rows).toHaveLength(6)
+    const labels = rows.map(r => r.get('.version-label').text())
     expect(labels).not.toContain('unknownPackage')
+    labels.forEach(label => expect(label.length).toBeGreaterThan(0))
   })
 })

@@ -53,6 +53,10 @@ describe('serverFeatures.vue', () => {
     const clientNames = clientGrid.findAll('.app-name').map(n => n.text())
     expect(clientNames).toContain('Goose')
     expect(clientNames).toContain('linux-mcp-server')
+
+    const badges = clientGrid.findAll('.app-badge').map(b => b.text())
+    expect(badges).toContain('Agentic AI Foundation')
+    expect(badges).toContain('RHEL Lightspeed')
   })
 
   it('renders the RHEL Lightspeed attribution row', () => {
@@ -66,8 +70,10 @@ describe('serverFeatures.vue', () => {
   it('cards without CNCF tier get no badge element', () => {
     const wrapper = mountFeatures()
 
-    // Docker and Tailscale have no CNCF tier
+    // Docker, Tailscale, Incus and ZFS have no CNCF tier
     const otherCards = wrapper.findAll('.app-card.other')
+    // Guard against the selector silently matching nothing
+    expect(otherCards).toHaveLength(4)
     otherCards.forEach((card) => {
       expect(card.find('.app-badge').exists()).toBe(false)
     })

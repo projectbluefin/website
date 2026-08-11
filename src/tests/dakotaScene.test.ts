@@ -1,5 +1,6 @@
 import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { nextTick } from 'vue'
 import DakotaScene from '../components/dakota/DakotaScene.vue'
 
 function mountScene() {
@@ -7,6 +8,16 @@ function mountScene() {
 }
 
 describe('dakotaScene.vue', () => {
+  // The component reveals its text via a 150 ms setTimeout in onMounted;
+  // fake timers keep that timer from leaking past the end of a test.
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('renders the hero title and tag', () => {
     const wrapper = mountScene()
 
@@ -19,6 +30,7 @@ describe('dakotaScene.vue', () => {
 
     const desc = wrapper.get('.hero-desc')
     const links = desc.findAll('a')
+    expect(links.length).toBeGreaterThan(0)
     const hrefs = links.map(l => l.attributes('href'))
 
     expect(hrefs).toContain('https://freedesktop-sdk.io')
@@ -31,9 +43,15 @@ describe('dakotaScene.vue', () => {
     })
   })
 
-  it('starts with the text hidden (opacity 0 via CSS class)', () => {
+  it('starts hidden and reveals the text once the mount timer fires', async () => {
     const wrapper = mountScene()
 
+    // Hidden until the 150 ms onMounted timer fires
     expect(wrapper.get('.dakota-text').classes()).not.toContain('is-loaded')
+
+    vi.advanceTimersByTime(150)
+    await nextTick()
+
+    expect(wrapper.get('.dakota-text').classes()).toContain('is-loaded')
   })
 })
