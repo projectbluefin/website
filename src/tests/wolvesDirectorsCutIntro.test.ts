@@ -4,7 +4,9 @@ import { estimatePageSeconds } from '@/components/wolves/lore/lore-pages'
 import { DIRECTORS_CUT_DESTINY_CONCEPTS } from '@/data/wolves-directors-cut-artwork'
 import { DIRECTORS_CUT_COLLAPSE_DAY_IMAGE, DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE } from '@/data/wolves-directors-cut-finale'
 import {
+  buildDirectorsCutPrologueSegment,
   buildDirectorsCutVideoSequence,
+  DEFAULT_PROLOGUE_MOOD_ID,
   DIRECTORS_CUT_DESTINY_SEGMENT_ID,
   DIRECTORS_CUT_FINAL_CRESCENDO_SECOND,
   DIRECTORS_CUT_MAX_CUE_WORDS,
@@ -17,6 +19,8 @@ import {
   IKORA_RATING_CARD_SECONDS,
   IKORA_SOURCE_OFFSET_SECONDS,
   IKORA_SOURCE_VIDEO_ID,
+  PROLOGUE_MOODS,
+  resolvePrologueMood,
   TRIBULATION_LAST_AUDIBLE_SECOND,
   TRIBULATION_PROLOGUE_MARKS,
   TRIBULATION_SOURCE_VIDEO_ID,
@@ -455,6 +459,52 @@ describe('director\'s cut intro sequence', () => {
     expect(directors.burnedInCaptions).toEqual([
       { text: '', start: 21.9, end: 35.9, comicHeroTitleCard: true },
     ])
+  })
+
+  it('keeps the cut fixed and swaps only the score', () => {
+    // A mood is an audio substitution under an authored grid, never a re-cut.
+    // Whichever score is playing, the segment runs the same window and the same
+    // cues, so the montage, the Collapse and the title always land where they
+    // were cut to land.
+    const base = buildDirectorsCutPrologueSegment()
+
+    for (const mood of PROLOGUE_MOODS) {
+      const segment = buildDirectorsCutPrologueSegment(mood.id)
+
+      expect(segment.duration, mood.id).toBe(base.duration)
+      expect(segment.overlays, mood.id).toEqual(base.overlays)
+      expect(segment.audioYoutubeVideoId, mood.id).toBe(mood.youtubeVideoId)
+    }
+  })
+
+  it('plays the mood the cut was built for when nobody touches anything', () => {
+    // The presentation runs unattended to a room with no input device, so the
+    // picker has to be an affordance and never a dependency. An untouched build
+    // is the default mood, and the default is the track the marks were measured
+    // from - not merely whichever entry happens to be first in the list.
+    const untouched = buildDirectorsCutPrologueSegment()
+    const fallback = buildDirectorsCutPrologueSegment('no-such-mood')
+    const expected = resolvePrologueMood(DEFAULT_PROLOGUE_MOOD_ID)
+
+    expect(expected.id).toBe('tribulation')
+    expect(expected.offsetSeconds).toBe(0)
+    expect(untouched.audioYoutubeVideoId).toBe(expected.youtubeVideoId)
+    expect(fallback.audioYoutubeVideoId).toBe(expected.youtubeVideoId)
+  })
+
+  it('gives every mood enough track to cover the window it is borrowed for', () => {
+    // A mood entered at an offset whose remaining track is shorter than the
+    // show would fall silent before the title card. The fade needs to land on
+    // music, not on a track that already ended.
+    for (const mood of PROLOGUE_MOODS) {
+      expect(mood.offsetSeconds, mood.id).toBeGreaterThanOrEqual(0)
+      expect(mood.trackSeconds - mood.offsetSeconds, mood.id)
+        .toBeGreaterThanOrEqual(TRIBULATION_TRACK_SECONDS)
+    }
+
+    // Distinct ids and sources, or the picker offers the same thing twice.
+    expect(new Set(PROLOGUE_MOODS.map(mood => mood.id)).size).toBe(PROLOGUE_MOODS.length)
+    expect(new Set(PROLOGUE_MOODS.map(mood => mood.youtubeVideoId)).size).toBe(PROLOGUE_MOODS.length)
   })
 
   it('leaves the standard intro and its optional Ikora toggle untouched', () => {

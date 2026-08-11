@@ -210,6 +210,67 @@ export const IKORA_RATING_CARD_SECONDS = 2
  */
 export const IKORA_LAST_CONTENT_SECOND = 113.5
 
+/**
+ * The score is swappable; the cut is not.
+ *
+ * The prologue's 134.65 s window and its mark grid are authored against the
+ * default mood and stay fixed no matter which track is playing. A mood is an
+ * audio substitution *under* that grid, never a re-cut: it supplies a start
+ * offset into its own recording so the excerpt the show uses is the part worth
+ * hearing, and the segment's existing fade ends it on a decay rather than a
+ * hard cut.
+ *
+ * Only the default's cuts land on its own measured musical events - the grid
+ * was derived from it. An alternate is phrased against a grid built for a
+ * different piece, so some will fit better than others. That is the accepted
+ * trade of having a picker at all, and it is why `DEFAULT_PROLOGUE_MOOD_ID`
+ * exists as a separate exported thing rather than "the first entry": a run
+ * nobody touches must play the mood the cut was actually built for.
+ *
+ * `trackSeconds` is the recording's full measured length and exists to bound
+ * `offsetSeconds`: a mood whose offset plus the show's window runs past the end
+ * of its own track would fall silent before the title card.
+ */
+export interface PrologueMood {
+  readonly id: string
+  /** Shown in the transport picker. Keep it short; the widget is one line. */
+  readonly label: string
+  readonly youtubeVideoId: string
+  /** Seconds into the recording where the show's window begins. */
+  readonly offsetSeconds: number
+  /** Full measured length of the recording, via `yt-dlp` -> `ffprobe`. */
+  readonly trackSeconds: number
+}
+
+export const PROLOGUE_MOODS: readonly PrologueMood[] = [
+  {
+    id: 'tribulation',
+    label: 'Bleak',
+    youtubeVideoId: 'uvtR84x0kgw',
+    offsetSeconds: 0,
+    trackSeconds: TRIBULATION_TRACK_SECONDS,
+  },
+  {
+    // Nightwish, "Perfume Of The Timeless (Orchestral Version)", measured at
+    // 493.59 s. It runs 3.7x the length of the show, so it is played from the
+    // top and faded out at the window's end; the opening is where the piece is
+    // quietest, which suits a prologue that now begins on empty space.
+    // The offset is a starting point to audition, not a measured result.
+    id: 'timeless',
+    label: 'Orchestral',
+    youtubeVideoId: '88rc8UAdhfQ',
+    offsetSeconds: 0,
+    trackSeconds: 493.59,
+  },
+] as const
+
+export const DEFAULT_PROLOGUE_MOOD_ID = 'tribulation' as const
+
+export function resolvePrologueMood(id: string | undefined): PrologueMood {
+  return PROLOGUE_MOODS.find(mood => mood.id === id)
+    ?? PROLOGUE_MOODS.find(mood => mood.id === DEFAULT_PROLOGUE_MOOD_ID)!
+}
+
 function mark(index: number): number {
   return TRIBULATION_PROLOGUE_MARKS[index]
 }
@@ -417,13 +478,18 @@ function buildPrologueCues(): IntroOverlayTextCue[] {
   })
 }
 
-export function buildDirectorsCutPrologueSegment(): IntroTextSegment {
+export function buildDirectorsCutPrologueSegment(moodId?: string): IntroTextSegment {
+  const mood = resolvePrologueMood(moodId)
+
   return {
     id: DIRECTORS_CUT_PROLOGUE_SEGMENT_ID,
     kind: 'text',
+    // The window is the cut's, not the track's. Every mood plays this long and
+    // is faded out here, however much of its own recording is left over.
     duration: TRIBULATION_TRACK_SECONDS,
     audioFadeOutSeconds: TRIBULATION_AUDIO_FADE_SECONDS,
-    audioYoutubeVideoId: TRIBULATION_SOURCE_VIDEO_ID,
+    audioYoutubeVideoId: mood.youtubeVideoId,
+    audioStartSeconds: mood.offsetSeconds || undefined,
     overlays: buildPrologueCues(),
   }
 }
