@@ -127,4 +127,73 @@ describe('imageChooser.vue', () => {
     expect(wrapper.find('.release-selection').exists()).toBe(true)
     expect(wrapper.findAll('.release-box')).toHaveLength(2)
   })
+
+  it('renders no version information when the versions fetch fails', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      throw new Error('offline')
+    }))
+
+    const wrapper = mountChooser()
+    await flushPromises()
+
+    expect(wrapper.findAll('.release-box')).toHaveLength(2)
+    expect(wrapper.find('.version-info').exists()).toBe(false)
+  })
+
+  it('renders no version information when the versions YAML is malformed', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      text: async () => '{{{{ not yaml',
+    })))
+
+    const wrapper = mountChooser()
+    await flushPromises()
+
+    expect(wrapper.findAll('.release-box')).toHaveLength(2)
+    expect(wrapper.find('.version-info').exists()).toBe(false)
+  })
+
+  it('summarises the selection and links the release registry on the download step', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      throw new Error('offline')
+    }))
+
+    const wrapper = mountChooser()
+    await reachGpuStep(wrapper)
+    await wrapper.findAll('.step-selection .option-button')[0].trigger('click')
+
+    const summary = wrapper.get('.decision-summary')
+    expect(summary.text()).toContain('Bluefin')
+    expect(summary.text()).toContain('x86_64')
+    expect(summary.text()).toContain('AMD/Intel')
+
+    const registry = wrapper.get('a[title="View Registry"]')
+    expect(registry.attributes('href'))
+      .toBe('https://github.com/orgs/ublue-os/packages?repo_name=bluefin')
+    expect(registry.attributes('target')).toBe('_blank')
+  })
+
+  it('fully resets so the same release can be selected again', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => {
+      throw new Error('offline')
+    }))
+
+    const wrapper = mountChooser()
+    await reachGpuStep(wrapper)
+    await wrapper.findAll('.step-selection .option-button')[0].trigger('click')
+    expect(wrapper.find('.download-section').exists()).toBe(true)
+
+    await wrapper.get('.start-over-button').trigger('click')
+
+    // Selecting the already-selected stable release again restarts the flow
+    // at the architecture step with all downstream steps hidden.
+    await wrapper.findAll('.release-box')[1].trigger('click')
+    expect(wrapper.find('.release-selection').exists()).toBe(false)
+    expect(wrapper.find('.download-section').exists()).toBe(false)
+
+    const archButtons = wrapper.findAll('.step-selection .option-button')
+    expect(archButtons).toHaveLength(1)
+    await archButtons[0].trigger('click')
+    expect(wrapper.findAll('.step-selection .option-button')).toHaveLength(2)
+  })
 })

@@ -1,8 +1,20 @@
+import type { DakotaVersions } from '../composables'
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import DakotaVersionChips from '../components/dakota/DakotaVersionChips.vue'
 
-const VERSIONS_JSON = {
+// Mock getDakotaVersions to bypass the module-level singleton cache: once any
+// test triggers the real composable, every later test in this file would get
+// the cached value regardless of how fetch is stubbed.
+const getDakotaVersionsMock = vi.fn<() => Promise<DakotaVersions>>()
+vi.mock('../composables', async (importOriginal) => {
+  const orig = await importOriginal<typeof import('../composables')>()
+  return { ...orig, getDakotaVersions: () => getDakotaVersionsMock() }
+})
+
+// Import after mock is set up
+const { default: DakotaVersionChips } = await import('../components/dakota/DakotaVersionChips.vue')
+
+const VERSIONS_JSON: DakotaVersions = {
   generatedAt: '2026-08-01T00:00:00Z',
   packages: {
     kernel: '6.19.11',
@@ -18,14 +30,11 @@ function mountChips(props: { keys?: string[] } = {}) {
 
 describe('dakotaVersionChips.vue', () => {
   afterEach(() => {
-    vi.unstubAllGlobals()
+    getDakotaVersionsMock.mockReset()
   })
 
   it('renders chips for every non-empty package with mapped labels', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({
-      ok: true,
-      json: async () => VERSIONS_JSON,
-    })))
+    getDakotaVersionsMock.mockResolvedValue(VERSIONS_JSON)
 
     const wrapper = mountChips()
     await flushPromises()
@@ -46,10 +55,7 @@ describe('dakotaVersionChips.vue', () => {
   })
 
   it('flags the baseline chip as a feature chip', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({
-      ok: true,
-      json: async () => VERSIONS_JSON,
-    })))
+    getDakotaVersionsMock.mockResolvedValue(VERSIONS_JSON)
 
     const wrapper = mountChips()
     await flushPromises()
@@ -60,10 +66,7 @@ describe('dakotaVersionChips.vue', () => {
   })
 
   it('limits chips to the requested keys', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({
-      ok: true,
-      json: async () => VERSIONS_JSON,
-    })))
+    getDakotaVersionsMock.mockResolvedValue(VERSIONS_JSON)
 
     const wrapper = mountChips({ keys: ['kernel'] })
     await flushPromises()
@@ -71,5 +74,58 @@ describe('dakotaVersionChips.vue', () => {
     const chips = wrapper.findAll('.version-chip')
     expect(chips).toHaveLength(1)
     expect(chips[0].get('.chip-label').text()).toBe('Kernel')
+  })
+
+  it('renders nothing when the versions fetch fails', async () => {
+    getDakotaVersionsMock.mockRejectedValue(new Error('network error'))
+
+    const wrapper = mountChips()
+    await flushPromises()
+
+    expect(wrapper.find('.version-chips').exists()).toBe(false)
+    expect(wrapper.findAll('.version-chip')).toHaveLength(0)
+  })
+
+  it('renders nothing when the payload has no packages', async () => {
+    getDakotaVersionsMock.mockResolvedValue({
+      generatedAt: '2026-08-01T00:00:00Z',
+      packages: {},
+    })
+
+    const wrapper = mountChips()
+    await flushPromises()
+
+    expect(wrapper.find('.version-chips').exists()).toBe(false)
+    expect(wrapper.findAll('.version-chip')).toHaveLength(0)
+  })
+
+  it('renders nothing when keys is an empty array', async () => {
+    getDakotaVersionsMock.mockResolvedValue(VERSIONS_JSON)
+
+    const wrapper = mountChips({ keys: [] })
+    await flushPromises()
+
+    expect(wrapper.find('.version-chips').exists()).toBe(false)
+    expect(wrapper.findAll('.version-chip')).toHaveLength(0)
+  })
+
+  it('falls back to the raw package key when no label is mapped', async () => {
+    getDakotaVersionsMock.mockResolvedValue({
+      generatedAt: '2026-08-01T00:00:00Z',
+      packages: {
+        kernel: '6.19.11',
+        brandNewPackage: '9.9.9',
+      },
+    })
+
+    const wrapper = mountChips()
+    await flushPromises()
+
+    const chips = wrapper.findAll('.version-chip')
+    expect(chips.map(chip => chip.get('.chip-label').text())).toEqual([
+      'Kernel',
+      'brandNewPackage',
+    ])
+    expect(chips[1].get('.chip-value').text()).toBe('9.9.9')
   })
 })

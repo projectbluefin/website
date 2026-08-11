@@ -437,6 +437,36 @@ global: { provide: { visibleSection: { value: '' } } }
 When a parent composes a child that fetches (e.g. `SectionNews` → `RssFeed`),
 stub `fetch` globally so the child's `onMounted` does not hit the network.
 
+### Components that fetch in `onMounted`
+
+For a component that calls global `fetch` directly (e.g. `RssFeed`,
+`ServerVersion`, `ImageChooser`), `vi.stubGlobal('fetch', ...)` plus
+`flushPromises()` covers the success, rejection, and non-ok paths. Two extra
+moves pin the states in between:
+
+- A never-resolving promise (`vi.fn(() => new Promise(() => {}))`) asserts the
+  loading state without racing the fetch.
+- Assert the mock's call arguments (`expect(fetchMock).toHaveBeenCalledWith(url,
+  expect.objectContaining({ mode: 'cors' }))`) to prove the request shape and
+  that no real network call escaped.
+
+### Locale-driven labels
+
+Switch locale with `setLocale()` from `../composables/useLocale` and reset to
+`en-US` in `afterEach` — the `i18n` instance is shared across the whole test
+file. Components calling `t()` in the template (e.g. `Navigation`) react to a
+post-mount switch; components calling `t()` in `<script setup>` to build plain
+arrays (e.g. `TopNavbar`'s link lists) capture the locale at mount, so call
+`setLocale()` **before** `mount()`.
+
+### Scroll geometry in happy-dom
+
+Scroll handlers read `window.scrollY`, `window.innerHeight`, and
+`documentElement.scrollHeight`, which happy-dom leaves at `0`/`768`/`0`. Drive
+both branches of a scroll handler with `Object.defineProperty(...,
+{ value, configurable: true })` and restore the defaults in `afterEach` so the
+overrides cannot leak into the next test.
+
 ### CSS pseudo-selectors in test-utils
 
 `wrapper.findAll('.parent:first-of-type .child')` does not work in jsdom.
