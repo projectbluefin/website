@@ -2165,7 +2165,7 @@ onBeforeUnmount(() => {
 
 /* Guardian nameplate treatment for the featured Ghosts In The Mist opening slide, mirroring
    the intro video's guardian plates (crest, horizon lines, class label, gradient name) in the
-   burnished silver trustee palette shared with Bob Killen's intro plate. */
+   burnished silver trustee palette shared with Cortney Nickerson's intro plate. */
 .theater-guardian-header {
   display: flex;
   align-items: center;

@@ -217,6 +217,12 @@ describe('finale reveal', () => {
         .toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart)
       expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
         .toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
-    })
+    // Explicit timeout: this walks the whole director slot in 0.05s steps, paging the
+    // record at every step, and CI runs the suite under v8 coverage instrumentation.
+    // Uninstrumented that is ~0.6s; instrumented it is ~4s locally and reached 7.3s on a
+    // CI runner, past the 5s default. The scan is the point of the test — it proves the
+    // elegy is up for longer than its own reading cost — so give it room rather than
+    // trading away what it checks.
+    }, 30000)
   })
 })
