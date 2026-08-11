@@ -371,8 +371,43 @@ node scripts/wolves-cue-at.mjs prologue --all
 It loads the authored modules through Vite's `ssrLoadModule`, so aliases and
 TypeScript resolve exactly as the app resolves them and the answer cannot drift
 from the show. Use it to find the cue, then use a harness or Chromium to judge
-how that cue reads. Registration for further videos is the `VIDEOS` table in the
-script.
+how that cue reads. Registration for further videos is the `VIDEOS` table in
+`scripts/wolves-videos.mjs`, shared with the frame audit below so the two tools
+cannot disagree about what "video 1" means.
+
+## Auditing every shot of a video in a browser
+
+`scripts/wolves-frame-audit.mjs` is the other half: it walks *every* cue of a
+video in Chromium and checks the things a projected show fails on — the intended
+plate is the one on screen, the painting is full-bleed, the caption sits inside
+the frame with at least 24px of clearance, nothing errored and nothing 404ed.
+
+```bash
+npm run dev -- --port 5173 --strictPort
+node scripts/wolves-frame-audit.mjs                             # exits non-zero on any problem
+node scripts/wolves-frame-audit.mjs prologue --viewport 1280x720 --shots
+```
+
+Three things in it are load-bearing, and each is a bug this repository already
+shipped:
+
+- **It settles on two conditions**, the intended caption *and* the intended
+  decoded plate. Either alone samples a crossfade in progress, where the outgoing
+  shot's words sit over the incoming shot's picture. The same probe has reported a
+  collision that did not exist and hidden one that did, depending on which single
+  condition it used.
+- **It measures inside the settle predicate**, not in a second call after it. The
+  show clock keeps running against a live player, so anything measured after the
+  wait resolves is a *different frame* than the one that satisfied it. That drift
+  made a correct cut report the wrong plate on two shots.
+- **A wordless shot is not a shot with no text on screen.** A cue's words outlive
+  its shot by a fade, so the previous line is still clearing at the start of the
+  next one. Demanding an empty caption stalls past the end of a short window and
+  measures the following shot instead.
+
+Only the app's own requests count toward the request check: the embedded player
+beats its telemetry endpoints constantly and they fail for reasons that have
+nothing to do with the show.
 
 `tests/wolves-intro-silence.mjs` covers the other half of that: the cinematic
 buffers are prewarmed *during* the intro, so it watches them through that window
