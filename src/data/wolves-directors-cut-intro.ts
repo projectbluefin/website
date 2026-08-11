@@ -24,75 +24,79 @@ export const DIRECTORS_CUT_DESTINY_SEGMENT_ID = 'wolves-directors-destiny' as co
 /** Short reveal followed by a real reading hold; the shared 7.8s fade hid most short cues. */
 export const DIRECTORS_CUT_TEXT_FADE_SECONDS = 1.6
 
-/** Aram Khachaturian — Gayane Ballet Suite (Adagio), the prologue's scored source. */
-export const GAYANE_SOURCE_VIDEO_ID = 'EB3IokHelRk' as const
+/**
+ * "Excerpt from The Tribulation" - the prologue's scored source.
+ *
+ * It replaces Khachaturian's Gayane Adagio on owner instruction (2026-08-10),
+ * and the replacement is a recut, not a retime: Gayane ran 325.6 s and this
+ * runs 134.65 s. Every mark, cue and hold below was re-derived from this
+ * recording. Nothing was scaled across from the old grid, because a ratio
+ * applied to a different piece of music lands on nothing in this one.
+ */
+export const TRIBULATION_SOURCE_VIDEO_ID = 'uvtR84x0kgw' as const
 
 /**
- * Full playable length of the Gayane source, in seconds.
- *
- * Measured off the real upload (`yt-dlp` -> `ffprobe`): the decoded stream is 325.602 s and
- * YouTube reports 326 s. The prologue runs the whole thing rather than the old 94 s excerpt,
- * so the Director's Cut is genuinely one song end to end.
+ * Full playable length, in seconds. Measured: `yt-dlp` -> `ffprobe` reports a
+ * 134.653 s decoded stream.
  */
-export const GAYANE_TRACK_SECONDS = 325.6
+export const TRIBULATION_TRACK_SECONDS = 134.65
 
-/** First audible sample (librosa RMS > -60 dBFS). The source opens on ~3 s of true silence. */
-export const GAYANE_FIRST_AUDIBLE_SECOND = 3.09
+/** First audible sample (RMS > -60 dBFS). This source opens essentially on the downbeat. */
+export const TRIBULATION_FIRST_AUDIBLE_SECOND = 0.05
 
-/** Last audible sample. The final chord's decay dies here; the rest of the container is silent. */
-export const GAYANE_LAST_AUDIBLE_SECOND = 321.34
+/** Last audible sample. The tail after this is silence in the container. */
+export const TRIBULATION_LAST_AUDIBLE_SECOND = 130.82
 
 /**
- * Only the already-silent tail is faded, so the fade can never clip a note: the ramp starts
- * at 323.1 s and the music has been gone since 321.34 s. It exists purely to absorb a small
- * difference between the measured stream length and whatever YouTube hands the player.
+ * Only the already-silent tail is faded, so the fade can never clip a note.
  */
-const GAYANE_AUDIO_FADE_SECONDS = 2.5
+const TRIBULATION_AUDIO_FADE_SECONDS = 2.5
 
 /**
- * The prologue's cue grid: every measured musical boundary the Director's Cut is allowed to
- * cut on, in order, ending on the track's own end.
+ * The prologue's cue grid: every measured musical boundary this cut is allowed
+ * to cut on, in order, ending on the track's own end.
  *
- * Derived two independent ways and kept only where they agree:
+ * Derived the same two independent ways the Gayane grid was, and kept only
+ * where they agree:
  *
- * - **Laplacian structural segmentation** (librosa recurrence matrix + spectral clustering,
- *   the librosa gallery method) run at k = 4..10 and voted; boundaries carried by at least
- *   five of the seven clusterings are marked "strong" below.
- * - **Checkerboard-kernel novelty** over an MFCC self-similarity matrix, peak-picked
- *   independently of the clustering. Peak strength is normalised to the strongest event in
- *   the piece (240.5 s = 1.000).
+ * - **Laplacian structural segmentation** (librosa recurrence matrix +
+ *   spectral clustering) run at k = 4..10 and voted; the vote count is
+ *   recorded per mark below.
+ * - **Checkerboard-kernel novelty** over an MFCC self-similarity matrix,
+ *   peak-picked independently of the clustering, normalised to the strongest
+ *   event in the piece (23.41 s = 1.000).
  *
- * There are no equal slices here and no second clock: each mark is a real event in the
- * recording, and every cue below starts and ends on one of them.
+ * A mark carried by both methods is annotated with both numbers. Four marks
+ * are novelty-only and are annotated as such - they are kept because they fall
+ * in stretches where the clustering found no boundary at all and a shot would
+ * otherwise have to run more than twenty seconds on one image.
+ *
+ * There are no equal slices here and no second clock.
  */
-export const GAYANE_PROLOGUE_MARKS = [
-  /*  0 */ 0, //      curtain; the source is silent until 3.09 s
-  /*  1 */ 5.32, //   strong (7/7) — strings established, narration starts
-  /*  2 */ 20.02, //  strong (7/7)
-  /*  3 */ 33.03, //  strong (6/7)
-  /*  4 */ 53.75, //  strong (7/7) + novelty 0.827, the first movement's biggest event
-  /*  5 */ 65.71, //  strong (6/7)
-  /*  6 */ 83.38, //  strong (5/7) + novelty 0.516
-  /*  7 */ 98.71, //  strong (5/7) + novelty 0.346
-  /*  8 */ 108.51, // strong (7/7) — the Clarke quote's window opens
-  /*  9 */ 133.58, // strong (7/7) — montage begins
-  /* 10 */ 156.5, //  novelty 0.503
-  /* 11 */ 171.32, // strong (7/7)
-  /* 12 */ 192.5, //  novelty 0.253
-  /* 13 */ 211.16, // strong (7/7)
-  /* 14 */ 227, //    novelty 0.472
-  /* 15 */ 240.5, //  novelty 1.000, the strongest event in the piece
-  /* 16 */ 251.05, // strong (7/7)
-  /* 17 */ 261, //    novelty 0.430
-  /* 18 */ 270.1, //  strong (7/7)
-  /* 19 */ 276, //    novelty 0.332 (strong 275.32) — the final crescendo starts
-  /* 20 */ 291.67, // strong (7/7) — the crescendo releases into the closing decay
-  /* 21 */ GAYANE_TRACK_SECONDS,
+export const TRIBULATION_PROLOGUE_MARKS = [
+  /*  0 */ 0, //      curtain; the source is audible from 0.05 s
+  /*  1 */ 2.53, //   novelty 0.952 + laplacian (3/7) at 1.14 - the piece establishes
+  /*  2 */ 13.79, //  laplacian (3/7) + novelty 0.416 at 14.40
+  /*  3 */ 23.41, //  novelty 1.000, the strongest event in the piece
+  /*  4 */ 33.02, //  laplacian (7/7) + novelty 0.583 at 33.85
+  /*  5 */ 43.26, //  laplacian (6/7) + novelty 0.315 at 42.61
+  /*  6 */ 52.13, //  novelty 0.469 (novelty-only)
+  /*  7 */ 58.31, //  novelty 0.604 (novelty-only)
+  /*  8 */ 65.16, //  laplacian (4/7) + novelty 0.486 at 65.46
+  /*  9 */ 72.31, //  laplacian (7/7) + novelty 0.547 at 73.10
+  /* 10 */ 81.29, //  laplacian (3/7) + novelty 0.592 at 81.13
+  /* 11 */ 90.53, //  laplacian (7/7) + novelty 0.416 at 89.88
+  /* 12 */ 94.41, //  laplacian (3/7) + novelty 0.489 at 94.30
+  /* 13 */ 103.51, // laplacian (3/7) + novelty 0.423 at 103.86
+  /* 14 */ 109.04, // laplacian (7/7) + novelty 0.766 at 108.74 - the last movement opens
+  /* 15 */ 117.17, // novelty 0.369 (novelty-only)
+  /* 16 */ 126.78, // laplacian (7/7) + novelty 0.662 at 127.15 - the closing
+  /* 17 */ TRIBULATION_TRACK_SECONDS,
 ] as const
 
 const NARRATION_FIRST_MARK = 1
-const MONTAGE_FIRST_MARK = 8
-const HANDOFF_FIRST_MARK = 18
+const ARRIVAL_FIRST_MARK = 14
+const CLOSING_MARK = 16
 
 /**
  * The measured second the piece's final crescendo starts.
@@ -101,7 +105,7 @@ const HANDOFF_FIRST_MARK = 18
  * a real mark, but it is the *approach*, and putting the line there spent six seconds of the
  * biggest moment in the piece on a line the audience had already finished reading.
  */
-export const DIRECTORS_CUT_FINAL_CRESCENDO_SECOND = GAYANE_PROLOGUE_MARKS[19]
+export const DIRECTORS_CUT_FINAL_CRESCENDO_SECOND = TRIBULATION_PROLOGUE_MARKS[14]
 
 /**
  * Word ceiling for any cue projected in this prologue.
@@ -160,7 +164,7 @@ export const DIRECTORS_CUT_SCENE_CROSSFADE_SECONDS = DIRECTORS_CUT_TEXT_FADE_SEC
  * enough for any projector's connection and short enough that the cued stream is not left to
  * go stale for the whole five-and-a-half-minute piece.
  */
-export const DIRECTORS_CUT_IKORA_PREWARM_SECOND = GAYANE_PROLOGUE_MARKS[17]
+export const DIRECTORS_CUT_IKORA_PREWARM_SECOND = TRIBULATION_PROLOGUE_MARKS[13]
 
 /**
  * How long the last painting may be held over a promoted-but-not-yet-playing trailer.
@@ -207,7 +211,7 @@ export const IKORA_RATING_CARD_SECONDS = 2
 export const IKORA_LAST_CONTENT_SECOND = 113.5
 
 function mark(index: number): number {
-  return GAYANE_PROLOGUE_MARKS[index]
+  return TRIBULATION_PROLOGUE_MARKS[index]
 }
 
 function round(seconds: number): number {
@@ -241,7 +245,7 @@ function round(seconds: number): number {
  *   the final crescendo, and the title bookends onto the montage's opening painting.
  */
 type PrologueShot = Omit<IntroOverlayTextCue, 'start' | 'end' | 'text'> & {
-  /** Index into `GAYANE_PROLOGUE_MARKS` where this shot cuts in; it runs to the next mark. */
+  /** Index into `TRIBULATION_PROLOGUE_MARKS` where this shot cuts in; it runs to the next mark. */
   readonly mark: number
   /** The thought this shot carries, or nothing at all: a wordless shot is a deliberate beat. */
   readonly text?: string
@@ -304,64 +308,52 @@ surrounded by predators.`
 const CLOSING_TITLE = 'PROJECT BLUEFIN\nseven days to the wolves'
 
 const PROLOGUE_SHOTS: readonly PrologueShot[] = [
-  // Act I — the narration, on black.
+  // Act I - Earth, after. No black open.
   //
-  // The Collapse used to sit under this whole act (marks 3-6, 33.03-98.71 s),
-  // which put the show's ending on stage a minute into it and left nothing for
-  // the finale to arrive at. It plays once now, at the end, as a fade. Act I is
-  // a cold open: the narration alone, on black, the way marks 1 and 7 always
-  // were.
-  { mark: NARRATION_FIRST_MARK, text: GARDENER_AND_WINNOWER },
-  { mark: 2, text: ONE_DAY, textPosition: 'bottom-right', highlightSubstring: 'Garden' },
-  // One wordless beat before the dominant line, so the silence still sets it up.
-  { mark: 3 },
-  // The crescendo is the only cue in the prologue that leaves the lower third
-  // and takes the centre of the frame. `emphasis: 'dominant'` was retired here
-  // once, because the shared dominant rule is capped at `8rem` and at that size
-  // *nothing* in this narration fits its ~1075px box — the browser re-wrapped
-  // the authored lines mid-phrase and the beat arrived as a ragged block.
+  // The previous cut spent its first 108 s - a third of the piece - on
+  // narration over an empty frame, and the owner's review named it first:
+  // "too much black in the beginning, I want to see scenes". So the montage
+  // starts on the downbeat and the narration plays over it. That is also the
+  // only way the authored lines fit at all: this track is 134.65 s against
+  // Gayane's 325.6 s, and a montage that waited for the narration to finish
+  // would have about twenty seconds left to run in.
   //
-  // The cap was the bug, not the emphasis. Every other caption in this show is
-  // capped at `4.4rem`, so on the 1920-wide projector the prologue is actually
-  // performed on, they all render at the same ~45px no matter how big the screen
-  // gets. The prologue's dominant rule is sized in `vw` instead, so it grows with
-  // the frame: ~51px at 1280 and ~77px at 1920, where it is 71% larger than
-  // everything around it. Because the size is proportional to the box, the fit
-  // holds at every width rather than at the one width it was measured at.
-  // See `.wolves-intro-overlay-text-director.wolves-intro-overlay-text-dominant`.
-  { mark: 4, text: NEW_CHILDREN, textPosition: 'bottom' },
-  { mark: 5, text: FOR_EONS },
-  { mark: 6, text: A_THREAT },
-  { mark: 7, text: OTHERS_CAME },
+  // The order is a descent, not a slideshow: wide on a ruined city, then what
+  // ruin becomes when nobody comes back, then dead industry and machines.
+  { mark: NARRATION_FIRST_MARK, text: GARDENER_AND_WINNOWER, ...painting(0) },
 
-  // Act II — the ten approved paintings, once each in registry order. Six authored thoughts
-  // recur here as motifs, never twice running and never more than twice in the whole show;
-  // four paintings are held wordless so the recurrences read as returns rather than as a
-  // caption track.
-  { mark: MONTAGE_FIRST_MARK, text: GARDENER_AND_WINNOWER, ...painting(0) },
-  { mark: 9, text: NEW_CHILDREN, ...painting(1) },
-  { mark: 10, text: FOR_EONS, ...painting(2) },
-  { mark: 11, ...painting(3) },
-  { mark: 12, text: ONE_DAY, ...painting(4) },
-  { mark: 13, text: A_THREAT, ...painting(5) },
-  { mark: 14, ...painting(6) },
-  { mark: 15, ...painting(7) },
-  { mark: 16, text: OTHERS_CAME, ...painting(8) },
-  { mark: 17, ...painting(9) },
+  // The drowned city plays wordless and the creation line lands on the shot
+  // after it. Reversed - "New Children arose and filled the pattern" over a
+  // dead drowned city - it read as a mismatch rather than as irony, and it
+  // spent the strongest musical event in the piece (23.41 s, novelty 1.000) on
+  // a contradiction the audience has been given no way to decode. Over the
+  // overgrown blocks, vegetation is visibly filling the pattern.
+  { mark: 2, ...painting(1) },
+  { mark: 3, text: NEW_CHILDREN, textPosition: 'bottom', ...painting(2) },
+  { mark: 4, text: FOR_EONS, ...painting(3) },
 
-  // Act III — the handoff. The approach (270.1-276) holds the same painting as the shot
-  // before it, so the crescendo arrives as a cut into new art rather than into a dissolve
-  // already in progress.
-  { mark: HANDOFF_FIRST_MARK, ...painting(9) },
+  // The densest thought in the prologue takes the longer of the two windows
+  // available to it: 8.87 s here against 6.18 s at the next mark. Four lines
+  // at theater distance need the room, and the shot after it is wordless.
+  { mark: 5, text: A_THREAT, ...painting(4) },
+  { mark: 6, ...painting(5) },
+  { mark: 7, ...painting(6) },
+  { mark: 8, ...painting(7) },
+
+  // The invasion line sits directly before the calamity so its last word cuts
+  // into the Collapse. Nine wordless seconds used to separate the two, which
+  // left a one-pass audience to infer the link on its own.
+  { mark: 9, text: OTHERS_CAME, ...painting(8) },
+
+  // Act II - the Collapse, as the day-to-night fade it is, once, carrying the
+  // line that names it. It is the fulcrum of the piece, so it takes the centre
+  // of the frame rather than the lower third.
   {
-    mark: 19,
-    text: WHAT_IS_LEFT,
+    mark: 10,
+    text: ONE_DAY,
     emphasis: 'dominant',
-    highlightSubstring: 'fights',
-    // The Collapse, once, on the final crescendo — and as the day-to-night fade
-    // it is, rather than a static night plate. This is the image the whole
-    // prologue has been walking towards, so it arrives with the biggest event
-    // in the piece instead of being spent in the first minute.
+    highlightSubstring: 'Garden',
+    calamity: true,
     backgroundCrossfade: [
       {
         day: DIRECTORS_CUT_COLLAPSE_DAY_IMAGE,
@@ -369,14 +361,25 @@ const PROLOGUE_SHOTS: readonly PrologueShot[] = [
       },
     ],
   },
-  {
-    mark: 20,
-    text: CLOSING_TITLE,
-    slim: true,
-    // The title lands on the Collapse at full night, holding the fade the
-    // crescendo just completed rather than cutting away from it.
-    backgroundImage: DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE,
-  },
+  // One short wordless beat on the night plate: the aftermath, not a pause.
+  { mark: 11, backgroundImage: DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE },
+
+  // The two darkest devastation records carry the rest of the aftermath. Held
+  // on the night plate instead, marks 11-13 were one near-static image for
+  // 27.75 s, which from a seat reads as the show having stopped.
+  { mark: 12, ...painting(9) },
+  { mark: 13, ...painting(10) },
+
+  // Act III - the cold arrival. Europa is held to the end on owner
+  // instruction, so these are the first ice frames in the whole prologue;
+  // after ninety seconds of ruined Earth they read as somewhere else entirely.
+  { mark: ARRIVAL_FIRST_MARK, text: WHAT_IS_LEFT, emphasis: 'dominant', highlightSubstring: 'fights', ...painting(11) },
+  { mark: 15, ...painting(12) },
+
+  // The title, on the last measured boundary, over Europa - the one Europa
+  // exception the owner named for this slide. It holds its full window while
+  // the music resolves and the projector hands off to the trailer.
+  { mark: CLOSING_MARK, text: CLOSING_TITLE, slim: true, ...painting(12) },
 ]
 
 /**
@@ -419,9 +422,9 @@ export function buildDirectorsCutPrologueSegment(): IntroTextSegment {
   return {
     id: DIRECTORS_CUT_PROLOGUE_SEGMENT_ID,
     kind: 'text',
-    duration: GAYANE_TRACK_SECONDS,
-    audioFadeOutSeconds: GAYANE_AUDIO_FADE_SECONDS,
-    audioYoutubeVideoId: GAYANE_SOURCE_VIDEO_ID,
+    duration: TRIBULATION_TRACK_SECONDS,
+    audioFadeOutSeconds: TRIBULATION_AUDIO_FADE_SECONDS,
+    audioYoutubeVideoId: TRIBULATION_SOURCE_VIDEO_ID,
     overlays: buildPrologueCues(),
   }
 }

@@ -11,7 +11,7 @@ say in your report which file and which timestamp you inspected.**
 
 | # | Video | What it is | Data owner | How to play it |
 |---|---|---|---|---|
-| 1 | **Prologue** — The Gardener and the Winnower | Scored Gayane Ballet Suite (Adagio) narration over the approved Destiny concept-art montage, ending on the Collapse and the title card. Silent narration, no dialogue. | `src/data/wolves-directors-cut-intro.ts` (`buildDirectorsCutPrologueSegment()`) | `/wolves/` → the **Director's Cut** button |
+| 1 | **Prologue** — The Gardener and the Winnower | Scored narration over the approved Earth-devastation montage, ending on the Collapse, the Europa arrival and the title card. Silent narration, no dialogue. Recut 2026-08-10: the track is now *Excerpt from The Tribulation* (134.65 s, was the 325.6 s Gayane Adagio) and it opens on an image, not on black. | `src/data/wolves-directors-cut-intro.ts` (`buildDirectorsCutPrologueSegment()`) | `/wolves/` → the **Director's Cut** button |
 | 2 | **Destiny** | The Ikora-voiced Destiny trailer the prologue hands off to. | `src/data/wolves-directors-cut-intro.ts` (`buildDirectorsCutDestinySegment()`) | continues from video 1 |
 | 3 | **Wolves** — "7 Days to the Wolves" | The comic reader, the lore column and the thesis overlay, on the Nightwish track. Show Track 1; segment index 0. | `src/data/wolves-track-zero-*.ts`, `src/data/wolves-narrative-timeline.ts` | continues from video 2 |
 | 4 | *(in review)* | A video the owner is opening a PR for as of 2026-08-10. Fill this row in when it lands rather than renumbering around it. | — | — |

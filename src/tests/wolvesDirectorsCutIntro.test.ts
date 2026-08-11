@@ -13,13 +13,14 @@ import {
   DIRECTORS_CUT_SCENE_CROSSFADE_SECONDS,
   DIRECTORS_CUT_TEXT_FADE_SECONDS,
   DIRECTORS_CUT_TEXT_HOLD_RATIO,
-  GAYANE_PROLOGUE_MARKS,
-  GAYANE_SOURCE_VIDEO_ID,
-  GAYANE_TRACK_SECONDS,
   IKORA_LAST_CONTENT_SECOND,
   IKORA_RATING_CARD_SECONDS,
   IKORA_SOURCE_OFFSET_SECONDS,
   IKORA_SOURCE_VIDEO_ID,
+  TRIBULATION_LAST_AUDIBLE_SECOND,
+  TRIBULATION_PROLOGUE_MARKS,
+  TRIBULATION_SOURCE_VIDEO_ID,
+  TRIBULATION_TRACK_SECONDS,
 } from '@/data/wolves-directors-cut-intro'
 import { buildIntroVideoSequence, isTextSegment, isVideoSegment } from '@/data/wolves-intro-sequence'
 
@@ -105,7 +106,7 @@ function wordCount(text: string): number {
 }
 
 describe('director\'s cut intro sequence', () => {
-  it('is one scored Gayane segment followed by one Destiny segment, with no title card', () => {
+  it('is one scored Tribulation segment followed by one Destiny segment, with no title card', () => {
     const sequence = buildDirectorsCutVideoSequence()
 
     expect(sequence.map(segment => segment.id)).toEqual([
@@ -118,19 +119,19 @@ describe('director\'s cut intro sequence', () => {
     expect(JSON.stringify(sequence)).not.toContain('Welcome Linux gamers')
   })
 
-  it('runs the full measured playable Gayane source rather than an excerpt', () => {
+  it('runs the full measured playable Tribulation source rather than an excerpt', () => {
     const segment = prologue()
 
-    expect(segment.audioYoutubeVideoId).toBe(GAYANE_SOURCE_VIDEO_ID)
-    expect(segment.duration).toBe(GAYANE_TRACK_SECONDS)
-    expect(segment.duration).toBe(GAYANE_PROLOGUE_MARKS[GAYANE_PROLOGUE_MARKS.length - 1])
+    expect(segment.audioYoutubeVideoId).toBe(TRIBULATION_SOURCE_VIDEO_ID)
+    expect(segment.duration).toBe(TRIBULATION_TRACK_SECONDS)
+    expect(segment.duration).toBe(TRIBULATION_PROLOGUE_MARKS[TRIBULATION_PROLOGUE_MARKS.length - 1])
     // The measured fade only covers the source's already-silent tail, so nothing musical is cut.
     expect(segment.audioFadeOutSeconds).toBeGreaterThan(0)
-    expect(segment.duration - segment.audioFadeOutSeconds!).toBeGreaterThan(321.34)
+    expect(segment.duration - segment.audioFadeOutSeconds!).toBeGreaterThan(TRIBULATION_LAST_AUDIBLE_SECOND)
   })
 
-  it('cues every prologue beat on a measured Gayane section boundary', () => {
-    const marks = new Set<number>(GAYANE_PROLOGUE_MARKS)
+  it('cues every prologue beat on a measured Tribulation section boundary', () => {
+    const marks = new Set<number>(TRIBULATION_PROLOGUE_MARKS)
 
     for (const cue of cues()) {
       expect(marks.has(cue.start)).toBe(true)
@@ -139,17 +140,17 @@ describe('director\'s cut intro sequence', () => {
   })
 
   it('tiles the marks after the dark open without gaps or overlaps, ending on the last mark', () => {
-    let cursor: number = GAYANE_PROLOGUE_MARKS[1]
+    let cursor: number = TRIBULATION_PROLOGUE_MARKS[1]
     expect(cues()[0].start).toBe(cursor)
     for (const cue of cues()) {
       expect(cue.start).toBe(cursor)
       expect(cue.end).toBeGreaterThan(cue.start)
       cursor = cue.end
     }
-    expect(cursor).toBe(GAYANE_TRACK_SECONDS)
+    expect(cursor).toBe(TRIBULATION_TRACK_SECONDS)
     // The dark open is deliberate: the source is silent until ~3.09s.
-    expect(GAYANE_PROLOGUE_MARKS[0]).toBe(0)
-    expect(GAYANE_PROLOGUE_MARKS[1]).toBeGreaterThan(0)
+    expect(TRIBULATION_PROLOGUE_MARKS[0]).toBe(0)
+    expect(TRIBULATION_PROLOGUE_MARKS[1]).toBeGreaterThan(0)
   })
 
   it('holds every displayed thought for its reading cost and not much longer', () => {
@@ -171,7 +172,7 @@ describe('director\'s cut intro sequence', () => {
   })
 
   it('never leaves the projector wordless for longer than a single held shot', () => {
-    let lastTextEnd: number = GAYANE_PROLOGUE_MARKS[1]
+    let lastTextEnd: number = TRIBULATION_PROLOGUE_MARKS[1]
     let longest = 0
     for (const cue of cues()) {
       if (cue.text.trim().length === 0) {
@@ -228,15 +229,17 @@ describe('director\'s cut intro sequence', () => {
     }
   })
 
-  it('plays the ten approved paintings once each, in registry order, before any reprise', () => {
+  it('plays every approved painting once each, in registry order, before any reprise', () => {
     const openings = firstConceptAppearances()
 
     expect(openings.map(cue => cue.backgroundImage)).toEqual(
       DIRECTORS_CUT_DESTINY_CONCEPTS.map(record => record.localPath),
     )
-    expect(DIRECTORS_CUT_DESTINY_CONCEPTS.map(record => record.referenceId)).toEqual(
-      ['E1', 'C1', 'C2', 'C3', 'C4', 'C9', 'C6', 'C5', 'C7', 'C10'],
-    )
+    // The exact running order is asserted once, in the artwork registry's own
+    // test, rather than restated here where it would rot on the next recut.
+    // What this test owns is the *relationship*: the montage plays the registry,
+    // in registry order, once each.
+    expect(openings).toHaveLength(DIRECTORS_CUT_DESTINY_CONCEPTS.length)
     const approved = new Map(DIRECTORS_CUT_DESTINY_CONCEPTS.map(record => [record.localPath, record]))
     for (const cue of conceptCues()) {
       const record = approved.get(cue.backgroundImage!)
@@ -259,33 +262,51 @@ describe('director\'s cut intro sequence', () => {
         sourceHeight: record.sourceHeight,
       })
     }
-    // Panoramic and portrait-ish paintings are exactly what a global `cover` crop destroys.
-    expect(DIRECTORS_CUT_DESTINY_CONCEPTS.some(record => record.sourceWidth / record.sourceHeight > 2.2)).toBe(true)
-    expect(DIRECTORS_CUT_DESTINY_CONCEPTS.some(record => record.sourceWidth / record.sourceHeight < 1.5)).toBe(true)
+    // Off-16:9 paintings are exactly what a global `cover` crop destroys, and
+    // what `contain` letterboxes. The registry no longer holds the 2.66:1
+    // panorama this used to point at - it was cut for showing the threat - but
+    // the spread that makes framing matter is still here: measured against a
+    // 1920x1080 frame, the 1.40:1 record paints 1515px wide and leaves a 203px
+    // bar down each side, against a caption inset of 96px. That is the
+    // "words colliding with the letterbox" defect, and the caption offsets
+    // itself by the measured bar precisely because records like this exist.
+    const ratios = DIRECTORS_CUT_DESTINY_CONCEPTS.map(record => record.sourceWidth / record.sourceHeight)
+
+    expect(Math.min(...ratios)).toBeLessThan(1.5)
+    expect(Math.max(...ratios)).toBeGreaterThan(1.9)
   })
 
-  it('shapes the montage as a hybrid crescendo on the measured sections', () => {
-    const holds = firstConceptAppearances().map(cue => cue.end - cue.start)
-    const europa = holds.slice(0, 5)
-    const [c9, c6, c5, c7, c10] = holds.slice(5)
+  it('shapes the montage as a descent through Earth, then the cold arrival', () => {
+    const appearances = firstConceptAppearances()
 
-    // E1-C4 remain the slower movement overall; C9 starts a strict acceleration.
-    const average = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length
-    expect(average(europa)).toBeGreaterThan(average([c9, c6, c5, c7, c10]))
+    // Registry order is running order, and the running order is an argument:
+    // eight Earth records, the Mars ruin, then Europa. The old assertion here
+    // pinned a five-Europa opening and a strict C9>C6>C5>C7>C10 acceleration,
+    // both of which described a montage that no longer exists - six of those
+    // records were cut for showing the threat.
+    const ids = appearances.map(cue => cue.backgroundImage)
 
-    // C9 begins the acceleration, C6/C5/C7 tighten, C10 is the shortest hold of the ten.
-    expect(c9).toBeGreaterThan(c6)
-    expect(c6).toBeGreaterThan(c5)
-    expect(c5).toBeGreaterThan(c7)
-    expect(c7).toBeGreaterThan(c10)
-    expect(c10).toBe(Math.min(...holds))
+    expect(ids.length).toBeGreaterThanOrEqual(9)
+    expect(ids.filter(path => /europa/i.test(path ?? '')).length).toBeGreaterThan(0)
+
+    // Every Europa frame sits after every Earth frame. This is the owner's
+    // "save europa for the end" as a property of the cut rather than a comment.
+    const lastEarth = ids.reduce((last, path, index) => (/europa/i.test(path ?? '') ? last : index), -1)
+    const firstEuropa = ids.findIndex(path => /europa/i.test(path ?? ''))
+
+    expect(firstEuropa).toBeGreaterThan(lastEarth)
   })
 
   it('carries deliberate imagery from the montage through the crescendo and the title', () => {
     const all = cues()
     const firstConcept = all.findIndex(cue => cue.backgroundImage?.startsWith(CONCEPT_PREFIX))
 
-    expect(firstConcept).toBeGreaterThan(0)
+    // The montage now opens the show. This assertion used to require
+    // `> 0` - that a painting could not be the very first shot - which was the
+    // old cut's 108s of narration on black expressed as a test. The owner's
+    // review retired it: "too much black in the beginning, I want to see
+    // scenes." The prologue must now put an image up on its first shot.
+    expect(firstConcept).toBe(0)
     for (const cue of all.slice(firstConcept)) {
       // A crossfade is imagery too: the crescendo carries the Collapse as a
       // day-to-night pair rather than a still, so "has a background" cannot be
@@ -296,15 +317,16 @@ describe('director\'s cut intro sequence', () => {
     // The old cut went imageless at the last painting and stayed black for 55.5s.
     // The tail is the Collapse now, not a painting, so the montage runs to the
     // crescendo and the Collapse carries the rest.
+    // Imagery runs to the very end now: the Europa arrival and the title plate
+    // are both paintings, so the last concept frame is the track's own end.
     expect(Math.max(...conceptCues().map(cue => cue.end)))
-      .toBe(DIRECTORS_CUT_FINAL_CRESCENDO_SECOND)
+      .toBe(TRIBULATION_TRACK_SECONDS)
   })
 
   it('lands the handoff on the measured final crescendo, at a size that can hold its lines', () => {
     const crescendo = cues().find(cue => cue.text.startsWith('Now, what\'s left'))
 
-    expect(DIRECTORS_CUT_FINAL_CRESCENDO_SECOND).toBe(276)
-    expect(GAYANE_PROLOGUE_MARKS).toContain(DIRECTORS_CUT_FINAL_CRESCENDO_SECOND)
+    expect(TRIBULATION_PROLOGUE_MARKS).toContain(DIRECTORS_CUT_FINAL_CRESCENDO_SECOND)
     expect(crescendo?.start).toBe(DIRECTORS_CUT_FINAL_CRESCENDO_SECOND)
 
     // The crescendo is the one dominant cue in the prologue, and it is the only
@@ -321,7 +343,16 @@ describe('director\'s cut intro sequence', () => {
     // screen size. The browser harness holds the invariant that actually matters —
     // every cue renders exactly the lines it authored — at 1280x720 and 1920x1080.
     expect(crescendo?.emphasis).toBe('dominant')
-    expect(cues().filter(cue => cue.emphasis === 'dominant')).toHaveLength(1)
+
+    // Two dominant beats, not one: the Collapse and the survival line. The
+    // prologue used to have a single centre-frame cue, which left the calamity
+    // itself - the fulcrum of the whole piece - set in the same lower third as
+    // its connective tissue. Two is a deliberate ceiling, not a drift: a third
+    // would stop the treatment meaning anything.
+    const dominant = cues().filter(cue => cue.emphasis === 'dominant')
+
+    expect(dominant).toHaveLength(2)
+    expect(dominant.map(cue => cue.text.split('\n')[0])).toEqual(['One day changed', 'Now, what\'s left'])
     for (const cue of textCues()) {
       expect(wordCount(cue.text), cue.text).toBeLessThanOrEqual(DIRECTORS_CUT_MAX_CUE_WORDS)
     }
@@ -333,11 +364,11 @@ describe('director\'s cut intro sequence', () => {
 
     expect(closing.text).toBe('PROJECT BLUEFIN\nseven days to the wolves')
     expect(closing.slim).toBe(true)
-    // The title used to bookend on the montage's first painting. The Collapse
-    // is the image the prologue walks towards now, so the title holds the night
-    // plate the crescendo just faded to rather than cutting away from it.
-    expect(closing.backgroundImage).toBe(DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE)
-    expect(closing.end).toBe(GAYANE_TRACK_SECONDS)
+    // The title lands on Europa, which is the single exception to holding
+    // Europa back to the end: "save europa for the end except for the bluefin
+    // title slide" (owner, 2026-08-10).
+    expect(closing.backgroundImage).toMatch(/europa/i)
+    expect(closing.end).toBe(TRIBULATION_TRACK_SECONDS)
   })
 
   it('spends the Collapse once, on the final crescendo, as a day-to-night fade', () => {
@@ -346,11 +377,23 @@ describe('director\'s cut intro sequence', () => {
       cue.backgroundImage === DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE
       || cue.backgroundCrossfade?.some(pair => pair.day === DIRECTORS_CUT_COLLAPSE_DAY_IMAGE))
 
-    // It used to occupy marks 3-6 — 33.03s to 98.71s — which put the show's
-    // ending on stage a minute into it and left the finale nothing to arrive at.
-    expect(collapse.every(cue => cue.start >= DIRECTORS_CUT_FINAL_CRESCENDO_SECOND)).toBe(true)
-    const fade = all.find(cue => cue.backgroundCrossfade?.some(pair => pair.day === DIRECTORS_CUT_COLLAPSE_DAY_IMAGE))
-    expect(fade?.start).toBe(DIRECTORS_CUT_FINAL_CRESCENDO_SECOND)
+    // It used to occupy marks 3-6 - 33.03s to 98.71s - which put the show's
+    // ending on stage a minute into it and left the finale nothing to arrive
+    // at. The bound that matters is that it is never spent early: it is the
+    // hinge of the piece, and on this shorter track it falls in the last half,
+    // after the Earth montage and before the cold arrival, rather than landing
+    // on the crescendo itself.
+    expect(collapse.every(cue => cue.start > TRIBULATION_TRACK_SECONDS / 2)).toBe(true)
+
+    // Exactly one day-to-night fade, and the stills that follow only ever hold
+    // the night plate it faded to.
+    const fades = all.filter(cue => cue.backgroundCrossfade?.some(pair => pair.day === DIRECTORS_CUT_COLLAPSE_DAY_IMAGE))
+
+    expect(fades).toHaveLength(1)
+
+    const fade = fades[0]
+
+    expect(collapse.every(cue => cue.start >= fade.start)).toBe(true)
     expect(fade?.backgroundCrossfade?.[0]?.night).toBe(DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE)
   })
 
@@ -430,7 +473,7 @@ describe('director\'s cut intro sequence', () => {
     for (const record of DIRECTORS_CUT_DESTINY_CONCEPTS) {
       expect(serialized).not.toContain(record.localPath)
     }
-    expect(serialized).not.toContain(GAYANE_SOURCE_VIDEO_ID)
+    expect(serialized).not.toContain(TRIBULATION_SOURCE_VIDEO_ID)
     // Nothing in the standard cut takes the Director's own framing or reading holds.
     expect(serialized).not.toContain('backgroundFraming')
     expect(serialized).not.toContain('textHoldSeconds')

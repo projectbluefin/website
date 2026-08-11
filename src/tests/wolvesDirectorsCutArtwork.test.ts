@@ -54,18 +54,25 @@ function readJpegDimensions(path: string): { width: number, height: number } {
 }
 
 describe('director\'s cut Destiny concept-art registry', () => {
-  it('keeps the approved ten concept paintings in exact order', () => {
+  it('keeps the approved paintings in exact montage order', () => {
+    // Registry order *is* the montage order - `painting(index)` in the shot
+    // list schedules straight off this array - so this assertion is the running
+    // order of Act I, not bookkeeping. Earth devastation first, the Mars ruin
+    // to close it out, then Europa as the cold arrival.
     expect(DIRECTORS_CUT_DESTINY_CONCEPTS.map(record => record.referenceId)).toEqual([
-      'E1',
-      'C1',
-      'C2',
-      'C3',
-      'C4',
+      'EARTH-1',
+      'EARTH-2',
+      'EARTH-3',
+      'EARTH-4',
+      'EARTH-5',
+      'EARTH-6',
+      'EARTH-7',
+      'EARTH-8',
       'C9',
-      'C6',
-      'C5',
-      'C7',
-      'C10',
+      'EARTH-9',
+      'EARTH-10',
+      'C2',
+      'E1',
     ])
   })
 
@@ -90,9 +97,19 @@ describe('director\'s cut Destiny concept-art registry', () => {
       expect(record.workTitle.trim().length).toBeGreaterThan(0)
       expect(record.backgroundFigure.credit).toBe(DIRECTORS_CUT_DESTINY_CONCEPT_CREDIT)
       expect(record.backgroundFigure.label).toContain(record.workTitle)
-      expect(record.authoritativeSourceUrl).toMatch(/^https:\/\//)
-      expect(record.upstreamAssetUrl).toMatch(/^https:\/\//)
-      expect(new URL(record.upstreamAssetUrl).pathname).toMatch(/\.jpg$/)
+      // Owner-supplied local art has no upstream page to cite, and the ledger
+      // says so rather than inventing one. Everything retrieved from a public
+      // source still has to carry a real, re-checkable URL.
+      if ('upstreamAssetUrl' in record) {
+        expect(record.authoritativeSourceUrl).toMatch(/^https:\/\//)
+        expect(record.upstreamAssetUrl).toMatch(/^https:\/\//)
+        expect(new URL(record.upstreamAssetUrl).pathname).toMatch(/\.jpg$/)
+      }
+      else {
+        expect(record.provenance).toBe('owner-supplied-local')
+        expect(record.provenanceNote.trim().length).toBeGreaterThan(0)
+        expect(record.rightsHolder).toBe(BUNGIE_RIGHTS_HOLDER)
+      }
       expect(record.retrievalDate).toBe(DIRECTORS_CUT_DESTINY_CONCEPT_RETRIEVAL_DATE)
       expect(record.policyUrl).toBe(BUNGIE_FAN_CONTENT_POLICY_URL)
       expect(record.usageBasis).toBe('non-commercial-fan-content')
@@ -107,7 +124,24 @@ describe('director\'s cut Destiny concept-art registry', () => {
         continue
       }
 
+      // An owner-supplied file names its artist only as strongly as the
+      // evidence allows: `filename-asserted` when the supplied filename says
+      // so, `unattributed` when nothing does. Neither may claim `exact`.
+      if (record.artistCreditState === 'filename-asserted') {
+        expect(record.artist?.trim().length ?? 0).toBeGreaterThan(0)
+        expect(record.backgroundFigure.label).toContain(record.artist)
+        expect(record.provenanceNote).toMatch(/filename asserts/i)
+        continue
+      }
+
       expect(record.artist).toBeNull()
+
+      if (record.artistCreditState !== 'uncredited') {
+        expect(record.provenanceNote).toMatch(/not guessed/i)
+        expect(record.backgroundFigure.label).toContain('uncredited')
+        continue
+      }
+
       expect(record.sourceName).toBe('Bungie Press Room')
       expect(record.rightsHolder).toBe(BUNGIE_RIGHTS_HOLDER)
       expect(record.artistCreditNote).toMatch(/do not attribute this exact press image to a single named artist/i)
@@ -134,7 +168,7 @@ describe('director\'s cut Destiny concept-art registry', () => {
 
   it('keeps gameplay and render picks out of the montage allowlist', () => {
     for (const record of DIRECTORS_CUT_DESTINY_CONCEPTS) {
-      expect(record.referenceId).toMatch(/^(E1|C\d+)$/)
+      expect(record.referenceId).toMatch(/^(E1|C\d+|EARTH-\d+)$/)
       expect(record.referenceId).not.toMatch(/^[GR]/)
       expect(record.id).not.toMatch(/gameplay|render/i)
       expect(record.localPath).not.toMatch(/gameplay|render/i)
@@ -157,13 +191,47 @@ describe('director\'s cut Destiny concept-art registry', () => {
     }
   })
 
-  it('records the largest approved ArtStation /4k/ source geometry (2200px wide) for C9 and C7', () => {
+  it('records the largest approved ArtStation /4k/ source geometry (2200px wide) for C9', () => {
     const c9 = DIRECTORS_CUT_DESTINY_CONCEPTS.find(record => record.referenceId === 'C9')
-    const c7 = DIRECTORS_CUT_DESTINY_CONCEPTS.find(record => record.referenceId === 'C7')
 
     expect(c9).toMatchObject({ sourceWidth: 2200, sourceHeight: 1123 })
-    expect(c7).toMatchObject({ sourceWidth: 2200, sourceHeight: 1611 })
-    expect(c9?.upstreamAssetUrl).toMatch(/\/4k\//)
-    expect(c7?.upstreamAssetUrl).toMatch(/\/4k\//)
+    expect(c9 && 'upstreamAssetUrl' in c9 ? c9.upstreamAssetUrl : '').toMatch(/\/4k\//)
+  })
+
+  it('never readmits a record cut for showing the threat', () => {
+    // The owner's rule for this montage is that the threat is never seen:
+    // no Traveler, no aliens, no alien architecture or ships, nothing an
+    // audience can name as Destiny on sight (2026-08-10). These six records
+    // were cut under it, and this test is what stops a later session quietly
+    // restoring one because it looked good in isolation.
+    const cutForShowingTheThreat = [
+      'destiny-concepts/c6-fallen-citadel',
+      'destiny-concepts/c5-ice-shelf-shapes',
+      'destiny-concepts/c10-crash',
+      'destiny-concepts/c7-early-throne-world-citadel',
+      'destiny-concepts/c4-cryovolcanoes',
+      'destiny-concepts/c3-early-europa-concept',
+    ]
+
+    for (const id of cutForShowingTheThreat) {
+      expect(DIRECTORS_CUT_DESTINY_CONCEPTS.map(record => record.id)).not.toContain(id)
+    }
+  })
+
+  it('holds Europa back to the end of the prologue', () => {
+    // "save europa for the end except for the bluefin title slide" - owner,
+    // 2026-08-10. Europa is the cold arrival after Earth is gone, so its
+    // records must be the last ones in registry order; the montage schedules
+    // by index, so a Europa record sitting mid-list would put ice back into
+    // Act I without anybody editing the shot list.
+    const europaIndexes = DIRECTORS_CUT_DESTINY_CONCEPTS
+      .map((record, index) => ({ index, europa: /europa/i.test(record.id) }))
+      .filter(entry => entry.europa)
+      .map(entry => entry.index)
+
+    expect(europaIndexes.length).toBeGreaterThan(0)
+
+    const tail = DIRECTORS_CUT_DESTINY_CONCEPTS.length - europaIndexes.length
+    expect(Math.min(...europaIndexes)).toBe(tail)
   })
 })

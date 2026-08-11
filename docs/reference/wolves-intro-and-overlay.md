@@ -184,6 +184,108 @@ room with no input device and its only burned-in cue is the Comic Hero title car
 which renders switch or no switch. Both are asserted in `wolvesIntroOverlay.test.ts`,
 from both directions — the standard cut still publishes both switches.
 
+## The prologue is scored to The Tribulation, and it opens on an image
+
+The Director's Cut prologue was recut on owner review (2026-08-10). Two facts
+about it changed at once, and both invalidate anything measured before that day.
+
+**The track changed.** It is `uvtR84x0kgw`, *Excerpt from The Tribulation*,
+measured at 134.65 s, replacing the 325.6 s Gayane Adagio. This was a recut, not
+a retime: `TRIBULATION_PROLOGUE_MARKS` was derived from the new recording the
+same two independent ways the old grid was — librosa Laplacian segmentation
+voted over k = 4..10, plus checkerboard-kernel MFCC novelty — and only marks the
+two methods agree on were kept, with four novelty-only marks admitted where the
+clustering found no boundary and a shot would otherwise run past twenty seconds
+on one still. **Do not scale a number across from the old grid.** A ratio
+applied to a different piece of music lands on nothing in this one.
+
+**The black open is gone.** Act I used to be 108 s of narration on an empty
+frame — a third of the piece before an image. The montage now starts on the
+downbeat and the narration plays over it. `wolvesDirectorsCutIntro.test.ts`
+asserts the first concept painting is at index 0; that assertion used to require
+the opposite, which was the old cut's black open encoded as a test.
+
+Two consequences worth knowing before touching this file:
+
+- **Every text cue's hold now equals its full window.** `textHoldSeconds` is
+  `min(window, cost * 1.8)`, and on a 134.65 s track the windows are shorter
+  than the stretched reading cost, so nothing clears early any more. The montage
+  breathes through six deliberately wordless shots instead. A test that assumed
+  "some cue has slack" no longer has one to find.
+- **The audible-second literal is gone.** `321.34` was typed into an assertion
+  and survived a track change silently; it derives from
+  `TRIBULATION_LAST_AUDIBLE_SECOND` now. The same rot took `140` and `200` as
+  seek targets in `wolvesIntroOverlay.test.ts` — both were valid mid-piece times
+  under Gayane and both are past the end of this track.
+
+## The montage never shows the threat
+
+The concept-art registry is an allowlist, and since 2026-08-10 it is an
+allowlist with a rule: **the threat is never seen.** No Traveler, no aliens, no
+alien architecture or ships, nothing an audience can name as Destiny on sight.
+The devastation carries the prologue.
+
+Six of the original ten records were cut under it — the Fallen citadel, the
+ice-shelf wreck, the Cabal ship crash, the throne-world citadel with its Hive
+ring glyph, the cryovolcanoes with two armored Guardians front and centre, and
+the early Europa concept with its Darkness shards.
+`wolvesDirectorsCutArtwork.test.ts` fails if any of their ids returns.
+
+Two things that are explicitly **not** disqualifiers, both confirmed by the
+owner:
+
+- **A burned-in BUNGIE / DESTINY 2 corner watermark.** Bungie's remix policy
+  covers this use. Nearly every record in the source collection carries one, and
+  an early curation pass that rejected on watermarks threw away most of the best
+  material before anyone looked at it.
+- **A small, distant figure.** A lone silhouette dwarfed by a ruin strengthens
+  the scale and is preferred over an empty frame of the same subject. Only a
+  prominent foreground character disqualifies a record.
+
+Europa is held to the end — the cold arrival after Earth is gone — plus the
+`PROJECT BLUEFIN` title plate, which is the owner's single stated exception.
+Registry order *is* montage order, because the shot list schedules by index, so
+a Europa record moved up the list puts ice back into Act I without anyone
+editing a shot. A test pins Europa to the tail for exactly that reason.
+
+Provenance is recorded at the strength of the evidence, never higher.
+Owner-supplied local files have no `upstreamAssetUrl` — inventing a plausible
+ArtStation link would satisfy the test and lie in the ledger, and the next agent
+would read the fabrication as verified evidence. They carry
+`provenance: 'owner-supplied-local'` and either `artistCreditState:
+'filename-asserted'` (the supplied filename names an artist) or `'unattributed'`.
+
+## Words live inside the picture, not on the letterbox
+
+Framed cues render `object-fit: contain`, so the painting is letterboxed and the
+bar size is decided entirely by the source's aspect ratio. The caption was
+anchored to the *viewport*, so it rendered on the bar: measured in Chromium at
+1920x1080, the 1920x1369 record paints 1514 px wide and leaves a 203 px bar down
+each side while the caption ran 96 px to 1824 px — over the bar on both sides.
+
+`framedLetterbox` computes the bar from the ledger's source geometry and
+publishes it as `--wc-frame-bar-x` / `--wc-frame-bar-y`, and the caption offsets
+by it plus a 3% title-safe margin. Three traps, each of which produced a green
+unit suite and a wrong screen:
+
+- **The caption measures `overlayCueForDisplay`, not `sceneCue`.** Text outlives
+  its shot by a fade, so binding the caption to the scene cue offsets it by the
+  *previous* painting's bar — the title plate, a full-frame 16:9 image with no
+  bars at all, was inset by the 203 px belonging to the record before it.
+- **Specificity and source order.** The first attempt sat earlier in the sheet at
+  one-class specificity, tied with `.wolves-intro-overlay-text`, and lost. It is
+  now `.wolves-intro-overlay-text.wolves-intro-overlay-text-framed`, placed after
+  the base and dominant rules.
+- **A careless anchor match put the blue-`F` rule inside the `max-width: 640px`
+  block**, where it did nothing at projector sizes and corrupted the selector
+  above it. The glyph read white and every unit test still passed.
+
+Verify this in a browser, and settle on **two** independent conditions: the
+caption is the intended cue's *and* the decoded image is the intended record's.
+Waiting on either alone samples a crossfade in progress, where the outgoing
+shot's words sit over the incoming shot's picture — which reports a collision
+that is not there, and hides one that is.
+
 ## Director prologue text must hold, not spend its window appearing
 
 The shared somber treatment can fade for 7.8s. Applied to the Director's Cut, that

@@ -65,15 +65,46 @@ export interface UncreditedDirectorsCutDestinyConcept extends DirectorsCutDestin
   readonly sourceName: string
 }
 
+/**
+ * A record for art the owner supplied from his own local collection.
+ *
+ * The two shapes above both carry an `upstreamAssetUrl`, because both were
+ * retrieved from a public page that can be re-checked. The Earth devastation
+ * montage cannot make that claim: those files came out of the owner's picture
+ * library, and several arrived as opaque filenames (`VvQ42JH.jpeg`) with no
+ * recoverable page behind them.
+ *
+ * That is a provenance *gap*, and the honest thing is to record it rather than
+ * paper over it. Inventing a plausible ArtStation URL would satisfy the test
+ * and lie in the ledger, which is worse than an admitted unknown: the next
+ * agent would treat the fabricated link as verified evidence.
+ *
+ * So this shape has no `upstreamAssetUrl` at all, and `artistCreditState` is
+ * `'filename-asserted'` when the supplied filename names an artist —
+ * `sung-choi-foundry-gate-...` is good evidence of Sung Choi and poor evidence
+ * of anything else — or `'unattributed'` when it does not. Either way the
+ * claim in the ledger is exactly as strong as the evidence for it.
+ */
+export interface OwnerSuppliedDirectorsCutConcept
+  extends Omit<DirectorsCutDestinyConceptBase, 'authoritativeSourceUrl' | 'upstreamAssetUrl'> {
+  readonly artist: string | null
+  readonly artistCreditState: 'filename-asserted' | 'unattributed'
+  /** Where the file actually came from, in place of a URL that does not exist. */
+  readonly provenance: 'owner-supplied-local'
+  /** What is and is not known about this file's origin, in the owner's terms. */
+  readonly provenanceNote: string
+  readonly rightsHolder: typeof BUNGIE_RIGHTS_HOLDER
+}
+
 export type DirectorsCutDestinyConcept
   = CreditedDirectorsCutDestinyConcept
     | UncreditedDirectorsCutDestinyConcept
+    | OwnerSuppliedDirectorsCutConcept
 
 const BUNGIE_PRESS_ROOM
   = 'https://press.bungie.com/Go-Beyond-the-Light-Destiny-2-Beyond-Light-Arrives-On-September-22' as const
 const BUNGIE_PRESS_ROOM_SOURCE = 'Bungie Press Room' as const
 const JESSE_VAN_DIJK_ARTSTATION = 'https://www.artstation.com/jessevandijk' as const
-const MARK_GOLDSWORTHY_ARTSTATION = 'https://www.artstation.com/arasaka' as const
 const BUNGIE_ART_BLAST
   = 'https://magazine.artstation.com/2024/09/bungie-10-year-destiny-art-blast/' as const
 
@@ -126,7 +157,196 @@ function uncreditedRecord(
   }
 }
 
+function ownerSuppliedRecord(
+  concept: Omit<
+    OwnerSuppliedDirectorsCutConcept,
+    'backgroundFigure' | 'localPath' | 'policyUrl' | 'provenance' | 'retrievalDate' | 'rightsHolder' | 'usageBasis'
+  >,
+): OwnerSuppliedDirectorsCutConcept {
+  return {
+    ...concept,
+    provenance: 'owner-supplied-local',
+    rightsHolder: BUNGIE_RIGHTS_HOLDER,
+    backgroundFigure: {
+      label: concept.artist
+        ? exactArtistFigureLabel(concept.workTitle, concept.artist)
+        : uncreditedFigureLabel(concept.workTitle, 'the owner\'s supplied collection'),
+      credit: DIRECTORS_CUT_DESTINY_CONCEPT_CREDIT,
+    },
+    localPath: `wolves-intro/destiny-concepts/${concept.filename}`,
+    retrievalDate: DIRECTORS_CUT_DESTINY_CONCEPT_RETRIEVAL_DATE,
+    policyUrl: BUNGIE_FAN_CONTENT_POLICY_URL,
+    usageBasis: 'non-commercial-fan-content',
+  }
+}
+
 export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept[] = [
+  // ---------------------------------------------------------------------
+  // Act II - Earth, after. The montage is Earth devastation only.
+  //
+  // Six of the ten records this list used to carry were cut on owner review
+  // (2026-08-10), and the rule they were cut under is now the rule this list
+  // is maintained by: **the threat is never seen.** No Traveler, no aliens,
+  // no alien architecture or ships, nothing an audience can name as Destiny
+  // on sight. What is left is the devastation, which is the part that
+  // actually carries the prologue.
+  //
+  // Cut, and why, so nobody restores one by accident:
+  // - `c6-fallen-citadel`      alien mothership over a ruined city
+  // - `c5-ice-shelf-shapes`    red organic alien wreck, visible armored figure
+  // - `c10-crash`              alien ship crash, armed soldiers in foreground
+  // - `c7-early-throne-world`  the red ring reads as Hive iconography
+  // - `c4-cryovolcanoes`       two armored Guardians, front and centre
+  // - `c3-early-europa`        Jupiter plus red Darkness shards over a colony
+  //
+  // A burned-in BUNGIE / DESTINY 2 corner watermark is *not* a reason to cut a
+  // record: the owner confirmed Bungie's remix policy covers this use. Nor is
+  // a small distant figure - a lone silhouette dwarfed by a ruin strengthens
+  // the scale, and is preferred over an empty frame of the same subject. Only
+  // a prominent foreground character is disqualifying.
+  ownerSuppliedRecord({
+    referenceId: 'EARTH-1',
+    id: 'destiny-concepts/earth-ruined-city-canyon',
+    filename: 'earth-ruined-city-canyon.jpg',
+    artist: null,
+    artistCreditState: 'unattributed',
+    provenanceNote: 'Supplied by the owner as `VvQ42JH.jpeg`, an opaque filename with no recoverable source page. Artist unknown; not guessed.',
+    workTitle: 'Ruined city canyon under storm light',
+    sourceWidth: 1920,
+    sourceHeight: 1080,
+  }),
+  ownerSuppliedRecord({
+    referenceId: 'EARTH-2',
+    id: 'destiny-concepts/earth-drowned-city',
+    filename: 'earth-drowned-city-zombot-studio.jpg',
+    artist: 'Zombot Studio',
+    artistCreditState: 'filename-asserted',
+    provenanceNote: 'Supplied by the owner as `zombot-studio-downlox.jpg`. The filename asserts Zombot Studio; no upstream page was verified for this copy.',
+    workTitle: 'Drowned city behind dead trees',
+    sourceWidth: 1862,
+    sourceHeight: 1000,
+  }),
+  ownerSuppliedRecord({
+    referenceId: 'EARTH-3',
+    id: 'destiny-concepts/earth-overgrown-city',
+    filename: 'earth-overgrown-city-joseph-cross.jpg',
+    artist: 'Joseph Cross',
+    artistCreditState: 'filename-asserted',
+    provenanceNote: 'Supplied by the owner as `joseph-cross-jc-edz-2.jpg`. The filename asserts Joseph Cross; no upstream page was verified for this copy.',
+    workTitle: 'Overgrown city blocks',
+    sourceWidth: 1728,
+    sourceHeight: 987,
+  }),
+  ownerSuppliedRecord({
+    referenceId: 'EARTH-4',
+    id: 'destiny-concepts/earth-hydro-ruin',
+    filename: 'earth-hydro-ruin.jpg',
+    artist: null,
+    artistCreditState: 'unattributed',
+    provenanceNote: 'Supplied by the owner as `64uh1yh.jpeg`, an opaque filename with no recoverable source page. Artist unknown; not guessed.',
+    workTitle: 'Hydroelectric complex reclaimed by the valley',
+    sourceWidth: 1920,
+    sourceHeight: 1080,
+  }),
+  ownerSuppliedRecord({
+    referenceId: 'EARTH-5',
+    id: 'destiny-concepts/earth-foundry-gate',
+    filename: 'earth-foundry-gate-sung-choi.jpg',
+    artist: 'Sung Choi',
+    artistCreditState: 'filename-asserted',
+    provenanceNote: 'Supplied by the owner as `sung-choi-foundry-gate-sung-choi-1920.jpg`. The filename asserts Sung Choi; no upstream page was verified for this copy.',
+    workTitle: 'Collapsed foundry hall in snow',
+    sourceWidth: 1920,
+    sourceHeight: 1080,
+  }),
+  ownerSuppliedRecord({
+    referenceId: 'EARTH-6',
+    id: 'destiny-concepts/earth-scrapyard-dam',
+    filename: 'earth-scrapyard-dam.jpg',
+    artist: null,
+    artistCreditState: 'unattributed',
+    provenanceNote: 'Supplied by the owner as `s1JbhO9.jpeg`, an opaque filename with no recoverable source page. Artist unknown; not guessed.',
+    workTitle: 'Scrapyard beneath the dam wall',
+    sourceWidth: 1920,
+    sourceHeight: 1200,
+  }),
+  ownerSuppliedRecord({
+    referenceId: 'EARTH-7',
+    id: 'destiny-concepts/earth-shuttle-monolith',
+    filename: 'earth-shuttle-monolith.jpg',
+    artist: null,
+    artistCreditState: 'unattributed',
+    provenanceNote: 'Supplied by the owner under a base64-like filename with no recoverable source page. Artist unknown; not guessed.',
+    workTitle: 'Grounded shuttle on a storm plain',
+    sourceWidth: 1899,
+    sourceHeight: 1068,
+  }),
+  ownerSuppliedRecord({
+    referenceId: 'EARTH-8',
+    id: 'destiny-concepts/earth-collapsed-arcology',
+    filename: 'earth-collapsed-arcology-jesse-van-dijk.jpg',
+    artist: 'Jesse van Dijk',
+    artistCreditState: 'filename-asserted',
+    provenanceNote: 'Supplied by the owner as `jesse-van-dijk-e-010.jpg`. The filename asserts Jesse van Dijk; no upstream page was verified for this copy.',
+    workTitle: 'Collapsed arcology above the lake',
+    sourceWidth: 1920,
+    sourceHeight: 1369,
+  }),
+  creditedRecord({
+    referenceId: 'C9',
+    id: 'destiny-concepts/c9-mars-farm-collapse',
+    filename: 'mark-goldsworthy-markg-mars-farm-collapse-concept.jpg',
+    artist: 'Mark Goldsworthy',
+    workTitle: 'Mars Farm Collapse',
+    authoritativeSourceUrl: BUNGIE_ART_BLAST,
+    upstreamAssetUrl: 'https://cdnb.artstation.com/p/assets/images/images/012/963/499/4k/mark-goldsworthy-markg-mars-farm-collapse-concept.jpg',
+    sourceWidth: 2200,
+    sourceHeight: 1123,
+  }),
+
+  // The aftermath. These two exist because three consecutive shots on the
+  // Collapse night plate read as one still held for 27.75s - a stalled
+  // projector, not a held beat. They are the darkest devastation records in the
+  // set, so they follow the night fade without breaking its light.
+  ownerSuppliedRecord({
+    referenceId: 'EARTH-9',
+    id: 'destiny-concepts/earth-flooded-atrium',
+    filename: 'earth-flooded-atrium.jpg',
+    artist: null,
+    artistCreditState: 'unattributed',
+    provenanceNote: 'Supplied by the owner as `photo_2022-08-13_15-27-01.jpg`, a messaging-app export with no recoverable source page. Artist unknown; not guessed.',
+    workTitle: 'Vine-choked industrial atrium',
+    sourceWidth: 1280,
+    sourceHeight: 705,
+  }),
+  ownerSuppliedRecord({
+    referenceId: 'EARTH-10',
+    id: 'destiny-concepts/earth-storm-island',
+    filename: 'earth-storm-island.jpg',
+    artist: 'Dorje Bellbrook',
+    artistCreditState: 'filename-asserted',
+    provenanceNote: 'Supplied by the owner as `dorje-bellbrook-db-destiny2-001.jpg`. The filename asserts Dorje Bellbrook; no upstream page was verified for this copy.',
+    workTitle: 'Last lit settlement above the flood plain',
+    sourceWidth: 1920,
+    sourceHeight: 1080,
+  }),
+
+  // ---------------------------------------------------------------------
+  // Act III - the cold arrival. Europa is held back to the end of the piece
+  // on owner instruction (2026-08-10): "save europa for the end except for
+  // the bluefin title slide". These two records, and the title plate, are the
+  // only Europa in the prologue. Do not schedule either of them in Act II.
+  creditedRecord({
+    referenceId: 'C2',
+    id: 'destiny-concepts/c2-underneath-the-ice-on-europa',
+    filename: 'destiny-2020-jessevandijk-030.jpg',
+    artist: 'Jesse van Dijk',
+    workTitle: 'Underneath the ice on Europa',
+    authoritativeSourceUrl: JESSE_VAN_DIJK_ARTSTATION,
+    upstreamAssetUrl: 'https://cdna.artstation.com/p/assets/images/images/032/810/504/large/jesse-van-dijk-destiny-2020-jessevandijk-030.jpg?1607533935',
+    sourceWidth: 1920,
+    sourceHeight: 1200,
+  }),
   uncreditedRecord({
     referenceId: 'E1',
     id: 'destiny-concepts/e1-europa-environment',
@@ -139,112 +359,9 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
     upstreamAssetUrl: 'https://imgeucdn.gamespress.com/cdn/files/PremierPR/2020/06/09163147-741099bb-d13d-4d1a-bf66-a5f5300c3ed9/Destiny_2_Beyond_Light_Europa_Environment_01.jpg?otf=y&lightbox=y&sky=1b9ae393e24c13847cf692b20b8c587754b3b5106b459664b26043307b74c1c1',
     // NOTE: this Bungie Press Room asset URL carries a signed/expiring query
     // token (`otf`, `sky`). It is retrieval evidence for `retrievalDate`
-    // only, not a stable future download endpoint — do not expect this exact
+    // only, not a stable future download endpoint - do not expect this exact
     // URL to keep resolving, and re-verify before relying on it again.
     sourceWidth: 1920,
     sourceHeight: 1080,
-  }),
-  creditedRecord({
-    referenceId: 'C1',
-    id: 'destiny-concepts/c1-europa-landscape-v1',
-    filename: 'mark-goldsworthy-europa-landscape-v1-copy.jpg',
-    artist: 'Mark Goldsworthy',
-    workTitle: 'Europa Landscape V1',
-    authoritativeSourceUrl: BUNGIE_ART_BLAST,
-    upstreamAssetUrl: 'https://cdnb.artstation.com/p/assets/images/images/012/963/475/4k/mark-goldsworthy-europa-landscape-v1-copy.jpg?1537386402',
-    sourceWidth: 2048,
-    sourceHeight: 771,
-  }),
-  creditedRecord({
-    referenceId: 'C2',
-    id: 'destiny-concepts/c2-underneath-the-ice-on-europa',
-    filename: 'destiny-2020-jessevandijk-030.jpg',
-    artist: 'Jesse van Dijk',
-    workTitle: 'Underneath the ice on Europa',
-    authoritativeSourceUrl: JESSE_VAN_DIJK_ARTSTATION,
-    upstreamAssetUrl: 'https://cdna.artstation.com/p/assets/images/images/032/810/504/large/jesse-van-dijk-destiny-2020-jessevandijk-030.jpg?1607533935',
-    sourceWidth: 1920,
-    sourceHeight: 1200,
-  }),
-  creditedRecord({
-    referenceId: 'C3',
-    id: 'destiny-concepts/c3-early-europa-concept',
-    filename: 'destiny-2020-jessevandijk-010.jpg',
-    artist: 'Jesse van Dijk',
-    workTitle: 'Early Europa concept',
-    authoritativeSourceUrl: JESSE_VAN_DIJK_ARTSTATION,
-    upstreamAssetUrl: 'https://cdna.artstation.com/p/assets/images/images/032/809/884/large/jesse-van-dijk-destiny-2020-jessevandijk-010.jpg?1607532980',
-    sourceWidth: 1920,
-    sourceHeight: 1200,
-  }),
-  creditedRecord({
-    referenceId: 'C4',
-    id: 'destiny-concepts/c4-cryovolcanoes',
-    filename: 'destiny-2020-jessevandijk-020.jpg',
-    artist: 'Jesse van Dijk',
-    workTitle: 'Cryovolcanoes',
-    authoritativeSourceUrl: JESSE_VAN_DIJK_ARTSTATION,
-    upstreamAssetUrl: 'https://cdnb.artstation.com/p/assets/images/images/032/810/477/large/jesse-van-dijk-destiny-2020-jessevandijk-020.jpg?1607533856',
-    sourceWidth: 1920,
-    sourceHeight: 1200,
-  }),
-  creditedRecord({
-    referenceId: 'C9',
-    id: 'destiny-concepts/c9-mars-farm-collapse',
-    filename: 'mark-goldsworthy-markg-mars-farm-collapse-concept.jpg',
-    artist: 'Mark Goldsworthy',
-    workTitle: 'Mars Farm Collapse',
-    authoritativeSourceUrl: MARK_GOLDSWORTHY_ARTSTATION,
-    // Largest approved ArtStation rendition (`/4k/`, 2200px wide), replacing
-    // the earlier `/large/` (1920px) download.
-    upstreamAssetUrl: 'https://cdnb.artstation.com/p/assets/images/images/046/905/269/4k/mark-goldsworthy-markg-mars-farm-collapse-concept.jpg?1646261226',
-    sourceWidth: 2200,
-    sourceHeight: 1123,
-  }),
-  creditedRecord({
-    referenceId: 'C6',
-    id: 'destiny-concepts/c6-fallen-citadel',
-    filename: 'mark-goldsworthy-fallen-citadel-oct-1.jpg',
-    artist: 'Mark Goldsworthy',
-    workTitle: 'Fallen Citadel',
-    authoritativeSourceUrl: MARK_GOLDSWORTHY_ARTSTATION,
-    upstreamAssetUrl: 'https://cdna.artstation.com/p/assets/images/images/032/669/612/large/mark-goldsworthy-fallen-citadel-oct-1.jpg?1607107735',
-    sourceWidth: 1920,
-    sourceHeight: 842,
-  }),
-  creditedRecord({
-    referenceId: 'C5',
-    id: 'destiny-concepts/c5-ice-shelf-shapes',
-    filename: 'destiny-2020-jessevandijk-079.jpg',
-    artist: 'Jesse van Dijk',
-    workTitle: 'Ice-shelf shapes',
-    authoritativeSourceUrl: JESSE_VAN_DIJK_ARTSTATION,
-    upstreamAssetUrl: 'https://cdna.artstation.com/p/assets/images/images/032/810/096/large/jesse-van-dijk-destiny-2020-jessevandijk-079.jpg?1607533346',
-    sourceWidth: 1920,
-    sourceHeight: 998,
-  }),
-  creditedRecord({
-    referenceId: 'C7',
-    id: 'destiny-concepts/c7-early-throne-world-citadel',
-    filename: 'mark-goldsworthy-markg-citadel-concept.jpg',
-    artist: 'Mark Goldsworthy',
-    workTitle: 'Early Throne World citadel',
-    authoritativeSourceUrl: MARK_GOLDSWORTHY_ARTSTATION,
-    // Largest approved ArtStation rendition (`/4k/`, 2200px wide), replacing
-    // the earlier `/large/` (1920px) download.
-    upstreamAssetUrl: 'https://cdna.artstation.com/p/assets/images/images/046/905/669/4k/mark-goldsworthy-markg-citadel-concept.jpg?1646262190',
-    sourceWidth: 2200,
-    sourceHeight: 1611,
-  }),
-  creditedRecord({
-    referenceId: 'C10',
-    id: 'destiny-concepts/c10-crash',
-    filename: 'jvd_cabalshipcrashintrohiveship_1920.jpg',
-    artist: 'Jesse van Dijk',
-    workTitle: 'Crash',
-    authoritativeSourceUrl: JESSE_VAN_DIJK_ARTSTATION,
-    upstreamAssetUrl: 'https://cdna.artstation.com/p/assets/images/images/001/163/640/large/jesse-van-dijk-jvd-cabalshipcrashintrohiveship-1920.jpg?1441351541',
-    sourceWidth: 1920,
-    sourceHeight: 984,
   }),
 ] as const

@@ -550,7 +550,7 @@ describe('wolvesApp intro status handling', () => {
 
     // The Director's Cut opens on the scored prologue, so its music plaque is the
     // Gayane track, not the standard cut's Destiny trailer.
-    expect(wrapper.getComponent(MediaWidgetStub).props('title')).toBe('PROLOGUE — Gayane Ballet Suite')
+    expect(wrapper.getComponent(MediaWidgetStub).props('title')).toBe('PROLOGUE — Excerpt from The Tribulation')
 
     const intro = wrapper.getComponent(WolvesIntroOverlayStub)
     intro.vm.$emit('status', {
@@ -562,7 +562,7 @@ describe('wolvesApp intro status handling', () => {
     })
     await wrapper.vm.$nextTick()
     // The scored prologue carries no chapter plaque at all: it is a cold open,
-    // and a "PROLOGUE / Gayane Ballet Suite (Adagio)" card in the top-left
+    // and a "PROLOGUE / Excerpt from The Tribulation" card in the top-left
     // corner of the frame is the slide-deck chrome it exists to avoid. The
     // media widget still names the track.
     expect(wrapper.find('.nameplate-stub').exists()).toBe(false)

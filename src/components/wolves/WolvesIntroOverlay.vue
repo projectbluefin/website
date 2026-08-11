@@ -406,6 +406,9 @@ async function predecodeDirectorsCutConceptArtwork() {
 
 onMounted(() => {
   predecodeGuardianCompanionArtwork()
+  // Keeps `framedLetterbox` honest when the frame changes under it.
+  window.addEventListener('resize', trackViewportSize)
+  trackViewportSize()
 })
 
 /**
@@ -474,6 +477,107 @@ const somberFadeDuration = computed(() => {
 const sceneCrossfadeDuration = computed(() => (
   isDirectorsCutPrologue.value ? DIRECTORS_CUT_SCENE_CROSSFADE_SECONDS : PROLOGUE_SCENE_CROSSFADE_SECONDS
 ))
+
+/**
+ * The viewport, as reactive state, so the painted-box maths below re-runs when the
+ * frame changes. A projector is a fixed size, but the browser this is authored and
+ * verified in is not, and a value sampled once at mount is wrong for every resize
+ * after it.
+ */
+const viewportWidth = ref(typeof window === 'undefined' ? 1920 : window.innerWidth)
+const viewportHeight = ref(typeof window === 'undefined' ? 1080 : window.innerHeight)
+
+function trackViewportSize(): void {
+  viewportWidth.value = window.innerWidth
+  viewportHeight.value = window.innerHeight
+}
+
+/**
+ * The letterbox bars around a framed painting, in pixels.
+ *
+ * Framed cues render `object-fit: contain` and are capped at their own source
+ * pixels, so the painting almost never fills the frame: a 2048x771 panorama in a
+ * 1920x1080 projector paints 1920x723 and leaves a 178.6px black bar above and
+ * below it. The caption, meanwhile, was anchored to `bottom: 12%` of the
+ * viewport* — 130px at 1080p — which put the words 48px *below the bottom edge
+ * of the picture*, sitting on the bar. That is the "words are colliding with the
+ * letterbox" defect from the owner's review, and it is a geometry bug, not a
+ * taste one: it is fully determined by the source aspect ratio and reproduces
+ * exactly on any screen wide enough to letterbox that record.
+ *
+ * Deriving the bar here lets the caption sit inside the painted box on every
+ * record without hand-tuning a percentage per painting — the thing that would
+ * rot the moment the registry changed, which it just did.
+ */
+function letterboxFor(framing: IntroOverlayTextCue['backgroundFraming']): { x: number, y: number } {
+  if (!framing) {
+    return { x: 0, y: 0 }
+  }
+
+  // Mirrors the CSS exactly: `contain` inside the frame, then capped at the
+  // source's own pixels by `max-width`/`max-height` so the browser never
+  // enlarges past what the artist delivered.
+  const scale = Math.min(
+    viewportWidth.value / framing.sourceWidth,
+    viewportHeight.value / framing.sourceHeight,
+    1,
+  )
+
+  return {
+    x: Math.max(0, (viewportWidth.value - framing.sourceWidth * scale) / 2),
+    y: Math.max(0, (viewportHeight.value - framing.sourceHeight * scale) / 2),
+  }
+}
+
+const framedLetterbox = computed(() => letterboxFor(sceneCue.value?.backgroundFraming))
+
+/**
+ * The closing title's first line, split so the `F` of BLUEFIN can be set in the
+ * brand blue.
+ *
+ * Requested directly by the owner (2026-08-10): "Color in the F in bluefin blue
+ * on that one." It is deliberately keyed to the word rather than to the first
+ * `F` in the string or to a character offset — the line is authored data, and a
+ * bare index would silently colour the wrong glyph the moment the title text
+ * changes. If the word is not present the line renders exactly as before.
+ */
+const slimTitleSegments = computed(() => {
+  const line = overlayText.value?.split('\n')[0] ?? ''
+  const word = 'BLUEFIN'
+  const wordStart = line.indexOf(word)
+
+  if (wordStart < 0) {
+    return [{ text: line, brand: false }]
+  }
+
+  const letterIndex = wordStart + word.indexOf('F')
+
+  return [
+    { text: line.slice(0, letterIndex), brand: false },
+    { text: line.slice(letterIndex, letterIndex + 1), brand: true },
+    { text: line.slice(letterIndex + 1), brand: false },
+  ].filter(part => part.text.length > 0)
+})
+
+function barStyle(bar: { x: number, y: number }): Record<string, string> {
+  return {
+    '--wc-frame-bar-x': `${Math.round(bar.x)}px`,
+    '--wc-frame-bar-y': `${Math.round(bar.y)}px`,
+  }
+}
+
+/** The scrim belongs to the scene, so it measures the scene's own painting. */
+const framedBoxStyle = computed(() => barStyle(framedLetterbox.value))
+
+/**
+ * The caption measures the cue it is actually painting, which is not always the
+ * scene cue: text outlives its shot by a fade, so binding the caption to
+ * `sceneCue` offsets it by the *previous* painting's bar. In Chromium that
+ * showed up as the title plate — a full-frame 16:9 image with no bars at all —
+ * being inset by 203px, which is the bar belonging to the 1920x1369 record
+ * before it, while the record that actually needed the inset got none.
+ */
+const captionBoxStyle = computed(() => barStyle(letterboxFor(overlayCueForDisplay.value?.backgroundFraming)))
 
 /**
  * A `backgroundCrossfade` cue can list one or more day/night stages; multi-stage cues split
@@ -1436,6 +1540,7 @@ onBeforeUnmount(() => {
   // paintings nobody is going to see, so the chain cannot keep taking
   // bandwidth from the show that replaced it.
   directorsCutConceptWarmAbandoned = true
+  window.removeEventListener('resize', trackViewportSize)
   destroyPlayer()
   discardPrewarmedPlayer()
   releaseHandoffHold()
@@ -1565,6 +1670,7 @@ defineExpose({
                 v-if="sceneCue?.backgroundFraming"
                 class="wolves-intro-overlay-scrim"
                 :class="{ 'wolves-intro-overlay-scrim-top': sceneCue.textPosition === 'top' }"
+                :style="framedBoxStyle"
               />
             </div>
           </Transition>
@@ -1731,6 +1837,7 @@ defineExpose({
             :key="overlayText"
             class="wolves-intro-overlay-text font-mono"
             :class="{
+              'wolves-intro-overlay-text-framed': Boolean(overlayCueForDisplay?.backgroundFraming),
               'wolves-intro-overlay-text-somber': isSomberTextSegment,
               'wolves-intro-overlay-text-director': isDirectorsCutPrologue || handoffHoldCue,
               'wolves-intro-overlay-text-dominant': overlayCueForDisplay?.emphasis === 'dominant',
@@ -1739,10 +1846,14 @@ defineExpose({
               'wolves-intro-overlay-text-top': overlayCueForDisplay?.backgroundCrossfade && overlayCueForDisplay.emphasis !== 'dominant' && !overlayCueForDisplay.calamity && overlayCueForDisplay.textPosition !== 'bottom' && overlayCueForDisplay.textPosition !== 'bottom-right',
               'wolves-intro-overlay-text-bottom-right': overlayCueForDisplay?.textPosition === 'bottom-right',
             }"
-            :style="isSomberTextSegment ? { 'animationDuration': `${somberFadeDuration}s`, '--wolves-intro-text-fade': `${somberFadeDuration}s` } : undefined"
+            :style="isSomberTextSegment ? { 'animationDuration': `${somberFadeDuration}s`, '--wolves-intro-text-fade': `${somberFadeDuration}s`, ...captionBoxStyle } : captionBoxStyle"
           >
             <template v-if="overlayCueForDisplay?.slim && overlayText.includes('\n')">
-              <span class="wolves-intro-overlay-text-slim-line1">{{ overlayText.split('\n')[0] }}</span>
+              <span class="wolves-intro-overlay-text-slim-line1"><span
+                v-for="(part, index) in slimTitleSegments"
+                :key="index"
+                :class="{ 'wolves-intro-overlay-text-slim-brand': part.brand }"
+              >{{ part.text }}</span></span>
               <span class="wolves-intro-overlay-text-slim-line2">{{ formatIntroCueText(overlayText.split('\n')[1], overlayCueForDisplay?.preservePunctuation) }}</span>
             </template>
             <template v-else>
@@ -1915,6 +2026,13 @@ defineExpose({
   inset: 0;
   pointer-events: none;
   background: linear-gradient(to top, rgb(0 0 0 / 78%) 0%, rgb(0 0 0 / 45%) 22%, rgb(0 0 0 / 0%) 46%);
+}
+
+/* The scrim buys the caption its contrast, so it has to cover the same band the
+   caption occupies. Left on the viewport it would gradient the letterbox bar --
+   darkening nothing, and stopping short of the text it exists to back. */
+.wolves-intro-overlay-scrim {
+  inset: var(--wc-frame-bar-y, 0px) var(--wc-frame-bar-x, 0px);
 }
 
 .wolves-intro-overlay-scrim-top {
@@ -2603,6 +2721,40 @@ defineExpose({
   line-height: 1.25;
 }
 
+/* Words live inside the picture, never on the letterbox.
+
+   `.wolves-intro-overlay-text` anchors to the viewport, which is right while the
+   image is a full-bleed backdrop and wrong the moment it is a framed painting: a
+   `contain` fit leaves bars whose size is decided by the source's aspect ratio,
+   and the caption happily rendered on top of them. Measured in Chromium at
+   1920x1080, the 1920x1369 record paints 1514px wide and leaves a 203px bar down
+   each side, while the caption ran 96px to 1824px -- over the bar on both sides.
+
+   `--wc-frame-bar-x/y` is that bar, computed from the ledger geometry in
+   `framedLetterbox` and published per cue, so the caption tracks the picture on
+   every record and at every size rather than being tuned per painting. The extra
+   3% is title-safe margin: type stopping exactly on the picture edge reads as an
+   accident from the back row.
+
+   Placed here, after the base and dominant rules, and written at two-class
+   specificity on purpose. The first attempt sat earlier in the sheet at one
+   class, tied with `.wolves-intro-overlay-text`, and lost on source order -- it
+   passed every unit test and still painted the words on the bar, which is
+   exactly the class of defect only a laid-out browser catches.
+
+   `max()` rather than plain addition, because a 16:9 record has no bar at all
+   and must keep the placement it already had. */
+.wolves-intro-overlay-text.wolves-intro-overlay-text-framed {
+  bottom: max(12%, calc(var(--wc-frame-bar-y, 0px) + 3%));
+  left: max(5%, calc(var(--wc-frame-bar-x, 0px) + 3%));
+  right: max(5%, calc(var(--wc-frame-bar-x, 0px) + 3%));
+}
+
+.wolves-intro-overlay-text-director.wolves-intro-overlay-text-dominant.wolves-intro-overlay-text-framed {
+  left: max(3%, calc(var(--wc-frame-bar-x, 0px) + 3%));
+  right: max(3%, calc(var(--wc-frame-bar-x, 0px) + 3%));
+}
+
 @media (max-width: 640px) {
   .wolves-guardian-plate-row {
     bottom: max(18%, 12rem);
@@ -2654,6 +2806,21 @@ defineExpose({
   .wolves-intro-overlay-text-director.wolves-intro-overlay-text-slim .wolves-intro-overlay-text-slim-line2 {
     font-size: clamp(1rem, 4.4vw, 1.6rem);
   }
+}
+
+/* The one coloured glyph in the show's own name.
+
+   Requested directly by the owner: the `F` of BLUEFIN in the brand blue. It
+   inherits every other property from the title line, so it keeps the same
+   baseline, weight and tracking — only the colour changes, which is what makes
+   it read as a logo rather than as a highlighted letter.
+
+   It sits at top level, after the line it colours. The first attempt was
+   inserted into the `max-width: 640px` block by a careless anchor match, where
+   it did nothing at projector sizes and quietly corrupted the selector above
+   it. */
+.wolves-intro-overlay-text-slim-brand {
+  color: var(--color-blue, #2f6fed);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -18,10 +18,10 @@ import {
   DIRECTORS_CUT_PROLOGUE_SEGMENT_ID,
   DIRECTORS_CUT_SCENE_CROSSFADE_SECONDS,
   DIRECTORS_CUT_TEXT_FADE_SECONDS,
-  GAYANE_TRACK_SECONDS,
   IKORA_LAST_CONTENT_SECOND,
   IKORA_RATING_CARD_SECONDS,
   IKORA_SOURCE_VIDEO_ID,
+  TRIBULATION_TRACK_SECONDS,
 } from '../data/wolves-directors-cut-intro'
 import {
   buildIntroVideoSequence,
@@ -1607,28 +1607,56 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     await seekPrologue(painting.start + 1)
     expect(wrapper.find('.wolves-intro-overlay-scrim').exists()).toBe(true)
 
-    // The narration's black beats carry no painting, so they need no scrim over the black.
-    const dark = buildDirectorsCutPrologueSegment().overlays![0]
-    await seekPrologue(dark.start + 1)
+    // The scrim belongs to framed paintings only. It used to be checked against
+    // shot 0, on the assumption that the prologue opens on black - it no longer
+    // does, so the check now finds a genuinely unframed cue instead of trusting
+    // a position in the list.
+    const unframed = buildDirectorsCutPrologueSegment().overlays!.find(cue => !cue.backgroundFraming)!
+
+    await seekPrologue(unframed.start + 1)
     expect(wrapper.find('.wolves-intro-overlay-scrim').exists()).toBe(false)
   })
 
   it('clears a thought once it has been read, while its shot keeps running', async () => {
     const wrapper = await mountDirectorsCut()
-    const held = buildDirectorsCutPrologueSegment().overlays!.find(cue => cue.textHoldSeconds != null && cue.end - cue.start - cue.textHoldSeconds > 2)!
+    // On the 134.65s Tribulation recut every authored thought costs at least its
+    // whole shot to read, so `textHoldSeconds` is pinned to the window and no cue
+    // clears early any more - the montage breathes through its six deliberately
+    // wordless shots instead. The hold plumbing still has to be right, so what is
+    // asserted here is the rule rather than a sample: a hold never outruns its
+    // shot, and never undercuts the reading cost.
+    const held = buildDirectorsCutPrologueSegment().overlays!.filter(cue => cue.textHoldSeconds != null)
 
-    await seekPrologue(held.start + held.textHoldSeconds! - 0.5)
+    expect(held.length).toBeGreaterThan(0)
+    for (const cue of held) {
+      // Holds are published rounded to a hundredth of a second, so the bound is
+      // checked to that resolution: a mark difference like 43.26 - 33.02 is not
+      // exactly 10.24 in binary floating point, and an exact comparison fails by
+      // about 2e-15 rather than by anything an audience could see.
+      expect(cue.textHoldSeconds!, cue.text).toBeLessThanOrEqual(cue.end - cue.start + 0.005)
+    }
+
+    const sample = held[0]
+
+    await seekPrologue(sample.start + sample.textHoldSeconds! - 0.5)
     expect(wrapper.get('.wolves-intro-overlay-text').text().length).toBeGreaterThan(0)
 
-    await seekPrologue(held.start + held.textHoldSeconds! + 1)
-    expect(wrapper.find('.wolves-intro-overlay-text').exists()).toBe(false)
-    // The shot itself is untouched: the image plays out its full musical section.
+    // Past this shot's hold the recut has already cut to the next one, because
+    // hold and window are now the same number. What must survive the boundary is
+    // the imagery: the montage plays on rather than dropping to black between
+    // thoughts, which is the whole point of the recut.
+    await seekPrologue(sample.start + sample.textHoldSeconds! + 1)
     expect(wrapper.find('.wolves-intro-overlay-scene').exists()).toBe(true)
   })
 
   it('dissolves scenes at its own reveal tempo, not the standard prologue\'s', async () => {
     const wrapper = await mountDirectorsCut()
-    await seekPrologue(140)
+    // Derived, not typed in: this used to seek to a literal 140s, which was a
+    // montage shot under the 325.6s Gayane track and is past the end of the
+    // 134.65s recut. Ask the segment for a shot that carries a painting.
+    const framed = buildDirectorsCutPrologueSegment().overlays!.find(cue => cue.backgroundFraming)!
+
+    await seekPrologue(framed.start + 1)
 
     const scene = wrapper.get('.wolves-intro-overlay-scene')
     expect(scene.attributes('style')).toContain(`transition-duration: ${DIRECTORS_CUT_SCENE_CROSSFADE_SECONDS}s`)
@@ -1714,7 +1742,7 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     expect(wrapper.find('.wolves-intro-overlay-text').exists()).toBe(false)
     expect(wrapper.find('img.wolves-intro-overlay-background').exists()).toBe(false)
 
-    await seekPrologue(GAYANE_TRACK_SECONDS - 1)
+    await seekPrologue(TRIBULATION_TRACK_SECONDS - 1)
     expect(wrapper.get('.wolves-intro-overlay-text').text()).toContain('seven days to the wolves')
   })
 
@@ -1786,11 +1814,11 @@ describe('wolvesIntroOverlay director\'s cut', () => {
 
     // A clock frozen in the body of the piece is a mid-roll ad or buffering, not the end of the
     // track: the scored card must wait for the music rather than run a clock of its own.
-    audio.setCurrentTime(GAYANE_TRACK_SECONDS - 5)
+    audio.setCurrentTime(TRIBULATION_TRACK_SECONDS - 5)
     await vi.advanceTimersByTimeAsync(30_000)
     await flushPromises()
     expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
-    expect(latestStatus(wrapper).currentTime).toBeCloseTo(GAYANE_TRACK_SECONDS - 5)
+    expect(latestStatus(wrapper).currentTime).toBeCloseTo(TRIBULATION_TRACK_SECONDS - 5)
     // The trailer's player exists by now — it is deliberately warmed at the montage's
     // penultimate mark — but it is parked. Nothing has taken the stage from the scored card.
     for (const warmed of players.slice(1)) {
@@ -1805,8 +1833,8 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
     // The card took its own clock over from where the music stopped rather than freezing,
     // and did not restart it from zero.
-    expect(latestStatus(wrapper).currentTime).toBeGreaterThan(GAYANE_TRACK_SECONDS - 5)
-    expect(latestStatus(wrapper).currentTime).toBeLessThan(GAYANE_TRACK_SECONDS - 3.5)
+    expect(latestStatus(wrapper).currentTime).toBeGreaterThan(TRIBULATION_TRACK_SECONDS - 5)
+    expect(latestStatus(wrapper).currentTime).toBeLessThan(TRIBULATION_TRACK_SECONDS - 3.5)
 
     await vi.advanceTimersByTimeAsync(5000)
     await flushPromises()
@@ -1849,7 +1877,10 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     const audio = players[0]
 
     // Mid-piece, far from the end window: an ad break, not the music ending.
-    audio.setCurrentTime(200)
+    // Derived from the track rather than typed in - a literal 200s was mid-piece
+    // under Gayane and is past the end of the 134.65s recut, which made this
+    // assertion fail on the segment having already handed off.
+    audio.setCurrentTime(TRIBULATION_TRACK_SECONDS / 2)
     await vi.advanceTimersByTimeAsync(200)
     await flushPromises()
 
@@ -1863,7 +1894,7 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     // must not survive the release: if it did, the card would complete the instant its own
     // clock crossed into the window — up to a full second before the authored duration —
     // even though nothing about the music actually ended there.
-    const windowStart = GAYANE_TRACK_SECONDS - TEXT_SEGMENT_END_SLACK_SECONDS
+    const windowStart = TRIBULATION_TRACK_SECONDS - TEXT_SEGMENT_END_SLACK_SECONDS
     const beforeWindow = latestStatus(wrapper).currentTime
     await vi.advanceTimersByTimeAsync(Math.round((windowStart - beforeWindow - 0.2) * 1000))
     await flushPromises()
@@ -1874,7 +1905,7 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     await vi.advanceTimersByTimeAsync(400)
     await flushPromises()
     expect(latestStatus(wrapper).currentTime).toBeGreaterThanOrEqual(windowStart)
-    expect(latestStatus(wrapper).currentTime).toBeLessThan(GAYANE_TRACK_SECONDS)
+    expect(latestStatus(wrapper).currentTime).toBeLessThan(TRIBULATION_TRACK_SECONDS)
     expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
 
     // It still ends, exactly once, on the authored duration rather than hanging.
@@ -1890,7 +1921,7 @@ describe('wolvesIntroOverlay director\'s cut', () => {
 
     // The exact hang the authored 325.6s end invites: the decoded stream is 325.602s, so a real
     // player that stops a few hundredths short never satisfies `elapsed >= duration`.
-    audio.setCurrentTime(GAYANE_TRACK_SECONDS - 0.02)
+    audio.setCurrentTime(TRIBULATION_TRACK_SECONDS - 0.02)
     await vi.advanceTimersByTimeAsync(TEXT_SEGMENT_STALL_GRACE_SECONDS * 1000 - 500)
     await flushPromises()
     expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
@@ -1921,8 +1952,8 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     const wrapper = await mountDirectorsCut()
     const audio = players[0]
 
-    await seekPrologue(GAYANE_TRACK_SECONDS - 10)
-    expect(latestStatus(wrapper).currentTime).toBeCloseTo(GAYANE_TRACK_SECONDS - 10)
+    await seekPrologue(TRIBULATION_TRACK_SECONDS - 10)
+    expect(latestStatus(wrapper).currentTime).toBeCloseTo(TRIBULATION_TRACK_SECONDS - 10)
 
     audio.triggerError()
     await vi.advanceTimersByTimeAsync(1000)
@@ -1931,7 +1962,7 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     // The music is gone, but the act still reaches the audience: the card picks up its own
     // clock from where the music died instead of freezing on whichever cue was up.
     expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
-    expect(latestStatus(wrapper).currentTime).toBeCloseTo(GAYANE_TRACK_SECONDS - 9, 1)
+    expect(latestStatus(wrapper).currentTime).toBeCloseTo(TRIBULATION_TRACK_SECONDS - 9, 1)
 
     await vi.advanceTimersByTimeAsync(10_000)
     await flushPromises()
@@ -2118,7 +2149,7 @@ describe('wolvesIntroOverlay director\'s cut', () => {
       // the music is already playing and nothing may stop it.
       expect(RecordingImage.requested.filter(url => url.includes('destiny-concepts/')))
         .toHaveLength(DIRECTORS_CUT_DESTINY_CONCEPTS.length)
-      await seekPrologue(GAYANE_TRACK_SECONDS - 1)
+      await seekPrologue(TRIBULATION_TRACK_SECONDS - 1)
       expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
       expect(wrapper.get('.wolves-intro-overlay-text').text()).toContain('seven days to the wolves')
       warn.mockRestore()

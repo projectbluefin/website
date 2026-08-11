@@ -355,7 +355,7 @@ try {
     return {
       prewarmSecond: intro.DIRECTORS_CUT_IKORA_PREWARM_SECOND,
       crossfadeSeconds: intro.DIRECTORS_CUT_SCENE_CROSSFADE_SECONDS,
-      trackSeconds: intro.GAYANE_TRACK_SECONDS,
+      trackSeconds: intro.TRIBULATION_TRACK_SECONDS,
       artwork: artwork.DIRECTORS_CUT_DESTINY_CONCEPTS.map(record => ({
         id: record.id,
         localPath: record.localPath,

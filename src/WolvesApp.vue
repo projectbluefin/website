@@ -108,10 +108,10 @@ const introSegmentIndexById = computed(() => new Map(introVideos.value.map((segm
 const INTRO_DISPLAY: Record<string, { chapter: string, title: string, mediaTitle: string, artist: string, artwork: string }> = {
   'wolves-prologue': {
     chapter: 'PROLOGUE',
-    title: 'Gayane Ballet Suite (Adagio)',
-    mediaTitle: 'PROLOGUE — Gayane Ballet Suite',
-    artist: 'Aram Khachaturian',
-    artwork: 'https://i.ytimg.com/vi/EB3IokHelRk/hqdefault.jpg',
+    title: 'Excerpt from The Tribulation',
+    mediaTitle: 'PROLOGUE — Excerpt from The Tribulation',
+    artist: 'Martin O\'Donnell, Michael Salvatori, Paul McCartney',
+    artwork: 'https://i.ytimg.com/vi/uvtR84x0kgw/hqdefault.jpg',
   },
   'wolves-intro': {
     chapter: 'Meet your Fireteam',
