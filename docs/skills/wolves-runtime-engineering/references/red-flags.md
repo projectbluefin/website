@@ -101,6 +101,18 @@ Grouped roughly by surface: boundaries and scheduling, transport and buffers, im
   produced both a false positive (a collision reported that did not exist) and
   a false negative (a real one hidden), depending on which single condition
   was used.
+- A legibility scrim is conditioned on the shot rather than on the caption. A
+  scrim exists to buy contrast for text; rendered over a wordless shot it is
+  pure haze, darkening artwork that has nothing to pay for. The prologue's
+  scrim keyed off `backgroundFraming`, so it dimmed the bottom 46% of all six
+  wordless montage beats — measured 26.9 to 41.3 luminance recovered on the
+  brightest plate once it was scoped to `caption && captionVisible`. Condition
+  it on exactly what the caption itself renders on, so the two cannot drift
+  apart, and have the test assert its **absence** on a wordless shot as well as
+  its presence on a captioned one.
+- A base `opacity` below 1 on the painting layer. It reads as "dimming" but it
+  is compositing against the black overlay beneath, and any shot whose own
+  animation does not override it is silently the haziest frame in the show.
 - A closing animation is computed per clock tick. The transport stops publishing
   time in the final `PRE_END_THRESHOLD_S` of a segment and a YouTube clock
   plateaus before that anyway, so `(time - start) / span` freezes the show
