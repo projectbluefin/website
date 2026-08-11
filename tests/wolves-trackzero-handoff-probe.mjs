@@ -22,7 +22,11 @@ import { chromium } from 'playwright'
 
 const BASE_URL = process.env.WOLVES_BASE_URL ?? 'http://127.0.0.1:5173'
 const CDP_ENDPOINT = process.env.WOLVES_CDP ?? null
-const SECONDS = Number(process.env.WOLVES_PROBE_SECONDS ?? 90)
+const SECONDS = Number(process.env.WOLVES_PROBE_SECONDS ?? 20)
+const SKIP_TO_HANDOFF = process.env.WOLVES_PROBE_SKIP_TO_HANDOFF !== '0'
+const HANDOFF_SEEK_SECONDS = Number(process.env.WOLVES_PROBE_HANDOFF_SEEK_SECONDS ?? 324.6)
+const IKORA_HANDOFF_SEEK_SECONDS = Number(process.env.WOLVES_PROBE_IKORA_HANDOFF_SEEK_SECONDS ?? 113.4)
+const IKORA_SOURCE_VIDEO_ID = 'BKm0TPqeOjY'
 
 const browser = CDP_ENDPOINT
   ? await chromium.connectOverCDP(CDP_ENDPOINT)
@@ -46,6 +50,7 @@ const sample = () => page.evaluate(() => {
   const app = document.querySelector('#app')?.__vue_app__
   const store = app?.config?.globalProperties?.$pinia?.state?.value?.cinematic
   const players = [...document.querySelectorAll('iframe')].map(frame => frame.src.replace("https://www.youtube.com/embed/", "embed/").slice(0, 60))
+  const buffers = window.__wolvesCinematic?.buffers?.() ?? window.__wolvesDurations?.buffers?.() ?? null
   return {
     phase: store?.phase ?? null,
     segmentIndex: store?.segmentIndex ?? null,
@@ -55,6 +60,7 @@ const sample = () => page.evaluate(() => {
     trackZeroGrid: Boolean(document.querySelector('.wc-trackzero-grid')),
     iframes: players.length,
     allIframes: players,
+    buffers,
   }
 })
 
@@ -64,10 +70,24 @@ if (await button.count()) {
   console.log('clicked the Director\'s Cut entrance')
 }
 
+if (SKIP_TO_HANDOFF) {
+  await page.waitForFunction(() => typeof window.__wolvesIntro?.seekTo === 'function', undefined, { timeout: 15_000 })
+  await page.evaluate((seconds) => window.__wolvesIntro.seekTo(seconds), HANDOFF_SEEK_SECONDS)
+  await page.waitForFunction(
+    (videoId) => window.__wolvesIntro?.getVideoId?.() === videoId,
+    IKORA_SOURCE_VIDEO_ID,
+    { timeout: 15_000 },
+  )
+  await page.evaluate((seconds) => window.__wolvesIntro.seekTo(seconds), IKORA_HANDOFF_SEEK_SECONDS)
+  console.log(`sought the real prologue and Ikora trailer to their handoff cuts (${HANDOFF_SEEK_SECONDS}s, ${IKORA_HANDOFF_SEEK_SECONDS}s)`)
+}
+
 console.log(`\nsampling ${SECONDS}s of real playback\n`)
 let previous = null
+let reachedTrackZero = false
 for (let elapsed = 0; elapsed <= SECONDS; elapsed += 5) {
   const state = await sample()
+  reachedTrackZero ||= state.phase === 'cinematic' && state.segmentIndex === 0 && state.nativeTime > 0 && state.trackZeroGrid
   const line = JSON.stringify(state)
   if (line !== previous) {
     console.log(`  t+${String(elapsed).padStart(3)}s  ${line}`)
@@ -77,6 +97,10 @@ for (let elapsed = 0; elapsed <= SECONDS; elapsed += 5) {
 }
 
 console.log('\nconsole/page errors:', consoleErrors.length ? consoleErrors.slice(0, 10) : 'none')
+if (SKIP_TO_HANDOFF && !reachedTrackZero) {
+  console.error('the real soundtrack never reached Track 0')
+  process.exitCode = 1
+}
 if (!CDP_ENDPOINT) {
   await browser.close()
 }

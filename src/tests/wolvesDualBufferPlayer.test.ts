@@ -1,7 +1,13 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
-import { COLD_SKIP_PLAYBACK_TIMEOUT_MS, PREPARE_TIMEOUT_MS, START_PLAYBACK_TIMEOUT_MS, useDualBufferPlayer } from '@/composables/useDualBufferPlayer'
+import {
+  COLD_SKIP_PLAYBACK_TIMEOUT_MS,
+  OPENING_FRAME_CONFIRMATION_POLLS,
+  PREPARE_TIMEOUT_MS,
+  START_PLAYBACK_TIMEOUT_MS,
+  useDualBufferPlayer,
+} from '@/composables/useDualBufferPlayer'
 import { invalidateYoutubeIframeApiLoad, resetYoutubeIframeApiCacheForTests } from '@/composables/useYoutubeIframeApi'
 import { CINEMATIC_SEGMENTS, PRE_END_THRESHOLD_S, TIME_POLL_MS } from '@/config/wolves-cinematic'
 import { useCinematicStore } from '@/stores/cinematic'
@@ -10,6 +16,7 @@ interface FakeEvents {
   onReady?: (event: unknown) => void
   onStateChange?: (event: { data: number }) => void
   onError?: (event: unknown) => void
+  onAutoplayBlocked?: (event: unknown) => void
 }
 
 interface FakePlayerOptions {
@@ -446,6 +453,32 @@ describe('useDualBufferPlayer', () => {
     expect(settled).toBe(true)
   })
 
+  it('does not finish Track 0 when a late prewarm state reports the source end before its opening frame', async () => {
+    FakePlayer.emitPlayingOnPlay = false
+    const store = useCinematicStore()
+    store.enterCinematic()
+    const player = buildPlayer()
+    await player.prepare()
+    const [playerA] = FakePlayer.instances
+
+    playerA.duration = 424
+    const startup = player.start()
+    await flushMicrotasks()
+
+    // A real IFrame can deliver its original prewarm PLAYING after startup has
+    // already requested Track 0. Its first clock reply is then the old media's
+    // terminal frame, before the opening seek reaches the player.
+    playerA.currentTime = playerA.duration
+    playerA.events.onStateChange?.({ data: 0 })
+
+    expect(store.finished).toBe(false)
+    expect(store.crossfading).toBe(false)
+    expect(store.nativeTime).toBe(0)
+
+    player.destroy()
+    await startup
+  })
+
   it('prewarms and parks the active side so Track 0 never enters the show cold', async () => {
     const store = useCinematicStore()
     store.enterCinematic()
@@ -471,6 +504,18 @@ describe('useDualBufferPlayer', () => {
     // Promoted by seek from its park, not re-fetched: a cold loadVideoById here is
     // exactly the buffering gap this whole double buffer exists to avoid.
     expect(playerA.loadedId).toBe('')
+  })
+
+  it('retries a blocked startup muted so the real player can reach PLAYING', async () => {
+    const player = await startPlayer()
+    const [playerA] = FakePlayer.instances
+    const playsBeforeRetry = playerA.playCount
+
+    playerA.events.onAutoplayBlocked?.({})
+
+    expect(playerA.muted).toBe(true)
+    expect(playerA.playCount).toBe(playsBeforeRetry + 1)
+    player.destroy()
   })
 
   it('lands the active side\'s park before startup raises the volume', async () => {
@@ -672,7 +717,7 @@ describe('useDualBufferPlayer', () => {
     expect(settled).toBe(true)
     playerA.currentTime = 7
     playerA.duration = 300
-    vi.advanceTimersByTime(TIME_POLL_MS)
+    vi.advanceTimersByTime(TIME_POLL_MS * OPENING_FRAME_CONFIRMATION_POLLS)
     expect(store.segmentElapsed).toBe(7)
 
     player.destroy()
