@@ -1791,7 +1791,7 @@ defineExpose({
           </div>
         </div>
 
-        <!-- Quick fade when one centered plate replaces another (e.g. Bob Killen -> Kat
+        <!-- Quick fade when one centered plate replaces another (e.g. Cortney Nickerson -> Kat
            Cosgrove at 14.5s); the entering plate keeps its authored impact animation.
            Each row anchors the guardian plate plus, for documented dinosaur bonds, the
            companion plate that shows the partnership beside the guardian's name. -->
@@ -2980,7 +2980,7 @@ defineExpose({
   animation: wolves-guardian-plate-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Quick fade-out when one plate is replaced by the next (Bob Killen -> Kat Cosgrove). */
+/* Quick fade-out when one plate is replaced by the next (Cortney Nickerson -> Kat Cosgrove). */
 .wolves-guardian-plate-swap-leave-active {
   transition: opacity 0.25s ease-out;
 }
@@ -3143,7 +3143,7 @@ defineExpose({
   font-weight: 600;
 }
 
-/* Burnished silver treatment for Universal Blue trustees (Bob Killen's cue; Jorge
+/* Burnished silver treatment for Universal Blue trustees (Cortney Nickerson's cue; Jorge
    Castro's Ghosts In The Mist plate mirrors it in WolvesComicReader.vue). Distinct
    from the default blue plate. */
 .wolves-guardian-plate-trustee:not(.wolves-guardian-plate-leader) {
