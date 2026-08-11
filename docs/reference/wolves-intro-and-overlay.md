@@ -255,6 +255,26 @@ would read the fabrication as verified evidence. They carry
 `provenance: 'owner-supplied-local'` and either `artistCreditState:
 'filename-asserted'` (the supplied filename names an artist) or `'unattributed'`.
 
+## The Collapse carries no vignette
+
+`calamity: true` layers `.wolves-intro-overlay-calamity-vignette` over a cue: a
+radial gradient from transparent at centre to `rgb(0 0 0 / 85%)` at the edges,
+animated to 0.85 opacity and held there by `animation-fill-mode: both`. On the
+Collapse it measured 0.71 opacity by the end of the shot, on top of the day
+frame's own `brightness(0.33)` — between them the painting was crushed to
+silhouette, and it read as a dark filter laid over the art rather than as
+nightfall. Removed on owner instruction (2026-08-10).
+
+The day-to-night crossfade already *is* the calamity: the day frame dims and
+fades while the night frame rises under it, so the shot opens in full sunset
+colour and resolves to night on its own. The vignette was darkening an image
+that was already going dark.
+
+The cue field and its CSS remain — nothing in the prologue sets `calamity` now,
+and it is the only surface that ever did. If it is ever wanted again, note that
+it composites *on top of* the crossfade's own brightness ramp; the two are not
+alternatives and their darkening multiplies.
+
 ## Words live inside the picture, not on the letterbox
 
 Framed cues render `object-fit: contain`, so the painting is letterboxed and the

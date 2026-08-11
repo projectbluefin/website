@@ -353,7 +353,6 @@ const PROLOGUE_SHOTS: readonly PrologueShot[] = [
     text: ONE_DAY,
     emphasis: 'dominant',
     highlightSubstring: 'Garden',
-    calamity: true,
     backgroundCrossfade: [
       {
         day: DIRECTORS_CUT_COLLAPSE_DAY_IMAGE,
