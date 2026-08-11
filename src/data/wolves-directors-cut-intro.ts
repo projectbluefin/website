@@ -262,6 +262,18 @@ export const PROLOGUE_MOODS: readonly PrologueMood[] = [
     offsetSeconds: 0,
     trackSeconds: 493.59,
   },
+  {
+    // Khachaturian's Gayane Ballet Suite (Adagio) - the prologue's original
+    // score, measured at 325.6 s when this cut still ran its full length. It is
+    // here because it costs one entry and it is the mood the piece was first
+    // written against; the show now uses its first 134.65 s, which is the
+    // movement's opening statement rather than its crescendo.
+    id: 'adagio',
+    label: 'Adagio',
+    youtubeVideoId: 'EB3IokHelRk',
+    offsetSeconds: 0,
+    trackSeconds: 325.6,
+  },
 ] as const
 
 export const DEFAULT_PROLOGUE_MOOD_ID = 'tribulation' as const
