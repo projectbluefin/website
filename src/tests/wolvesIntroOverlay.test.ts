@@ -1367,7 +1367,7 @@ describe('wolvesIntroOverlay guardian plate', () => {
       youtubeVideoId: 'BV3BZKbpBns',
       overlays: [
         { text: 'Harbinger Titan — Kat Cosgrove — Defender Queen of the Lost', start: 0, end: 5 },
-        { text: 'Void Warlock — Bob Killen — Reconciler of the Arcane', start: 5, end: 10 },
+        { text: 'Void Warlock — Cortney Nickerson — Reconciler of the Arcane', start: 5, end: 10 },
         { text: 'Arc Warlock — Kaslin Fields — Rage of the Paradox', start: 10, end: 15 },
         { text: 'Solar Hunter — Laura Santamaria — Paragon to the Order of 7', start: 15, end: 20 },
         { text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 20, end: 25, position: 'right' as const, raised: true },
@@ -1387,7 +1387,7 @@ describe('wolvesIntroOverlay guardian plate', () => {
     expect(wrapper.text()).not.toContain('GUARDIAN // MAINTAINER')
   })
 
-  it('renders Bob Killen with the documented dinosaur companion plate', async () => {
+  it('renders Cortney Nickerson with the documented dinosaur companion plate', async () => {
     const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: guardianPlateSequence } })
     await flushPromises()
     resolveIframeApi()
@@ -1397,17 +1397,17 @@ describe('wolvesIntroOverlay guardian plate', () => {
     await vi.advanceTimersByTimeAsync(200)
     await flushPromises()
 
-    expect(wrapper.text()).toContain('Bob Killen')
+    expect(wrapper.text()).toContain('Cortney Nickerson')
     expect(wrapper.find('.wolves-companion-plate').exists()).toBe(true)
     expect(wrapper.find('.wolves-companion-plate-art').attributes('src')).toContain('bob-torosaurus.webp')
     expect(wrapper.find('.wolves-companion-plate-label').text()).toBe('GUARDIAN BOND')
     expect(wrapper.find('.wolves-companion-plate-species').text()).toBe('Torosaurus latus')
-    // No character sheet names Bob's torosaurus, so the plate carries no name line.
+    // No character sheet names Cortney's torosaurus, so the plate carries no name line.
     expect(wrapper.find('.wolves-companion-plate-name').exists()).toBe(false)
     // The pair share one anchored row so the plates sit side by side.
     expect(wrapper.find('.wolves-guardian-plate-row .wolves-guardian-plate').exists()).toBe(true)
     expect(wrapper.find('.wolves-guardian-plate-row .wolves-companion-plate').exists()).toBe(true)
-    // Bob's companion keeps the default bottom-right corner placement.
+    // Cortney's companion keeps the default bottom-right corner placement.
     expect(wrapper.find('.wolves-guardian-plate-row').classes()).not.toContain('wolves-guardian-plate-row-companion-below')
   })
 

@@ -311,16 +311,17 @@ describe('wolves intro overlay sequence', () => {
     }
   })
 
-  it('renames Robert Killen to Bob Killen without moving the authored guardian windows', () => {
+  it('renames Bob Killen to Cortney Nickerson without moving the authored guardian windows', () => {
     const destiny = buildIntroVideoSequence().find(segment => segment.id === 'wolves-intro')
     if (!destiny || !isVideoSegment(destiny)) {
       throw new Error('Expected the Destiny segment to exist')
     }
 
     expect(destiny.overlays).toEqual(expect.arrayContaining([
-      expect.objectContaining({ text: 'Voidwalker Warlock — Bob Killen — Reconciler of the Plane', start: 5, end: 14.5 }),
+      expect.objectContaining({ text: 'Voidwalker Warlock — Cortney Nickerson — Reconciler of the Plane', start: 5, end: 14.5 }),
       expect.objectContaining({ text: 'Stormcaller Warlock — Kaslin Fields — Rage of the Paradox', start: 40, end: 48 }),
     ]))
+    expect(JSON.stringify(destiny.overlays)).not.toContain('Bob Killen')
     expect(JSON.stringify(destiny.overlays)).not.toContain('Robert Killen')
   })
 

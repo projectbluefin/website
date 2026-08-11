@@ -643,13 +643,13 @@ function buildDestinyTrailerSegment(): IntroVideoSpec {
     // against the real embed (Playwright + the YouTube IFrame API, screenshotting every
     // ~1-2s) per the Wolves content verification checklist, replacing the
     // original automated hue/brightness pass that had mismatched two of the six windows:
-    // - Bob Killen's Void Warlock (the first purple, a crystalline void-arm close-up) runs
+    // - Cortney Nickerson's Void Warlock (the first purple, a crystalline void-arm close-up) runs
     //   5-17.5s footage-wise; the whip-pan cut to a Titan Ward of Dawn bubble forming happens
     //   at ~17.5s (confirmed via 0.5s-resolution frame capture — 17.0s is still clearly the
     //   Warlock's caped back, 18.5s is already the Titan crouched inside the bubble).
     // - Kat Cosgrove's plate is deliberately cued ahead of the frame-verified footage cut,
-    //   at 14.5s (explicit user request, 2026-07-18: her plate replaces Bob's with a quick
-    //   fade instead of overlapping). Bob Killen's window is shortened to match (5-14.5s) —
+    //   at 14.5s (explicit user request, 2026-07-18: her plate replaces Cortney's with a quick
+    //   fade instead of overlapping). Cortney Nickerson's window is shortened to match (5-14.5s) —
     //   neither has a `position`, so two simultaneous cues here would stack on top of each
     //   other instead of rendering side-by-side. Her plate now runs 14.5-24.5s. This is an
     //   intentional exception to frame-accurate cueing — do not "fix" the boundary back to
@@ -691,7 +691,7 @@ function buildDestinyTrailerSegment(): IntroVideoSpec {
     alternateMaxDuration: 118.8,
     burnedInCaptions: buildDestinyCaptionCues(),
     overlays: [
-      { text: 'Voidwalker Warlock — Bob Killen — Reconciler of the Plane', start: 5, end: 14.5, trustee: true },
+      { text: 'Voidwalker Warlock — Cortney Nickerson — Reconciler of the Plane', start: 5, end: 14.5, trustee: true },
       { text: 'Sentinel Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 },
       { text: 'Stormcaller Warlock — Kaslin Fields — Rage of the Paradox', start: 40, end: 48 },
       // #nova4ever easter egg: the default "fighting for something greater than themselves" status briefly
