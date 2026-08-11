@@ -2634,6 +2634,11 @@ defineExpose({
   }
 
   .wolves-intro-overlay-text-director.wolves-intro-overlay-text-dominant {
+    /* Restated, not inherited: the prologue's crescendo rule above sets 3% and
+       outranks the `.wolves-intro-overlay-text-director` 4% this block relies on,
+       so without this the phone silently picked up the projector's margins. */
+    left: 4%;
+    right: 4%;
     font-size: clamp(1.5rem, 7vw, 2.5rem);
     line-height: 1.2;
   }
