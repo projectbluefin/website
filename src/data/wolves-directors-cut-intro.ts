@@ -308,7 +308,7 @@ surrounded by predators.`
 const CLOSING_TITLE = 'PROJECT BLUEFIN\nseven days to the wolves'
 
 const PROLOGUE_SHOTS: readonly PrologueShot[] = [
-  // Act I - Earth, after. No black open.
+  // Act I - the Golden Age, and its loss. No black open.
   //
   // The previous cut spent its first 108 s - a third of the piece - on
   // narration over an empty frame, and the owner's review named it first:
@@ -318,36 +318,40 @@ const PROLOGUE_SHOTS: readonly PrologueShot[] = [
   // Gayane's 325.6 s, and a montage that waited for the narration to finish
   // would have about twenty seconds left to run in.
   //
-  // The order is a descent, not a slideshow: wide on a ruined city, then what
-  // ruin becomes when nobody comes back, then dead industry and machines.
+  // It opens on the world as it was, under banners and a lit sky, and only then
+  // begins the descent. A prologue that opens on ruin asks an audience to mourn
+  // something it has never seen; this one shows it first.
   { mark: NARRATION_FIRST_MARK, text: GARDENER_AND_WINNOWER, ...painting(0) },
-
-  // The drowned city plays wordless and the creation line lands on the shot
-  // after it. Reversed - "New Children arose and filled the pattern" over a
-  // dead drowned city - it read as a mismatch rather than as irony, and it
-  // spent the strongest musical event in the piece (23.41 s, novelty 1.000) on
-  // a contradiction the audience has been given no way to decode. Over the
-  // overgrown blocks, vegetation is visibly filling the pattern.
   { mark: 2, ...painting(1) },
+
+  // The strongest event in the piece (23.41 s, novelty 1.000) takes the
+  // creation line, over vegetation visibly filling the pattern. It sat on the
+  // drowned city once, where it read as a mismatch rather than as irony and
+  // spent the biggest moment in the track on a contradiction the audience had
+  // been given no way to decode.
   { mark: 3, text: NEW_CHILDREN, textPosition: 'bottom', ...painting(2) },
   { mark: 4, text: FOR_EONS, ...painting(3) },
 
   // The densest thought in the prologue takes the longer of the two windows
-  // available to it: 8.87 s here against 6.18 s at the next mark. Four lines
-  // at theater distance need the room, and the shot after it is wordless.
+  // available to it: 8.87 s here against 6.18 s at the next mark. Four lines at
+  // theater distance need the room, and the shot after it is wordless.
   { mark: 5, text: A_THREAT, ...painting(4) },
   { mark: 6, ...painting(5) },
   { mark: 7, ...painting(6) },
   { mark: 8, ...painting(7) },
 
-  // The invasion line sits directly before the calamity so its last word cuts
-  // into the Collapse. Nine wordless seconds used to separate the two, which
-  // left a one-pass audience to infer the link on its own.
+  // The invasion line, over the invasion, cutting straight into the calamity.
+  // Nine wordless seconds used to separate the two, which left a one-pass
+  // audience to infer the link on its own.
   { mark: 9, text: OTHERS_CAME, ...painting(8) },
 
   // Act II - the Collapse, as the day-to-night fade it is, once, carrying the
   // line that names it. It is the fulcrum of the piece, so it takes the centre
   // of the frame rather than the lower third.
+  //
+  // It carries no `calamity` vignette. That layer darkened to 0.85 opacity over
+  // a frame the crossfade was already taking to night, and between the two the
+  // painting was crushed to silhouette.
   {
     mark: 10,
     text: ONE_DAY,
@@ -362,10 +366,6 @@ const PROLOGUE_SHOTS: readonly PrologueShot[] = [
   },
   // One short wordless beat on the night plate: the aftermath, not a pause.
   { mark: 11, backgroundImage: DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE },
-
-  // The two darkest devastation records carry the rest of the aftermath. Held
-  // on the night plate instead, marks 11-13 were one near-static image for
-  // 27.75 s, which from a seat reads as the show having stopped.
   { mark: 12, ...painting(9) },
   { mark: 13, ...painting(10) },
 

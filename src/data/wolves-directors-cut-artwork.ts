@@ -105,8 +105,6 @@ const BUNGIE_PRESS_ROOM
   = 'https://press.bungie.com/Go-Beyond-the-Light-Destiny-2-Beyond-Light-Arrives-On-September-22' as const
 const BUNGIE_PRESS_ROOM_SOURCE = 'Bungie Press Room' as const
 const JESSE_VAN_DIJK_ARTSTATION = 'https://www.artstation.com/jessevandijk' as const
-const BUNGIE_ART_BLAST
-  = 'https://magazine.artstation.com/2024/09/bungie-10-year-destiny-art-blast/' as const
 
 function exactArtistFigureLabel(workTitle: string, artist: string): string {
   return `${workTitle} concept art by ${artist}`
@@ -181,29 +179,49 @@ function ownerSuppliedRecord(
 }
 
 export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept[] = [
-  // ---------------------------------------------------------------------
-  // Act II - Earth, after. The montage is Earth devastation only.
+  // Registry order IS montage order - the shot list schedules by index - so this
+  // array is the running order of the prologue, not bookkeeping.
   //
-  // Six of the ten records this list used to carry were cut on owner review
-  // (2026-08-10), and the rule they were cut under is now the rule this list
-  // is maintained by: **the threat is never seen.** No Traveler, no aliens,
-  // no alien architecture or ships, nothing an audience can name as Destiny
-  // on sight. What is left is the devastation, which is the part that
-  // actually carries the prologue.
+  // Two rules govern what may be in it.
   //
-  // Cut, and why, so nobody restores one by accident:
-  // - `c6-fallen-citadel`      alien mothership over a ruined city
-  // - `c5-ice-shelf-shapes`    red organic alien wreck, visible armored figure
-  // - `c10-crash`              alien ship crash, armed soldiers in foreground
-  // - `c7-early-throne-world`  the red ring reads as Hive iconography
-  // - `c4-cryovolcanoes`       two armored Guardians, front and centre
-  // - `c3-early-europa`        Jupiter plus red Darkness shards over a colony
+  // **The threat is never seen.** No Traveler, no aliens, no alien architecture,
+  // nothing an audience can name as Destiny on sight. Six records were cut under
+  // this on 2026-08-10 and a test fails if any of their ids returns. Ships are
+  // the one admitted exception, added on owner instruction the same day: the
+  // narration already says others came to claim the Garden, so distant dropships
+  // over a ruined skyline illustrate a line the audience is being told rather
+  // than revealing a threat it was promised it would not see. Creatures remain
+  // out.
   //
-  // A burned-in BUNGIE / DESTINY 2 corner watermark is *not* a reason to cut a
-  // record: the owner confirmed Bungie's remix policy covers this use. Nor is
-  // a small distant figure - a lone silhouette dwarfed by a ruin strengthens
-  // the scale, and is preferred over an empty frame of the same subject. Only
-  // a prominent foreground character is disqualifying.
+  // **Cityscapes and skyboxes.** Owner instruction: the montage is biased toward
+  // cities and sky rather than interiors and yards. A collapsed foundry hall and
+  // a scrapyard were dropped for that reason even though both were good pictures
+  // - they had no horizon, and on a projector this piece lives on its horizons.
+  //
+  // Not disqualifiers, both confirmed by the owner: a burned-in BUNGIE /
+  // DESTINY 2 corner watermark (Bungie's remix policy covers this use), and a
+  // small distant figure (a silhouette dwarfed by a ruin strengthens the scale).
+  // Only a prominent foreground character disqualifies a record - with one
+  // owner-approved exception, the Golden Age plate below, where the figure is
+  // the point.
+
+  // The world as it was. The prologue opens here so the ninety seconds of ruin
+  // that follow have something to be the loss of, and so the Collapse lands on
+  // an audience that has seen what is being collapsed.
+  ownerSuppliedRecord({
+    referenceId: 'EARTH-GOLD',
+    id: 'destiny-concepts/earth-golden-age-city',
+    filename: 'earth-golden-age-city-sung-choi.jpg',
+    artist: 'Sung Choi',
+    artistCreditState: 'filename-asserted',
+    provenanceNote: 'Supplied by the owner as `sung-choi-guardian-day-sung-choi-1600px.jpg` and approved by name for the Golden Age beat. The filename asserts Sung Choi; no upstream page was verified for this copy.',
+    workTitle: 'Golden Age city under banners',
+    sourceWidth: 1600,
+    sourceHeight: 900,
+  }),
+
+  // The descent: a city under storm light, then what a city becomes when nobody
+  // comes back to it.
   ownerSuppliedRecord({
     referenceId: 'EARTH-1',
     id: 'destiny-concepts/earth-ruined-city-canyon',
@@ -217,17 +235,6 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
   }),
   ownerSuppliedRecord({
     referenceId: 'EARTH-2',
-    id: 'destiny-concepts/earth-drowned-city',
-    filename: 'earth-drowned-city-zombot-studio.jpg',
-    artist: 'Zombot Studio',
-    artistCreditState: 'filename-asserted',
-    provenanceNote: 'Supplied by the owner as `zombot-studio-downlox.jpg`. The filename asserts Zombot Studio; no upstream page was verified for this copy.',
-    workTitle: 'Drowned city behind dead trees',
-    sourceWidth: 1862,
-    sourceHeight: 1000,
-  }),
-  ownerSuppliedRecord({
-    referenceId: 'EARTH-3',
     id: 'destiny-concepts/earth-overgrown-city',
     filename: 'earth-overgrown-city-joseph-cross.jpg',
     artist: 'Joseph Cross',
@@ -238,7 +245,29 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
     sourceHeight: 987,
   }),
   ownerSuppliedRecord({
+    referenceId: 'EARTH-3',
+    id: 'destiny-concepts/earth-drowned-city',
+    filename: 'earth-drowned-city-zombot-studio.jpg',
+    artist: 'Zombot Studio',
+    artistCreditState: 'filename-asserted',
+    provenanceNote: 'Supplied by the owner as `zombot-studio-downlox.jpg`. The filename asserts Zombot Studio; no upstream page was verified for this copy.',
+    workTitle: 'Drowned city behind dead trees',
+    sourceWidth: 1862,
+    sourceHeight: 1000,
+  }),
+  ownerSuppliedRecord({
     referenceId: 'EARTH-4',
+    id: 'destiny-concepts/earth-storm-city',
+    filename: 'earth-storm-city.jpg',
+    artist: null,
+    artistCreditState: 'unattributed',
+    provenanceNote: 'Supplied by the owner as `EjCq1IT.jpeg`, an opaque filename with no recoverable source page. Artist unknown; not guessed.',
+    workTitle: 'Overgrown towers in a rainstorm',
+    sourceWidth: 1920,
+    sourceHeight: 1080,
+  }),
+  ownerSuppliedRecord({
+    referenceId: 'EARTH-5',
     id: 'destiny-concepts/earth-hydro-ruin',
     filename: 'earth-hydro-ruin.jpg',
     artist: null,
@@ -249,29 +278,7 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
     sourceHeight: 1080,
   }),
   ownerSuppliedRecord({
-    referenceId: 'EARTH-5',
-    id: 'destiny-concepts/earth-foundry-gate',
-    filename: 'earth-foundry-gate-sung-choi.jpg',
-    artist: 'Sung Choi',
-    artistCreditState: 'filename-asserted',
-    provenanceNote: 'Supplied by the owner as `sung-choi-foundry-gate-sung-choi-1920.jpg`. The filename asserts Sung Choi; no upstream page was verified for this copy.',
-    workTitle: 'Collapsed foundry hall in snow',
-    sourceWidth: 1920,
-    sourceHeight: 1080,
-  }),
-  ownerSuppliedRecord({
     referenceId: 'EARTH-6',
-    id: 'destiny-concepts/earth-scrapyard-dam',
-    filename: 'earth-scrapyard-dam.jpg',
-    artist: null,
-    artistCreditState: 'unattributed',
-    provenanceNote: 'Supplied by the owner as `s1JbhO9.jpeg`, an opaque filename with no recoverable source page. Artist unknown; not guessed.',
-    workTitle: 'Scrapyard beneath the dam wall',
-    sourceWidth: 1920,
-    sourceHeight: 1200,
-  }),
-  ownerSuppliedRecord({
-    referenceId: 'EARTH-7',
     id: 'destiny-concepts/earth-shuttle-monolith',
     filename: 'earth-shuttle-monolith.jpg',
     artist: null,
@@ -282,7 +289,7 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
     sourceHeight: 1068,
   }),
   ownerSuppliedRecord({
-    referenceId: 'EARTH-8',
+    referenceId: 'EARTH-7',
     id: 'destiny-concepts/earth-collapsed-arcology',
     filename: 'earth-collapsed-arcology-jesse-van-dijk.jpg',
     artist: 'Jesse van Dijk',
@@ -292,22 +299,24 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
     sourceWidth: 1920,
     sourceHeight: 1369,
   }),
-  creditedRecord({
-    referenceId: 'C9',
-    id: 'destiny-concepts/c9-mars-farm-collapse',
-    filename: 'mark-goldsworthy-markg-mars-farm-collapse-concept.jpg',
-    artist: 'Mark Goldsworthy',
-    workTitle: 'Mars Farm Collapse',
-    authoritativeSourceUrl: BUNGIE_ART_BLAST,
-    upstreamAssetUrl: 'https://cdnb.artstation.com/p/assets/images/images/012/963/499/4k/mark-goldsworthy-markg-mars-farm-collapse-concept.jpg',
-    sourceWidth: 2200,
-    sourceHeight: 1123,
+
+  // The invasion, under the line that names it. Ships are admitted here on owner
+  // instruction because the narration is already saying this out loud.
+  ownerSuppliedRecord({
+    referenceId: 'EARTH-8',
+    id: 'destiny-concepts/earth-invasion-city',
+    filename: 'earth-invasion-city-sung-choi.jpg',
+    artist: 'Sung Choi',
+    artistCreditState: 'filename-asserted',
+    provenanceNote: 'Supplied by the owner as `destiny-2-concept-art-sung-choi-ruined-city-wide-01.jpg`. The filename asserts Sung Choi; no upstream page was verified for this copy.',
+    workTitle: 'Ruined city wide, under descending craft',
+    sourceWidth: 1600,
+    sourceHeight: 681,
   }),
 
   // The aftermath. These two exist because three consecutive shots on the
   // Collapse night plate read as one still held for 27.75s - a stalled
-  // projector, not a held beat. They are the darkest devastation records in the
-  // set, so they follow the night fade without breaking its light.
+  // projector, not a held beat.
   ownerSuppliedRecord({
     referenceId: 'EARTH-9',
     id: 'destiny-concepts/earth-flooded-atrium',
@@ -332,10 +341,10 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
   }),
 
   // ---------------------------------------------------------------------
-  // Act III - the cold arrival. Europa is held back to the end of the piece
-  // on owner instruction (2026-08-10): "save europa for the end except for
-  // the bluefin title slide". These two records, and the title plate, are the
-  // only Europa in the prologue. Do not schedule either of them in Act II.
+  // The cold arrival. Europa is held to the end on owner instruction
+  // (2026-08-10): "save europa for the end except for the bluefin title slide".
+  // These two records, and the title plate, are the only Europa in the
+  // prologue. Do not schedule either of them earlier.
   creditedRecord({
     referenceId: 'C2',
     id: 'destiny-concepts/c2-underneath-the-ice-on-europa',
@@ -357,10 +366,6 @@ export const DIRECTORS_CUT_DESTINY_CONCEPTS: readonly DirectorsCutDestinyConcept
     workTitle: 'Europa environment',
     authoritativeSourceUrl: BUNGIE_PRESS_ROOM,
     upstreamAssetUrl: 'https://imgeucdn.gamespress.com/cdn/files/PremierPR/2020/06/09163147-741099bb-d13d-4d1a-bf66-a5f5300c3ed9/Destiny_2_Beyond_Light_Europa_Environment_01.jpg?otf=y&lightbox=y&sky=1b9ae393e24c13847cf692b20b8c587754b3b5106b459664b26043307b74c1c1',
-    // NOTE: this Bungie Press Room asset URL carries a signed/expiring query
-    // token (`otf`, `sky`). It is retrieval evidence for `retrievalDate`
-    // only, not a stable future download endpoint - do not expect this exact
-    // URL to keep resolving, and re-verify before relying on it again.
     sourceWidth: 1920,
     sourceHeight: 1080,
   }),

@@ -60,6 +60,7 @@ describe('director\'s cut Destiny concept-art registry', () => {
     // order of Act I, not bookkeeping. Earth devastation first, the Mars ruin
     // to close it out, then Europa as the cold arrival.
     expect(DIRECTORS_CUT_DESTINY_CONCEPTS.map(record => record.referenceId)).toEqual([
+      'EARTH-GOLD',
       'EARTH-1',
       'EARTH-2',
       'EARTH-3',
@@ -68,7 +69,6 @@ describe('director\'s cut Destiny concept-art registry', () => {
       'EARTH-6',
       'EARTH-7',
       'EARTH-8',
-      'C9',
       'EARTH-9',
       'EARTH-10',
       'C2',
@@ -168,7 +168,7 @@ describe('director\'s cut Destiny concept-art registry', () => {
 
   it('keeps gameplay and render picks out of the montage allowlist', () => {
     for (const record of DIRECTORS_CUT_DESTINY_CONCEPTS) {
-      expect(record.referenceId).toMatch(/^(E1|C\d+|EARTH-\d+)$/)
+      expect(record.referenceId).toMatch(/^(E1|C\d+|EARTH-(\d+|GOLD))$/)
       expect(record.referenceId).not.toMatch(/^[GR]/)
       expect(record.id).not.toMatch(/gameplay|render/i)
       expect(record.localPath).not.toMatch(/gameplay|render/i)
@@ -191,11 +191,20 @@ describe('director\'s cut Destiny concept-art registry', () => {
     }
   })
 
-  it('records the largest approved ArtStation /4k/ source geometry (2200px wide) for C9', () => {
-    const c9 = DIRECTORS_CUT_DESTINY_CONCEPTS.find(record => record.referenceId === 'C9')
+  it('retrieves every upstream-sourced record at a projector-worthy size', () => {
+    // This used to pin C9 and C7 to a literal 2200x1123 and 2200x1611 and to an
+    // ArtStation `/4k/` path. Both records have since been cut - C7 for showing
+    // the threat, C9 in the cityscape pass - and a test written against two
+    // specific ids protects nothing once they are gone. The rule underneath it
+    // is what mattered: anything pulled from a public page is pulled at the
+    // largest variant that page offers, because this is projected.
+    const upstream = DIRECTORS_CUT_DESTINY_CONCEPTS.filter(record => 'upstreamAssetUrl' in record)
 
-    expect(c9).toMatchObject({ sourceWidth: 2200, sourceHeight: 1123 })
-    expect(c9 && 'upstreamAssetUrl' in c9 ? c9.upstreamAssetUrl : '').toMatch(/\/4k\//)
+    expect(upstream.length).toBeGreaterThan(0)
+    for (const record of upstream) {
+      expect(record.sourceWidth, record.id).toBeGreaterThanOrEqual(1920)
+      expect(record.sourceHeight, record.id).toBeGreaterThanOrEqual(1000)
+    }
   })
 
   it('never readmits a record cut for showing the threat', () => {
@@ -211,6 +220,8 @@ describe('director\'s cut Destiny concept-art registry', () => {
       'destiny-concepts/c7-early-throne-world-citadel',
       'destiny-concepts/c4-cryovolcanoes',
       'destiny-concepts/c3-early-europa-concept',
+      'destiny-concepts/c9-mars-farm-collapse',
+      'destiny-concepts/c1-europa-landscape-v1',
     ]
 
     for (const id of cutForShowingTheThreat) {
