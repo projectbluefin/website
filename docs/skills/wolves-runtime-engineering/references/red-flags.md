@@ -71,12 +71,36 @@ Grouped roughly by surface: boundaries and scheduling, transport and buffers, im
   The blanket `@media (max-width: 640px) { .wolves-intro-overlay-text { display: none } }`
   silently blanked the entire Director narration; scope such rules with `:not()`
   and give the surviving surface its own type scale.
+- A new CSS rule at one-class specificity is placed earlier in the sheet than
+  the rule it must beat. Equal specificity resolves on source order, so the new
+  rule silently does nothing and no unit test can see it. Give the variant its
+  own higher-specificity selector and place it after the rules it overrides.
+- A rule inserted by a careless anchor match lands *inside* a
+  `@media (max-width: 640px)` block, where it does nothing at projector sizes
+  and corrupts the selector above it. When inserting by anchor, check the brace
+  context of the match, not just the match.
+- A caption is bound to the wrong reactive source. Text outlives its shot by a
+  fade, so a caption keyed to the scene cue takes its geometry from the
+  *previous* shot — every unit test green, the offset visible only laid out in
+  a browser. See
+  [`../../../reference/wolves-intro-and-overlay.md`](../../../reference/wolves-intro-and-overlay.md).
+  Anything about layout, cascade, or paint needs a browser assertion; a green
+  unit suite says nothing about the screen.
 - A Director prologue cue uses the shared 7.8s somber fade. That consumes most
   of a short musical window and makes a seek look blank; the Director's Cut has
   its own short reveal followed by a real reading hold.
 - A browser seek probe declares success because the outgoing image stayed
   stable twice. Wait for the transport to publish the target time **and** for
   the intended image to decode and take the active layer.
+- A probe of a cross-fading surface settles on one condition. Settle on **two**
+  independent ones before measuring: the caption is the intended cue's text
+  **and** the decoded image is the intended record's (compare
+  `naturalWidth`/`naturalHeight` against the ledger's recorded geometry).
+  Waiting on either alone samples a crossfade in progress, where the outgoing
+  shot's words sit over the incoming shot's picture — and the same probe has
+  produced both a false positive (a collision reported that did not exist) and
+  a false negative (a real one hidden), depending on which single condition
+  was used.
 - A closing animation is computed per clock tick. The transport stops publishing
   time in the final `PRE_END_THRESHOLD_S` of a segment and a YouTube clock
   plateaus before that anyway, so `(time - start) / span` freezes the show
@@ -189,6 +213,15 @@ Grouped roughly by surface: boundaries and scheduling, transport and buffers, im
 - A test double for a player exposes `getCurrentTime()` that never advances, or a
   `pauseVideo()`/`playVideo()` that does not emit the state change the real
   IFrame API emits.
+- A test carries a typed-in number derived from the current source media — an
+  audible-second bound, a seek target, a duration. Swapping the prologue's
+  score (325.6s to 134.65s) broke assertions that were never wrong about the
+  code: a bound of 321.34 and seek targets of 140 and 200 were valid mid-piece
+  times under the old track and past the end of the new one. Derive
+  expectations from the exported constants so the media can change underneath
+  them — see "Derive harness expectations from the live modules" in
+  [`../../../reference/wolves-test-harnesses.md`](../../../reference/wolves-test-harnesses.md).
+  This failure mode has bitten this repo at least three times.
 - Buffer bookkeeping (a prewarm park's pause and seek) is published to the store
   as show transport state.
 - Playlist metadata is indexed by `segmentIndex`/`trackIndex` instead of
@@ -335,4 +368,14 @@ Grouped roughly by surface: boundaries and scheduling, transport and buffers, im
   `presentationProfile` selects the authored Wolves intro, timeline, slide
   schedule and finale — the generator never writes it, so anything but
   absent/`'generic'` is refused at the boundary rather than trusted.
+- A control added to the frozen presentation is wired as a dependency rather
+  than an affordance. The show runs unattended to a room with no input device,
+  so the default must be a separate exported constant (not "the first entry in
+  the list"), an unknown value must fall back to it, and a test must prove an
+  untouched run completes. See `PROLOGUE_MOODS` in
+  [`../../../reference/wolves-intro-and-overlay.md`](../../../reference/wolves-intro-and-overlay.md).
+- A `<select>` is rendered inside the overlay root. `handleOverlayClick`
+  ignores `button, a, input, [role="button"]` and **not** `select`, so opening
+  a picker inside the overlay advances the cue every time. Keep controls
+  outside the overlay root or extend the guard.
 

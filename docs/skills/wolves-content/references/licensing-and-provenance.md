@@ -50,4 +50,17 @@ again once it expires; the ledger's inline comment on that record says so.
 Don't "fix" it by swapping in a different, unverified URL just to make it look
 durable — record the instability instead.
 
+## Record a provenance gap; never fill it with a plausible URL
+
+When art comes from a local collection with no recoverable source page, the
+honest record is the gap. Inventing a plausible upstream URL satisfies the
+URL-shape tests and lies in the ledger — the next agent reads a fabricated
+link as verified evidence and builds on it.
+
+The artwork registry models this directly: `provenance: 'owner-supplied-local'`
+with no `upstreamAssetUrl`, plus an `artistCreditState` of
+`'filename-asserted'` when the supplied filename names an artist or
+`'unattributed'` when it does not. A claim is exactly as strong as its
+evidence; a record that cannot name its source says so.
+
 

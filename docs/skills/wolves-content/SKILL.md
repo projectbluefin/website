@@ -68,6 +68,9 @@ on screen at 4:41" are different questions; the tool answers the second.
 | "This overlay text is obvious enough to paraphrase." | Wolves content surfaces use exact supplied wording only; changing even a short overlay changes authored content. |
 | "It is only intro data, so I don't need to update tests." | Intro segment ids and timestamps are contract data for store and overlay tests; pin them when they change. |
 | "I checked the seconds either side, so the timestamp is fine." | A cue can sit entirely between two probes. Resolve it with the lookup tool and quote the cue text. |
+| "The vision model scored the pool, so its top picks are vetted." | Roughly one in five model top picks mislabels what is literally in the frame; use the scores to narrow the pool, then confirm every finalist by eye before it enters a registry. See [`references/galleries-and-artwork.md`](references/galleries-and-artwork.md). |
+| "The rejection criteria are obvious, so the scoring pass can start." | A wrong disqualifying criterion silently discards the best material and the scores look plausible either way; confirm the criteria with the owner before an expensive pass. |
+| "This asset has no source page, so a plausible upstream URL will do." | A fabricated link is read as verified evidence by the next agent; record the gap as `provenance: 'owner-supplied-local'`. See [`references/licensing-and-provenance.md`](references/licensing-and-provenance.md). |
 
 ## Detail
 
@@ -76,8 +79,8 @@ Load only the reference the change needs.
 | Reference | Covers |
 |---|---|
 | [`references/projection-typography.md`](references/projection-typography.md) | Paging at thoughts, measure caps, photo fitting, overlay contrast, readability inside a locked range. |
-| [`references/galleries-and-artwork.md`](references/galleries-and-artwork.md) | Gallery pools, photo sourcing, captions, hero labels, wallpaper numbering. |
-| [`references/licensing-and-provenance.md`](references/licensing-and-provenance.md) | Third-party asset rights, including the Bungie fan-content guidelines. |
+| [`references/galleries-and-artwork.md`](references/galleries-and-artwork.md) | Gallery pools, photo sourcing and model-assisted curation, captions, hero labels, wallpaper numbering. |
+| [`references/licensing-and-provenance.md`](references/licensing-and-provenance.md) | Third-party asset rights, including the Bungie fan-content guidelines, and recording provenance gaps honestly. |
 | [`references/video-and-scene-work.md`](references/video-and-scene-work.md) | Source clips, keep ranges, encoders, reusable silent scene masters. |
 | [`references/directors-cut-intro.md`](references/directors-cut-intro.md) | Composing either intro variant, and keeping content out of the standard show. |
 
