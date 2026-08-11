@@ -61,6 +61,11 @@ an unidentified player request.
   state backstop.
 - "The standard profile test covers the Director's Cut." Profile-specific data
   must be wired through the live component path and exercised in Chromium.
+- "The unit suite is green, so the screen is right." A cascade rule that lost
+  on source order, a caption bound to the wrong reactive source, and a rule
+  stranded inside a `@media (max-width: 640px)` block all shipped under a
+  fully green suite; layout, cascade, and paint claims need a browser
+  assertion.
 
 ## Red Flags
 
@@ -82,6 +87,13 @@ this show the most:
 - A startup or readiness await has no timeout, or a bounded await sits inside an
   unbounded one.
 - A browser probe declares success because the outgoing image stayed stable.
+- A browser probe of a cross-fading surface settles on one condition. Settle on
+  two — the intended cue's caption **and** the intended record's decoded image —
+  or the same probe can invent a collision and hide a real one in one run.
+- A new control is wired as a dependency instead of an affordance: the default
+  is "the first entry in the list" rather than a separate exported constant,
+  with no fallback for an unknown value and no test that an untouched run
+  completes.
 
 ## Detail
 

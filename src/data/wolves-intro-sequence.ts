@@ -196,6 +196,16 @@ export interface IntroTextSegment extends IntroSegmentBase {
   /** Optional background-only YouTube embed (e.g. a music track) with no visible player. */
   readonly audioYoutubeVideoId?: string
   /**
+   * Seconds into the audio source where playback should begin.
+   *
+   * A segment's window is its own; a track is only borrowed. When a piece runs
+   * far longer than the segment it scores, this picks which part of it the
+   * audience actually hears. The cue clock reads the audio player's real
+   * `getCurrentTime()`, so anything comparing cue times against it has to
+   * subtract this offset or the segment starts mid-show.
+   */
+  readonly audioStartSeconds?: number
+  /**
    * Ramp the background audio's volume to zero over this many seconds leading into the
    * segment's cutoff, so the excerpt ends on a musical decay instead of a hard cut.
    */
@@ -234,6 +244,9 @@ export interface IntroStatusPayload {
   readonly voiceOverEnabled?: boolean
   readonly showCaptionToggle?: boolean
   readonly captionsEnabled?: boolean
+  /** Selectable scores for the current segment; fewer than two means no picker. */
+  readonly moods?: readonly { readonly id: string, readonly label: string }[]
+  readonly activeMoodId?: string
 }
 
 export function createIntroSequenceState(): IntroSequenceState {

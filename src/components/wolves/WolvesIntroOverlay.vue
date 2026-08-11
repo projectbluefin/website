@@ -9,11 +9,14 @@ import { getActiveComicHeroShot, wolvesComicHeroShots } from '@/data/wolves-comi
 import { dinosaurSpecies } from '@/data/wolves-dinosaur-species'
 import { DIRECTORS_CUT_DESTINY_CONCEPTS } from '@/data/wolves-directors-cut-artwork'
 import {
+  DEFAULT_PROLOGUE_MOOD_ID,
   DIRECTORS_CUT_HANDOFF_HOLD_MAX_MS,
   DIRECTORS_CUT_IKORA_PREWARM_SECOND,
   DIRECTORS_CUT_PROLOGUE_SEGMENT_ID,
   DIRECTORS_CUT_SCENE_CROSSFADE_SECONDS,
   DIRECTORS_CUT_TEXT_FADE_SECONDS,
+  PROLOGUE_MOODS,
+  resolvePrologueMood,
 } from '@/data/wolves-directors-cut-intro'
 import { wolvesGuardianDinosaurBonds } from '@/data/wolves-guardian-dinosaur-bonds'
 import {
@@ -136,6 +139,19 @@ const lastDirectorsCutCue = ref<IntroOverlayTextCue | undefined>()
 /** Whether the persistent player host is mounted: a video is on stage, or one is warming. */
 const prewarmHostRequested = ref(false)
 const isDirectorsCutPrologue = computed(() => currentSegment.value?.id === DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
+/**
+ * Which score the prologue is playing.
+ *
+ * Local to the overlay on purpose. The cut - its window, its marks, every cue -
+ * is authored against the default and does not change with the mood, so
+ * swapping one does not rebuild the sequence or disturb the store's timeline;
+ * it reloads the hidden audio embed and nothing else.
+ *
+ * It is an affordance, never a dependency: a run where nobody touches the
+ * transport plays `DEFAULT_PROLOGUE_MOOD_ID` from end to end, which is the
+ * guarantee the whole presentation is built on.
+ */
+const activeMoodId = ref<string>(DEFAULT_PROLOGUE_MOOD_ID)
 /**
  * Whatever the background layer should be showing. Normally the active cue; during a warm
  * handoff, the prologue's last painting, which outlives its own segment by design.
@@ -921,7 +937,7 @@ function releaseAudioClock() {
   textClockOriginMs = performance.now() - currentTime.value * 1000
 }
 
-async function loadAudioTrack(youtubeVideoId: string | undefined, token: number) {
+async function loadAudioTrack(youtubeVideoId: string | undefined, token: number, startSeconds = 0) {
   destroyAudioPlayer()
   if (!youtubeVideoId) {
     return
@@ -949,7 +965,12 @@ async function loadAudioTrack(youtubeVideoId: string | undefined, token: number)
     width: '1',
     height: '1',
     videoId: youtubeVideoId,
-    playerVars: getChromeFreeYoutubePlayerVars({ autoplay: 1 }),
+    // A mood longer than the show is entered at its offset, the same way the
+    // video segments skip a rating card, using YouTube's own `start` param.
+    playerVars: getChromeFreeYoutubePlayerVars({
+      autoplay: 1,
+      ...(startSeconds ? { start: Math.round(startSeconds) } : {}),
+    }),
     events: {
       // The background embed's own end state is the scored card's completion backstop: a real
       // player's clock routinely plateaus short of the duration it reports, so waiting for
@@ -978,7 +999,7 @@ function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
   currentTime.value = 0
   activeSegmentDuration.value = segment.duration
   textClockOriginMs = performance.now()
-  void loadAudioTrack(segment.audioYoutubeVideoId, token)
+  void loadAudioTrack(segment.audioYoutubeVideoId, token, segment.audioStartSeconds ?? 0)
 
   textTimer = setInterval(() => {
     const now = performance.now()
@@ -992,8 +1013,13 @@ function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
     // Ad resilience: when a background audio embed exists, cues key off the
     // audio's real getCurrentTime(). Pre-roll ads hold it at 0 and mid-roll ads
     // freeze it, so the cold open waits for the music instead of desyncing.
+    // A mood entered part-way through its own recording reports the *track's*
+    // time, not the show's, so the offset comes back off here. Without this the
+    // segment would open on whatever cue happens to sit at the offset and run
+    // out early.
+    const audioOffset = segment.audioStartSeconds ?? 0
     const audioClock = audioPlayer && typeof audioPlayer.getCurrentTime === 'function'
-      ? (audioPlayer.getCurrentTime() ?? 0)
+      ? Math.max(0, (audioPlayer.getCurrentTime() ?? 0) - audioOffset)
       : null
     // A released clock is watched, not abandoned. The moment the player's own clock moves again
     // — an ad finished, a stalled stream recovered — the card snaps back to the music, which is
@@ -1484,6 +1510,25 @@ function handlePrevious() {
   sequenceState.value = previousIntroSequence(sequenceState.value)
 }
 
+function setPrologueMood(id: string) {
+  const segment = currentSegment.value
+  if (!segment || !isTextSegment(segment) || !isDirectorsCutPrologue.value) {
+    return
+  }
+
+  const mood = resolvePrologueMood(id)
+  if (mood.id === activeMoodId.value) {
+    return
+  }
+
+  activeMoodId.value = mood.id
+  // Enter the new track where the show already is, not at its beginning: the
+  // audience is mid-prologue and the cut keeps running underneath. Same
+  // contract as the Destiny segment's voice-over switch, which preserves time
+  // across two sources.
+  void loadAudioTrack(mood.youtubeVideoId, loadToken, mood.offsetSeconds + currentTime.value)
+}
+
 function setVoiceOverEnabled(enabled: boolean) {
   const segment = currentSegment.value
   if (!segment || !isVideoSegment(segment) || !canToggleDestinyVoiceOver.value) {
@@ -1566,6 +1611,8 @@ watchEffect(() => {
     mediaTitle: activeMediaTitle.value,
     showVoiceOverToggle: canToggleDestinyVoiceOver.value,
     voiceOverEnabled: canToggleDestinyVoiceOver.value ? destinyVoiceOverEnabled.value : false,
+    moods: isDirectorsCutPrologue.value ? PROLOGUE_MOODS.map(mood => ({ id: mood.id, label: mood.label })) : [],
+    activeMoodId: activeMoodId.value,
     showCaptionToggle: canToggleDestinyCaptions.value,
     captionsEnabled: canToggleDestinyCaptions.value ? destinyCaptionsEnabled.value : false,
   })
@@ -1590,6 +1637,7 @@ watchEffect(() => {
 
 defineExpose({
   next: handleNext,
+  setPrologueMood,
   previous: handlePrevious,
   setVoiceOverEnabled,
   setCaptionsEnabled,

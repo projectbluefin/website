@@ -115,6 +115,37 @@ the filename stem and the title, and key the on-screen credit on the resulting
 `kind`.
 
 
+## A vision model narrows the pool; a human confirms every finalist
+
+Scoring artwork with a vision model is a filter, not a verdict. Across the two
+curation passes run for the prologue montage (198 images, then 203 more),
+roughly one top pick in five was wrong about what was literally in the frame —
+an interior control room scored as "a colossal crashed freighter", the Traveler
+over the Last City scored as a "flooded industrial atrium beneath a vast
+superstructure", an animation study sheet scored as a "snowbound gantry and
+rusted machinery". The scores still looked plausible; that is what makes the
+failure dangerous. Use the model to cut hundreds of candidates down to a
+shortlist, then confirm every finalist by eye before it enters a registry. A
+model's label is never the evidence.
+
+Two setup rules decide whether a scoring pass is worth running at all:
+
+- **Name project-specific exclusions literally.** A generic "no aliens" prompt
+  does not cover property iconography: both passes ranked Destiny's Darkness
+  Pyramids in their top picks, because a pyramid is not a creature. Enumerate
+  the banned subjects by name in the prompt, and even then have a human who
+  knows the property re-check the survivors.
+- **Confirm the disqualifying criteria with the owner before the pass.** The
+  first pass rejected nearly all the best material on two rules that were wrong
+  for this project: burned-in publisher watermarks (permitted here under the
+  approved fan-content basis — see
+  [`licensing-and-provenance.md`](licensing-and-provenance.md)) and any visible
+  armed figure (desirable when small and distant, because it gives scale). A
+  wrong criterion silently discards the strongest candidates, and the scores
+  look fine either way — so the check has to happen before the expensive pass,
+  not after.
+
+
 ## Gallery captions are derived, never invented, and may be withheld
 
 Both feeds ship filenames rather than captions: photographer exports

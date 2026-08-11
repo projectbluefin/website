@@ -83,6 +83,17 @@
       "videoTitle": "Destiny 2: Beyond Light – Warlock Shadebinder Gameplay Trailer",
       "sceneTime": 18,
       "linkTime": 12
+    },
+    {
+      "slug": "krook",
+      "label": "LOREM IPSUM // GUARDIAN",
+      "class": "Lorem Ipsum Dolor",
+      "name": "Daniel Krook",
+      "title": "Lorem ipsum dolor sit amet",
+      "videoId": "TODO",
+      "videoTitle": "TODO — Krook has no on-screen appearance yet",
+      "sceneTime": 0,
+      "linkTime": 0
     }
   ]
 }

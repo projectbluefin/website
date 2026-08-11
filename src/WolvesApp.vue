@@ -100,6 +100,8 @@ const INTRO_HANDOFF_FADE_MS = 400
 const intro = ref<InstanceType<typeof WolvesIntroOverlay> | null>(null)
 const introShowVoiceOverToggle = ref(false)
 const introVoiceOverEnabled = ref(false)
+const introMoods = ref<readonly { id: string, label: string }[]>([])
+const introActiveMoodId = ref<string | undefined>()
 const introNameplateVisible = ref(true)
 const introNameplateGlitch = ref(false)
 const introSegmentIndexById = computed(() => new Map(introVideos.value.map((segment, index) => [segment.id, index])))
@@ -233,6 +235,8 @@ function handleIntroStatus(payload: IntroStatusPayload) {
   introNameplateGlitch.value = payload.nameplateGlitch ?? false
   introShowVoiceOverToggle.value = payload.showVoiceOverToggle ?? false
   introVoiceOverEnabled.value = payload.voiceOverEnabled ?? false
+  introMoods.value = payload.moods ?? []
+  introActiveMoodId.value = payload.activeMoodId
   store.syncIntroStatus(normalizeIntroStatus(payload))
   store.setPlaying(!payload.paused)
 }
@@ -382,8 +386,11 @@ onBeforeUnmount(() => {
           :show-voice-over-toggle="introShowVoiceOverToggle"
           :voice-over-enabled="introVoiceOverEnabled"
           voice-over-label="Ikora voice over"
+          :moods="introMoods"
+          :active-mood-id="introActiveMoodId"
           @toggle-play="intro?.toggle()"
           @toggle-voice-over="(enabled: boolean) => intro?.setVoiceOverEnabled(enabled)"
+          @select-mood="(id: string) => intro?.setPrologueMood(id)"
           @skip="handleIntroSkip"
           @seek="handleSegmentSeek"
         />

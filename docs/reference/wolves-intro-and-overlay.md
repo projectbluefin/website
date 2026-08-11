@@ -218,6 +218,42 @@ Two consequences worth knowing before touching this file:
   seek targets in `wolvesIntroOverlay.test.ts` — both were valid mid-piece times
   under Gayane and both are past the end of this track.
 
+## The score is swappable; the cut is not
+
+`PROLOGUE_MOODS` lets the transport swap the prologue's music. A mood is an
+audio substitution **under** the authored grid, never a re-cut: the segment's
+134.65 s window, its marks and every cue are identical whichever score is
+playing. `buildDirectorsCutPrologueSegment(moodId)` changes exactly one field.
+
+Consequences worth knowing before adding one:
+
+- **Only the default's cuts land on its own musical events.** The grid was
+  measured from *Excerpt from The Tribulation*; anything else is phrased against
+  a grid built for a different piece, so some moods fit better than others. That
+  is the accepted cost of having a picker, not a defect to file.
+- **`DEFAULT_PROLOGUE_MOOD_ID` is a separate exported constant, not "the first
+  entry".** The presentation runs unattended to a room with no input device, so
+  the picker is an *affordance*: an untouched run must play the mood the cut was
+  actually built for. There is a test for exactly that, and for an unknown id
+  falling back to the same place.
+- **A mood needs enough track left after its offset to cover the whole window,**
+  or it falls silent before the title card. `trackSeconds` exists to make that
+  assertable rather than assumed.
+- **`audioStartSeconds` is subtracted from the cue clock.** Cues key off the
+  audio player's real `getCurrentTime()` for ad resilience, and a mood entered
+  part-way through its recording reports the *track's* time, not the show's.
+  Without the subtraction the segment would open on whichever cue sits at the
+  offset and run out early.
+- **Switching mid-show preserves the show's place** by loading at
+  `offset + currentTime`, the same contract the Destiny segment's voice-over
+  switch honours across two sources.
+
+The picker is a real `<select>` in the transport, which matters for a reason
+beyond taste: `handleOverlayClick` ignores `button, a, input, [role="button"]`
+and **not** `select`. `MediaWidget` mounts outside the overlay root so nothing
+is wrong today, but a picker rendered inside the overlay would advance the cue
+every time it was opened. Add `select` to that guard if it ever moves.
+
 ## The montage never shows the threat
 
 The concept-art registry is an allowlist, and since 2026-08-10 it is an
