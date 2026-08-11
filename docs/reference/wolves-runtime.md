@@ -24,6 +24,14 @@ prose, data values, registered records, and approved assets within existing
 structures. Do not edit Vue templates, styles, layout, controls, animation,
 player synchronization, or generated files for content work.
 
+## Which video is which
+
+"The first video" is the prologue. The full running order, the branch that owns
+each video, and the one-command timestamp lookup are in
+[`wolves-video-order.md`](wolves-video-order.md). Resolve any ordinal or
+timestamp there **before** opening a file — auditing the wrong artifact is the
+single most repeated failure on this route.
+
 ## Runtime owners
 
 - Entry: `wolves/index.html`

@@ -353,6 +353,28 @@ stale unnoticed. All of them take `WOLVES_BASE_URL` (default
 | `wolves-directors-cut-prologue.mjs` | Director's Cut scored prologue: every painting framed whole at source geometry, full brightness plus scrim, the reading hold clearing while its shot runs, the warm-silent-promoted Ikora handoff, and the narration surviving a 390px viewport. |
 | `navbar-visual.mjs` | Main-site navbar, not Wolves. |
 
+## Answering "what is on screen at m:ss" without a browser
+
+The harnesses above seek and screenshot. That is the right tool for *how it
+looks* and the wrong one for *what is scheduled*: a probe only sees the seconds
+it was told to visit, and a timestamp the owner reported can sit in the gap
+between two of them. That has happened — 263s, 266s and 320s were captured while
+the 281s cue under discussion never rendered at all.
+
+`scripts/wolves-cue-at.mjs` answers the scheduling question directly, with no
+browser and no seek:
+
+```bash
+node scripts/wolves-cue-at.mjs 4:41        # defaults to the prologue
+node scripts/wolves-cue-at.mjs prologue --all
+```
+
+It loads the authored modules through Vite's `ssrLoadModule`, so aliases and
+TypeScript resolve exactly as the app resolves them and the answer cannot drift
+from the show. Use it to find the cue, then use a harness or Chromium to judge
+how that cue reads. Registration for further videos is the `VIDEOS` table in the
+script.
+
 `tests/wolves-intro-silence.mjs` covers the other half of that: the cinematic
 buffers are prewarmed *during* the intro, so it watches them through that window
 and fails if either becomes audible. It reads `__wolvesDurations.buffers()`, which
