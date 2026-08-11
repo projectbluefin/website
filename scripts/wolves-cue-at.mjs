@@ -17,20 +17,9 @@
 
 import { fileURLToPath } from 'node:url'
 import { createServer } from 'vite'
+import { isKnownVideo, knownVideoNames, resolveVideo } from './wolves-videos.mjs'
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
-
-/** Ordinal running order of the show's videos. Keep in step with docs/reference/wolves-video-order.md. */
-const VIDEOS = {
-  prologue: {
-    ordinal: 1,
-    title: 'The Gardener and the Winnower (scored Gayane prologue)',
-    load: async loadModule => (await loadModule('/src/data/wolves-directors-cut-intro.ts'))
-      .buildDirectorsCutPrologueSegment(),
-  },
-}
-
-const ALIASES = { 1: 'prologue', first: 'prologue', gardener: 'prologue', winnower: 'prologue' }
 
 /** Accept `281`, `4:41`, or `4m41s`. Timestamps are how the owner reports defects. */
 function parseTimestamp(value) {
@@ -68,7 +57,7 @@ function describeCue(cue, at) {
     emphasis: cue.emphasis ?? 'normal',
     position: cue.textPosition ?? 'default',
     image: cue.backgroundImage ?? (cue.backgroundCrossfade ? '(crossfade)' : '(none)'),
-    textUp: at == null ? null : at < holdEnd,
+    textUp: at == null || !cue.text ? null : at < holdEnd,
     holdEnds: cue.textHoldSeconds != null ? formatTimestamp(holdEnd) : '(holds the shot)',
   }
 }
@@ -91,20 +80,25 @@ async function main() {
   const args = process.argv.slice(2)
   if (args.length === 0 || args.includes('--help')) {
     console.info('usage: node scripts/wolves-cue-at.mjs [video] <m:ss | seconds | --all>')
-    console.info(`videos: ${Object.keys(VIDEOS).join(', ')} (default: prologue)`)
+    console.info(`videos: ${knownVideoNames()} (default: prologue)`)
     process.exit(args.length === 0 ? 1 : 0)
   }
 
-  const named = args.find(arg => !arg.startsWith('-') && Number.isNaN(parseTimestamp(arg)))
-  const key = ALIASES[named] ?? named ?? 'prologue'
-  const video = VIDEOS[key]
+  const positional = args.filter(arg => !arg.startsWith('-'))
+
+  // Resolve the video before reading anything as a timestamp: `1` is both a valid
+  // ordinal for the prologue and a valid timestamp, and parsing first makes the
+  // ordinal unreachable.
+  const named = positional.find(arg => isKnownVideo(arg))
+    ?? positional.find(arg => Number.isNaN(parseTimestamp(arg)))
+  const { key, video } = resolveVideo(named)
   if (!video) {
-    console.error(`unknown video "${named}". known: ${Object.keys(VIDEOS).join(', ')}`)
+    console.error(`unknown video "${named}". known: ${knownVideoNames()}`)
     process.exit(1)
   }
 
   const wantsAll = args.includes('--all')
-  const stamp = args.find(arg => !arg.startsWith('-') && !Number.isNaN(parseTimestamp(arg)))
+  const stamp = positional.find(arg => arg !== named && !Number.isNaN(parseTimestamp(arg)))
   if (!wantsAll && stamp == null) {
     console.error('give a timestamp (4:41 or 281) or --all')
     process.exit(1)
@@ -127,7 +121,20 @@ async function main() {
     const cue = cues.find(candidate => at >= candidate.start && at < candidate.end)
     console.info(`at ${formatTimestamp(at)} (${at}s):\n`)
     if (!cue) {
-      console.info('  nothing scheduled — the timestamp is past the end of this video.\n')
+      // Say which kind of gap this is. "Past the end" for a timestamp that falls before
+      // the first shot, or inside a hole in the grid, sends the reader looking for a
+      // missing cue at the wrong end of the video.
+      const first = cues[0]
+      const last = cues[cues.length - 1]
+      if (first && at < first.start) {
+        console.info(`  nothing scheduled — the first shot starts at ${formatTimestamp(first.start)}.\n`)
+      }
+      else if (last && at >= last.end) {
+        console.info(`  nothing scheduled — the last shot ends at ${formatTimestamp(last.end)}.\n`)
+      }
+      else {
+        console.info('  nothing scheduled — the timestamp falls in a gap between shots.\n')
+      }
       return
     }
     print(cue, at)

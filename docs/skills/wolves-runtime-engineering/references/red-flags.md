@@ -113,6 +113,21 @@ Grouped roughly by surface: boundaries and scheduling, transport and buffers, im
 - A base `opacity` below 1 on the painting layer. It reads as "dimming" but it
   is compositing against the black overlay beneath, and any shot whose own
   animation does not override it is silently the haziest frame in the show.
+- A probe settles on its conditions and then measures in a *second* call. Against
+  a live player the show clock keeps running, so the frame measured is not the
+  frame that satisfied the wait — a correct cut reported the wrong plate on two
+  shots that way. Return the measurements *from* the settle predicate, so the
+  frame checked is the frame that settled. `scripts/wolves-frame-audit.mjs` does
+  this.
+- A probe treats a wordless shot as a shot with no text on screen. A cue's words
+  outlive its shot by a fade, so the previous line is still clearing at the start
+  of the next one; requiring an empty caption stalls past the end of a short
+  window and measures the following shot. Require the outgoing text to be gone
+  **or visibly clearing**, not instantly absent.
+- A browser probe counts every failed request as a defect. The embedded player
+  beats its own telemetry endpoints constantly and they fail for reasons that
+  have nothing to do with the show; scope the check to the app's own origin or
+  the real 404 drowns.
 - A closing animation is computed per clock tick. The transport stops publishing
   time in the final `PRE_END_THRESHOLD_S` of a segment and a YouTube clock
   plateaus before that anyway, so `(time - start) / span` freezes the show
