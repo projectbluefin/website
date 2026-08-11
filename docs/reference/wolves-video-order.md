@@ -14,7 +14,7 @@ say in your report which file and which timestamp you inspected.**
 | 1 | **Prologue** — The Gardener and the Winnower | Scored narration over the approved Earth-devastation montage, ending on the Collapse, the Europa arrival and the title card. Silent narration, no dialogue. Recut 2026-08-10: the track is now *Excerpt from The Tribulation* (134.65 s, was the 325.6 s Gayane Adagio) and it opens on an image, not on black. | `src/data/wolves-directors-cut-intro.ts` (`buildDirectorsCutPrologueSegment()`) | `/wolves/` → the **Director's Cut** button |
 | 2 | **Destiny** | The Ikora-voiced Destiny trailer the prologue hands off to. | `src/data/wolves-directors-cut-intro.ts` (`buildDirectorsCutDestinySegment()`) | continues from video 1 |
 | 3 | **Wolves** — "7 Days to the Wolves" | The comic reader, the lore column and the thesis overlay, on the Nightwish track. Show Track 1; segment index 0. | `src/data/wolves-track-zero-*.ts`, `src/data/wolves-narrative-timeline.ts` | continues from video 2 |
-| 4 | *(in review)* | A video the owner is opening a PR for as of 2026-08-10. Fill this row in when it lands rather than renumbering around it. | — | — |
+| 4 | **Europa Intro** | A 95s interlude between Track 0 and Ghosts, published as a single upload because the finished film is a twelve-span edit across three sources that no start/end trim reproduces. Hits the instant Track 0's finale reaches black, with `crossfadeMs: 0` — the piece opens on its own fade up, so crossfading would dissolve one black frame into another and read as a stall. Deliberately **not** a member of `CINEMATIC_SEGMENTS`: that list is the authored seven-part soundtrack the standard show plays and every index into it is load-bearing. | `src/config/wolves-cinematic.ts` (`DIRECTORS_CUT_EUROPA_INTRO_SEGMENT`) | continues from video 3 |
 | 5 | **Ghosts In The Mist** | First of the later authored tracks; opens on the Jorge Castro hero plate and its 48.4s quote sequence. Segment index 1. | `src/config/wolves-cinematic.ts` | continues from video 4 |
 | 6+ | The rest | Tracks 3–7 in `CINEMATIC_SEGMENTS` order, on the curated Flickr gallery. | `src/config/wolves-cinematic.ts` | continue in order |
 
@@ -24,6 +24,8 @@ not line up:
 
 - Video 1 and 2 are the Director's Cut intro; neither is a "track".
 - Video 3 is show Track 1 and segment index 0.
+- Video 4 is the Europa intro, which is a Director's Cut segment with **no**
+  index into `CINEMATIC_SEGMENTS` at all.
 - Video 5 is show Track 2 and segment index 1.
 
 Say which scheme you mean every time a number could be read either way.
