@@ -117,8 +117,10 @@ Grouped roughly by surface: boundaries and scheduling, transport and buffers, im
   a live player the show clock keeps running, so the frame measured is not the
   frame that satisfied the wait — a correct cut reported the wrong plate on two
   shots that way. Return the measurements *from* the settle predicate, so the
-  frame checked is the frame that settled. `scripts/wolves-frame-audit.mjs` does
-  this.
+  frame checked is the frame that settled — `page.waitForFunction` resolves to a
+  `JSHandle` of whatever truthy value the predicate returned, so read it with
+  `.jsonValue()` (`source: /microsoft/playwright`).
+  `scripts/wolves-frame-audit.mjs` does this.
 - A probe treats a wordless shot as a shot with no text on screen. A cue's words
   outlive its shot by a fade, so the previous line is still clearing at the start
   of the next one; requiring an empty caption stalls past the end of a short

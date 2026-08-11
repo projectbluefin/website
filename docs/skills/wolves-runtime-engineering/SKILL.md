@@ -6,6 +6,7 @@ metadata:
     - https://developer.mozilla.org/en-US/docs/Web/CSS/text-wrap (text-wrap balance six-line cap)
   context7-sources:
     - /websites/developers_google_youtube
+    - /microsoft/playwright (waitForFunction resolves to a JSHandle of the truthy value; read with jsonValue)
 ---
 
 # Wolves runtime engineering
