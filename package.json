@@ -18,7 +18,9 @@
     "update:back-catalogue": "node scripts/update-back-catalogue.js",
     "record:wolves": "node record-wolves.cjs",
     "generate:wolves-qrs": "node scripts/generate-qrs.js",
-    "check:docs": "node scripts/check-docs.mjs"
+    "check:docs": "node scripts/check-docs.mjs",
+    "check:git-hygiene": "node scripts/check-git-hygiene.mjs",
+    "test:git-hygiene": "node scripts/check-git-hygiene.mjs --self-test"
   },
   "dependencies": {
     "@fontsource/michroma": "^5.2.8",

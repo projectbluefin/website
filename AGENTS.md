@@ -145,6 +145,13 @@ handoff artifacts. Do not write session artifacts to `/tmp`.
   timeline, or generated-data references.
 - Stage explicit paths only.
 - Never use `git add .` or `git add -A`.
+- Never reuse a merged or closed PR branch for new work. Move preserved edits
+  to a fresh branch first, then remove the old branch and worktree.
+- A linked worktree must have dirty work or an open PR. A clean worktree with
+  no open PR is stale even when its branch still exists.
+- After every merge and before every handoff, remove the completed worktree and
+  branch, run `git worktree prune`, then run `npm run check:git-hygiene`. A
+  failure blocks completion; do not dismiss it as local housekeeping.
 - Do not use destructive reset or restore commands. To resync local `main`
   after a squash merge — which always diverges, because the squash is not your
   commits — use `git reset --keep upstream/main`. It aborts rather than

@@ -67,6 +67,20 @@ runtime, or hands work to another agent.
    no page errors or failed module requests; a successful Vite build is not
    sufficient.
 
+9. **Close the git session.** A squash merge does not make the feature branch
+   an ancestor of `main`, so `git branch --merged` cannot identify completed
+   PR branches reliably. After a merge, move any preserved edits to a fresh
+   branch, remove the completed worktree and branch, and prune Git's metadata.
+   Before every handoff, run:
+   ```bash
+   git worktree prune
+   npm run check:git-hygiene
+   ```
+   The checker uses GitHub PR state as well as Git ancestry. It fails on
+   merged/closed PR branches, clean worktrees with no open PR, unpublished
+   clean branches, detached worktrees, and prunable metadata. It never deletes
+   automatically because dirty state and unique commits require human review.
+
 ## Commit attribution
 
 Every AI-authored commit carries both trailers, naming the model and tool
@@ -181,6 +195,8 @@ an API token scoped to the target zone. Do not compensate by deploying a Worker.
 - A local build is treated as proof that route initialization succeeds.
 - A commit authored by an agent is missing the `Assisted-by` or
   `Co-authored-by` trailer.
+- A merged/closed PR branch remains checked out, or a clean worktree has no
+  open PR and is kept "just in case."
 - A PR opened speculatively past a factory gate, or review requested without
   the five evidence items.
 - A fork or feature-branch checkout of `common` cited as the shared contract.
@@ -196,6 +212,8 @@ an API token scoped to the target zone. Do not compensate by deploying a Worker.
 - [ ] Cloudflare changes used `wrangler` and documented permissions.
 - [ ] The exact commit's CI/deploy status is reported.
 - [ ] Every AI-authored commit carries both attribution trailers.
+- [ ] `npm run check:git-hygiene` passes after completed branches/worktrees are
+      removed and `git worktree prune` runs.
 - [ ] Gate stops were signalled (`hold` + `needs-human/agent-ready`) and
       explicitly approved before any PR was opened.
 
