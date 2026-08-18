@@ -22,45 +22,32 @@ player synchronization, or generated manifests.
 ## Core Process
 
 1. Read `../../reference/wolves-runtime.md`.
-2. Match the request to an open content surface.
-3. Use exact user-supplied or recovered authored copy.
-4. Add manifest entries for new registered records.
-5. Regenerate generated files with their scripts.
-6. Run the relevant tests, build, and browser checks.
+2. Resolve any video ordinal or timestamp in
+   `../../reference/wolves-video-order.md` before opening a file.
+3. Match the request to an open content surface.
+4. Use exact user-supplied or recovered authored copy.
+5. Add manifest entries for new registered records.
+6. Regenerate generated files with their scripts.
+7. Run the relevant tests, build, and browser checks.
 
-For a visible WebP quality regression, compare the optimized asset with its
-approved source at identical dimensions. Recover only demonstrated high-loss
-PNG or screenshot derivatives as lossless WebP; do not upscale assets whose
-source is already low resolution.
+## Resolve the artifact before you audit it
 
-For Flickr-backed theater assets, retrieve the largest available Flickr
-rendition (prefer 2048px, then 1600px, then the original) before encoding a
-WebP derivative at high quality. Keep the existing local filename and do not
-upscale when Flickr's original itself is below the target size.
+"The first video" is the prologue, and videos 1 and 2 exist only on the
+`wolves-directors-cut` branch. The running order and the branch map are in
+`../../reference/wolves-video-order.md` — read it before opening a file for any
+request naming a video ordinal or a timestamp.
 
-When an official event album uses camera filenames instead of descriptive
-titles, add its distinctive prefixes to `peopleFirst.allowPatterns`, run
-`node scripts/update-flickr-photos.js`, and verify it adds photos before
-claiming the presentation refresh is complete.
+Answer "what is on screen at m:ss" with the show's own data, never by eye:
 
-To re-source a local people asset whose Flickr identity is unknown, resolve
-the album by title rather than guessing: the CNCF account is `143247548@N03`,
-its albums index is client-rendered, so collect `/albums/<id>` links from that
-page and read each album page's `<title>`. KubeCon + CloudNativeCon Europe 2026
-is the Amsterdam album (`72177720332674037`). Album pages are server-rendered,
-so `extractPhotosFromAlbumHtml()` from `scripts/update-flickr-photos.js` works
-directly. That scraper returns a size-suffixed `secret` such as
-`abc123_h`; request `{id}_{secret}.jpg` unchanged, because stripping the
-suffix to build another size returns HTTP 410. Camera filenames encode the day
-(`KC+CNC_EU_2603DD_Keynote_DK_NNN`), so filter on the day and session before
-scanning. Match candidates by content, not title — a perceptual hash of the
-local file plus a saturated-hue mask narrows hundreds of frames to a handful
-for human confirmation. Confirm the chosen frame with the user before
-replacing, then take the largest rendition from `/sizes/o/` and re-encode over
-the existing filename so the generated wallpaper manifest stays unchanged.
+```bash
+node scripts/wolves-cue-at.mjs 4:41
+```
 
-For a dinosaur addition, use the registry, supplied artwork, and supplied lore
-record. Do not invent names, scientific facts, pairings, or provenance.
+Screenshotting the seconds *around* a reported timestamp is not verification: a
+prior session probed 263s, 266s and 320s, never rendered the 281s cue in
+question, and reported it as checked. Quote the cue text in your report. Note
+that a cue's shot outlives its text, so "the shot contains 4:41" and "words are
+on screen at 4:41" are different questions; the tool answers the second.
 
 ## Red Flags
 
@@ -68,6 +55,34 @@ record. Do not invent names, scientific facts, pairings, or provenance.
 - Authored prose is generated or summarized.
 - A generated manifest is hand-edited.
 - Text moves between signal, thesis, lore, and chat layers.
+- A video ordinal or timestamp is answered without `scripts/wolves-cue-at.mjs`.
+
+## Common Rationalizations
+
+| Rationalization | Reality |
+|---|---|
+| "It is in an official press kit, so it is freely licensed." | Availability is not a reuse license; record the governing policy and approved usage basis. See [`references/licensing-and-provenance.md`](references/licensing-and-provenance.md). |
+| "The audience will not notice one missing image." | A late or failed image is a visible broken beat in an unattended theater show; validate every local asset. |
+| "A short quote can be paraphrased safely." | Quotes and attribution are authored content; preserve exact verified wording or omit them. |
+| "These cut windows are short, so rebasing them from zero is simpler." | Director's Cut keep ranges are pinned to absolute YouTube source timestamps; rebasing them breaks playback timing and the intro timeline math. |
+| "This overlay text is obvious enough to paraphrase." | Wolves content surfaces use exact supplied wording only; changing even a short overlay changes authored content. |
+| "It is only intro data, so I don't need to update tests." | Intro segment ids and timestamps are contract data for store and overlay tests; pin them when they change. |
+| "I checked the seconds either side, so the timestamp is fine." | A cue can sit entirely between two probes. Resolve it with the lookup tool and quote the cue text. |
+| "The vision model scored the pool, so its top picks are vetted." | Roughly one in five model top picks mislabels what is literally in the frame; use the scores to narrow the pool, then confirm every finalist by eye before it enters a registry. See [`references/galleries-and-artwork.md`](references/galleries-and-artwork.md). |
+| "The rejection criteria are obvious, so the scoring pass can start." | A wrong disqualifying criterion silently discards the best material and the scores look plausible either way; confirm the criteria with the owner before an expensive pass. |
+| "This asset has no source page, so a plausible upstream URL will do." | A fabricated link is read as verified evidence by the next agent; record the gap as `provenance: 'owner-supplied-local'`. See [`references/licensing-and-provenance.md`](references/licensing-and-provenance.md). |
+
+## Detail
+
+Load only the reference the change needs.
+
+| Reference | Covers |
+|---|---|
+| [`references/projection-typography.md`](references/projection-typography.md) | Paging at thoughts, measure caps, photo fitting, overlay contrast, readability inside a locked range. |
+| [`references/galleries-and-artwork.md`](references/galleries-and-artwork.md) | Gallery pools, photo sourcing and model-assisted curation, captions, hero labels, wallpaper numbering. |
+| [`references/licensing-and-provenance.md`](references/licensing-and-provenance.md) | Third-party asset rights, including the Bungie fan-content guidelines, and recording provenance gaps honestly. |
+| [`references/video-and-scene-work.md`](references/video-and-scene-work.md) | Source clips, keep ranges, encoders, reusable silent scene masters. |
+| [`references/directors-cut-intro.md`](references/directors-cut-intro.md) | Composing either intro variant, and keeping content out of the standard show. |
 
 ## Verification
 
@@ -77,12 +92,11 @@ record. Do not invent names, scientific facts, pairings, or provenance.
 - [ ] Affected player timestamps were checked when applicable.
 - [ ] `../validation/SKILL.md` is complete.
 
-## References
+## Sources
 
-- `../../reference/wolves-runtime.md`
-- `../editorial-provenance/SKILL.md`
-- `../validation/SKILL.md`
-- `../wolves-runtime-engineering/SKILL.md`
+- Context7: `/addyosmani/agent-skills` (skill file structure and required sections)
+- Context7: `/websites/ffmpeg_documentation` (encoder discovery and `-c:v libx264`)
+- Context7: `/yt-dlp/yt-dlp` (format selection and output templates)
 
 ## Pages break at thoughts, not at character counts
 

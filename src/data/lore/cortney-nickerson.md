@@ -1,9 +1,9 @@
 ---
 kind: character-sheet
 subject_kind: person
-title: Bob Killen
+title: Cortney Nickerson
 timestamp: '2326-08-01'
-subject: subjectprofile/robert-killen
+subject: subjectprofile/cortney-nickerson
 guardian:
   class: warlock
   super: Voidwalker

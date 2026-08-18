@@ -1,7 +1,8 @@
-import type { ExperienceManifest, ExperienceSegment } from '@/config/experience-manifest'
+import type { ExperienceManifest, ExperienceSegment, PresentationProfile } from '@/config/experience-manifest'
 import type { IntroVideoSpec } from '@/data/wolves-intro-sequence'
 import { defineStore } from 'pinia'
-import { CINEMATIC_SEGMENTS, DEFAULT_CROSSFADE_MS } from '@/config/wolves-cinematic'
+import { CINEMATIC_SEGMENTS, DEFAULT_CROSSFADE_MS, DIRECTORS_CUT_EUROPA_INTRO_SEGMENT, PRE_END_THRESHOLD_S } from '@/config/wolves-cinematic'
+import { DIRECTORS_CUT_FINALE_ANCHORS } from '@/data/wolves-directors-cut-finale'
 import { buildIntroVideoSequence, isTextSegment } from '@/data/wolves-intro-sequence'
 
 export type CinematicPhase
@@ -70,6 +71,32 @@ let INTRO_SEGMENTS: readonly IntroVideoSpec[] = buildIntroVideoSequence()
 const CINEMATIC_AUTHORED_DURATIONS = [424, 347, 251, 384, 193, 234, 271] as const
 
 /**
+ * Measured off the finished render (exactly 95.000s), not read off YouTube's
+ * rounded duration, because the seek-bar timeline is derived from it.
+ */
+const DIRECTORS_CUT_EUROPA_INTRO_SECONDS = 95
+
+/** `presentationProfile` value for the standard, seven-part Wolves show. */
+export const WOLVES_STANDARD_PROFILE_ID: PresentationProfile = 'wolves-standard'
+/** `presentationProfile` value for the Director's Cut. */
+export const WOLVES_DIRECTORS_CUT_PROFILE_ID: PresentationProfile = 'wolves-directors-cut'
+
+/**
+ * True for either authored Wolves show — the seven-part standard cut or the
+ * Director's Cut — false for a generic back-catalogue album (or an
+ * experience that has not set a profile at all). This is the typed
+ * replacement for raw `experienceId === WOLVES_EXPERIENCE.id` checks, which
+ * read a Director's Cut playthrough as a generic album because its manifest
+ * carries a different `id`. Code that means "the standard seven-part show
+ * specifically" (e.g. restoring it after a Director's Cut run) must still
+ * compare against `WOLVES_STANDARD_PROFILE_ID` explicitly rather than call
+ * this helper.
+ */
+export function isWolvesPresentationProfile(profile: PresentationProfile | undefined): boolean {
+  return profile === WOLVES_STANDARD_PROFILE_ID || profile === WOLVES_DIRECTORS_CUT_PROFILE_ID
+}
+
+/**
  * The authored Wolves cinematic expressed as a generic experience manifest —
  * the default the runtime boots with. Back-catalogue albums load their own
  * manifests through loadExperience(); the renderer is identical for both.
@@ -80,10 +107,51 @@ export const WOLVES_EXPERIENCE: ExperienceManifest = {
   title: 'Seven Days to the Wolves',
   artwork: 'wolves-artwork/LASru9j0oIc.jpg',
   includeIntro: true,
+  presentationProfile: WOLVES_STANDARD_PROFILE_ID,
   segments: CINEMATIC_SEGMENTS.map((segment, index) => ({
     ...segment,
     durationSeconds: CINEMATIC_AUTHORED_DURATIONS[index] ?? 0,
   })),
+}
+
+/**
+ * The Director's Cut cinematic: 7 Days to the Wolves runs its full authored
+ * length into its finale, then the Europa intro, which carries `crossfadeMs: 0`
+ * so it hits the instant Track 0 ends — out of black, with no title slide and no
+ * fade-in delay.
+ *
+ * This cut is a **fork** of the Wolves show, not a re-edit of it. It keeps 7
+ * Days to the Wolves, which the show is named for, and everything after it is
+ * new material authored for this cut. That is why Ghosts In The Mist is no
+ * longer here: it belongs to the standard show, which still plays it and all
+ * seven of its authored tracks, unchanged. Adding a legacy track back to this
+ * list is the thing to stop and ask about.
+ *
+ * The Europa intro sits outside `CINEMATIC_SEGMENTS` because it belongs to this
+ * cut alone; see the segment's own note for why it has to be one upload instead
+ * of an embed of its three sources.
+ *
+ * The Director's Cut *intro* (prologue + Destiny trailer,
+ * `buildDirectorsCutVideoSequence()`) is published separately through
+ * `setIntroSequence()` — this manifest only carries the cinematic segments
+ * `loadExperience()` swaps in.
+ */
+export const WOLVES_DIRECTORS_CUT_EXPERIENCE: ExperienceManifest = {
+  id: 'wolves-directors-cut',
+  title: 'Director\'s Cut',
+  artwork: CINEMATIC_SEGMENTS[0].artwork,
+  includeIntro: true,
+  presentationProfile: WOLVES_DIRECTORS_CUT_PROFILE_ID,
+  segments: [
+    {
+      ...CINEMATIC_SEGMENTS[0],
+      durationSeconds: CINEMATIC_AUTHORED_DURATIONS[0],
+    },
+    {
+      ...DIRECTORS_CUT_EUROPA_INTRO_SEGMENT,
+      durationSeconds: DIRECTORS_CUT_EUROPA_INTRO_SECONDS,
+    },
+  ],
 }
 
 // Active experience: module-level so the timeline math below stays plain
@@ -274,6 +342,14 @@ export const useCinematicStore = defineStore('cinematic', {
     phase: 'lobby' as CinematicPhase,
     /** Stable manifest identity used by experience-specific presentation rules. */
     experienceId: WOLVES_EXPERIENCE.id,
+    /**
+     * Which authored presentation is active: `'wolves-standard'`,
+     * `'wolves-directors-cut'`, or `'generic'` for a back-catalogue album.
+     * Set from the manifest in `loadExperience()`; typed consumers use
+     * `isWolvesPresentation` or compare against a `*_PROFILE_ID` constant
+     * rather than re-deriving this from `experienceId`.
+     */
+    presentationProfile: (WOLVES_EXPERIENCE.presentationProfile ?? 'generic') as PresentationProfile,
     /** Segments of the active experience (defaults to the Wolves cinematic). */
     segments: WOLVES_EXPERIENCE.segments as ExperienceSegment[],
     segmentIndex: 0,
@@ -294,6 +370,20 @@ export const useCinematicStore = defineStore('cinematic', {
     completedElapsed: 0,
     playing: false,
     crossfading: false,
+    /**
+     * Whether the transport has run the active experience to its end and
+     * stopped. Latched by `finish()` and released the moment the player
+     * publishes an earlier time, so a backward seek out of the terminal state
+     * is a clock event and needs no explicit reset call.
+     *
+     * This is an experience-level end, not a Track 0 one: in the multi-song
+     * Director's Cut it latches at the end of Ghosts, the last segment, long
+     * after Track 0's finale. The finale's terminal black is keyed to Track 0's
+     * own clock instead (see `directorTerminalBlack`), because its
+     * `terminalFadeEnd` anchor is authored ahead of the final
+     * `PRE_END_THRESHOLD_S` the transport never publishes.
+     */
+    finished: false,
     /**
      * Where a crossfade in flight is headed. The overlay has to decide on the
      * incoming segment, and `segmentIndex` still names the outgoing one until
@@ -365,13 +455,73 @@ export const useCinematicStore = defineStore('cinematic', {
       return duration > 0 ? Math.min(1, this.overallElapsed / duration) : 0
     },
     isLastSegment: state => state.segmentIndex >= state.segments.length - 1,
+    /**
+     * True for either authored Wolves show. The typed replacement for raw
+     * `experienceId === WOLVES_EXPERIENCE.id` checks — see
+     * `isWolvesPresentationProfile()` for why the Director's Cut needs both
+     * profiles covered.
+     */
+    isWolvesPresentation: state => isWolvesPresentationProfile(state.presentationProfile),
+    /**
+     * The Director's Cut finale is scored to Track 0's own native timeline, so
+     * every finale predicate below keys on Track 0 being the segment on air —
+     * NOT on "the last segment of the experience". Track 0 is now followed by
+     * Ghosts In The Mist, whose independent 0–347s native clock would otherwise
+     * cross the finale's earliest anchor (the 344.956s companion pre-arm) and
+     * mount the finale over the wrong song. Track 0 is the authored
+     * `trackZeroExperience` segment, the same signal `CinematicStage` and
+     * `TheaterExperience` resolve their immersive treatment from.
+     */
+    isDirectorsCutTrackZero: (state): boolean =>
+      state.presentationProfile === WOLVES_DIRECTORS_CUT_PROFILE_ID
+      && state.phase === 'cinematic'
+      && state.segments[state.segmentIndex]?.trackZeroExperience === true,
+    /**
+     * The Director's Cut finale has mounted its companion player but has not
+     * taken the frame yet. The finale needs a mounted, cued, muted and parked
+     * YouTube player well before the audience sees it, or the corner opens on a
+     * cold black frame in front of the room.
+     */
+    directorFinalePrearmed(): boolean {
+      return this.isDirectorsCutTrackZero
+        && this.nativeTime >= DIRECTORS_CUT_FINALE_ANCHORS.companionPrearm
+    },
+    /**
+     * The Director's Cut finale owns the frame: the ordinary theater grid,
+     * nameplate, organization ads, captions and media widget are all suppressed
+     * from the cover beat to the end of Track 0. It stands down again when the
+     * show hands off to Ghosts, whose chrome is the ordinary later-part
+     * treatment.
+     *
+     * Derived from the Track 0 clock (via `isDirectorsCutTrackZero`) plus the
+     * published soundtrack time, never latched, so seeking backward out of the
+     * finale restores every piece of chrome at once without any surface having
+     * to unwind its own state.
+     */
+    directorFinaleActive(): boolean {
+      return this.isDirectorsCutTrackZero
+        && this.nativeTime >= DIRECTORS_CUT_FINALE_ANCHORS.coverStart
+    },
+    /**
+     * The finale's terminal fade has completed. Keyed to Track 0's own clock
+     * reaching `terminalFadeEnd` (422.301s), which is authored 1.699s before the
+     * 424s segment ends — ahead of the final `PRE_END_THRESHOLD_S` the transport
+     * never publishes — so the black always lands on a tick that actually
+     * arrives. It deliberately does NOT read `finished`: in the multi-song cut
+     * `finish()` belongs to the end of Ghosts, the real last segment, and would
+     * pin black over the wrong song.
+     */
+    directorTerminalBlack(): boolean {
+      return this.directorFinaleActive
+        && this.nativeTime >= DIRECTORS_CUT_FINALE_ANCHORS.terminalFadeEnd
+    },
     /** What the hero widget shows: the intro override when present, else the segment. */
     display(state): { chapter: string, title: string, artist: string, artwork: string, counter: string } {
       if (state.displayOverride) {
         return { ...state.displayOverride, counter: state.displayOverride.chapter }
       }
       const segment = this.segment
-      const title = state.experienceId === WOLVES_EXPERIENCE.id
+      const title = this.isWolvesPresentation
         ? segment.title
         : `${segment.title} by ${segment.artist}`
       return {
@@ -409,6 +559,7 @@ export const useCinematicStore = defineStore('cinematic', {
       this.timelineRevision += 1
       this.segments = manifest.segments
       this.experienceId = manifest.id
+      this.presentationProfile = manifest.presentationProfile ?? 'generic'
       this.phase = 'lobby'
       this.segmentIndex = 0
       this.segmentElapsed = 0
@@ -418,8 +569,11 @@ export const useCinematicStore = defineStore('cinematic', {
       this.playing = false
       this.crossfading = false
       this.pendingSegmentIndex = null
-      this.showTransitionOverlay = manifest.id === WOLVES_EXPERIENCE.id
+      // Reuse the profile just assigned above rather than recomputing it from the manifest —
+      // same value (undefined and 'generic' both resolve false), one source of truth.
+      this.showTransitionOverlay = isWolvesPresentationProfile(this.presentationProfile)
       this.displayOverride = null
+      this.finished = false
     },
     /**
      * Publish the intro list about to be performed. `/wolves/` has two authored
@@ -445,12 +599,20 @@ export const useCinematicStore = defineStore('cinematic', {
       this.segmentElapsed = 0
       this.nativeTime = 0
       this.segmentDuration = CINEMATIC_TIMELINE[0]?.segmentDuration ?? 0
+      this.finished = false
     },
     updateTime(elapsed: number, duration: number, nativeTime?: number) {
       this.segmentElapsed = elapsed
       this.nativeTime = nativeTime ?? elapsed
       if (duration > 0) {
         this.segmentDuration = duration
+      }
+      // A published time short of the finish point means the transport is
+      // running again — a backward seek out of the terminal state, or a fresh
+      // run. Releasing the latch here is what lets the Director's Cut finale
+      // hand the show back without an explicit "un-finish" call from anywhere.
+      if (this.finished && this.segmentDuration > 0 && elapsed < this.segmentDuration - PRE_END_THRESHOLD_S) {
+        this.finished = false
       }
     },
     syncIntroStatus(payload: { segmentIndex: number, segmentElapsed: number, segmentDuration: number, nativeTime: number }) {
@@ -482,6 +644,7 @@ export const useCinematicStore = defineStore('cinematic', {
       this.segmentDuration = CINEMATIC_TIMELINE[this.segmentIndex]?.segmentDuration ?? 0
       this.crossfading = false
       this.pendingSegmentIndex = null
+      this.finished = false
     },
     /** Manual skip to an arbitrary segment (prev/next); only watched time accrues. */
     jumpToSegment(index: number) {
@@ -492,6 +655,7 @@ export const useCinematicStore = defineStore('cinematic', {
       this.segmentDuration = CINEMATIC_TIMELINE[this.segmentIndex]?.segmentDuration ?? 0
       this.crossfading = false
       this.pendingSegmentIndex = null
+      this.finished = false
     },
     finish() {
       this.segmentIndex = this.segments.length - 1
@@ -501,6 +665,7 @@ export const useCinematicStore = defineStore('cinematic', {
       this.playing = false
       this.crossfading = false
       this.pendingSegmentIndex = null
+      this.finished = true
     },
     setDisplayOverride(override: typeof this.displayOverride) {
       this.displayOverride = override

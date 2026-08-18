@@ -4,6 +4,8 @@ description: Use only for explicitly approved Wolves overlay, transport, player,
 metadata:
   verified-sources:
     - https://developer.mozilla.org/en-US/docs/Web/CSS/text-wrap (text-wrap balance six-line cap)
+  context7-sources:
+    - /websites/developers_google_youtube
 ---
 
 # Wolves runtime engineering
@@ -40,59 +42,68 @@ window: `origin` identifies the IFrame API caller, `widget_referrer` identifies
 the embedding page and prevents an otherwise playable track from being treated as
 an unidentified player request.
 
+## Common Rationalizations
+
+- "The player reported the right time in a mock." Real IFrame readiness,
+  buffering, end-state, and error ordering still need a codec-capable browser
+  release check.
+- "A hidden iframe is prewarmed." `display: none` can prevent composition; keep
+  a pre-armed visual player rendered but invisible until its authored reveal.
+- "The clock is on the reveal beat, so the iframe is ready." A fast-forward can
+  skip the whole pre-arm window. Keep the visual player hidden until the cold
+  build has completed, the runtime has issued its source-alignment seek, and
+  the player reports `PLAYING`.
+  The IFrame API documents that `cueVideoById()` does not request the video
+  until `playVideo()` or `seekTo()` is called, so a cued player is not proof
+  that the reveal frame has loaded.
+- "The final clock will finish the fade." The last-segment transport can stop
+  before another useful tick; terminal transitions need an explicit finished
+  state backstop.
+- "The standard profile test covers the Director's Cut." Profile-specific data
+  must be wired through the live component path and exercised in Chromium.
+- "The unit suite is green, so the screen is right." A cascade rule that lost
+  on source order, a caption bound to the wrong reactive source, and a rule
+  stranded inside a `@media (max-width: 640px)` block all shipped under a
+  fully green suite; layout, cascade, and paint claims need a browser
+  assertion.
+
 ## Red Flags
 
+The full catalogue is [`references/red-flags.md`](references/red-flags.md) —
+scan the group matching the surface you are changing. The ones that have cost
+this show the most:
+
 - Content work is used to justify component or style changes.
-- A fullscreen overlay lacks the required containing-block treatment.
-- A second YouTube API loader or transport is introduced.
-- Browser bounds and player states are not checked.
 - A musical moment is scheduled with a round number instead of the measured
   beat in `TRACK_ZERO_SECTIONS`.
-- A page ends on a title such as `Dr.`, orphaning the name it introduces, or on
-  a preposition or article, making the audience wait a page turn for the rest of
-  the phrase.
-- A slot is assumed to display its record's authored pages without checking
-  `affordablePageCount()` against the slot duration.
-- A prewarmed buffer is played and never parked, or is promoted without an
-  explicit seek to its opening frame.
-- A buffer is promoted to air on `sides[side].segmentIndex` alone, without
-  checking `getVideoData().video_id` against the segment it is supposed to be.
-- An `onError` is handled only for the active side, so a failure on the buffer
-  holding the *next* segment is discarded.
-- A prewarm is silenced with `setVolume(0)` instead of `mute()`, or a path that
-  puts a side on air forgets to lift the mute.
-- A boundary, skip, or recovery load can run before `start()`, so it plays a
-  segment underneath the intro.
-- Only the inactive buffer is prewarmed, so the first track enters cold.
-- A crossfade length is read from the outgoing segment.
-- A startup or readiness await has no timeout.
-- A bounded await sits *inside* an unbounded one, so the bound is decorative.
-- A prewarm, cache warm, or other optimisation is awaited on the critical path
-  to first audio.
-- A cold skip switches sides and ramps before the incoming player reports
-  `PLAYING`.
-- The transport clock stops publishing while a crossfade runs.
-- A clock advances by a hardcoded constant per tick, or by accumulating deltas.
-- A crossfade is triggered by a lead shorter than the fade it starts.
-- A test double for a player exposes `getCurrentTime()` that never advances, or a
-  `pauseVideo()`/`playVideo()` that does not emit the state change the real
-  IFrame API emits.
-- Buffer bookkeeping (a prewarm park's pause and seek) is published to the store
-  as show transport state.
-- Playlist metadata is indexed by `segmentIndex`/`trackIndex` instead of
-  resolved by `id`/`youtubeVideoId`. (`trackIndex` still drives ordering and
-  branching; the ban is on metadata lookup by position.)
-- Back-catalogue title credit is baked into generated `segment.title` data
-  instead of formatting the normalized `title` and `artist` fields at the
-  display boundary. The media widget and stage nameplate share
-  `TrackCredit.vue`; transition cards keep their separate artist line.
-- A hand-maintained array that parallels `CINEMATIC_SEGMENTS` (durations, BPM,
-  chat keys) is not asserted against it by id.
-- An authored sequence has a gap (`TRANSITION_FIVE` with no `TRANSITION_FOUR`,
-  chapter labels stopping short of the part count) and it is read as style
-  rather than as evidence of a deletion.
-- A change removes authored content — a segment, lore, prose — without the
-  owner's explicit word, or its justification does not match its diff.
+- A cue window on a scored segment is picked by dividing the track evenly or by
+  ear, instead of from measured section boundaries.
+- A cue's window is treated as its text's dwell time. The window is how long the
+  *shot* runs; `textHoldSeconds` is how long the *words* stay up.
+- A long text beat is given `emphasis: 'dominant'` on the strength of what it
+  says rather than what it costs to read.
+- A second YouTube API loader or transport is introduced.
+- A takeover is verified by asserting that nothing changed.
+- A startup or readiness await has no timeout, or a bounded await sits inside an
+  unbounded one.
+- A browser probe declares success because the outgoing image stayed stable.
+- A browser probe of a cross-fading surface settles on one condition. Settle on
+  two — the intended cue's caption **and** the intended record's decoded image —
+  or the same probe can invent a collision and hide a real one in one run.
+- A new control is wired as a dependency instead of an affordance: the default
+  is "the first entry in the list" rather than a separate exported constant,
+  with no fallback for an unknown value and no test that an untouched run
+  completes.
+
+## Detail
+
+Load only the reference the change needs.
+
+| Reference | Covers |
+|---|---|
+| [`references/red-flags.md`](references/red-flags.md) | The full defect catalogue: scheduling, transport and buffers, images and framing, store and data integrity. |
+| [`references/directors-cut-and-branches.md`](references/directors-cut-and-branches.md) | Director's Cut entry points, the production wall, autoplay resilience, and finding a surface on another branch before rebuilding it. |
+| [`references/staging-and-composition.md`](references/staging-and-composition.md) | Why a passing geometry harness is not a picture of the stage, the finale's frame, projected narration set in lines, spending an image once. |
 
 ## Verification
 
@@ -100,6 +111,22 @@ an unidentified player request.
 - [ ] Relevant unit tests, typecheck, and build pass.
 - [ ] Chromium checks cover bounds and controls.
 - [ ] Production deployment follows the validation skill.
+
+For the Director's Cut finale, the focused loop is:
+
+```bash
+npx vitest run src/tests/wolvesDirectorsCutFinale.test.ts \
+  src/tests/wolvesDirectorsCutFinaleStage.test.ts \
+  src/tests/wolvesFinaleReveal.test.ts
+WOLVES_BASE_URL=http://127.0.0.1:5173 node tests/wolves-directors-cut-finale.mjs
+WOLVES_BASE_URL=http://127.0.0.1:5173 WOLVES_VIEWPORT=390x844 \
+  node tests/wolves-directors-cut-finale.mjs
+```
+
+The harness must identify whether it ran with the deterministic mock or the
+live IFrame API. `WOLVES_REAL_MEDIA=1` is evidence about YouTube only when the
+browser can decode the soundtrack and companion; a `SKIPPED (no real media
+support)` result is an environment limitation, not a green real-media claim.
 
 ## References
 
@@ -125,6 +152,11 @@ one links back to this skill.
   measured beat grids, locked slide windows, preload budgeting, buffer
   continuity at segment boundaries, and the non-Wolves shows the comic reader
   serves.
+- [`../../reference/wolves-directors-cut-finale.md`](../../reference/wolves-directors-cut-finale.md) —
+  the Director's Cut finale's named anchors, the frame-measured companion video
+  window, why the terminal fade is a latched CSS transition rather than a
+  per-tick opacity, and the three surfaces that consume the store's finale
+  state.
 - [`../../reference/wolves-test-harnesses.md`](../../reference/wolves-test-harnesses.md) —
   driving Track 0 in a browser, keeping the movie-flow harness alive, player
   mock load lifecycle, and deriving expectations from live modules.

@@ -39,6 +39,57 @@ export interface YoutubePlayer {
    * optional and tolerates it throwing before the player has media.
    */
   getVideoData?: () => { video_id?: string, title?: string } | undefined
+  /**
+   * Tears a player module back out. The `captions` module is the only one this
+   * show unloads; see `suppressYoutubeCaptions`.
+   *
+   * Not listed in the current IFrame API reference — it survives from the older
+   * JS Player API — so every call site treats it as optional and tolerates it
+   * being absent or throwing.
+   */
+  unloadModule?: (module: string) => void
+  /** Module names the player currently exposes options for, e.g. `['captions']`. */
+  getOptions?: () => string[] | undefined
+}
+
+/**
+ * Module names YouTube has used for the closed-caption module.
+ *
+ * Both are tried because the name has differed across player versions: the
+ * modern player exposes `captions` (as `getOptions()` reports), while older
+ * builds — and the AS3-era player the method predates — used `cc`. Unloading a
+ * module the player does not have is a no-op, so trying both costs nothing and
+ * missing the one in use costs the show a caption bar across the projection.
+ */
+const YOUTUBE_CAPTION_MODULES = ['captions', 'cc'] as const
+
+/**
+ * Force YouTube's own captions off for a player.
+ *
+ * `cc_load_policy: 0` is only a *default*. A viewer whose YouTube account or
+ * browser prefers captions gets them regardless, and this show burns in its own
+ * authored subtitles — so YouTube's track lands on top of ours, in a different
+ * typeface, on a theater screen, with nobody in the room able to dismiss it.
+ *
+ * Unloading the module is the part that actually holds. It must be re-applied
+ * on `onApiChange`, not only on `onReady`: that event fires precisely when the
+ * player loads or unloads a module, which is how the caption module arrives
+ * after the stream's own caption track resolves — well after the player is
+ * otherwise ready.
+ */
+export function suppressYoutubeCaptions(player: YoutubePlayer | null | undefined): void {
+  if (!player?.unloadModule) {
+    return
+  }
+  for (const module of YOUTUBE_CAPTION_MODULES) {
+    try {
+      player.unloadModule(module)
+    }
+    catch {
+      // A module the player never loaded, or a player mid-teardown. Neither is
+      // recoverable and neither should take the show down.
+    }
+  }
 }
 
 export interface YoutubePlayerState {

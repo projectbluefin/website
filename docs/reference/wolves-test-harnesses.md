@@ -199,6 +199,136 @@ Two things about running it:
   `CinematicTransition.vue` deliberately runs without the overlay, so anything that
   goes wrong there is seen by the whole room.
 
+## Reading the slide on stage is a timing problem, not a selector problem
+
+A probe that seeks the transport, waits a fixed interval and then reads
+`.flickr-img` is sampling a race. Both traps below reported the *wrong slide*,
+not a flaky one, so they read as a scheduling bug that did not exist:
+
+- **A fixed wait samples the previous frame.** The swap is gated on fetching and
+  decoding a full-size image and then on the crossfade
+  (`currentSlideTransitionDuration` = `min(duration >= 8 ? 1600 : 800,
+  duration * 300)` ms). 700 ms after a seek the stage can still be holding the
+  slide it was on. Poll until the stage settles — same `src` twice in a row with
+  the visible layer at full opacity — instead of guessing a duration.
+- **Both buffers are above half opacity mid-fade.** Picking "the first layer with
+  opacity > 0.5" returns the **outgoing** buffer whenever it is earlier in the
+  DOM. Take the layer with the highest opacity.
+- **A day/night wallpaper never renders its `path`.** `getFlickrPhotoUrl` resolves
+  `type: 'daynight'` through `dayName`/`nightName`, so asserting the rendered
+  `src` against `slide.path` reports a false miss on exactly those slides.
+  Compare against `[path, dayName, nightName]`.
+
+`tests/wolves-directors-cut-slides.mjs` does all three, and rebuilds the expected
+schedule in-page from `/src/data/wolves-directors-cut-slides.ts` rather than
+carrying cut times as constants.
+
+## The lore column's quote crossfade is the same trap, on a different clock
+
+`WolvesLoreColumn`'s quote view (`QuoteLoreView.vue`) fades its text through a
+`Transition name="quote-fade"` keyed on `record.id`
+(`lore-dossier.scss`, 0.5s `opacity` transition), so a probe that seeks and reads
+`.lore-quote-text` immediately after can sample the outgoing quote mid-fade —
+same class of bug as sampling a slide mid-crossfade, on a different selector and
+a shorter window. It has one extra trap the slide probe does not: the
+attribution (`.lore-quote-meta`, in `LoreRecordHeader`'s header slot) sits
+**outside** the `Transition` and updates immediately, so a probe that reads text
+and attribution in the same tick can pair the *outgoing* quote's text with the
+*incoming* quote's attribution — a combination that never exists on screen.
+Poll both together until they agree across two reads, the same discipline
+`slideAt()` uses for the image layers.
+
+A Director's Cut prologue probe has a second, unrelated clock trap: the scored
+card's clock is read from the background audio embed's `getCurrentTime()`, not
+from wall time (see `wolves-runtime-engineering/SKILL.md`). A mock player whose
+clock never advances on its own sits on the prologue's opening silent card
+(`buildNarrationCues()`'s pre-`NARRATION_FIRST_MARK` dark window) forever,
+however long the probe waits in real time — waiting longer does not help, only
+advancing the mock's `currentTime` does.
+
+## An element box does not answer a cropping question
+
+`getBoundingClientRect()` on an `<img>` reports the **element** box, so a
+painting letterboxed by `object-fit: contain` and one cropped by `cover` both
+answer `1280x720` on a 16:9 stage. `wolves-directors-cut-prologue.mjs` first
+"proved" whole-frame framing that way and passed against artwork it had not
+looked at.
+
+Measure the painted content box instead: read the browser's decoded
+`naturalWidth`/`naturalHeight`, assert the artwork ledger's `sourceWidth`/
+`sourceHeight` matches that decode — otherwise the probe is validating our own
+assumption — then derive the painted box from the element box the way `contain`
+is defined to compute it. Assert the painted aspect equals the source aspect,
+that the scale never exceeds 1, and that the painting still reaches one axis of
+the stage, or "framed whole" also passes for a postage stamp.
+
+That distinction is what the panoramas turn on: `c1-europa-landscape-v1`
+(2048x771) paints 1280x482 and `c7-early-throne-world-citadel` (2200x1611) paints
+983x720 — neither is 1280x720, and under `cover` both were.
+
+## A frozen slide is not a covered slide
+`tests/wolves-directors-cut-slides.mjs` originally proved the reserved finale
+interval by asserting the image on stage at 380 s was the *same* image as at
+355 s. That passed for the wrong reason: the reader simply holds its last slide
+when the schedule runs out, so the assertion scored a frozen ordinary slide as
+a working finale, and would have kept passing if the finale never rendered.
+
+Assert the negative instead. A covered element gives every descendant a
+zero-area `getBoundingClientRect()`, so:
+
+- the theater grid's computed `display` is `none`, **and**
+- every `.flickr-photo-layer` has zero rendered area, **and**
+- the finale's own frame measures the full viewport.
+
+The same trap has a general form: *"nothing changed" is not evidence that the
+thing that should have covered it exists.* Any probe of a takeover has to
+measure the taker, not the absence of change in the taken.
+
+## Measuring a swap needs a warm cache and a budget
+
+The Director's schedule keeps a four-measured-beat floor (about 1.58 s at the
+fastest passage), and the reader will not swap a slide until its full-size image
+has fetched **and** decoded. Whether the last pre-finale window lands on time is
+therefore a real, load-dependent question — and a cold-cache measurement
+answers a different one (how fast is the network).
+
+`wolves-directors-cut-slides.mjs` seeks that window once to warm it, then seeks
+it again and polls until the expected image is on stage at full opacity,
+failing if that takes longer than the window itself. A skipped swap fails the
+same assertion, because the expected image never arrives at all.
+
+## Mock evidence and real-media evidence are different claims
+
+`wolves-directors-cut-finale.mjs` prints which of the two it is producing, and
+they are not interchangeable:
+
+- **Mock transport** (default) replaces `window.YT` with a deterministic fake.
+  The show clock only moves when the harness seeks it, and the companion's own
+  clock is frozen — which is deliberate, because a frozen companion is what a
+  stalled embed looks like, so the drift correction has to fire and its seek
+  target becomes directly observable. Nothing in this mode is evidence that
+  YouTube decoded anything.
+- **Real media** (`WOLVES_REAL_MEDIA=1`) loads the live IFrame API. Playwright's
+  bundled Chromium has no proprietary codecs, and `WOLVES_CDP` can attach to a
+  real Chrome instead (on a Flatpak host, launch it with `flatpak run
+  --command=chrome com.google.Chrome --headless=new --remote-debugging-port=9333
+  --remote-allow-origins='*'` and connect over CDP).
+
+Real media mode **stands down rather than failing** when the browser cannot hold
+the clock. `getCurrentTime()` answers a seek optimistically even when no media
+ever decodes, and then the embed collapses back to 0 — so the precondition
+samples the published time repeatedly and requires all of them to hold. One
+sample reads the optimism as a working transport and produces a wall of
+failures that say nothing about the change under test.
+
+The same stand-down applies earlier if the real soundtrack cannot leave the
+intro and mount Track 0 at all. A codec-free browser otherwise reports a
+finale selector timeout, which is transport-environment failure rather than a
+finale assertion. In mock mode the harness uses `__mockWolvesPlayers`; in both
+modes the finale-specific checks read the DEV-only `__wolvesFinaleCompanion`
+hook for the live player id, source time, readiness, synchronization, mute and
+volume state. Mock bookkeeping is not real-media evidence.
+
 ## The full harness inventory
 
 Every standalone Playwright script in `tests/`. Only `wolves-movie-flow` runs in
@@ -218,7 +348,31 @@ stale unnoticed. All of them take `WOLVES_BASE_URL` (default
 | `wolves-lobby-progress.mjs` | Lobby and progress readouts; reads live durations, never constants. |
 | `wolves-immersive-layout.mjs` | Track 0 immersive grid layout. |
 | `wolves-trackzero-sidecar-real-player.mjs` | Track 0 against a real player; source of the canonical mock. |
+| `wolves-directors-cut-slides.mjs` | Director's Cut Track 0 cut boundaries, the covered finale interval, the warm final pre-finale window, and the standard cut's hero locks. |
+| `wolves-directors-cut-finale.mjs` | Director's Cut finale: every named anchor, the companion player's source seconds, chrome suppression, narrow-viewport placement and the terminal black. |
+| `wolves-directors-cut-prologue.mjs` | Director's Cut scored prologue: every painting framed whole at source geometry, full brightness plus scrim, every cue rendering the lines it authored, the reading hold clearing while its shot runs, the warm-silent-promoted Ikora handoff, and the narration surviving a 390px viewport. |
 | `navbar-visual.mjs` | Main-site navbar, not Wolves. |
+
+## Answering "what is on screen at m:ss" without a browser
+The harnesses above seek and screenshot. That is the right tool for *how it
+looks* and the wrong one for *what is scheduled*: a probe only sees the seconds
+it was told to visit, and a timestamp the owner reported can sit in the gap
+between two of them. That has happened — 263s, 266s and 320s were captured while
+the 281s cue under discussion never rendered at all.
+
+`scripts/wolves-cue-at.mjs` answers the scheduling question directly, with no
+browser and no seek:
+
+```bash
+node scripts/wolves-cue-at.mjs 4:41        # defaults to the prologue
+node scripts/wolves-cue-at.mjs prologue --all
+```
+
+It loads the authored modules through Vite's `ssrLoadModule`, so aliases and
+TypeScript resolve exactly as the app resolves them and the answer cannot drift
+from the show. Use it to find the cue, then use a harness or Chromium to judge
+how that cue reads. Registration for further videos is the `VIDEOS` table in the
+script.
 
 `tests/wolves-intro-silence.mjs` covers the other half of that: the cinematic
 buffers are prewarmed *during* the intro, so it watches them through that window
@@ -232,3 +386,19 @@ Two intro harnesses, `wolves-intro-segments.mjs` and
 first times out waiting for `.wolves-intro-overlay-player`, the second reports the
 widget out of viewport bounds. Confirm against a baseline worktree before blaming a
 change for either.
+
+## A settle on the image is not a settle on the caption
+
+`seekPrologue()` settles on a stable, fully-opaque *scene*. The caption is a
+separately keyed element with its own 1.6s reveal, so a measurement taken on an
+image settle reads whichever thought was on screen before the seek.
+
+This is not hypothetical: the first version of the line-break assertion reported
+every cue as two lines, 1111px wide — the opening cue's geometry, repeated
+thirteen times, all passing. Wait for the expected caption to be on screen at
+full opacity before measuring it.
+
+Compare captions on letters alone when doing that. The overlay renders its
+display type without punctuation, so an exact string match never settles. That
+comparison is a settle condition, not a provenance check — wording is guarded in
+`wolvesDirectorsCutIntro.test.ts`.

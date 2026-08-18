@@ -3,9 +3,11 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import WolvesComicReader from '@/components/wolves/WolvesComicReader.vue'
 import WolvesLoreColumn from '@/components/wolves/WolvesLoreColumn.vue'
 import { getChromeFreeYoutubeEmbedParams } from '@/composables/useYoutubeIframeApi'
+import { getDirectorsCutNarrativeSlotForTime } from '@/data/wolves-directors-cut-timeline'
 import { getNarrativeSlotForTime } from '@/data/wolves-narrative-timeline'
 import { getWolvesThesisState } from '@/data/wolves-thesis-sequence'
-import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
+import { TRACKZERO_SIDECAR_VIDEO_IDS } from '@/data/wolves-track-zero-sidecar'
+import { useCinematicStore, WOLVES_DIRECTORS_CUT_PROFILE_ID } from '@/stores/cinematic'
 
 // The authored seven-days immersive layer, mounted over the video during the
 // 7 Days segment. The video below stays the audio source; the locked comic
@@ -17,14 +19,30 @@ const time = computed(() => store.nativeTime)
 // The lore column follows the player clock and nothing else. A record used to
 // be able to pin this to its own slot until it finished rendering, which let a
 // long transmission run past its window and start every record after it late.
-const displayedNarrativeSlot = computed(() => getNarrativeSlotForTime(time.value))
-const slotDuration = computed(() => Math.max(1, displayedNarrativeSlot.value.endTime - displayedNarrativeSlot.value.startTime))
+//
+// The Director's Cut schedules its own nine-quote science panel and closing bulletin on a
+// different timeline (`wolves-directors-cut-timeline.ts`), compressed to its one-song runtime
+// rather than the standard show's seven-part clock. Reading `getNarrativeSlotForTime()`
+// unconditionally here resolved every Director's Cut clock reading against the standard show's
+// schedule instead — the authored panel was fully built and tested but never reached live.
+//
+// That timeline also returns null, on purpose: the intervals between quotes and
+// everything after the bulletin clears are authored image-only frames. Falling
+// back to the last slot there would leave a stale quote on stage under the
+// impact reveal, so a null slot renders an empty column instead.
+const displayedNarrativeSlot = computed(() =>
+  store.presentationProfile === WOLVES_DIRECTORS_CUT_PROFILE_ID
+    ? getDirectorsCutNarrativeSlotForTime(time.value)
+    : getNarrativeSlotForTime(time.value),
+)
+const displayedArtifactId = computed(() => displayedNarrativeSlot.value?.artifactId ?? '')
+const slotDuration = computed(() => Math.max(1, (displayedNarrativeSlot.value?.endTime ?? 0) - (displayedNarrativeSlot.value?.startTime ?? 0)))
 const slotElapsed = computed(() => Math.min(
   slotDuration.value,
-  Math.max(0, time.value - displayedNarrativeSlot.value.startTime),
+  Math.max(0, time.value - (displayedNarrativeSlot.value?.startTime ?? 0)),
 ))
 const isTrackZero = computed(() => store.segment.trackZeroExperience === true)
-const isWolvesExperience = computed(() => store.experienceId === WOLVES_EXPERIENCE.id)
+const isWolvesPresentation = computed(() => store.isWolvesPresentation)
 const thesis = computed(() => (isTrackZero.value ? getWolvesThesisState(time.value) : getWolvesThesisState(0)))
 
 // Static ordered video-loop sidecar for Track 0's desktop right column, below
@@ -33,15 +51,10 @@ const thesis = computed(() => (isTrackZero.value ? getWolvesThesisState(time.val
 // through the authored playlist, and inline on mobile browsers that support
 // it. It must not mount on narrow viewports, so it is gated behind a
 // reactive desktop media-query guard rather than CSS alone.
-const TRACKZERO_SIDECAR_VIDEO_IDS = [
-  'xu_yE8h3jT8',
-  'PjryN2F6fF0',
-  'jRXB67fcXZA',
-  'tcj7O-hsCN0',
-  '-lo2IXn9RK4',
-  '_4SQ2mWxnEc',
-  'bCA6l-VlpAY',
-] as const
+//
+// The playlist itself lives in `wolves-track-zero-sidecar.ts` because the
+// Director's Cut finale drives one of its entries through the IFrame API and
+// the two surfaces must never disagree about which upload that is.
 
 const trackZeroSidecarSrc = computed(() => {
   const [firstVideoId] = TRACKZERO_SIDECAR_VIDEO_IDS
@@ -118,39 +131,60 @@ watch([isTrackZero, isDesktopViewport], ([trackZero, desktop]) => {
 const showTrackZeroSidecar = computed(() => store.phase === 'cinematic'
   && isTrackZero.value
   && isDesktopViewport.value
-  && sidecarReady.value)
+  && sidecarReady.value
+  && !store.directorFinaleActive)
 
-// Background wallpaper layers, carried over from the original immersive
-// theater: monthly Bluefin day/night pairs crossfade over 1.5s as soundtrack
-// progress advances, with a sine-modulated night blend. Progress spans the
-// whole seven-part show, matching the original (trackIndex + trackProgress)/7.
-const totalProgress = computed(() => {
-  const trackProgress = store.segmentDuration > 0 ? store.segmentElapsed / store.segmentDuration : 0
-  return Math.min(1, Math.max(0, (store.segmentIndex + trackProgress) / 7))
+// Background wallpaper layers: monthly Bluefin day/night pairs, one scene per
+// song, dissolving from day to night across that song.
+//
+// The scene is a function of `segmentIndex` and the night blend is a function
+// of progress *within* the segment, so the two cannot disagree: a song owns
+// exactly one wallpaper and takes it from full day to full night, and the next
+// song cuts to the next scene and starts its own dawn.
+//
+// This replaced `sin(frac(totalProgress * 12 + 6) * PI)` over a
+// `(segmentIndex + trackProgress) / 7` clock. That was wrong twice over. The
+// sine ran day -> night -> *back to day* inside every slot, so the background
+// pulsed underneath slides that were not changing rather than progressing; and
+// the twelve slots did not line up with the seven songs, so a scene change
+// could land anywhere inside a song. The hardcoded `/ 7` was wrong a third
+// time: the one-segment Director's Cut only ever reached 1/7 of the curve, so
+// its single song got a fragment of one dissolve instead of a whole one.
+//
+// Deriving both from the segment is what makes the first song's dissolve run.
+// Under the old clock the show opened at exactly `frac == 0`, and the opening
+// dissolve was whatever fraction of a slot happened to remain.
+const WALLPAPER_OPENING_PAIR_INDEX = 6
+// December (index 11) is out of rotation, so the show cycles the eleven pairs
+// below it. Wrapping keeps a scene per song for any segment count without
+// repeating a scene until the pool is exhausted.
+const WALLPAPER_PAIR_COUNT = 11
+
+const segmentProgress = computed(() => {
+  if (store.segmentDuration <= 0) {
+    return 0
+  }
+  return Math.min(1, Math.max(0, store.segmentElapsed / store.segmentDuration))
 })
 
 const wallpaperNightOpacity = computed(() => {
-  if (!isWolvesExperience.value) {
+  if (!isWolvesPresentation.value) {
     return 0
   }
   if (thesis.value.dayPulse) {
     return 0
   }
-  const wallpaperIndexFloat = totalProgress.value * 12 + 6
-  return Math.sin((wallpaperIndexFloat - Math.floor(wallpaperIndexFloat)) * Math.PI)
+  return segmentProgress.value
 })
 
 const currentPairIndex = computed(() => {
   // Back-catalogue albums already crossfade large slideshow images. Running the
   // full-screen month wallpaper dissolve underneath at the same time compounds
   // decode/compositor work into a visible hitch, so their backdrop stays fixed.
-  if (!isWolvesExperience.value) {
-    return 6
+  if (!isWolvesPresentation.value) {
+    return WALLPAPER_OPENING_PAIR_INDEX
   }
-  const wallpaperIndexFloat = totalProgress.value * 12 + 6
-  const pairIndex = Math.floor(wallpaperIndexFloat) % 12
-  // December is intentionally out of rotation; November holds through its slot.
-  return pairIndex === 11 ? 10 : pairIndex
+  return (WALLPAPER_OPENING_PAIR_INDEX + store.segmentIndex) % WALLPAPER_PAIR_COUNT
 })
 
 const activeMonth = ref(6)
@@ -233,15 +267,39 @@ onBeforeUnmount(() => {
     <div class="wc-wallpaper-container">
       <div v-if="previousMonth !== null" class="wc-wallpaper-buffer fading-out">
         <div class="wc-wallpaper-layer" :style="{ backgroundImage: getDayWallpaperUrl(previousMonth) }" />
-        <div class="wc-wallpaper-layer" :style="{ backgroundImage: getNightWallpaperUrl(previousMonth), opacity: wallpaperNightOpacity }" />
+        <!-- The outgoing scene belongs to the song that just ended, so it leaves
+             at full night. Sharing the incoming buffer's opacity would snap it
+             back to day for its whole 1.5s fade-out, because the new song's ramp
+             starts at dawn. -->
+        <div
+          class="wc-wallpaper-layer wc-wallpaper-layer--night"
+          :style="{ backgroundImage: getNightWallpaperUrl(previousMonth), opacity: 1 }"
+        />
       </div>
       <div class="wc-wallpaper-buffer" :class="{ 'is-transitioning': isTransitioning }">
         <div class="wc-wallpaper-layer" :style="{ backgroundImage: getDayWallpaperUrl(activeMonth) }" />
-        <div class="wc-wallpaper-layer" :style="{ backgroundImage: getNightWallpaperUrl(activeMonth), opacity: wallpaperNightOpacity }" />
+        <div
+          class="wc-wallpaper-layer wc-wallpaper-layer--night"
+          data-wallpaper-night
+          :style="{ backgroundImage: getNightWallpaperUrl(activeMonth), opacity: wallpaperNightOpacity }"
+        />
       </div>
     </div>
 
-    <div class="wc-trackzero-grid" :class="{ 'wc-trackzero-grid--gallery': !isTrackZero }">
+    <!-- The finale unmounts the ordinary grid rather than covering it. `v-show`
+         left the comic reader and the lore column mounted and running behind an
+         opaque frame: they kept advancing their own clocks, kept the reader's
+         image buffers warm, and — because the finale carries the same lore
+         record — a second live instance of the bulletin ran off screen. Nothing
+         under here is the finale's, so none of it should be alive during it.
+         The standard show never sees this: `directorFinaleActive` is false
+         unless the Director's Cut profile is running. -->
+    <div
+      v-if="!store.directorFinaleActive"
+      class="wc-trackzero-grid"
+      :class="{ 'wc-trackzero-grid--gallery': !isTrackZero }"
+      data-trackzero-grid
+    >
       <div class="wc-trackzero-viewer">
         <!-- One persistent reader across every part preserves the single
              Fisher-Yates gallery shuffle (no photo reuse between songs).
@@ -254,7 +312,8 @@ onBeforeUnmount(() => {
           :pending-track-index="store.pendingSegmentIndex ?? undefined"
           :playlist-current-time="time"
           :experience-id="store.experienceId"
-          :wolves-experience="store.experienceId === WOLVES_EXPERIENCE.id"
+          :wolves-experience="isWolvesPresentation"
+          :presentation-profile="store.presentationProfile"
         />
 
         <Transition name="wc-thesis">
@@ -278,7 +337,7 @@ onBeforeUnmount(() => {
       <aside v-if="isTrackZero" class="wc-trackzero-lore immersive-col-right">
         <div class="wc-trackzero-lore-row">
           <WolvesLoreColumn
-            :artifact-id="displayedNarrativeSlot.artifactId"
+            :artifact-id="displayedArtifactId"
             :duration="slotDuration"
             :elapsed="slotElapsed"
             :warning="thesis.warning"

@@ -8,8 +8,9 @@ import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import Nameplate from '@/components/wolves/cinematic/Nameplate.vue'
 import WolvesIntroOverlay from '@/components/wolves/WolvesIntroOverlay.vue'
 import { parseBackCatalogue } from '@/config/experience-manifest'
-import { buildDirectorsCutVideoSequence, buildIntroVideoSequence, guardianIntroStartTime, isTextSegment } from '@/data/wolves-intro-sequence'
-import { INTRO_SEQUENCE_DURATION, useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
+import { buildDirectorsCutVideoSequence, DIRECTORS_CUT_DESTINY_SEGMENT_ID, DIRECTORS_CUT_PROLOGUE_SEGMENT_ID, IKORA_SOURCE_VIDEO_ID } from '@/data/wolves-directors-cut-intro'
+import { buildIntroVideoSequence, guardianIntroStartTime, isTextSegment } from '@/data/wolves-intro-sequence'
+import { INTRO_SEQUENCE_DURATION, useCinematicStore, WOLVES_DIRECTORS_CUT_EXPERIENCE, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
 const store = useCinematicStore()
 
@@ -55,6 +56,7 @@ async function startCinematicStage() {
     // drift out of date and leave the harness stuck in the intro.
     ;(window as any).__wolvesCinematic = {
       seekTo: (s: number) => stage.value?.seekTo(s),
+      nativeTime: () => store.nativeTime,
       introDuration: () => INTRO_SEQUENCE_DURATION,
       overallDuration: () => store.overallDuration,
       // What each YouTube buffer is really holding versus what the runtime thinks
@@ -83,7 +85,6 @@ async function launchExperience(manifest: ExperienceManifest) {
   // Preserve the authored intro and Track 0 presentation for the canonical
   // Wolves catalogue card instead of playing its generated fallback manifest.
   if (manifest.id === WOLVES_EXPERIENCE.sourcePlaylistId) {
-    store.loadExperience(WOLVES_EXPERIENCE)
     await enterIntro()
     return
   }
@@ -99,6 +100,8 @@ const INTRO_HANDOFF_FADE_MS = 400
 const intro = ref<InstanceType<typeof WolvesIntroOverlay> | null>(null)
 const introShowVoiceOverToggle = ref(false)
 const introVoiceOverEnabled = ref(false)
+const introMoods = ref<readonly { id: string, label: string }[]>([])
+const introActiveMoodId = ref<string | undefined>()
 const introNameplateVisible = ref(true)
 const introNameplateGlitch = ref(false)
 const introSegmentIndexById = computed(() => new Map(introVideos.value.map((segment, index) => [segment.id, index])))
@@ -107,10 +110,10 @@ const introSegmentIndexById = computed(() => new Map(introVideos.value.map((segm
 const INTRO_DISPLAY: Record<string, { chapter: string, title: string, mediaTitle: string, artist: string, artwork: string }> = {
   'wolves-prologue': {
     chapter: 'PROLOGUE',
-    title: 'Gayane Ballet Suite (Adagio)',
-    mediaTitle: 'PROLOGUE — Gayane Ballet Suite',
-    artist: 'Aram Khachaturian',
-    artwork: 'https://i.ytimg.com/vi/EB3IokHelRk/hqdefault.jpg',
+    title: 'Excerpt from The Tribulation',
+    mediaTitle: 'PROLOGUE — Excerpt from The Tribulation',
+    artist: 'Martin O\'Donnell, Michael Salvatori, Paul McCartney',
+    artwork: 'https://i.ytimg.com/vi/uvtR84x0kgw/hqdefault.jpg',
   },
   'wolves-intro': {
     chapter: 'Meet your Fireteam',
@@ -119,8 +122,29 @@ const INTRO_DISPLAY: Record<string, { chapter: string, title: string, mediaTitle
     artist: 'Bungie',
     artwork: 'https://i.ytimg.com/vi/BV3BZKbpBns/hqdefault.jpg',
   },
+  // Same authored segment, different source: the Director's Cut plays Bungie's own
+  // Ikora-voiced upload as its primary rather than the unvoiced re-upload, so its
+  // plaque artwork has to come from that video too.
+  [DIRECTORS_CUT_DESTINY_SEGMENT_ID]: {
+    chapter: 'Meet your Fireteam',
+    title: 'a project to bring their stories to life',
+    mediaTitle: 'The Wolves are Coming',
+    artist: 'Bungie',
+    artwork: `https://i.ytimg.com/vi/${IKORA_SOURCE_VIDEO_ID}/hqdefault.jpg`,
+  },
 }
 const introMediaTitle = ref(INTRO_DISPLAY['wolves-intro'].mediaTitle)
+
+/**
+ * Display metadata for whichever cut's opening segment is on stage.
+ *
+ * Back-navigation into the intro used to publish the standard Destiny plaque unconditionally,
+ * so a Director's Cut run showed the wrong chapter, artist and artwork the moment the
+ * audience stepped back into it.
+ */
+function openingIntroDisplay() {
+  return INTRO_DISPLAY[introVideos.value[0].id] ?? INTRO_DISPLAY['wolves-intro']
+}
 
 /**
  * Native start time forwarded to the intro overlay when a gallery thumbnail deep-links
@@ -134,12 +158,17 @@ async function enterIntro(startAtNativeTime: number | null = null, directorsCut 
   introHandoff.value = false
   introStartAt.value = startAtNativeTime
   introTransparent.value = false
+  // Load the cinematic segments for the requested cut BEFORE publishing the
+  // intro sequence: the Director's Cut intro hands off into the one-song
+  // cinematic, not the standard seven-part show, and both the intro and
+  // cinematic timelines read the experience this sets active.
+  store.loadExperience(directorsCut ? WOLVES_DIRECTORS_CUT_EXPERIENCE : WOLVES_EXPERIENCE)
   // The Director's Cut is a different list with different segments and
   // durations. Publish it before entering the phase so the store's timeline,
   // index clamping, and TOTAL readout describe the intro actually playing.
   store.setIntroSequence(introVideos.value)
   store.enterIntro()
-  introMediaTitle.value = INTRO_DISPLAY[directorsCut ? 'wolves-prologue' : 'wolves-intro'].mediaTitle
+  introMediaTitle.value = openingIntroDisplay().mediaTitle
   await nextTick()
   if (unmounted || token !== handoffToken || store.phase !== 'intro') {
     return
@@ -202,10 +231,12 @@ function handleIntroStatus(payload: IntroStatusPayload) {
       canPrevious: payload.canGoPrevious,
     })
   }
-  introNameplateVisible.value = true
+  introNameplateVisible.value = payload.segmentId !== DIRECTORS_CUT_PROLOGUE_SEGMENT_ID
   introNameplateGlitch.value = payload.nameplateGlitch ?? false
   introShowVoiceOverToggle.value = payload.showVoiceOverToggle ?? false
   introVoiceOverEnabled.value = payload.voiceOverEnabled ?? false
+  introMoods.value = payload.moods ?? []
+  introActiveMoodId.value = payload.activeMoodId
   store.syncIntroStatus(normalizeIntroStatus(payload))
   store.setPlaying(!payload.paused)
 }
@@ -253,7 +284,7 @@ async function restoreIntroForNavigation(): Promise<number | null> {
   if (unmounted || token !== handoffToken) {
     return null
   }
-  const meta = INTRO_DISPLAY['wolves-intro']
+  const meta = openingIntroDisplay()
   store.setDisplayOverride({
     ...meta,
     canPrevious: false,
@@ -295,6 +326,16 @@ async function handleSegmentSeek(ratio: number) {
     stage.value?.seekToRatio(ratio)
   }
 }
+
+onMounted(() => {
+  // Deep-link into the Director's Cut for projection / recording workflows that
+  // need the cut to start without a lobby click. The default front-door behavior
+  // is unchanged when the parameter is absent.
+  //
+  if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('directors-cut')) {
+    void enterIntro(null, true)
+  }
+})
 
 onBeforeUnmount(() => {
   unmounted = true
@@ -351,6 +392,11 @@ onMounted(async () => {
           @status="handleIntroStatus"
           @complete="handleIntroComplete"
         />
+        <!-- The Director's Cut prologue is a scored cold open: no title card,
+             and no chapter plaque either. The plate is suppressed for that one
+             segment rather than blanked, because empty strings would still lay
+             out the crest and horizon rules over the top-left of the frame. The
+             Destiny segment that follows keeps it. -->
         <div v-if="introNameplateVisible" class="wc-intro-nameplate">
           <Nameplate :detail="store.display.chapter" :label="store.display.title" :glitch="introNameplateGlitch" />
         </div>
@@ -360,15 +406,18 @@ onMounted(async () => {
           :show-voice-over-toggle="introShowVoiceOverToggle"
           :voice-over-enabled="introVoiceOverEnabled"
           voice-over-label="Ikora voice over"
+          :moods="introMoods"
+          :active-mood-id="introActiveMoodId"
           @toggle-play="intro?.toggle()"
           @toggle-voice-over="(enabled: boolean) => intro?.setVoiceOverEnabled(enabled)"
+          @select-mood="(id: string) => intro?.setPrologueMood(id)"
           @skip="handleIntroSkip"
           @seek="handleSegmentSeek"
         />
       </template>
 
       <MediaWidget
-        v-else
+        v-else-if="!store.directorFinaleActive"
         auto-hide
         @toggle-play="stage?.togglePlay()"
         @skip="(delta: number) => stage?.skip(delta)"

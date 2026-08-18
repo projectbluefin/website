@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { estimatePageSeconds } from '../components/wolves/lore/lore-pages'
+import { DIRECTORS_CUT_DESTINY_CONCEPTS } from '../data/wolves-directors-cut-artwork'
 import {
   activeOverlayCue,
   activeOverlayText,
@@ -8,6 +9,7 @@ import {
   buildIntroVideoSequence,
   buildOverlayTextParts,
   createIntroSequenceState,
+  isInsideTrackEndWindow,
   isTextSegment,
   isTextSegmentComplete,
   isVideoCutoffReached,
@@ -15,6 +17,8 @@ import {
   parseDestinyCaptionFile,
   previousIntroSequence,
   skipIntroSequence,
+  TEXT_SEGMENT_END_SLACK_SECONDS,
+  TEXT_SEGMENT_STALL_GRACE_SECONDS,
   TITLE_CARD_PACE,
 } from '../data/wolves-intro-sequence'
 
@@ -90,6 +94,54 @@ describe('wolves intro overlay sequence', () => {
     const segment = { id: 't', kind: 'text' as const, duration: 45 }
     expect(isTextSegmentComplete(segment, 44.9)).toBe(false)
     expect(isTextSegmentComplete(segment, 45)).toBe(true)
+  })
+
+  it('completes a scored card on the real player\'s ENDED state when its clock plateaus short', () => {
+    const segment = { id: 'wolves-prologue', kind: 'text' as const, duration: 325.6, audioYoutubeVideoId: 'EB3IokHelRk' }
+
+    // The hang this exists to prevent: a real player whose clock stops below the authored end.
+    expect(isTextSegmentComplete(segment, 325.58)).toBe(false)
+    expect(isTextSegmentComplete(segment, 325.58, { ended: true })).toBe(true)
+    expect(isTextSegmentComplete(segment, segment.duration - TEXT_SEGMENT_END_SLACK_SECONDS, { ended: true })).toBe(true)
+  })
+
+  it('refuses an ENDED from outside the silent tail, so an ad break cannot cut the act short', () => {
+    const segment = { id: 'wolves-prologue', kind: 'text' as const, duration: 325.6, audioYoutubeVideoId: 'EB3IokHelRk' }
+
+    // A YouTube embed publishes state around ad breaks, and a mid-roll ad freezes the main
+    // video's clock at a nonzero time. Believing an ENDED there would end a 325.6s scored act
+    // in the middle of the piece, in front of a live room.
+    expect(isTextSegmentComplete(segment, 120, { ended: true })).toBe(false)
+    expect(isTextSegmentComplete(segment, 0, { ended: true })).toBe(false)
+    expect(isTextSegmentComplete(segment, segment.duration - TEXT_SEGMENT_END_SLACK_SECONDS - 0.01, { ended: true })).toBe(false)
+    // The window an end-of-track claim is believed in is the same for both signals.
+    expect(isInsideTrackEndWindow(segment, 120)).toBe(false)
+    expect(isInsideTrackEndWindow(segment, segment.duration - TEXT_SEGMENT_END_SLACK_SECONDS)).toBe(true)
+  })
+
+  it('completes a scored card whose clock freezes inside the track\'s silent tail', () => {
+    const segment = { id: 'wolves-prologue', kind: 'text' as const, duration: 325.6, audioYoutubeVideoId: 'EB3IokHelRk' }
+    const frozen = { stalledSeconds: TEXT_SEGMENT_STALL_GRACE_SECONDS }
+
+    expect(isTextSegmentComplete(segment, segment.duration - TEXT_SEGMENT_END_SLACK_SECONDS, frozen)).toBe(true)
+    // A frozen clock is only read as the end of the track inside that measured tail...
+    expect(isTextSegmentComplete(segment, segment.duration - TEXT_SEGMENT_END_SLACK_SECONDS - 0.01, frozen)).toBe(false)
+    // ...and only after the grace, so buffering or a mid-roll ad still waits for the music.
+    expect(isTextSegmentComplete(segment, segment.duration - 0.02, {
+      stalledSeconds: TEXT_SEGMENT_STALL_GRACE_SECONDS - 0.1,
+    })).toBe(false)
+    // The whole backstop window sits after the source's last audible sample (321.34s), so it
+    // can only ever give back silence.
+    expect(segment.duration - TEXT_SEGMENT_END_SLACK_SECONDS).toBeGreaterThan(321.34)
+  })
+
+  it('never lets a silent card complete early: it has no player to stall or end', () => {
+    const silent = { id: 'wolves-title-card', kind: 'text' as const, duration: 59 }
+
+    // A silent card reports no clock state at all, so only its authored duration ends it.
+    expect(isTextSegmentComplete(silent, 58.5)).toBe(false)
+    expect(isTextSegmentComplete(silent, 58.5, { stalledSeconds: 0 })).toBe(false)
+    expect(isTextSegmentComplete(silent, 59)).toBe(true)
   })
 
   it('parses the authored Destiny caption file into timed burn-in cues', () => {
@@ -250,16 +302,26 @@ describe('wolves intro overlay sequence', () => {
     }))
   })
 
-  it('renames Robert Killen to Bob Killen without moving the authored guardian windows', () => {
+  it('keeps the standard intro free of the Director\'s Cut concept-art montage registry', () => {
+    const standardIntro = JSON.stringify(buildIntroVideoSequence())
+
+    for (const record of DIRECTORS_CUT_DESTINY_CONCEPTS) {
+      expect(standardIntro).not.toContain(record.id)
+      expect(standardIntro).not.toContain(record.localPath)
+    }
+  })
+
+  it('renames Bob Killen to Cortney Nickerson without moving the authored guardian windows', () => {
     const destiny = buildIntroVideoSequence().find(segment => segment.id === 'wolves-intro')
     if (!destiny || !isVideoSegment(destiny)) {
       throw new Error('Expected the Destiny segment to exist')
     }
 
     expect(destiny.overlays).toEqual(expect.arrayContaining([
-      expect.objectContaining({ text: 'Voidwalker Warlock — Bob Killen — Reconciler of the Plane', start: 5, end: 14.5 }),
+      expect.objectContaining({ text: 'Voidwalker Warlock — Cortney Nickerson — Reconciler of the Plane', start: 5, end: 14.5 }),
       expect.objectContaining({ text: 'Stormcaller Warlock — Kaslin Fields — Rage of the Paradox', start: 40, end: 48 }),
     ]))
+    expect(JSON.stringify(destiny.overlays)).not.toContain('Bob Killen')
     expect(JSON.stringify(destiny.overlays)).not.toContain('Robert Killen')
   })
 

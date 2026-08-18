@@ -24,6 +24,14 @@ prose, data values, registered records, and approved assets within existing
 structures. Do not edit Vue templates, styles, layout, controls, animation,
 player synchronization, or generated files for content work.
 
+## Which video is which
+
+"The first video" is the prologue. The full running order, the branch that owns
+each video, and the one-command timestamp lookup are in
+[`wolves-video-order.md`](wolves-video-order.md). Resolve any ordinal or
+timestamp there **before** opening a file — auditing the wrong artifact is the
+single most repeated failure on this route.
+
 ## Runtime owners
 
 - Entry: `wolves/index.html`
@@ -49,6 +57,9 @@ The defect-derived detail behind that gate lives in these companion references:
   oversubscription math, anchoring text to measured beats.
 - [`wolves-slide-scheduling.md`](wolves-slide-scheduling.md) — beat grids, locked
   slide windows, preload budgeting, slide buffer continuity.
+- [`wolves-directors-cut-finale.md`](wolves-directors-cut-finale.md) — the
+  Director's Cut finale: named anchors, the measured companion-video frames, the
+  latched terminal fade, and store-derived chrome suppression.
 - [`wolves-test-harnesses.md`](wolves-test-harnesses.md) — browser harnesses and
   player mocks.
 
@@ -62,7 +73,7 @@ The defect-derived detail behind that gate lives in these companion references:
 - Incoming signals: `src/data/wolves-incoming-signal.txt`.
 - Dinosaur registry: `src/data/wolves-dinosaur-species.ts`.
 - Guardian bond data: `src/data/wolves-guardian-dinosaur-bonds.ts`.
-- Intro cue data: `buildIntroVideoSequence()` (standard intro) and `buildDirectorsCutVideoSequence()` (Director's Cut with Gayane Ballet Suite prologue + Destiny 2 trailer) in `src/data/wolves-intro-sequence.ts`. Both sequences now open on the silent `wolves-title-card` segment: the presenter's welcome slide, built by `buildOpeningTitleCardSegment()`, showing the recovered orange-shirt stage portrait behind a Ghosts In The Mist-style nameplate (`Jorge Castro` / `Project Bluefin // Universal Blue // Kubernetes`) and the owner-authored welcome quote in four timed paragraphs, then handing off to the Destiny trailer. The portrait is 3:2, so landscape viewports fit it with `object-fit: contain` to keep the full gesture in frame while portrait keeps `cover` biased up the frame; the quote is capped to a readable measure and balanced, and its lower third is a soft scrim rather than an opaque panel. It carries no audio by design so the room hears the speaker. The Director's Cut option is available at the bottom of the `/wolves/experience/` lobby. The standard intro's comic title-card slot uses the approved project copy, restores the MakeMeAComic QR code, and places the recovered Amber Graner quote at the bottom. Its music widget auto-hides during inactivity and reappears on pointer, touch, or keyboard interaction.
+- Intro cue data: `buildIntroVideoSequence()` (standard intro) in `src/data/wolves-intro-sequence.ts`, and `buildDirectorsCutVideoSequence()` (Director's Cut) in `src/data/wolves-directors-cut-intro.ts`. The two are different shows, not two lengths of the same one. The standard intro opens on the silent `wolves-title-card` welcome slide. The Director's Cut has its own score, montage, narration, and handoff into its cinematic profile; it carries no standard title card. The Director's Cut option is available at the bottom of the `/wolves/experience/` lobby. The standard intro's music widget auto-hides during inactivity and reappears on pointer, touch, or keyboard interaction. The owning segment lists and measured timing constants are the authority for the current number and order of Director's Cut segments; do not duplicate that sequence in prose.
 - Soundtrack source data: `public/wolves-playlist.json` and its updater.
 - Back catalogue: source playlist metadata and
   `scripts/update-back-catalogue.js`.
@@ -199,3 +210,28 @@ proportional-bonus branch and into silent compression — and the caller
 nothing downstream can detect it. Which records play is an owner decision, not
 an agent decision. Do not "fix" a shortfall by shrinking type, speeding the
 typewriter, or lowering the readability minimum.
+
+`hiddenFromWolvesVideoArtifactIds` now also carries a second, unrelated
+category beneath the eleven oversubscription cuts: the Director's Cut nine-
+quote panel (`src/data/wolves-directors-cut-timeline.ts`), labeled "Director's
+Cut only" in a separate comment block. Those records were never authored for
+the standard show at all — excluding them is not evidence of a new
+oversubscription cut, and restoring the count of "eleven" oversubscribed
+artifacts to explain the set's full length would be wrong. Read each labeled
+block for its own reason before assuming the whole set shares one cause.
+
+Registering that panel in the data layer is not the same as it ever reaching
+the audience. `TheaterExperience.vue`'s `displayedNarrativeSlot` computed is
+the one place that resolves "which record is on stage right now" into the
+`WolvesLoreColumn` it mounts, and it has to branch on
+`store.presentationProfile === WOLVES_DIRECTORS_CUT_PROFILE_ID` to call
+`getDirectorsCutNarrativeSlotForTime()` instead of the standard show's
+`getNarrativeSlotForTime()`. That branch shipped later than the panel itself —
+Tasks 2–8 built, scheduled, and unit-tested the panel, but nothing mounted
+`TheaterExperience` with a real `WolvesLoreColumn` probe for the Director's Cut
+profile, so a live run silently showed the standard show's timeline at the
+Director's Cut's own clock readings until Task 9's validation pass caught it.
+`wolvesHeroTypography.test.ts`'s `theater experience lore column narrative
+timeline wiring` tests assert both branches by mounting the real component with
+a lore-column probe; extend those, not just the data-layer tests, if this
+panel's schedule ever changes.

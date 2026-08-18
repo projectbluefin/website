@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
+import { useCinematicStore } from '@/stores/cinematic'
 import TrackCredit from './TrackCredit.vue'
 
 const props = withDefaults(defineProps<{
@@ -8,11 +8,16 @@ const props = withDefaults(defineProps<{
   showVoiceOverToggle?: boolean
   voiceOverEnabled?: boolean
   voiceOverLabel?: string
+  /** Selectable scores for the current segment. Empty means no picker. */
+  moods?: readonly { id: string, label: string }[]
+  activeMoodId?: string
   autoHide?: boolean
 }>(), {
   showVoiceOverToggle: false,
   voiceOverEnabled: false,
   voiceOverLabel: 'Ikora voice over',
+  moods: () => [],
+  activeMoodId: undefined,
   autoHide: false,
 })
 
@@ -21,15 +26,20 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   togglePlay: []
   toggleVoiceOver: [enabled: boolean]
+  selectMood: [id: string]
   skip: [delta: number]
   seek: [ratio: number]
 }>()
+
+function handleMoodChange(event: Event) {
+  emit('selectMood', (event.target as HTMLSelectElement).value)
+}
 
 const store = useCinematicStore()
 const base = import.meta.env.BASE_URL
 const mediaTitle = computed(() => props.title ?? store.display.title)
 const showCatalogueCredit = computed(() =>
-  !props.title && store.experienceId !== WOLVES_EXPERIENCE.id,
+  !props.title && !store.isWolvesPresentation,
 )
 const artworkSrc = computed(() =>
   store.display.artwork.startsWith('http') ? store.display.artwork : `${base}${store.display.artwork}`,
@@ -225,6 +235,17 @@ function handleVoiceOverChange(event: Event) {
         <span class="wc-widget-time">{{ segmentTime }}</span>
         <span class="wc-widget-time">TOTAL {{ overallTime }}</span>
       </div>
+      <label v-if="props.moods.length > 1" class="wc-widget-toggle">
+        <span class="wc-widget-toggle-text">Mood</span>
+        <select
+          class="wc-widget-mood"
+          aria-label="Prologue score"
+          :value="props.activeMoodId"
+          @change="handleMoodChange"
+        >
+          <option v-for="mood in props.moods" :key="mood.id" :value="mood.id">{{ mood.label }}</option>
+        </select>
+      </label>
       <label v-if="props.showVoiceOverToggle" class="wc-widget-toggle">
         <input
           class="wc-widget-toggle-input"
@@ -419,6 +440,22 @@ function handleVoiceOverChange(event: Event) {
   gap: 8px;
   align-items: baseline;
   flex-wrap: wrap;
+}
+
+/* The mood picker borrows the toggle's type and colour so the meta row keeps one
+   voice. It is a real `<select>` rather than a custom menu on purpose: it has to
+   be operable in a hurry, by a presenter who is not looking at it, on whatever
+   machine the venue provides. */
+.wc-widget-mood {
+  padding: 0.1rem 0.3rem;
+  border: 1px solid rgb(255 255 255 / 25%);
+  border-radius: 2px;
+  background: rgb(0 0 0 / 45%);
+  color: var(--wc-fg, #e9e9e5);
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
 }
 
 .wc-widget-toggle {

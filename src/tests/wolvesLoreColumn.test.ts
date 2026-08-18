@@ -14,6 +14,13 @@ import {
 } from '../components/wolves/lore/lore-pages'
 import { splitReadableBeats } from '../components/wolves/lore/readable-beats'
 import WolvesLoreColumn from '../components/wolves/WolvesLoreColumn.vue'
+import { DIRECTORS_CUT_FINALE_ANCHORS } from '../data/wolves-directors-cut-finale'
+import {
+  DIRECTORS_CUT_BULLETIN_ARTIFACT_ID,
+  DIRECTORS_CUT_QUOTE_IDS,
+  getDirectorsCutNarrativeSlotForTime,
+  wolvesDirectorsCutNarrativeTimeline,
+} from '../data/wolves-directors-cut-timeline'
 import { parseLoreRecord } from '../data/wolves-lore-records'
 import { getNarrativeSlotForTime, wolvesNarrativeTimeline } from '../data/wolves-narrative-timeline'
 import { wolvesRelease } from '../data/wolves-story'
@@ -210,7 +217,7 @@ describe('wolvesLoreColumn Logic', () => {
       .map(record => record.id))
     const quoteArtifacts = wolvesRelease.artifacts.filter(artifact => quoteIds.has(artifact.id))
 
-    expect(quoteArtifacts).toHaveLength(8)
+    expect(quoteArtifacts).toHaveLength(17)
     expect(quoteArtifacts.every(artifact => !Object.prototype.hasOwnProperty.call(artifact, 'sourceLabel'))).toBe(true)
   })
 
@@ -705,5 +712,86 @@ describe('wolvesLoreColumn Logic', () => {
   afterEach(() => {
     vi.useRealTimers()
     vi.restoreAllMocks()
+  })
+})
+
+/**
+ * The Director's Cut panel, rendered rather than described.
+ *
+ * The schedule tests prove the nine quotes get readable windows. They cannot
+ * prove the quote reaches the screen: the column resolves its own record by id,
+ * and a scheduled id that no view can render, or a record whose attribution
+ * lives under a metadata key the quote view does not read, is a blank panel in
+ * a theater with a schedule that still passes.
+ */
+describe('director\'s cut lore column', () => {
+  const slotAt = (time: number) => {
+    const slot = getDirectorsCutNarrativeSlotForTime(time)
+    if (!slot) {
+      throw new Error(`no Director's Cut record scheduled at ${time}s`)
+    }
+    return slot
+  }
+
+  const mountSlot = (slot: { artifactId: string, startTime: number, endTime: number }, elapsed = 0.5) =>
+    mount(WolvesLoreColumn, {
+      props: {
+        artifactId: slot.artifactId,
+        duration: slot.endTime - slot.startTime,
+        elapsed,
+      },
+    })
+
+  it.each([
+    ['opening', 0],
+    ['middle', TRACK_ZERO_SECTIONS.chorusStart],
+    ['closing', TRACK_ZERO_SECTIONS.buildStart],
+  ])('renders the scheduled %s quote with its authored words, attribution and context', (_position, time) => {
+    const slot = slotAt(time)
+    const record = loreRecords.find(entry => entry.id === slot.artifactId)!
+    const quote = getQuoteLore(record)
+    const wrapper = mountSlot(slot)
+
+    expect(wrapper.find('[data-lore-view-kind="quote"]').exists()).toBe(true)
+    // Single-page by construction: a quote is never split across pages, so the
+    // whole authored line is on screen for the whole window.
+    expect(wrapper.get('.lore-quote-text').text().trim()).toBe(quote.quote.trim())
+    expect(wrapper.get('.lore-quote-meta strong').text()).toBe(record.metadata.attribution)
+    expect(wrapper.find('[data-lore-quote-context]').text()).toBe(record.metadata.context)
+  })
+
+  it('renders every scheduled quote whole, on one page, for the window it is given', () => {
+    for (const id of DIRECTORS_CUT_QUOTE_IDS) {
+      const slot = wolvesDirectorsCutNarrativeTimeline.find(entry => entry.artifactId === id)!
+      const record = loreRecords.find(entry => entry.id === id)!
+      const wrapper = mountSlot(slot, (slot.endTime - slot.startTime) - 0.1)
+
+      expect(wrapper.get('.lore-quote-text').text().trim(), id).toBe(getQuoteLore(record).quote.trim())
+      expect(wrapper.get('.lore-quote-meta strong').text(), id).toBe(record.metadata.attribution)
+    }
+  })
+
+  it('renders the missing-scientist bulletin as a news record on its own window', () => {
+    const slot = slotAt(DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart)
+    const wrapper = mountSlot(slot)
+
+    expect(slot.artifactId).toBe(DIRECTORS_CUT_BULLETIN_ARTIFACT_ID)
+    expect(wrapper.find('[data-lore-view="news-bulletin"]').exists()).toBe(true)
+  })
+
+  // The intervals between quotes are authored image-only frames. The column has
+  // to go empty there, not hold the last record: a quote left on screen through
+  // a gap is the stall this cut was re-timed to remove.
+  it('renders an empty column through an image-only interval', () => {
+    const firstQuote = wolvesDirectorsCutNarrativeTimeline[0]!
+    const gapTime = firstQuote.endTime + 1
+    expect(getDirectorsCutNarrativeSlotForTime(gapTime)).toBeNull()
+
+    const wrapper = mount(WolvesLoreColumn, {
+      props: { artifactId: '', duration: 10, elapsed: 0 },
+    })
+
+    expect(wrapper.find('[data-lore-view-kind]').exists()).toBe(false)
+    expect(wrapper.get('[data-unified-lore-feed]').text()).toBe('')
   })
 })

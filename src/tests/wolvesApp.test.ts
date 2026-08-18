@@ -4,8 +4,16 @@ import { flushPromises, shallowMount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, nextTick } from 'vue'
-import { buildDirectorsCutVideoSequence, buildIntroVideoSequence } from '@/data/wolves-intro-sequence'
-import { INTRO_SEQUENCE_DURATION, useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
+import { buildDirectorsCutVideoSequence, IKORA_SOURCE_VIDEO_ID } from '@/data/wolves-directors-cut-intro'
+import { buildIntroVideoSequence } from '@/data/wolves-intro-sequence'
+import {
+  INTRO_SEQUENCE_DURATION,
+  useCinematicStore,
+  WOLVES_DIRECTORS_CUT_EXPERIENCE,
+  WOLVES_DIRECTORS_CUT_PROFILE_ID,
+  WOLVES_EXPERIENCE,
+  WOLVES_STANDARD_PROFILE_ID,
+} from '@/stores/cinematic'
 import WolvesApp from '@/WolvesApp.vue'
 
 const CinematicLobbyStub = defineComponent({
@@ -501,6 +509,12 @@ describe('wolvesApp intro status handling', () => {
     expect(store.sequenceDuration).toBeGreaterThan(standardDuration)
     expect(INTRO_SEQUENCE_DURATION).toBeCloseTo(store.sequenceDuration)
 
+    // The Director CTA also loads the multi-song cinematic manifest, not just
+    // the longer intro list: the audience must not hand off into the full
+    // seven-part show after choosing the Director's Cut.
+    expect(store.segmentCount).toBe(WOLVES_DIRECTORS_CUT_EXPERIENCE.segments.length)
+    expect(store.presentationProfile).toBe(WOLVES_DIRECTORS_CUT_PROFILE_ID)
+
     // Resolution follows the Director's Cut list: its last index exists and is
     // no longer clamped into the shorter standard sequence.
     const lastIndex = directorsCut.length - 1
@@ -516,10 +530,101 @@ describe('wolvesApp intro status handling', () => {
 
     expect(store.segmentIndex).toBe(lastIndex)
     expect(store.overallDuration).toBeCloseTo(
-      store.sequenceDuration + WOLVES_EXPERIENCE.segments.reduce(
+      store.sequenceDuration + WOLVES_DIRECTORS_CUT_EXPERIENCE.segments.reduce(
         (sum, segment) => sum + (segment.durationSeconds ?? 0),
         0,
       ),
     )
+  })
+
+  it('publishes the Director\'s Cut plaque metadata for its own two segments', async () => {
+    const store = useCinematicStore()
+    const [prologue, destiny] = buildDirectorsCutVideoSequence()
+
+    const wrapper = shallowMount(WolvesApp, {
+      global: { stubs: stubs() },
+    })
+
+    wrapper.getComponent(CinematicLobbyStub).vm.$emit('enter-directors-cut')
+    await flushPromises()
+
+    // The Director's Cut opens on the scored prologue, so its music plaque is the
+    // Gayane track, not the standard cut's Destiny trailer.
+    expect(wrapper.getComponent(MediaWidgetStub).props('title')).toBe('PROLOGUE — Excerpt from The Tribulation')
+
+    const intro = wrapper.getComponent(WolvesIntroOverlayStub)
+    intro.vm.$emit('status', {
+      currentTime: 10,
+      duration: prologue.kind === 'text' ? prologue.duration : 0,
+      paused: false,
+      segmentId: prologue.id,
+      canGoPrevious: false,
+    })
+    await wrapper.vm.$nextTick()
+    // The scored prologue carries no chapter plaque at all: it is a cold open,
+    // and a "PROLOGUE / Excerpt from The Tribulation" card in the top-left
+    // corner of the frame is the slide-deck chrome it exists to avoid. The
+    // media widget still names the track.
+    expect(wrapper.find('.nameplate-stub').exists()).toBe(false)
+
+    // And the Destiny handoff plaque names the Ikora source it actually plays.
+    intro.vm.$emit('status', {
+      currentTime: 10,
+      duration: 120,
+      paused: false,
+      segmentId: destiny.id,
+      canGoPrevious: true,
+    })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.get('.nameplate-stub').text()).toBe('Meet your Fireteam|a project to bring their stories to life')
+    expect(store.display.artwork).toContain(IKORA_SOURCE_VIDEO_ID)
+  })
+
+  it('restores the standard seven-part experience when Enter is used after a Director\'s Cut run', async () => {
+    const store = useCinematicStore()
+
+    const wrapper = shallowMount(WolvesApp, {
+      global: { stubs: stubs() },
+    })
+
+    wrapper.getComponent(CinematicLobbyStub).vm.$emit('enter-directors-cut')
+    await flushPromises()
+
+    expect(store.segmentCount).toBe(WOLVES_DIRECTORS_CUT_EXPERIENCE.segments.length)
+    expect(store.presentationProfile).toBe(WOLVES_DIRECTORS_CUT_PROFILE_ID)
+
+    // No live in-app "return to lobby" navigation exists yet (see
+    // docs/skills/wolves-runtime-engineering/SKILL.md); a phase reset is the
+    // only way today's runtime models the audience arriving back at the
+    // lobby. What this test proves is the entry point's own behavior: the
+    // standard Enter button always reloads WOLVES_EXPERIENCE, regardless of
+    // whatever ran before it.
+    store.phase = 'lobby'
+    await wrapper.vm.$nextTick()
+
+    wrapper.getComponent(CinematicLobbyStub).vm.$emit('enter')
+    await flushPromises()
+
+    expect(store.segmentCount).toBe(WOLVES_EXPERIENCE.segments.length)
+    expect(store.presentationProfile).toBe(WOLVES_STANDARD_PROFILE_ID)
+  })
+
+  it('auto-starts the Director\'s Cut when the URL carries ?directors-cut', async () => {
+    const store = useCinematicStore()
+    const originalSearch = window.location.search
+    vi.stubGlobal('location', { ...window.location, search: '?directors-cut' })
+
+    shallowMount(WolvesApp, {
+      global: { stubs: stubs() },
+    })
+    await flushPromises()
+
+    expect(store.phase).toBe('intro')
+    // The Director's Cut (prologue + Destiny) is longer than the standard
+    // title-card + Destiny intro, so the live binding confirms the right list
+    // was published.
+    expect(store.sequenceDuration).toBeGreaterThan(180)
+
+    vi.stubGlobal('location', { ...window.location, search: originalSearch })
   })
 })

@@ -90,6 +90,67 @@ fresh at each time: `setProps` alone does not swap the displayed buffer in jsdom
 because the incoming image never loads, so a stale slide keeps reporting and the
 check silently passes.
 
+## The Director's Cut runs a second Track 0 schedule
+
+`/wolves/` plays two cuts of the same song through the same component, selected
+by `presentationProfile` (see `src/stores/cinematic.ts`). The standard cut keeps
+everything above. The Director's Cut runs
+`buildDirectorsCutTrackZeroSlides()` from
+`src/data/wolves-directors-cut-slides.ts` and drops **every** authored lock: no
+hero pins, no post-hero opening run, no Reza hold, no pivotal/bketelsen freezes,
+no reserved closing photo. `trackZeroSlides` in `WolvesComicReader.vue` is the
+switch; `timelineSlides` is untouched and still drives `wolves-standard`.
+
+Three constraints hold that schedule together, and none of them is taste:
+
+- **`DIRECTORS_CUT_FINALE_START` is a measured beat, not a chosen time.** It is
+  `TRACK_ZERO_SECTIONS.bkEnd` (355.219 s, beat 879) — the same beat the standard
+  show already names `TRACK_ZERO_TEMPO_PICKUPS.finale` and already uses to open
+  its own `finaleBarrage`. It is the last section boundary before the outro, so
+  it is the only place the picture edit can stop without stopping mid-phrase.
+  The ordinary schedule ends exactly there and nothing ordinary resumes; the
+  Director finale owns the rest of the frame.
+- **Four measured beats is the Director's floor on a hold.** The reader keeps
+  `PRELOAD_WINDOW_SECONDS` (8 s) of upcoming slides warm using at most
+  `MAX_LOOKAHEAD_SLIDES` (12) fetches, so the preloader's average-hold floor is
+  `8 / 12 ≈ 0.67 s`. The Director's projected-image floor is stricter:
+  `4 * TRACK_ZERO_SHORTEST_BEAT_SECONDS ≈ 1.58 s` at the fastest passage. Two
+  beats produced a random slideshow and left too little time for a decoded image
+  to settle and register. A request for faster cuts is a request to change the
+  preload budget and the projection readability floor together.
+- **The slide count comes from the beat budget, never from a pool size.**
+  `trackZeroBeatCuts` gives every slide the shortest tier, upgrades earlier
+  slides while beats remain, and then dumps whatever is left on **slide 0**. Feed
+  it too few slides and the section opens on one enormous hold; feed it more than
+  `floor(totalBeats / shortestTier)` and it silently abandons the measured grid
+  for a uniform division of the window. `directorsCutSectionSlideCount()` picks
+  `round(2 * totalBeats / (longest + shortest))` clamped between those two
+  bounds, which lands roughly half the section on each tier — the tightening
+  shape. Whatever beats remain still go to slide 0, so a section's opening hold
+  runs a little past its top tier by design (the ambient intro opens on 14
+  beats, not 12); it is the longest hold of the section either way.
+
+Pools are drawn in the section's declared order and fall through as each
+exhausts, with the live CNCF feed last. With today's 254 local wallpapers the
+feed is never reached; it exists so a shrinking local pool degrades into more
+photographs rather than into fewer slides. A feed photo whose id already appears
+inside a local filename (`wolves/people/kubecon-55168684055.webp`) is dropped, or
+the same frame plays twice under two ids.
+
+The pool cycling order is load-bearing, not cosmetic: every pool draws from one
+shared seeded generator, and the reader rebuilds this schedule the moment the
+Flickr feed resolves. Cycle the feed **last** or a suddenly-populated pool
+re-deals the whole show underneath a playing segment.
+
+A reserved interval is a hand-off, not a gap. The schedule stops at the earliest
+reserved `startTime` — snapped back to the nearest measured beat, because
+`trackZeroBeatCuts` clamps its last cut to whatever window end it is handed and
+would otherwise put an off-grid cut in the show — and never resumes.
+
+Diversity is the existing `buildWolvesGalleryCycle` per pool plus one
+`separateAdjacentEvents` pass over the assembled run, which is what repairs the
+seams *between* pools. Assign the beat cuts after that pass, never before.
+
 ## Slide preloading is measured in seconds, not slides
 
 `WolvesComicReader.vue` gates each slide swap on the incoming image having
@@ -123,11 +184,13 @@ either branch. Measure over several runs before blaming a change for it.
 `WolvesComicReader.vue` drives three different shows and only one is the
 presentation:
 
-- `timelineSlides` — the Wolves Track 0 schedule (`wolvesExperience` true).
+- `timelineSlides` — the standard Wolves Track 0 schedule (`wolvesExperience`
+  true), reached through `trackZeroSlides`, which swaps in the Director's Cut
+  schedule for the `wolves-directors-cut` profile.
 - `laterTrackPhotos` — Wolves tracks 1 and later.
 - `mixedPhotos` — the eleven albums in `public/experiences/catalogue.json`.
 
-`mixedPhotosToUse` only swaps in `timelineSlides` when `wolvesExperience` is
+`mixedPhotosToUse` only swaps in `trackZeroSlides` when `wolvesExperience` is
 true, so `mixedPhotos` is live for every non-Wolves album. It reads as dead
 legacy code beside the newer Wolves path, and an audit flagged ~113 lines of it
 for deletion; deleting it would have broken eleven experiences while leaving
@@ -153,6 +216,43 @@ pinned for the back catalogue only; on Wolves it carries authored meaning
 (progress across the seven parts) and is left running. If the hitch persists on
 the later tracks after the blur change, that is the next lever — not a silent
 one to pull.
+
+## One wallpaper scene per song, dawn to nightfall
+
+`TheaterExperience.vue` owns the full-screen monthly day/night plates behind the
+reader. The scene is a function of `store.segmentIndex` and the night blend is a
+function of progress *within* that segment, so a song owns exactly one wallpaper
+and takes it from full day to full night. The next song cuts to the next scene
+and starts its own dawn.
+
+It used to be `sin(frac(totalProgress * 12 + 6) * PI)` over a
+`(segmentIndex + trackProgress) / 7` clock, and that was wrong three ways:
+
+- **The sine came back.** It ran day -> night -> *day again* inside every slot,
+  so the background pulsed under slides that were not changing. Read from a
+  theater seat that is not "progress across the show", it is a light flickering
+  behind the picture — which is what "the changing wallpaper jacks up the
+  slides" was describing.
+- **Twelve slots do not fit seven songs.** A scene change could land anywhere
+  inside a song, including under a locked slide window.
+- **The `/ 7` was hardcoded.** The one-segment Director's Cut therefore only
+  ever reached 1/7 of the curve and got a fragment of a single dissolve.
+
+Two consequences worth keeping in mind when touching this:
+
+- **The outgoing buffer does not share the incoming buffer's opacity.** At a
+  boundary the new song's ramp is at dawn, so a shared value snapped the
+  departing scene from night back to day for the whole 1.5 s fade-out. The
+  outgoing plate belongs to a song that just finished; it leaves at full night.
+- **The first dissolve is now guaranteed.** Deriving the ramp from the segment
+  means segment 0 starts at a real `opacity: 0` day state and climbs. Under the
+  old clock the show opened at exactly `frac == 0` and the opening dissolve was
+  whatever fraction of a slot happened to be left.
+
+Pinned by `describe('cinematic wallpaper transitions')` in
+`src/tests/wolvesHeroTypography.test.ts`, which asserts both that the scene does
+*not* change inside a song and that the night blend rises monotonically across
+one.
 
 ## Nulling both slide buffers is a hard cut
 
@@ -202,3 +302,25 @@ are covered by the transition overlay, so they can afford the fetch.
 The general rule: **a decode gate is only as good as what has been fetched before
 it.** Any time you make a swap wait for readiness, check what warms the thing it
 is waiting on — and if nothing does, the gate is a stall, not a guarantee.
+
+## The Director's Cut finale covers the frame; it does not schedule slides
+
+From `DIRECTORS_CUT_FINALE_START` (355.219 s) to the end of the song, the
+ordinary Track 0 schedule is finished and `WolvesComicReader.vue` holds its last
+slide — that is what the reader always does when a schedule runs out. The
+Director finale is what the audience sees instead:
+`WolvesDirectorFinale.vue` renders an opaque cover over the theater grid, and
+`TheaterExperience.vue` also takes the grid out of layout with
+`v-show="!store.directorFinaleActive"`.
+
+Both halves matter, and the reason is a testing one. "The same slide is still on
+stage at 420 s" is true whether the finale exists or not, so a probe that
+asserts it proves nothing. See
+`../reference/wolves-test-harnesses.md` — the finale probes assert the negative
+(no rendered area for any slide layer) plus the positive (the finale's own frame
+measures the full viewport).
+
+`v-show`, not `v-if`, on that grid: destroying `WolvesComicReader` would re-deal
+its one Fisher-Yates gallery shuffle and re-run every preload the moment the
+finale opens, and a backward seek would then land on a different show than the
+one the audience was watching.

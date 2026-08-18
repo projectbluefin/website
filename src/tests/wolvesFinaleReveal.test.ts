@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { parseLoreSpeakerParagraphs, rebuildLoreSpeakerParagraph } from '../components/wolves/lore'
-import { loreChatPages, loreProsePages, pickBlockPage, pickPageIndexForElapsed } from '../components/wolves/lore/lore-pages'
+import { estimatePagesSeconds, loreChatPages, loreProsePages, pickBlockPage, pickPageIndexForElapsed } from '../components/wolves/lore/lore-pages'
+import { DIRECTORS_CUT_FINALE_ANCHORS } from '../data/wolves-directors-cut-finale'
+import { wolvesDirectorsCutNarrativeTimeline } from '../data/wolves-directors-cut-timeline'
 import { loadAllLoreRecords } from '../data/wolves-lore-records'
 import { wolvesNarrativeTimeline } from '../data/wolves-narrative-timeline'
 import { getWolvesThesisState } from '../data/wolves-thesis-sequence'
@@ -148,5 +150,79 @@ describe('finale reveal', () => {
         }
       }
     })
+  })
+  // The Director's Cut plays the same bulletin on its own window, and the
+  // finale — not the lore column — is what renders it from the finale beat on.
+  // The reveal therefore lands on a different second in that cut, and the only
+  // thing that must never happen is the audience not seeing it at all.
+  describe('the Director\'s Cut carries the same bulletin', () => {
+    const directorSlot = wolvesDirectorsCutNarrativeTimeline.find(entry => entry.artifactId === FINAL_ID)!
+
+    function directorPageAt(time: number) {
+      const record = loadAllLoreRecords().find(entry => entry.id === FINAL_ID)!
+      const pages = loreProsePages(record.body)
+      const index = pickPageIndexForElapsed(
+        pages,
+        time - directorSlot.startTime,
+        directorSlot.endTime - directorSlot.startTime,
+      )
+      return pages[index]!
+    }
+
+    it('pages and clears the bulletin on its complete authored window', () => {
+      // The finale takes the record over mid-run from the lore column. It must
+      // keep the timeline slot's `(duration, elapsed)` pair so the handover
+      // cannot re-page, and the complete slot ends before the impact reveal.
+      expect(directorSlot.startTime).toBe(DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart)
+      expect(directorSlot.endTime).toBe(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
+      expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBeGreaterThan(DIRECTORS_CUT_FINALE_ANCHORS.coverStart)
+      expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    })
+
+    it('still shows the death reveal, inside the finale the audience is watching', () => {
+      const revealTimes: number[] = []
+      for (let time = directorSlot.startTime; time < directorSlot.endTime; time += 0.25) {
+        if (directorPageAt(time).includes('Dr. Andy Anderson')) {
+          revealTimes.push(time)
+        }
+      }
+      expect(revealTimes.length, 'the Director\'s Cut never shows the death reveal').toBeGreaterThan(0)
+      expect(revealTimes[0]!).toBeGreaterThan(DIRECTORS_CUT_FINALE_ANCHORS.coverStart)
+      expect(revealTimes[revealTimes.length - 1]!).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
+    })
+
+    it('lands the elegy page, read in full, before the bulletin clears', () => {
+      const record = loadAllLoreRecords().find(entry => entry.id === FINAL_ID)!
+      const pages = loreProsePages(record.body)
+      const elegy = pages[pages.length - 1]!
+      // The last frame the bulletin is on screen is also the last frame of its
+      // complete paging window. The page must be the authored elegy, not a
+      // truncated record dropped early to make room for the finale.
+      expect(directorPageAt(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd - 0.1)).toBe(elegy)
+      expect(elegy).toContain('truly a great loss for humanity')
+
+      // And it is not cut off mid-read: the elegy has been up for longer than
+      // the reading time the pager itself charged for it before it is cleared.
+      let elegyStart = directorSlot.endTime
+      for (let time = directorSlot.startTime; time < directorSlot.endTime; time += 0.05) {
+        if (directorPageAt(time) === elegy) {
+          elegyStart = time
+          break
+        }
+      }
+      expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd - elegyStart)
+        .toBeGreaterThan(estimatePagesSeconds([elegy]))
+      // It does not share the frame with the impact or closing quote either.
+      expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
+        .toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart)
+      expect(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
+        .toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
+    // Explicit timeout: this walks the whole director slot in 0.05s steps, paging the
+    // record at every step, and CI runs the suite under v8 coverage instrumentation.
+    // Uninstrumented that is ~0.6s; instrumented it is ~4s locally and reached 7.3s on a
+    // CI runner, past the 5s default. The scan is the point of the test — it proves the
+    // elegy is up for longer than its own reading cost — so give it room rather than
+    // trading away what it checks.
+    }, 30000)
   })
 })

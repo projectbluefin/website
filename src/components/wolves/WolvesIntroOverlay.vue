@@ -4,9 +4,20 @@ import type { WolvesComicHeroShot } from '@/data/wolves-comic-hero-shots'
 import type { IntroOverlayTextCue, IntroStatusPayload, IntroVideoSpec } from '@/data/wolves-intro-sequence'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue'
 import qrMakeMeAComic from '@/assets/svg/qr-makemeacomic.svg'
-import { getChromeFreeYoutubePlayerVars, getYoutubePlayerConstructor, getYoutubePlayerState, loadYoutubeIframeApi } from '@/composables/useYoutubeIframeApi'
+import { getChromeFreeYoutubePlayerVars, getYoutubePlayerConstructor, getYoutubePlayerState, loadYoutubeIframeApi, suppressYoutubeCaptions } from '@/composables/useYoutubeIframeApi'
 import { getActiveComicHeroShot, wolvesComicHeroShots } from '@/data/wolves-comic-hero-shots'
 import { dinosaurSpecies } from '@/data/wolves-dinosaur-species'
+import { DIRECTORS_CUT_DESTINY_CONCEPTS } from '@/data/wolves-directors-cut-artwork'
+import {
+  DEFAULT_PROLOGUE_MOOD_ID,
+  DIRECTORS_CUT_HANDOFF_HOLD_MAX_MS,
+  DIRECTORS_CUT_IKORA_PREWARM_SECOND,
+  DIRECTORS_CUT_PROLOGUE_SEGMENT_ID,
+  DIRECTORS_CUT_SCENE_CROSSFADE_SECONDS,
+  DIRECTORS_CUT_TEXT_FADE_SECONDS,
+  PROLOGUE_MOODS,
+  resolvePrologueMood,
+} from '@/data/wolves-directors-cut-intro'
 import { wolvesGuardianDinosaurBonds } from '@/data/wolves-guardian-dinosaur-bonds'
 import {
   activeOverlayCue,
@@ -14,6 +25,7 @@ import {
   advanceIntroSequence,
   buildOverlayTextParts,
   createIntroSequenceState,
+  isInsideTrackEndWindow,
   isTextSegment,
   isTextSegmentComplete,
   isVideoSegment,
@@ -21,6 +33,7 @@ import {
   PROLOGUE_SCENE_CROSSFADE_SECONDS,
   PROLOGUE_TEXT_FADE_SECONDS,
   skipIntroSequence,
+  STANDARD_DESTINY_SEGMENT_ID,
 } from '@/data/wolves-intro-sequence'
 
 const props = defineProps<{
@@ -77,15 +90,26 @@ const burnedInCaptionCues = computed<readonly IntroOverlayTextCue[] | undefined>
   }
   return currentSegment.value.burnedInCaptions
 })
-const canToggleDestinyVoiceOver = computed(() =>
-  currentSegment.value?.id === 'wolves-intro'
-  && isVideoSegment(currentSegment.value)
-  && Boolean(currentSegment.value.alternateYoutubeVideoId),
-)
-const canToggleDestinyCaptions = computed(() =>
-  currentSegment.value?.id === 'wolves-intro'
-  && isVideoSegment(currentSegment.value),
-)
+/**
+ * The alternate-source switch is offered by the segment's own data, never by its id: it exists
+ * only where an authored segment actually carries a second upload of the same footage. The
+ * Director's Cut therefore offers none — Ikora's is its primary source, there is no alternate
+ * to switch to, and a theater audience has nothing to press anyway.
+ */
+const canToggleDestinyVoiceOver = computed(() => {
+  const segment = currentSegment.value
+  return Boolean(segment && isVideoSegment(segment) && segment.alternateYoutubeVideoId)
+})
+/**
+ * The CC switch belongs to the standard conference cut's trailer, where a laptop viewer can
+ * reach it. The Director's Cut is performed to a room with no input device and its only
+ * burned-in cue is the Comic Hero title card, which renders switch or no switch, so it
+ * publishes no caption toggle at all.
+ */
+const canToggleDestinyCaptions = computed(() => {
+  const segment = currentSegment.value
+  return Boolean(segment && isVideoSegment(segment) && segment.id === STANDARD_DESTINY_SEGMENT_ID)
+})
 const activeComicTitleCardCue = computed<IntroOverlayTextCue | undefined>(() => {
   const cues = burnedInCaptionCues.value ?? currentSegment.value?.overlays
   if (!cues) {
@@ -105,8 +129,58 @@ const activeTitlePlateCue = computed<IntroOverlayTextCue | undefined>(() =>
   activeCue.value?.titlePlate ? activeCue.value : undefined,
 )
 const comicHeroLeftOffsets = ref<Record<string, number>>({})
-const overlayCueForDisplay = computed<IntroOverlayTextCue | undefined>(() => activeComicTitleCardCue.value?.comicHeroTitleCard ? activeComicTitleCardCue.value : activeCue.value)
+/**
+ * The painting held on screen while a promoted trailer spins up, so the handoff is a
+ * dissolve out of the prologue rather than a black frame in front of a live room.
+ */
+const handoffHoldCue = ref<IntroOverlayTextCue | undefined>()
+/** The last cue the Director's prologue actually showed, which is what the hold holds. */
+const lastDirectorsCutCue = ref<IntroOverlayTextCue | undefined>()
+/** Whether the persistent player host is mounted: a video is on stage, or one is warming. */
+const prewarmHostRequested = ref(false)
+const isDirectorsCutPrologue = computed(() => currentSegment.value?.id === DIRECTORS_CUT_PROLOGUE_SEGMENT_ID)
+/**
+ * Which score the prologue is playing.
+ *
+ * Local to the overlay on purpose. The cut - its window, its marks, every cue -
+ * is authored against the default and does not change with the mood, so
+ * swapping one does not rebuild the sequence or disturb the store's timeline;
+ * it reloads the hidden audio embed and nothing else.
+ *
+ * It is an affordance, never a dependency: a run where nobody touches the
+ * transport plays `DEFAULT_PROLOGUE_MOOD_ID` from end to end, which is the
+ * guarantee the whole presentation is built on.
+ */
+const activeMoodId = ref<string>(DEFAULT_PROLOGUE_MOOD_ID)
+/**
+ * Whatever the background layer should be showing. Normally the active cue; during a warm
+ * handoff, the prologue's last painting, which outlives its own segment by design.
+ */
+const sceneCue = computed<IntroOverlayTextCue | undefined>(() => handoffHoldCue.value ?? activeCue.value)
+const overlayCueForDisplay = computed<IntroOverlayTextCue | undefined>(() => {
+  if (handoffHoldCue.value) {
+    return handoffHoldCue.value
+  }
+  return activeComicTitleCardCue.value?.comicHeroTitleCard ? activeComicTitleCardCue.value : activeCue.value
+})
 const overlayText = computed(() => overlayCueForDisplay.value?.text)
+/**
+ * A scored cue's window is a musical section; its words are a thought. `textHoldSeconds`
+ * separates the two, so a line clears once it has been read while its shot plays on. Cues
+ * without one behave exactly as before: the words last as long as the cue does.
+ */
+const overlayTextVisible = computed(() => {
+  const cue = overlayCueForDisplay.value
+  if (!cue || handoffHoldCue.value || cue.textHoldSeconds == null) {
+    return true
+  }
+  return currentTime.value < cue.start + cue.textHoldSeconds
+})
+/** The prologue's own stage: the black screen and its scene layer, plus any warm handoff. */
+const sceneStageVisible = computed(() => currentSegment.value?.kind === 'text' || Boolean(handoffHoldCue.value))
+/** The trailer's stage. Mounted early to warm, revealed only once it is really the show. */
+const playerHostMounted = computed(() => currentSegment.value?.kind === 'video' || prewarmHostRequested.value)
+const videoStageVisible = computed(() => currentSegment.value?.kind === 'video' && !handoffHoldCue.value)
 const activeBurnedInCaptions = computed<readonly IntroOverlayTextCue[]>(() =>
   activeOverlayCues(burnedInCaptionCues.value, currentTime.value)
     .filter(cue => !cue.comicHeroTitleCard && (!cue.requiresCaptionToggle || destinyCaptionsEnabled.value)),
@@ -293,9 +367,75 @@ function predecodeGuardianCompanionArtwork() {
   }
 }
 
+let directorsCutConceptArtworkPredecoded = false
+let directorsCutConceptWarmAbandoned = false
+/**
+ * Warm every approved Destiny concept painting the moment the Director's Cut
+ * prologue takes the stage.
+ *
+ * The montage cuts on measured section marks from 133.58 s onward, and its
+ * later holds are under ten seconds. A cue transition that opens on an
+ * undecoded 4K painting spends that hold on an empty scene layer — on a
+ * projector that reads as a dropped slide, and the cut cannot be replayed.
+ *
+ * **One at a time, in montage order.** Firing all ten at once is what the
+ * prologue's idle minutes appear to invite, and it is wrong: the ten paintings
+ * are the largest assets in the show, and ten parallel fetches saturate the
+ * connection pool that the Track 0 slide preloader and the scored audio embed
+ * are also using. Measured with `tests/wolves-directors-cut-slides.mjs`, a
+ * ten-wide burst starved the gallery hard enough that the 35.666 s cut still
+ * had the previous slide on stage. Chaining on `decode()` keeps exactly one
+ * painting in flight, and because the registry order *is* the montage order,
+ * the chain naturally stays ahead of the cue that needs each painting.
+ *
+ * Failures are swallowed on purpose: a painting that cannot be predecoded still
+ * loads normally from its own `<img>`, and nothing here may hold up the scored
+ * intro.
+ */
+async function predecodeDirectorsCutConceptArtwork() {
+  if (directorsCutConceptArtworkPredecoded) {
+    return
+  }
+  directorsCutConceptArtworkPredecoded = true
+
+  const requested = new Set<string>()
+  for (const record of DIRECTORS_CUT_DESTINY_CONCEPTS) {
+    if (directorsCutConceptWarmAbandoned) {
+      return
+    }
+    const url = `${baseUrl}${record.localPath}`
+    if (requested.has(url)) {
+      continue
+    }
+    requested.add(url)
+    const image = new Image()
+    image.decoding = 'async'
+    image.src = url
+    try {
+      await image.decode?.()
+    }
+    catch (error: unknown) {
+      console.warn(`Unable to predecode Destiny concept artwork: ${url}`, error)
+    }
+  }
+}
+
 onMounted(() => {
   predecodeGuardianCompanionArtwork()
+  // Keeps `framedLetterbox` honest when the frame changes under it.
+  window.addEventListener('resize', trackViewportSize)
+  trackViewportSize()
 })
+
+/**
+ * Keyed to the Director's Cut prologue by segment id, not to "any text
+ * segment": the standard intro must not fetch a single concept painting.
+ */
+watch(currentSegment, (segment) => {
+  if (segment?.id === DIRECTORS_CUT_PROLOGUE_SEGMENT_ID) {
+    void predecodeDirectorsCutConceptArtwork()
+  }
+}, { immediate: true })
 
 watch(activeComicTitleCardCue, (cue) => {
   if (cue) {
@@ -304,22 +444,156 @@ watch(activeComicTitleCardCue, (cue) => {
 })
 
 /**
+ * Remembers what the Director's prologue last had on stage, so the handoff has a painting to
+ * hold over the trailer while it spins up.
+ */
+watch(activeCue, (cue) => {
+  if (cue && isDirectorsCutPrologue.value) {
+    lastDirectorsCutCue.value = cue
+  }
+})
+
+/**
+ * Warms the trailer against a measured mark in the prologue's own clock, not against a wall
+ * timer: this is the same clock every other cue is read off, so a paused, seeked or ad-broken
+ * show warms at the same musical moment it would have anyway.
+ */
+watch(currentTime, (seconds) => {
+  if (isDirectorsCutPrologue.value && seconds >= DIRECTORS_CUT_IKORA_PREWARM_SECOND) {
+    void prewarmNextSegment()
+  }
+})
+
+/**
  * The Prologue/Epilogue's somber, BPM-paced fade only applies to text-card segments; the
  * trailer's Guardian overlays stay snappy since they're synced to fast-moving footage.
  */
-const isSomberTextSegment = computed(() => currentSegment.value?.kind === 'text')
+const isSomberTextSegment = computed(() => currentSegment.value?.kind === 'text' || Boolean(handoffHoldCue.value))
 /**
  * The somber fade is capped to a fraction of the active cue's own on-screen window so a short
  * cue (e.g. the Epilogue's 3s closing line) still fully fades in with time to read, rather than
  * always using the full BPM-derived duration regardless of how briefly the cue is shown.
+ *
+ * The Director's Cut prices its fade off the *reading hold*, not the musical window: its
+ * windows are long sections, so 20% of a 25s section was a five-second reveal on a line meant
+ * to land in under two.
  */
 const somberFadeDuration = computed(() => {
-  if (!activeCue.value) {
+  const cue = activeCue.value
+  if (!cue) {
     return PROLOGUE_TEXT_FADE_SECONDS
   }
-  const cueWindow = activeCue.value.end - activeCue.value.start
+  const cueWindow = cue.end - cue.start
+  if (currentSegment.value?.id === DIRECTORS_CUT_PROLOGUE_SEGMENT_ID) {
+    return Math.min(DIRECTORS_CUT_TEXT_FADE_SECONDS, (cue.textHoldSeconds ?? cueWindow) * 0.2)
+  }
   return Math.min(PROLOGUE_TEXT_FADE_SECONDS, cueWindow * 0.85)
 })
+/** The Director's cut dissolves scenes at its own reveal tempo; every other segment inherits. */
+const sceneCrossfadeDuration = computed(() => (
+  isDirectorsCutPrologue.value ? DIRECTORS_CUT_SCENE_CROSSFADE_SECONDS : PROLOGUE_SCENE_CROSSFADE_SECONDS
+))
+
+/**
+ * The viewport, as reactive state, so the painted-box maths below re-runs when the
+ * frame changes. A projector is a fixed size, but the browser this is authored and
+ * verified in is not, and a value sampled once at mount is wrong for every resize
+ * after it.
+ */
+const viewportWidth = ref(typeof window === 'undefined' ? 1920 : window.innerWidth)
+const viewportHeight = ref(typeof window === 'undefined' ? 1080 : window.innerHeight)
+
+function trackViewportSize(): void {
+  viewportWidth.value = window.innerWidth
+  viewportHeight.value = window.innerHeight
+}
+
+/**
+ * The letterbox bars around a framed painting, in pixels.
+ *
+ * Framed cues render `object-fit: contain` and are capped at their own source
+ * pixels, so the painting almost never fills the frame: a 2048x771 panorama in a
+ * 1920x1080 projector paints 1920x723 and leaves a 178.6px black bar above and
+ * below it. The caption, meanwhile, was anchored to `bottom: 12%` of the
+ * viewport* — 130px at 1080p — which put the words 48px *below the bottom edge
+ * of the picture*, sitting on the bar. That is the "words are colliding with the
+ * letterbox" defect from the owner's review, and it is a geometry bug, not a
+ * taste one: it is fully determined by the source aspect ratio and reproduces
+ * exactly on any screen wide enough to letterbox that record.
+ *
+ * Deriving the bar here lets the caption sit inside the painted box on every
+ * record without hand-tuning a percentage per painting — the thing that would
+ * rot the moment the registry changed, which it just did.
+ */
+function letterboxFor(framing: IntroOverlayTextCue['backgroundFraming']): { x: number, y: number } {
+  if (!framing) {
+    return { x: 0, y: 0 }
+  }
+
+  // Mirrors the CSS exactly: `contain` inside the frame, then capped at the
+  // source's own pixels by `max-width`/`max-height` so the browser never
+  // enlarges past what the artist delivered.
+  const scale = Math.min(
+    viewportWidth.value / framing.sourceWidth,
+    viewportHeight.value / framing.sourceHeight,
+    1,
+  )
+
+  return {
+    x: Math.max(0, (viewportWidth.value - framing.sourceWidth * scale) / 2),
+    y: Math.max(0, (viewportHeight.value - framing.sourceHeight * scale) / 2),
+  }
+}
+
+const framedLetterbox = computed(() => letterboxFor(sceneCue.value?.backgroundFraming))
+
+/**
+ * The closing title's first line, split so the `F` of BLUEFIN can be set in the
+ * brand blue.
+ *
+ * Requested directly by the owner (2026-08-10): "Color in the F in bluefin blue
+ * on that one." It is deliberately keyed to the word rather than to the first
+ * `F` in the string or to a character offset — the line is authored data, and a
+ * bare index would silently colour the wrong glyph the moment the title text
+ * changes. If the word is not present the line renders exactly as before.
+ */
+const slimTitleSegments = computed(() => {
+  const line = overlayText.value?.split('\n')[0] ?? ''
+  const word = 'BLUEFIN'
+  const wordStart = line.indexOf(word)
+
+  if (wordStart < 0) {
+    return [{ text: line, brand: false }]
+  }
+
+  const letterIndex = wordStart + word.indexOf('F')
+
+  return [
+    { text: line.slice(0, letterIndex), brand: false },
+    { text: line.slice(letterIndex, letterIndex + 1), brand: true },
+    { text: line.slice(letterIndex + 1), brand: false },
+  ].filter(part => part.text.length > 0)
+})
+
+function barStyle(bar: { x: number, y: number }): Record<string, string> {
+  return {
+    '--wc-frame-bar-x': `${Math.round(bar.x)}px`,
+    '--wc-frame-bar-y': `${Math.round(bar.y)}px`,
+  }
+}
+
+/** The scrim belongs to the scene, so it measures the scene's own painting. */
+const framedBoxStyle = computed(() => barStyle(framedLetterbox.value))
+
+/**
+ * The caption measures the cue it is actually painting, which is not always the
+ * scene cue: text outlives its shot by a fade, so binding the caption to
+ * `sceneCue` offsets it by the *previous* painting's bar. In Chromium that
+ * showed up as the title plate — a full-frame 16:9 image with no bars at all —
+ * being inset by 203px, which is the bar belonging to the 1920x1369 record
+ * before it, while the record that actually needed the inset got none.
+ */
+const captionBoxStyle = computed(() => barStyle(letterboxFor(overlayCueForDisplay.value?.backgroundFraming)))
 
 /**
  * A `backgroundCrossfade` cue can list one or more day/night stages; multi-stage cues split
@@ -328,7 +602,7 @@ const somberFadeDuration = computed(() => {
  * freshly-keyed crossfade animation.
  */
 const activeCrossfadeStage = computed(() => {
-  const cue = activeCue.value
+  const cue = sceneCue.value
   const stages = cue?.backgroundCrossfade
   if (!cue || !stages || stages.length === 0) {
     return undefined
@@ -349,13 +623,28 @@ const activeCrossfadeStage = computed(() => {
  * cross-dissolve between one scene and the next.
  */
 const activeSceneKey = computed(() => {
-  if (activeCue.value?.backgroundImage) {
-    return `image:${activeCue.value.backgroundImage}`
+  if (sceneCue.value?.backgroundImage) {
+    return `image:${sceneCue.value.backgroundImage}`
   }
   if (activeCrossfadeStage.value) {
     return `stage:${activeCrossfadeStage.value.start}`
   }
   return 'blank'
+})
+
+/**
+ * `aria-description` has unreliable screen-reader support, so the montage
+ * credit is exposed instead through `aria-describedby` pointing at a
+ * visually hidden node (see `.wolves-intro-overlay-visually-hidden` below).
+ * The id is derived from the already-unique `activeSceneKey` so it stays
+ * stable per painting without a second identity source.
+ */
+const activeFigureCreditId = computed(() => {
+  if (!sceneCue.value?.backgroundFigure) {
+    return undefined
+  }
+  const slug = activeSceneKey.value.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '')
+  return `wolves-intro-figure-credit-${slug}`
 })
 
 /** Splits text into single-character parts so every literal B/F can be highlighted without v-html. */
@@ -403,8 +692,37 @@ let player: YoutubePlayer | null = null
 let audioPlayer: YoutubePlayer | null = null
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let textTimer: ReturnType<typeof setInterval> | null = null
+/** Resolution of a text card's own tick, and the unit the stall watchdog counts in. */
+const TEXT_CLOCK_TICK_MS = 100
+/**
+ * How long the background audio's clock may sit pinned at 0 before the card gives up on it.
+ *
+ * Short, because releasing is cheap and reversible: the recovery check hands the card straight
+ * back to the music the instant the player's clock moves, so a false positive on a slow cold
+ * buffer costs a brief desync and nothing else. A pre-roll ad does not look like this — during
+ * an ad the embed reports the ad's own advancing time, so it never sits frozen on exactly 0.
+ * A clock still pinned to the origin this long is a player the browser refused to start.
+ */
+const BLOCKED_AUDIO_SECONDS = 5
+
+/**
+ * How long a video segment may sit on its opening frame before the show skips it.
+ *
+ * Three times the audio threshold, because this decision cannot be taken back: advancing
+ * discards the segment, so it must outlast a cold buffer on a bad conference network rather
+ * than merely a hesitation. The audio side can afford to be twitchy; this side cannot.
+ */
+const BLOCKED_VIDEO_SECONDS = 15
 /** performance.now() corresponding to elapsed 0 on a silent text card. */
 let textClockOriginMs = 0
+/** The background audio embed published its own `ENDED` state for the active scored card. */
+let audioTrackEnded = false
+/** The background audio died (error, or an `ENDED` before it started); its clock is abandoned. */
+let audioClockReleased = false
+/** Milliseconds the background audio's clock has sat on `lastAudioClockReading`. */
+let audioClockStalledMs = 0
+/** Previous reading from the background audio's clock, used only to detect a frozen one. */
+let lastAudioClockReading: number | null = null
 
 /**
  * How long the trailer's audio takes to reach silence at the intro→Track 0 junction.
@@ -455,6 +773,20 @@ let loadToken = 0
 let pendingPausedSourceSwitchTime: number | null = null
 /** Whether the one-shot `startAtNativeTime` deep-link opening has already been applied. */
 let deepLinkStartConsumed = false
+/**
+ * The warm handoff's staging area: a player built during the prologue and parked, plus the
+ * numbers the promotion needs so it can start playing without re-deriving (and re-seeking)
+ * anything. Kept out of `player` so `destroyPlayer()` — which every segment change calls —
+ * cannot tear down the very thing the handoff is warming.
+ */
+let prewarmedPlayer: YoutubePlayer | null = null
+let prewarmedSegmentId: string | null = null
+let prewarmedStartSeconds = 0
+let prewarmedIsDeepLink = false
+/** Whether the warmed player has reported ready and been parked. An unready one cannot promote. */
+let prewarmedReady = false
+let prewarmToken = 0
+let handoffHoldTimer: ReturnType<typeof setTimeout> | null = null
 const handoffPending = ref(false)
 
 /** Seek within the active segment by 0..1 ratio, driven by the hero widget's progress bar. */
@@ -572,13 +904,40 @@ function fadeOutAndDestroyPlayer() {
 function destroyAudioPlayer() {
   audioPlayer?.destroy?.()
   audioPlayer = null
+  audioTrackEnded = false
+  audioClockReleased = false
+  audioClockStalledMs = 0
+  lastAudioClockReading = null
 }
 
 function advance() {
   sequenceState.value = advanceIntroSequence(sequenceState.value, props.videos.length)
 }
 
-async function loadAudioTrack(youtubeVideoId: string | undefined) {
+/**
+ * Hand a scored card back to its own origin clock when the background audio stops being one — a
+ * player error, or an `ENDED` that arrives outside the track's measured silent tail (an ad
+ * break, a dead or region-blocked upload).
+ *
+ * This is not a second clock running alongside the music. It is provisional: the tick keeps
+ * watching the real clock, and the moment it moves again the card snaps straight back to it.
+ * Without it the card would freeze on whichever cue was on screen, because every later cue keys
+ * off an audio clock that will never move again; with it, the authored windows still play out
+ * and the card still ends where it was written to end — the only outcome a live room survives.
+ *
+ * Clearing `audioTrackEnded` here matters: an out-of-window `ENDED` is exactly what triggers a
+ * release, and leaving the flag `true` would stay stale on the card's own free-running clock —
+ * completing the card the instant that clock crossed into the end window, up to a full second
+ * before the authored duration, on the strength of a signal that was never inside the window.
+ */
+function releaseAudioClock() {
+  audioClockReleased = true
+  audioClockStalledMs = 0
+  audioTrackEnded = false
+  textClockOriginMs = performance.now() - currentTime.value * 1000
+}
+
+async function loadAudioTrack(youtubeVideoId: string | undefined, token: number, startSeconds = 0) {
   destroyAudioPlayer()
   if (!youtubeVideoId) {
     return
@@ -594,7 +953,7 @@ async function loadAudioTrack(youtubeVideoId: string | undefined) {
   await nextTick()
 
   const PlayerCtor = getYoutubePlayerConstructor()
-  if (!PlayerCtor || !audioMountHost.value) {
+  if (!PlayerCtor || !audioMountHost.value || token !== loadToken) {
     return
   }
 
@@ -606,30 +965,86 @@ async function loadAudioTrack(youtubeVideoId: string | undefined) {
     width: '1',
     height: '1',
     videoId: youtubeVideoId,
-    playerVars: getChromeFreeYoutubePlayerVars({ autoplay: 1 }),
-    events: {},
+    // A mood longer than the show is entered at its offset, the same way the
+    // video segments skip a rating card, using YouTube's own `start` param.
+    playerVars: getChromeFreeYoutubePlayerVars({
+      autoplay: 1,
+      ...(startSeconds ? { start: Math.round(startSeconds) } : {}),
+    }),
+    events: {
+      // The background embed's own end state is the scored card's completion backstop: a real
+      // player's clock routinely plateaus short of the duration it reports, so waiting for
+      // `elapsed >= duration` alone can hang the show on its closing title. These handlers only
+      // raise flags — the 100ms tick below stays the single place that decides the card is
+      // over, so no signal can advance the sequence twice.
+      onStateChange: (event: { data: number }) => {
+        if (token !== loadToken || event.data !== getYoutubePlayerState().ENDED) {
+          return
+        }
+        audioTrackEnded = true
+      },
+      onError: () => {
+        if (token !== loadToken) {
+          return
+        }
+        releaseAudioClock()
+      },
+    },
   })
 }
 
 function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
   stopTextTimer()
+  const token = loadToken
   currentTime.value = 0
   activeSegmentDuration.value = segment.duration
   textClockOriginMs = performance.now()
-  void loadAudioTrack(segment.audioYoutubeVideoId)
+  void loadAudioTrack(segment.audioYoutubeVideoId, token, segment.audioStartSeconds ?? 0)
 
   textTimer = setInterval(() => {
     const now = performance.now()
     if (isPaused.value) {
       // Hold the clock by trailing the origin, so resuming continues where it stopped.
       textClockOriginMs = now - currentTime.value * 1000
+      // A paused clock is held, not stalled; the end-of-track backstop must not read it as one.
+      audioClockStalledMs = 0
       return
     }
     // Ad resilience: when a background audio embed exists, cues key off the
     // audio's real getCurrentTime(). Pre-roll ads hold it at 0 and mid-roll ads
     // freeze it, so the cold open waits for the music instead of desyncing.
-    if (audioPlayer && typeof audioPlayer.getCurrentTime === 'function') {
-      currentTime.value = audioPlayer.getCurrentTime() ?? 0
+    // A mood entered part-way through its own recording reports the *track's*
+    // time, not the show's, so the offset comes back off here. Without this the
+    // segment would open on whatever cue happens to sit at the offset and run
+    // out early.
+    const audioOffset = segment.audioStartSeconds ?? 0
+    const audioClock = audioPlayer && typeof audioPlayer.getCurrentTime === 'function'
+      ? Math.max(0, (audioPlayer.getCurrentTime() ?? 0) - audioOffset)
+      : null
+    // A released clock is watched, not abandoned. The moment the player's own clock moves again
+    // — an ad finished, a stalled stream recovered — the card snaps back to the music, which is
+    // the only thing it is ever allowed to synchronise with.
+    if (audioClock != null && audioClockReleased && audioClock > (lastAudioClockReading ?? 0)) {
+      audioClockReleased = false
+      audioTrackEnded = false
+    }
+    if (audioClock != null && !audioClockReleased) {
+      // Watchdog only, never a cue source: how long the player's own clock has sat on the
+      // identical reading. A playing player reports a new value every tick, so any repeat is
+      // buffering, an ad, or the end of the track — `isTextSegmentComplete` decides which.
+      audioClockStalledMs = audioClock === lastAudioClockReading ? audioClockStalledMs + TEXT_CLOCK_TICK_MS : 0
+      lastAudioClockReading = audioClock
+      currentTime.value = audioClock
+      // Blocked autoplay, which is the one stall that is not an ad and never recovers on its
+      // own. A pre-roll ad or a buffering stream freezes the clock somewhere inside the piece
+      // and resumes; a player the browser refused to start never leaves 0 at all, and the
+      // stall backstop above cannot save it because that only fires inside the track's end
+      // window. Left alone, the cold open holds its first card in front of the room forever.
+      // Releasing hands the card to its own wall clock so the show still plays; the recovery
+      // check above snaps it back the instant the music actually starts.
+      if (audioClock === 0 && audioClockStalledMs / 1000 > BLOCKED_AUDIO_SECONDS) {
+        releaseAudioClock()
+      }
     }
     else {
       // A silent card (the presenter's welcome slide) has no player to read, so it
@@ -639,6 +1054,11 @@ function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
       // played in 29.5s and nobody in the back row finished a paragraph — and never
       // accumulate deltas, which drifts over a card this long.
       currentTime.value = (now - textClockOriginMs) / 1000
+    }
+    // An `ENDED` from outside the source's measured silent tail is an ad break or a dead
+    // upload, not the end of the music: believing it would cut the scored act short mid-piece.
+    if (audioTrackEnded && !audioClockReleased && !isInsideTrackEndWindow(segment, currentTime.value)) {
+      releaseAudioClock()
     }
     // Authored musical fade: ramp the audio down across the excerpt's final
     // seconds so it ends on the phrase's own decay instead of a hard cut. The
@@ -654,10 +1074,291 @@ function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
         audioPlayer.setVolume(100)
       }
     }
-    if (isTextSegmentComplete(segment, currentTime.value)) {
+    if (isTextSegmentComplete(segment, currentTime.value, {
+      ended: audioTrackEnded,
+      stalledSeconds: audioClockStalledMs / 1000,
+    })) {
+      // Stop first: the card is over, and a second tick must never advance a second time.
+      stopTextTimer()
       advance()
     }
-  }, 100)
+  }, TEXT_CLOCK_TICK_MS)
+}
+
+/**
+ * Everything the show does once a player is actually its player: assert the opening frame,
+ * publish the segment's duration, and start the transport poll.
+ *
+ * Split out of `onReady` because a promoted player has already been ready for a minute. The
+ * `assertOpeningFrame` flag is what separates the two paths: a cold player has to be pushed
+ * back onto its authored opening frame (YouTube restores prior watch positions for a reused
+ * video id), while a warmed player is already parked exactly there — re-loading and re-seeking
+ * it is the visible stutter the prewarm exists to remove.
+ */
+function beginSegmentPlayback(
+  segment: Extract<IntroVideoSpec, { kind: 'video' }>,
+  openingTime: number,
+  options: { assertOpeningFrame: boolean, isDeepLink: boolean },
+) {
+  if (options.assertOpeningFrame) {
+    if (!options.isDeepLink) {
+      // Reload only for front-door entries: loadVideoById restarts playback from the
+      // buffered beginning, which would discard a deep-linked Guardian opening time.
+      player?.loadVideoById?.({ videoId: activeVideoId(segment), startSeconds: openingTime })
+    }
+    player?.seekTo?.(openingTime, true)
+  }
+  currentTime.value = openingTime
+  activeSegmentDuration.value = activeVideoCutoffDuration(segment) ?? player?.getDuration?.() ?? 0
+  segmentDurations.value[sequenceState.value.index] = activeSegmentDuration.value
+  stopPolling()
+  let lastVideoTime = -1
+  let lastVideoAdvanceMs = performance.now()
+  pollTimer = setInterval(() => {
+    currentTime.value = player?.getCurrentTime?.() ?? 0
+    updateHandoffFade()
+    const now = performance.now()
+    if (currentTime.value !== lastVideoTime) {
+      lastVideoTime = currentTime.value
+      lastVideoAdvanceMs = now
+    }
+    if (isPaused.value) {
+      // A paused player is held, not stalled. Trailing the mark here is what stops a deliberate
+      // pause from accumulating into a blocked-autoplay verdict and skipping the segment.
+      lastVideoAdvanceMs = now
+      return
+    }
+    if (activeVideoCutoffDuration(segment) == null) {
+      return
+    }
+    if (currentTime.value >= activeSegmentDuration.value) {
+      advance()
+      return
+    }
+    // Unattended fallback, the video-segment twin of the audio clock's blocked-autoplay
+    // release: a player still sitting on its opening frame this long was never allowed to
+    // start, and there is nobody in the room who can click it. Advancing costs one segment;
+    // waiting costs the rest of the show, in front of everyone.
+    const nearStart = currentTime.value <= Math.min(10, activeSegmentDuration.value / 2)
+    if (nearStart && (now - lastVideoAdvanceMs) / 1000 > BLOCKED_VIDEO_SECONDS) {
+      advance()
+    }
+  }, 200)
+}
+
+/**
+ * Builds a segment's player into the persistent host.
+ *
+ * The same constructor serves the warm and the cold path because YouTube fixes a player's
+ * event handlers at construction: a player warmed with inert handlers could never be given
+ * live ones at promotion. The handlers instead ask whether this player is the show's player
+ * yet, so a parked player's own CUED/ENDED/error traffic cannot touch the sequence, and the
+ * moment it is promoted the very same handlers become live.
+ */
+function buildSegmentPlayer(
+  segment: Extract<IntroVideoSpec, { kind: 'video' }>,
+  options: { parked: boolean, startTime: number, isDeepLink: boolean },
+): YoutubePlayer | null {
+  const PlayerCtor = getYoutubePlayerConstructor()
+  if (!PlayerCtor || !mountHost.value) {
+    return null
+  }
+
+  mountHost.value.replaceChildren()
+  const mountNode = document.createElement('div')
+  mountHost.value.appendChild(mountNode)
+
+  const playerVars = getChromeFreeYoutubePlayerVars({
+    autoplay: options.parked ? 0 : 1,
+    // Keep YouTube's own captions off so the burned-in subtitles remain the only overlay.
+    cc_load_policy: 0,
+    ...(options.startTime ? { start: Math.round(options.startTime) } : {}),
+  })
+
+  let self: YoutubePlayer | null = null
+  const isShowPlayer = () => self != null && player === self
+
+  self = new PlayerCtor(mountNode, {
+    width: '100%',
+    height: '100%',
+    videoId: activeVideoId(segment),
+    playerVars,
+    events: {
+      // YouTube's caption module can arrive long after `onReady`, when the
+      // stream's own caption track resolves. `onApiChange` is the event that
+      // fires on exactly that, so it is where the suppression has to hold — the
+      // burned-in subtitles below are the only captions this show projects.
+      onApiChange: () => {
+        suppressYoutubeCaptions(self)
+      },
+      onReady: () => {
+        suppressYoutubeCaptions(self)
+        if (!isShowPlayer()) {
+          parkPrewarmedPlayer(self!, segment, options.startTime)
+          return
+        }
+        beginSegmentPlayback(segment, options.startTime, { assertOpeningFrame: true, isDeepLink: options.isDeepLink })
+      },
+      onStateChange: (event: { data: number }) => {
+        if (!isShowPlayer()) {
+          return
+        }
+        if (event.data === getYoutubePlayerState().PLAYING) {
+          isPaused.value = false
+          // A real frame from the trailer is the only thing allowed to end the warm handoff.
+          releaseHandoffHold()
+          if (pendingPausedSourceSwitchTime != null) {
+            const pausedTime = pendingPausedSourceSwitchTime
+            pendingPausedSourceSwitchTime = null
+            currentTime.value = pausedTime
+            player?.seekTo?.(pausedTime, true)
+            player?.pauseVideo?.()
+            return
+          }
+        }
+        if (event.data === getYoutubePlayerState().PAUSED || event.data === getYoutubePlayerState().CUED) {
+          isPaused.value = true
+        }
+        if (event.data === getYoutubePlayerState().ENDED) {
+          advance()
+        }
+      },
+      onError: () => {
+        if (!isShowPlayer()) {
+          // A dead warm player is discarded silently; the cold path will try again at the cut.
+          discardPrewarmedPlayer()
+          return
+        }
+        // A missing/restricted video must never block the live experience.
+        releaseHandoffHold()
+        advance()
+      },
+    },
+  })
+
+  return self
+}
+
+/**
+ * Parks a warmed player: muted, cued to its authored opening frame, and paused.
+ *
+ * `mute()` rather than `setVolume(0)` — the mute latch is what a browser's autoplay policy
+ * actually reads, and a volume of zero on an unmuted player is still an unmuted player.
+ * `cueVideoById` rather than `loadVideoById` — a cue stages the stream without playing it,
+ * which is the whole point; a load would start the trailer under the music.
+ */
+function parkPrewarmedPlayer(warmed: YoutubePlayer, segment: Extract<IntroVideoSpec, { kind: 'video' }>, startTime: number) {
+  warmed.mute?.()
+  warmed.cueVideoById?.({ videoId: activeVideoId(segment), startSeconds: startTime })
+  warmed.seekTo?.(startTime, true)
+  warmed.pauseVideo?.()
+  // Adopt on readiness rather than on construction: readiness is what makes a warmed player
+  // promotable, and it is the only moment guaranteed to be after the constructor returned.
+  prewarmedPlayer = warmed
+  prewarmedReady = true
+}
+
+function discardPrewarmedPlayer() {
+  prewarmedPlayer?.destroy?.()
+  prewarmedPlayer = null
+  prewarmedSegmentId = null
+  prewarmedStartSeconds = 0
+  prewarmedIsDeepLink = false
+  prewarmedReady = false
+  prewarmHostRequested.value = false
+}
+
+/**
+ * Builds the next segment's player early and parks it, so the cut into the trailer is a cut
+ * and not a wait. Gated on the Director's prologue by segment id, not on "any text segment":
+ * the standard conference cut must not open a second embed nobody asked for.
+ */
+async function prewarmNextSegment() {
+  const next = props.videos[sequenceState.value.index + 1]
+  if (prewarmedSegmentId || !next || !isVideoSegment(next)) {
+    return
+  }
+
+  // Claim the slot before the first await so a second tick cannot start a second player.
+  prewarmedSegmentId = next.id
+  prewarmHostRequested.value = true
+  const token = ++prewarmToken
+
+  try {
+    await loadYoutubeIframeApi()
+  }
+  catch {
+    discardPrewarmedPlayer()
+    return
+  }
+
+  await nextTick()
+
+  if (token !== prewarmToken || sequenceState.value.done || currentSegment.value?.kind !== 'text') {
+    return
+  }
+
+  const deepLinkTime = deepLinkStartConsumed ? null : (props.startAtNativeTime ?? null)
+  deepLinkStartConsumed = true
+  prewarmedStartSeconds = Math.max(next.startOffset ?? 0, deepLinkTime ?? 0)
+  prewarmedIsDeepLink = deepLinkTime != null
+
+  const warmed = buildSegmentPlayer(next, {
+    parked: true,
+    startTime: prewarmedStartSeconds,
+    isDeepLink: prewarmedIsDeepLink,
+  })
+  if (!warmed) {
+    discardPrewarmedPlayer()
+    return
+  }
+  prewarmedPlayer = warmed
+}
+
+/**
+ * Ends the warm handoff and reveals the trailer. Idempotent: the bounded timeout and the
+ * player's first real frame race each other by design, and whichever lands first wins.
+ */
+function releaseHandoffHold() {
+  if (handoffHoldTimer) {
+    clearTimeout(handoffHoldTimer)
+    handoffHoldTimer = null
+  }
+  handoffHoldCue.value = undefined
+}
+
+/**
+ * Promotes the warmed player into the show player: unmute, play, and hold the prologue's
+ * last painting over it until it produces a real frame.
+ *
+ * The music is already gone by the time this runs — `loadCurrentSegment` destroys the audio
+ * player before it reaches here — so the unmute can never put the trailer's audio on top of
+ * the score.
+ */
+function promotePrewarmedPlayer(segment: Extract<IntroVideoSpec, { kind: 'video' }>): boolean {
+  if (!prewarmedPlayer || prewarmedSegmentId !== segment.id || !prewarmedReady) {
+    return false
+  }
+
+  const warmed = prewarmedPlayer
+  const openingTime = prewarmedStartSeconds
+  const isDeepLink = prewarmedIsDeepLink
+  prewarmedPlayer = null
+  prewarmedSegmentId = null
+  prewarmedReady = false
+  prewarmHostRequested.value = false
+  player = warmed
+
+  handoffHoldCue.value = lastDirectorsCutCue.value
+  if (handoffHoldCue.value) {
+    handoffHoldTimer = setTimeout(releaseHandoffHold, DIRECTORS_CUT_HANDOFF_HOLD_MAX_MS)
+  }
+
+  videoVolume = 100
+  warmed.unMute?.()
+  warmed.playVideo?.()
+  beginSegmentPlayback(segment, openingTime, { assertOpeningFrame: false, isDeepLink })
+  return true
 }
 
 async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video' }> | undefined) {
@@ -670,6 +1371,11 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
     sequenceState.value = skipIntroSequence(sequenceState.value)
     return
   }
+
+  if (promotePrewarmedPlayer(segment)) {
+    return
+  }
+  discardPrewarmedPlayer()
 
   try {
     await loadYoutubeIframeApi()
@@ -694,91 +1400,27 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
     return
   }
 
-  const PlayerCtor = getYoutubePlayerConstructor()
-  if (!PlayerCtor || !mountHost.value) {
-    advance()
-    return
-  }
-
-  mountHost.value.replaceChildren()
-  const mountNode = document.createElement('div')
-  mountHost.value.appendChild(mountNode)
-
   // A gallery deep link overrides the authored opening frame, once, for the first player.
   const deepLinkTime = deepLinkStartConsumed ? null : (props.startAtNativeTime ?? null)
   deepLinkStartConsumed = true
   const startTime = Math.max(segment.startOffset ?? 0, deepLinkTime ?? 0)
 
-  const playerVars = getChromeFreeYoutubePlayerVars({
-    autoplay: 1,
-    // Keep YouTube's own captions off so the burned-in subtitles remain the only overlay.
-    cc_load_policy: 0,
-    ...(startTime ? { start: Math.round(startTime) } : {}),
-  })
-
-  player = new PlayerCtor(mountNode, {
-    width: '100%',
-    height: '100%',
-    videoId: activeVideoId(segment),
-    playerVars,
-    events: {
-      onReady: () => {
-        // YouTube may restore a prior watch position for a reused video ID even
-        // when playerVars.start is present. Reassert the authored opening frame
-        // after readiness so revisiting Wolves always begins at the beginning.
-        const openingTime = startTime
-        if (deepLinkTime == null) {
-          // Reload only for front-door entries: loadVideoById restarts playback from the
-          // buffered beginning, which would discard a deep-linked Guardian opening time.
-          player?.loadVideoById?.({ videoId: activeVideoId(segment), startSeconds: openingTime })
-        }
-        player?.seekTo?.(openingTime, true)
-        currentTime.value = openingTime
-        activeSegmentDuration.value = activeVideoCutoffDuration(segment) ?? player?.getDuration?.() ?? 0
-        segmentDurations.value[sequenceState.value.index] = activeSegmentDuration.value
-        stopPolling()
-        pollTimer = setInterval(() => {
-          currentTime.value = player?.getCurrentTime?.() ?? 0
-          updateHandoffFade()
-          if (activeVideoCutoffDuration(segment) != null && currentTime.value >= activeSegmentDuration.value && !isPaused.value) {
-            advance()
-          }
-        }, 200)
-      },
-      onStateChange: (event: { data: number }) => {
-        if (event.data === getYoutubePlayerState().PLAYING) {
-          isPaused.value = false
-          if (pendingPausedSourceSwitchTime != null) {
-            const pausedTime = pendingPausedSourceSwitchTime
-            pendingPausedSourceSwitchTime = null
-            currentTime.value = pausedTime
-            player?.seekTo?.(pausedTime, true)
-            player?.pauseVideo?.()
-            return
-          }
-        }
-        if (event.data === getYoutubePlayerState().PAUSED || event.data === getYoutubePlayerState().CUED) {
-          isPaused.value = true
-        }
-        if (event.data === getYoutubePlayerState().ENDED) {
-          advance()
-        }
-      },
-      onError: () => {
-        // A missing/restricted video must never block the live experience.
-        advance()
-      },
-    },
-  })
+  player = buildSegmentPlayer(segment, { parked: false, startTime, isDeepLink: deepLinkTime != null })
+  if (!player) {
+    advance()
+  }
 }
 
 function loadCurrentSegment(segment: IntroVideoSpec | undefined) {
   loadToken += 1
   isPaused.value = false
-  if (segment?.id !== 'wolves-intro') {
+  // Leaving a segment that offers an alternate source drops back to its primary, so a
+  // Director's Cut segment can never inherit a switch state set on the standard cut.
+  if (!segment || !isVideoSegment(segment) || !segment.alternateYoutubeVideoId) {
     destinyVoiceOverEnabled.value = false
   }
   destroyPlayer()
+  releaseHandoffHold()
   stopTextTimer()
   destroyAudioPlayer()
 
@@ -788,6 +1430,10 @@ function loadCurrentSegment(segment: IntroVideoSpec | undefined) {
   }
 
   if (isTextSegment(segment)) {
+    // A card is back on stage (the show started, or the presenter stepped back): whatever was
+    // warmed for a cut that is no longer next has to go, or it holds the host the next
+    // warm-up needs.
+    discardPrewarmedPlayer()
     startTextSegment(segment)
     return
   }
@@ -800,6 +1446,8 @@ function loadCurrentSegment(segment: IntroVideoSpec | undefined) {
 watch(() => sequenceState.value.done, (done) => {
   if (done) {
     fadeOutAndDestroyPlayer()
+    discardPrewarmedPlayer()
+    releaseHandoffHold()
     stopTextTimer()
     destroyAudioPlayer()
     handoffPending.value = props.holdForHandoff ?? false
@@ -862,6 +1510,25 @@ function handlePrevious() {
   sequenceState.value = previousIntroSequence(sequenceState.value)
 }
 
+function setPrologueMood(id: string) {
+  const segment = currentSegment.value
+  if (!segment || !isTextSegment(segment) || !isDirectorsCutPrologue.value) {
+    return
+  }
+
+  const mood = resolvePrologueMood(id)
+  if (mood.id === activeMoodId.value) {
+    return
+  }
+
+  activeMoodId.value = mood.id
+  // Enter the new track where the show already is, not at its beginning: the
+  // audience is mid-prologue and the cut keeps running underneath. Same
+  // contract as the Destiny segment's voice-over switch, which preserves time
+  // across two sources.
+  void loadAudioTrack(mood.youtubeVideoId, loadToken, mood.offsetSeconds + currentTime.value)
+}
+
 function setVoiceOverEnabled(enabled: boolean) {
   const segment = currentSegment.value
   if (!segment || !isVideoSegment(segment) || !canToggleDestinyVoiceOver.value) {
@@ -914,7 +1581,14 @@ function handleTogglePlayback() {
 }
 
 onBeforeUnmount(() => {
+  // The intro is over (skipped, or handed off to Track 0): stop warming
+  // paintings nobody is going to see, so the chain cannot keep taking
+  // bandwidth from the show that replaced it.
+  directorsCutConceptWarmAbandoned = true
+  window.removeEventListener('resize', trackViewportSize)
   destroyPlayer()
+  discardPrewarmedPlayer()
+  releaseHandoffHold()
   stopTextTimer()
   destroyAudioPlayer()
   if (import.meta.env.DEV) {
@@ -937,6 +1611,8 @@ watchEffect(() => {
     mediaTitle: activeMediaTitle.value,
     showVoiceOverToggle: canToggleDestinyVoiceOver.value,
     voiceOverEnabled: canToggleDestinyVoiceOver.value ? destinyVoiceOverEnabled.value : false,
+    moods: isDirectorsCutPrologue.value ? PROLOGUE_MOODS.map(mood => ({ id: mood.id, label: mood.label })) : [],
+    activeMoodId: activeMoodId.value,
     showCaptionToggle: canToggleDestinyCaptions.value,
     captionsEnabled: canToggleDestinyCaptions.value ? destinyCaptionsEnabled.value : false,
   })
@@ -961,6 +1637,7 @@ watchEffect(() => {
 
 defineExpose({
   next: handleNext,
+  setPrologueMood,
   previous: handlePrevious,
   setVoiceOverEnabled,
   setCaptionsEnabled,
@@ -977,26 +1654,42 @@ defineExpose({
       :class="{ 'wolves-intro-overlay--transparent-handoff': props.transparentHandoff }"
       @click="handleOverlayClick"
     >
-      <template v-if="currentSegment.kind === 'video'">
-        <div ref="mountHost" class="wolves-intro-overlay-player" />
-      </template>
-      <template v-else>
+      <div
+        v-if="playerHostMounted"
+        ref="mountHost"
+        class="wolves-intro-overlay-player"
+        :class="{ 'wolves-intro-overlay-player-hidden': !videoStageVisible }"
+        :aria-hidden="videoStageVisible ? undefined : 'true'"
+        :inert="!videoStageVisible"
+      />
+      <template v-if="sceneStageVisible">
         <div class="wolves-intro-overlay-blackscreen">
           <Transition name="wolves-scene-crossfade">
             <div
               :key="activeSceneKey"
               class="wolves-intro-overlay-scene"
-              :style="{ transitionDuration: `${PROLOGUE_SCENE_CROSSFADE_SECONDS}s` }"
+              :role="sceneCue?.backgroundFigure ? 'figure' : undefined"
+              :aria-label="sceneCue?.backgroundFigure?.label"
+              :aria-describedby="activeFigureCreditId"
+              :style="{ transitionDuration: `${sceneCrossfadeDuration}s` }"
             >
+              <span
+                v-if="sceneCue?.backgroundFigure"
+                :id="activeFigureCreditId"
+                class="wolves-intro-overlay-visually-hidden"
+              >{{ sceneCue.backgroundFigure.credit }}</span>
               <img
-                v-if="activeCue?.backgroundImage"
+                v-if="sceneCue?.backgroundImage"
                 class="wolves-intro-overlay-background"
                 :class="{
-                  'wolves-intro-overlay-background-kenburns': activeCue.backgroundMotion === 'kenburns',
-                  'wolves-intro-overlay-background-title-card': activeCue.titlePlate,
+                  'wolves-intro-overlay-background-title-card': sceneCue.titlePlate,
+                  'wolves-intro-overlay-background-framed': sceneCue.backgroundFraming,
                 }"
-                :style="activeCue.backgroundMotion === 'kenburns' ? { animationDuration: `${activeCue.end - activeCue.start}s` } : undefined"
-                :src="`${baseUrl}${activeCue.backgroundImage}`"
+                :style="sceneCue.backgroundFraming ? {
+                  maxWidth: `${sceneCue.backgroundFraming.sourceWidth}px`,
+                  maxHeight: `${sceneCue.backgroundFraming.sourceHeight}px`,
+                } : undefined"
+                :src="`${baseUrl}${sceneCue.backgroundImage}`"
                 alt=""
               >
               <template v-else-if="activeCrossfadeStage">
@@ -1013,15 +1706,26 @@ defineExpose({
                   alt=""
                 >
                 <div
-                  v-if="activeCue?.calamity"
+                  v-if="sceneCue?.calamity"
                   class="wolves-intro-overlay-calamity-vignette"
                   :style="{ animationDuration: `${activeCrossfadeStage.duration}s` }"
                 />
               </template>
+              <!-- Legibility is bought here, over the text region only, rather than by dimming
+                   the whole painting: a concept painting is the subject of its shot, and a
+                   global dim spends the artwork to pay for the caption. And the scrim exists
+                   only while a caption does — on a wordless shot it is haze with nothing to
+                   buy, so the condition mirrors the caption's own exactly. -->
+              <div
+                v-if="sceneCue?.backgroundFraming && overlayText && overlayTextVisible"
+                class="wolves-intro-overlay-scrim"
+                :class="{ 'wolves-intro-overlay-scrim-top': sceneCue.textPosition === 'top' }"
+                :style="framedBoxStyle"
+              />
             </div>
           </Transition>
         </div>
-        <div ref="audioMountHost" class="wolves-intro-overlay-audio-mount" />
+        <div v-if="currentSegment.kind === 'text'" ref="audioMountHost" class="wolves-intro-overlay-audio-mount" />
       </template>
 
       <template v-if="!isSomberTextSegment">
@@ -1087,7 +1791,7 @@ defineExpose({
           </div>
         </div>
 
-        <!-- Quick fade when one centered plate replaces another (e.g. Bob Killen -> Kat
+        <!-- Quick fade when one centered plate replaces another (e.g. Cortney Nickerson -> Kat
            Cosgrove at 14.5s); the entering plate keeps its authored impact animation.
            Each row anchors the guardian plate plus, for documented dinosaur bonds, the
            companion plate that shows the partnership beside the guardian's name. -->
@@ -1176,32 +1880,42 @@ defineExpose({
         </TransitionGroup>
       </template>
 
-      <p
-        v-else-if="overlayText && !activeTitlePlateCue"
-        :key="overlayText"
-        class="wolves-intro-overlay-text font-mono"
-        :class="{
-          'wolves-intro-overlay-text-somber': isSomberTextSegment,
-          'wolves-intro-overlay-text-dominant': overlayCueForDisplay?.emphasis === 'dominant',
-          'wolves-intro-overlay-text-terminal': overlayCueForDisplay?.presentation === 'terminal',
-          'wolves-intro-overlay-text-slim': overlayCueForDisplay?.slim,
-          'wolves-intro-overlay-text-top': overlayCueForDisplay?.backgroundCrossfade && overlayCueForDisplay.emphasis !== 'dominant' && !overlayCueForDisplay.calamity && overlayCueForDisplay.textPosition !== 'bottom' && overlayCueForDisplay.textPosition !== 'bottom-right',
-          'wolves-intro-overlay-text-bottom-right': overlayCueForDisplay?.textPosition === 'bottom-right',
-        }"
-        :style="isSomberTextSegment ? { animationDuration: `${somberFadeDuration}s` } : undefined"
-      >
-        <template v-if="overlayCueForDisplay?.slim && overlayText.includes('\n')">
-          <span class="wolves-intro-overlay-text-slim-line1">{{ overlayText.split('\n')[0] }}</span>
-          <span class="wolves-intro-overlay-text-slim-line2">{{ formatIntroCueText(overlayText.split('\n')[1], overlayCueForDisplay?.preservePunctuation) }}</span>
-        </template>
-        <template v-else>
-          <span
-            v-for="(part, index) in overlayTextParts"
-            :key="index"
-            :class="{ 'wolves-intro-letter-highlight': part.highlight }"
-          >{{ part.char }}</span>
-        </template>
-      </p>
+      <template v-else-if="!activeTitlePlateCue">
+        <Transition name="wolves-intro-text-hold">
+          <p
+            v-if="overlayText && overlayTextVisible"
+            :key="overlayText"
+            class="wolves-intro-overlay-text font-mono"
+            :class="{
+              'wolves-intro-overlay-text-framed': Boolean(overlayCueForDisplay?.backgroundFraming),
+              'wolves-intro-overlay-text-somber': isSomberTextSegment,
+              'wolves-intro-overlay-text-director': isDirectorsCutPrologue || handoffHoldCue,
+              'wolves-intro-overlay-text-dominant': overlayCueForDisplay?.emphasis === 'dominant',
+              'wolves-intro-overlay-text-terminal': overlayCueForDisplay?.presentation === 'terminal',
+              'wolves-intro-overlay-text-slim': overlayCueForDisplay?.slim,
+              'wolves-intro-overlay-text-top': overlayCueForDisplay?.backgroundCrossfade && overlayCueForDisplay.emphasis !== 'dominant' && !overlayCueForDisplay.calamity && overlayCueForDisplay.textPosition !== 'bottom' && overlayCueForDisplay.textPosition !== 'bottom-right',
+              'wolves-intro-overlay-text-bottom-right': overlayCueForDisplay?.textPosition === 'bottom-right',
+            }"
+            :style="isSomberTextSegment ? { 'animationDuration': `${somberFadeDuration}s`, '--wolves-intro-text-fade': `${somberFadeDuration}s`, ...captionBoxStyle } : captionBoxStyle"
+          >
+            <template v-if="overlayCueForDisplay?.slim && overlayText.includes('\n')">
+              <span class="wolves-intro-overlay-text-slim-line1"><span
+                v-for="(part, index) in slimTitleSegments"
+                :key="index"
+                :class="{ 'wolves-intro-overlay-text-slim-brand': part.brand }"
+              >{{ part.text }}</span></span>
+              <span class="wolves-intro-overlay-text-slim-line2">{{ formatIntroCueText(overlayText.split('\n')[1], overlayCueForDisplay?.preservePunctuation) }}</span>
+            </template>
+            <template v-else>
+              <span
+                v-for="(part, index) in overlayTextParts"
+                :key="index"
+                :class="{ 'wolves-intro-letter-highlight': part.highlight }"
+              >{{ part.char }}</span>
+            </template>
+          </p>
+        </Transition>
+      </template>
 
       <!-- Opening title card lower third. Replicates the Ghosts In The Mist guardian
            nameplate from WolvesComicReader.vue (crest, horizon rules, gradient name) with
@@ -1268,6 +1982,15 @@ defineExpose({
   pointer-events: none;
 }
 
+/* A player warmed ahead of its cut. Hidden by opacity, never by `display: none` or
+   `visibility: hidden`: an unrendered iframe stops decoding, which throws away exactly the
+   warm-up this exists to buy. It keeps its box and its layer, and simply is not seen. */
+.wolves-intro-overlay-player-hidden {
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+
 .wolves-intro-overlay-blackscreen {
   position: absolute;
   inset: 0;
@@ -1280,6 +2003,20 @@ defineExpose({
 .wolves-intro-overlay-scene {
   position: absolute;
   inset: 0;
+}
+
+/* Exposes the montage credit to assistive tech via aria-describedby without
+   painting a visible caption over the artwork. */
+.wolves-intro-overlay-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .wolves-scene-crossfade-enter-active,
@@ -1306,9 +2043,53 @@ defineExpose({
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Dims still images (e.g. the KubeCon Ken Burns beat) behind the overlaid text; the
-     day/night crossfade beats override this via their own animated opacity below. */
-  opacity: 0.55;
+  /* Full brightness: legibility is bought by the scrim over the text region only, not by a
+     global dim that spends the artwork. The one unframed still left in the show — the
+     Collapse night plate — is a wordless beat, so there is no caption for a dim to pay for.
+     The day/night crossfade beats override this via their own animated opacity below, and
+     framed paintings override it entirely. */
+  opacity: 1;
+}
+
+/* A painting, not a backdrop.
+
+   `cover` crops to the frame, which on this registry means amputating a 2.66:1 panorama top
+   and bottom and a 1.37:1 canvas left and right — and then upscaling whatever survived.
+   `contain` shows the whole canvas, and the per-record `max-width`/`max-height` (bound
+   inline from the asset ledger's measured source geometry) stop the browser enlarging it
+   past the pixels the artist actually delivered. The margins letterbox it in the frame.
+
+   Full brightness for the same reason: legibility is bought by the scrim below, over the
+   text region only, instead of by spending the artwork. */
+.wolves-intro-overlay-background-framed {
+  object-fit: contain;
+  opacity: 1;
+  inset: auto;
+  margin: auto;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+/* The legibility scrim: a gradient behind the caption band only, so the painting above it
+   stays at full brightness while the text below keeps its contrast. */
+.wolves-intro-overlay-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to top, rgb(0 0 0 / 78%) 0%, rgb(0 0 0 / 45%) 22%, rgb(0 0 0 / 0%) 46%);
+}
+
+/* The scrim buys the caption its contrast, so it has to cover the same band the
+   caption occupies. Left on the viewport it would gradient the letterbox bar --
+   darkening nothing, and stopping short of the text it exists to back. */
+.wolves-intro-overlay-scrim {
+  inset: var(--wc-frame-bar-y, 0px) var(--wc-frame-bar-x, 0px);
+}
+
+.wolves-intro-overlay-scrim-top {
+  background: linear-gradient(to bottom, rgb(0 0 0 / 78%) 0%, rgb(0 0 0 / 45%) 22%, rgb(0 0 0 / 0%) 46%);
 }
 
 /* The opening title card's photo is the subject of the slide, not a backdrop for text, so
@@ -1535,28 +2316,6 @@ defineExpose({
   }
   100% {
     opacity: 0.85;
-  }
-}
-
-.wolves-intro-overlay-background-kenburns {
-  /* Anchor the zoom/pan on the crowd's faces (roughly the upper-middle third of this wide
-     group photo), keeping the jungle foliage on the left and the escalators/floor padding on
-     the right and bottom out of frame throughout the motion. */
-  transform-origin: 50% 32%;
-  animation-name: wolves-intro-kenburns;
-  animation-timing-function: ease-in-out;
-  animation-fill-mode: both;
-}
-
-@keyframes wolves-intro-kenburns {
-  0% {
-    transform: scale(1.15) translate(3%, 2%);
-  }
-  50% {
-    transform: scale(1.4) translate(-4%, -3%);
-  }
-  100% {
-    transform: scale(1.65) translate(2%, 4%);
   }
 }
 
@@ -1977,6 +2736,78 @@ defineExpose({
   }
 }
 
+/* A thought leaving on its reading hold fades out at the same tempo it arrived on, so a
+   cleared line reads as a decision rather than as a dropped frame. */
+.wolves-intro-text-hold-leave-active {
+  transition: opacity var(--wolves-intro-text-fade, 1.6s) ease-in-out;
+  animation: none;
+}
+
+.wolves-intro-text-hold-leave-to {
+  opacity: 0;
+}
+
+/* The Director's Cut prologue's own crescendo treatment (4:36, "Now, what's left...").
+   Scoped so the shared `dominant` rule, and the Clarke quote it was written for, do not
+   move. It sits above the narrow-viewport block on purpose: that block carries a rule of
+   exactly this specificity, and CSS breaks the tie on source order, so putting this after
+   it would silently undo the phone treatment.
+
+   Two things this fixes. The shared rule tops out at `8rem`, which at 1280 is 81px in a
+   1075px box — wider than every authored line in this narration, so the browser re-wrapped
+   the lining mid-phrase and `dominant` had to be abandoned here. And its `font-weight: 700`
+   is synthetic bold on Michroma, which ships one weight; the base caption rule already says
+   so.
+
+   Sizing in `vw` rather than `rem` is the point. Every other caption is capped at `4.4rem`,
+   so on the 1920-wide projector this show is performed on they all still render ~45px
+   however large the screen gets. This one tracks the frame — ~51px at 1280, ~77px at 1920 —
+   so the biggest musical event in the piece is also the biggest type in the show, and the
+   fit is proportional to the box instead of being true only at the one width it was
+   measured at. Verified in Chromium with Michroma loaded: four rendered line boxes against
+   four authored, at both 1280x720 and 1920x1080. */
+.wolves-intro-overlay-text-director.wolves-intro-overlay-text-dominant {
+  left: 3%;
+  right: 3%;
+  font-size: clamp(2.6rem, 4vw, 7.5rem);
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+/* Words live inside the picture, never on the letterbox.
+
+   `.wolves-intro-overlay-text` anchors to the viewport, which is right while the
+   image is a full-bleed backdrop and wrong the moment it is a framed painting: a
+   `contain` fit leaves bars whose size is decided by the source's aspect ratio,
+   and the caption happily rendered on top of them. Measured in Chromium at
+   1920x1080, the 1920x1369 record paints 1514px wide and leaves a 203px bar down
+   each side, while the caption ran 96px to 1824px -- over the bar on both sides.
+
+   `--wc-frame-bar-x/y` is that bar, computed from the ledger geometry in
+   `framedLetterbox` and published per cue, so the caption tracks the picture on
+   every record and at every size rather than being tuned per painting. The extra
+   3% is title-safe margin: type stopping exactly on the picture edge reads as an
+   accident from the back row.
+
+   Placed here, after the base and dominant rules, and written at two-class
+   specificity on purpose. The first attempt sat earlier in the sheet at one
+   class, tied with `.wolves-intro-overlay-text`, and lost on source order -- it
+   passed every unit test and still painted the words on the bar, which is
+   exactly the class of defect only a laid-out browser catches.
+
+   `max()` rather than plain addition, because a 16:9 record has no bar at all
+   and must keep the placement it already had. */
+.wolves-intro-overlay-text.wolves-intro-overlay-text-framed {
+  bottom: max(12%, calc(var(--wc-frame-bar-y, 0px) + 3%));
+  left: max(5%, calc(var(--wc-frame-bar-x, 0px) + 3%));
+  right: max(5%, calc(var(--wc-frame-bar-x, 0px) + 3%));
+}
+
+.wolves-intro-overlay-text-director.wolves-intro-overlay-text-dominant.wolves-intro-overlay-text-framed {
+  left: max(3%, calc(var(--wc-frame-bar-x, 0px) + 3%));
+  right: max(3%, calc(var(--wc-frame-bar-x, 0px) + 3%));
+}
+
 @media (max-width: 640px) {
   .wolves-guardian-plate-row {
     bottom: max(18%, 12rem);
@@ -1990,9 +2821,59 @@ defineExpose({
   .wolves-intro-overlay-burned-captions,
   .wolves-intro-overlay-title-card,
   .wolves-guardian-plate-row,
-  .wolves-intro-overlay-text {
+  .wolves-intro-overlay-text:not(.wolves-intro-overlay-text-director) {
     display: none !important;
   }
+
+  /* The Director's Cut is the exception: it is a scored prologue whose narration *is* the
+     content, so blanking its captions leaves a phone or a narrow projector window showing
+     paintings with the story removed. It keeps its words and rescales them to the frame
+     instead, which is what the rule was reaching for in the first place. */
+  .wolves-intro-overlay-text-director {
+    left: 4%;
+    right: 4%;
+    width: auto;
+    bottom: 9%;
+    font-size: clamp(1.15rem, 5.4vw, 1.9rem);
+    line-height: 1.35;
+  }
+
+  .wolves-intro-overlay-text-director.wolves-intro-overlay-text-dominant {
+    /* Restated, not inherited: the prologue's crescendo rule above sets 3% and
+       outranks the `.wolves-intro-overlay-text-director` 4% this block relies on,
+       so without this the phone silently picked up the projector's margins. */
+    left: 4%;
+    right: 4%;
+    font-size: clamp(1.5rem, 7vw, 2.5rem);
+    line-height: 1.2;
+  }
+
+  .wolves-intro-overlay-text-director.wolves-intro-overlay-text-bottom-right {
+    font-size: clamp(1.3rem, 6vw, 2.1rem);
+  }
+
+  .wolves-intro-overlay-text-director.wolves-intro-overlay-text-slim .wolves-intro-overlay-text-slim-line1 {
+    font-size: clamp(1.6rem, 7.4vw, 2.6rem);
+  }
+
+  .wolves-intro-overlay-text-director.wolves-intro-overlay-text-slim .wolves-intro-overlay-text-slim-line2 {
+    font-size: clamp(1rem, 4.4vw, 1.6rem);
+  }
+}
+
+/* The one coloured glyph in the show's own name.
+
+   Requested directly by the owner: the `F` of BLUEFIN in the brand blue. It
+   inherits every other property from the title line, so it keeps the same
+   baseline, weight and tracking — only the colour changes, which is what makes
+   it read as a logo rather than as a highlighted letter.
+
+   It sits at top level, after the line it colours. The first attempt was
+   inserted into the `max-width: 640px` block by a careless anchor match, where
+   it did nothing at projector sizes and quietly corrupted the selector above
+   it. */
+.wolves-intro-overlay-text-slim-brand {
+  color: var(--color-blue, #2f6fed);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2099,7 +2980,7 @@ defineExpose({
   animation: wolves-guardian-plate-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Quick fade-out when one plate is replaced by the next (Bob Killen -> Kat Cosgrove). */
+/* Quick fade-out when one plate is replaced by the next (Cortney Nickerson -> Kat Cosgrove). */
 .wolves-guardian-plate-swap-leave-active {
   transition: opacity 0.25s ease-out;
 }
@@ -2262,7 +3143,7 @@ defineExpose({
   font-weight: 600;
 }
 
-/* Burnished silver treatment for Universal Blue trustees (Bob Killen's cue; Jorge
+/* Burnished silver treatment for Universal Blue trustees (Cortney Nickerson's cue; Jorge
    Castro's Ghosts In The Mist plate mirrors it in WolvesComicReader.vue). Distinct
    from the default blue plate. */
 .wolves-guardian-plate-trustee:not(.wolves-guardian-plate-leader) {

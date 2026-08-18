@@ -1102,7 +1102,14 @@ export const TRACK_ZERO_SECTIONS = {
   finaleStart: 408.137,
 } as const
 
-function nearestBeatIndex(time: number): number {
+/**
+ * Index of the measured beat closest to `time`.
+ *
+ * Exported so every scheduler resolves "which measured beat" through one
+ * implementation. A second copy of this search is how a schedule starts
+ * cutting a beat away from the one its section boundary names.
+ */
+export function trackZeroNearestBeatIndex(time: number): number {
   const beats = TRACK_ZERO_BEAT_TIMES
   let lo = 0
   let hi = beats.length - 1
@@ -1120,6 +1127,46 @@ function nearestBeatIndex(time: number): number {
   }
   return lo
 }
+
+/**
+ * The last measured beat at or before `time`, clamped to the first beat.
+ *
+ * `trackZeroNearestBeatIndex` rounds to whichever beat is closest, which is the
+ * wrong answer for a window *end*: rounding forward lets the last hold run past
+ * the boundary it was supposed to stop on. Every schedule that closes a window
+ * snaps backwards through this.
+ */
+export function trackZeroBeatAtOrBefore(time: number): number {
+  const index = trackZeroNearestBeatIndex(time)
+  const beat = TRACK_ZERO_BEAT_TIMES[index]!
+  return beat <= time ? beat : (TRACK_ZERO_BEAT_TIMES[index - 1] ?? TRACK_ZERO_BEAT_TIMES[0]!)
+}
+
+/**
+ * The first measured beat at or after `time`, clamped to the last beat.
+ *
+ * The mirror of the above, for a window *start*: rounding backwards would open
+ * a record before the beat it is anchored to.
+ */
+export function trackZeroBeatAtOrAfter(time: number): number {
+  const index = trackZeroNearestBeatIndex(time)
+  const beat = TRACK_ZERO_BEAT_TIMES[index]!
+  return beat >= time
+    ? beat
+    : (TRACK_ZERO_BEAT_TIMES[index + 1] ?? TRACK_ZERO_BEAT_TIMES[TRACK_ZERO_BEAT_TIMES.length - 1]!)
+}
+
+/**
+ * Shortest interval between two consecutive measured beats.
+ *
+ * The grid is measured, not synthetic — it slows to ~136 BPM in the middle of
+ * the song and its spacing is not uniform anywhere — so "how long is N beats"
+ * has no single answer. This is the worst case, which is what a readable-floor
+ * check has to be written against.
+ */
+export const TRACK_ZERO_SHORTEST_BEAT_SECONDS: number = TRACK_ZERO_BEAT_TIMES
+  .slice(1)
+  .reduce((shortest, beat, index) => Math.min(shortest, beat - TRACK_ZERO_BEAT_TIMES[index]!), Number.POSITIVE_INFINITY)
 
 /**
  * Allocate `count` slide end times across the measured beats between
@@ -1147,8 +1194,8 @@ export function trackZeroBeatCuts(
   }
 
   const beats = TRACK_ZERO_BEAT_TIMES
-  const startIndex = nearestBeatIndex(startTime)
-  const endIndex = nearestBeatIndex(endTime)
+  const startIndex = trackZeroNearestBeatIndex(startTime)
+  const endIndex = trackZeroNearestBeatIndex(endTime)
   const totalBeats = endIndex - startIndex
   const base = tiers[tiers.length - 1]
   if (totalBeats < base * count) {
@@ -1188,8 +1235,8 @@ export function trackZeroEvenBeatCuts(
     return []
   }
 
-  const startIndex = nearestBeatIndex(startTime)
-  const endIndex = nearestBeatIndex(endTime)
+  const startIndex = trackZeroNearestBeatIndex(startTime)
+  const endIndex = trackZeroNearestBeatIndex(endTime)
   const totalBeats = endIndex - startIndex
   if (totalBeats < count) {
     return Array.from({ length: count }, (_, index) =>
@@ -1222,9 +1269,9 @@ export function trackZeroBeatCutsWithPickup(
     return []
   }
 
-  const startIndex = nearestBeatIndex(startTime)
-  const pickupIndex = nearestBeatIndex(pickupTime)
-  const endIndex = nearestBeatIndex(endTime)
+  const startIndex = trackZeroNearestBeatIndex(startTime)
+  const pickupIndex = trackZeroNearestBeatIndex(pickupTime)
+  const endIndex = trackZeroNearestBeatIndex(endTime)
   const totalBeats = endIndex - startIndex
   if (totalBeats < afterBeats * count) {
     return Array.from({ length: count }, (_, index) =>
