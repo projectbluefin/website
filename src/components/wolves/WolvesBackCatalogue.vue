@@ -32,9 +32,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section v-if="experiences.length > 0" class="wc-back-catalogue" aria-label="Back Catalogue">
+  <section v-if="experiences.length > 0" class="wc-back-catalogue" aria-label="Music to Slay By">
     <p class="wc-label wc-back-catalogue-heading">
-      BACK CATALOGUE
+      Music to Slay By
     </p>
     <div class="wc-hairline" />
     <div class="wc-back-catalogue-grid">
