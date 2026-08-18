@@ -156,7 +156,9 @@ onBeforeUnmount(() => {
     <!-- Keep the film title above the trailer without restoring the old
          full-height hero that pushed the video below the fold. -->
     <section class="wt-stage" aria-label="Official teaser trailer">
-      <h1 class="wt-heading">Seven Days to the Wolves</h1>
+      <h1 class="wt-heading">
+        Seven Days to the Wolves
+      </h1>
       <div class="wt-player wc-plate" data-wolves-trailer>
         <!-- The delivered frame is 16:9 with the 2.39:1 picture letterboxed
              inside it, so the embed is given a 16:9 box and YouTube pillars
@@ -312,7 +314,10 @@ onBeforeUnmount(() => {
 }
 
 .wt-heading {
-  margin: 0 -0.22em 0 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  white-space: nowrap;
   color: var(--wc-white);
   font-size: clamp(2rem, 4vw, 6.4rem);
   font-weight: 800;
@@ -330,7 +335,7 @@ onBeforeUnmount(() => {
   aspect-ratio: 16 / 9;
 
   // Height-capped so title, frame, and standfirst all clear the fold.
-  width: min(100vw, calc((100svh - 13rem) * 16 / 9));
+  width: min(100vw, calc((100svh - 16rem) * 16 / 9));
   overflow: hidden;
   background: #000;
 
@@ -713,7 +718,6 @@ onBeforeUnmount(() => {
   }
 
   .wt-heading {
-    margin-right: -0.12em;
     font-size: 2rem;
     letter-spacing: 0.12em;
   }
