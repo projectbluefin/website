@@ -88,6 +88,31 @@ describe('media widget', () => {
     expect(wrapper.get('.wc-track-credit-byline').text()).toBe('By Eleine')
   })
 
+  it('renders external single-track playback without mutating the cinematic store', () => {
+    const store = useCinematicStore()
+    const wrapper = mount(MediaWidget, {
+      props: {
+        title: 'Trailer 1 — Seven Days to the Wolves',
+        artwork: '/poster.webp',
+        elapsed: 55,
+        duration: 110,
+        playing: true,
+        showSkipControls: false,
+      },
+    })
+
+    expect(wrapper.get('.wc-widget-title').text()).toBe('Trailer 1 — Seven Days to the Wolves')
+    expect(wrapper.get('.wc-widget-art').attributes('src')).toBe('/poster.webp')
+    expect(wrapper.text()).toContain('0:55 / 1:50')
+    expect(wrapper.text()).toContain('TOTAL 0:55 / 1:50')
+    expect(wrapper.get('.wc-widget-progress').attributes('aria-valuenow')).toBe('50')
+    expect(wrapper.findAll('.wc-widget-progress-ascii .is-filled')).toHaveLength(20)
+    expect(wrapper.get('button[aria-label="Pause"]').attributes('aria-label')).toBe('Pause')
+    expect(wrapper.find('button[aria-label="Previous"]').exists()).toBe(false)
+    expect(wrapper.find('button[aria-label="Next"]').exists()).toBe(false)
+    expect(store.segmentElapsed).toBe(0)
+  })
+
   it('shows the plain authored title, not a catalogue credit, for the Director\'s Cut', () => {
     const store = useCinematicStore()
     store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)

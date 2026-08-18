@@ -175,19 +175,36 @@ The book box is opaque `rgb(4 10 20)`, with a 4px `#60a5fa` left border,
 
 ## Iframe Geometry
 
-The player is the delivered 16:9 frame, but the iframe is the 1920/804 picture.
-Centre the iframe vertically inside the player so the black bars belong to the
-page.
+The player is the delivered 16:9 frame. Inside it, `.wt-player-frame` is the
+clipped 1920:804 picture aperture. Centre a **16:9 iframe** inside that aperture:
+its height is 134.328% of the aperture, so YouTube's own top and bottom
+letterbox bars fall outside the clipped area. That hides the title/share/logo
+chrome without masking or cropping the film itself.
 
-Do not give the iframe the 16:9 frame. YouTube then letterboxes the source
-itself and paints title/share/logo chrome into those bars, where the delivered
-cut is pure black. Player chrome over the picture fades after playback settles.
+Set `pointer-events: none` on the iframe. Playback belongs to the site's media
+widget; allowing pointer hover over the cross-origin iframe asks YouTube to
+paint chrome again, and the page cannot style it away. YouTube also paints a
+centre play/pause glyph briefly after API playback starts. Keep the opaque
+poster over the iframe for the first 8 seconds (and whenever paused); reveal it
+before the first authored plate at 11 seconds.
 
 `new YT.Player(div, …)` replaces the host div with the iframe. Target the
 resulting iframe through the wrapper's `:deep(iframe)` rule.
 
 YouTube rejects numeric loopback origins. Test at
 `http://projectbluefin.io.localhost:5173/wolves/`, not `localhost`.
+
+## Reuse the Wolves Media Widget
+
+`MediaWidget.vue` is store-backed by default and is also the teaser transport.
+Its optional `artwork`, `elapsed`, `duration`, and `playing` props activate
+external single-track mode without mutating the cinematic store. Keep
+`showSkipControls` true by default for the show and set it false for the teaser.
+The teaser owns play, pause, replay, and ratio seek through the IFrame API.
+
+Do not copy the widget markup or stylesheet into the teaser. A visual copy
+immediately drifts from the show and creates two transport accessibility
+surfaces to maintain.
 
 ## Inline Mark Trap
 
@@ -207,7 +224,7 @@ element can collapse below the available width and wrap unexpectedly.
 | Rationalization | Reality |
 |---|---|
 | "The timing manifest is authoritative, so it is enough." | It has no plate design and no three-picture composition. Read the cards and builder. |
-| "The iframe should be 16:9 because the player is." | That delegates letterboxing to YouTube and puts chrome in the black bars. |
+| "The iframe should match the 1920:804 aperture." | Chrome then paints over the picture. Use a clipped aperture around a centred 16:9 iframe. |
 | "The existing Kubernetes SVG is already available." | It is the blue logo; the authored treatment requires the white symbolic icon. |
 | "A dark scrim makes the words safer." | The owner explicitly removed it. Use the authored glyph halo. |
 | "The helm is just an image; default image CSS is fine." | Preflight makes it block-level and breaks the word. |
@@ -220,7 +237,9 @@ element can collapse below the available width and wrap unexpectedly.
 - Plate type uses Michroma.
 - A plate has a full-card translucent background.
 - The title or *Extinction* wraps only when the helm is present.
-- YouTube chrome occupies the frame's black bars.
+- YouTube chrome occupies the frame's black bars or overlays the picture.
+- A second teaser-only transport copies `MediaWidget` markup or styles.
+- The iframe accepts pointer events.
 - The event title's B/F is recoloured, or the CTA's b/f is blue.
 - Plate timings are adjusted locally rather than re-ported from destiny-vids.
 
@@ -234,8 +253,10 @@ element can collapse below the available width and wrap unexpectedly.
       mismatch means the inline mark is wrapping.
 - [ ] Player is fully above the fold on desktop and mobile.
 - [ ] No horizontal scroll exists at 1920×1080 or 390×844.
-- [ ] The iframe is 1920/804 inside a 16:9 player; the page owns equal black
-      bars above and below.
-- [ ] Playback settles with no YouTube chrome in the black bars.
+- [ ] A 16:9 iframe is centred at 134.328% height inside the clipped 1920:804
+      aperture and has `pointer-events: none`.
+- [ ] Playback, pause, replay, and seek work through the external media-widget
+      mode; the 8-second start/seek cover and paused poster leave no YouTube
+      chrome visible.
 - [ ] `src/tests/wolvesTrailerPlates.test.ts`, lint, typecheck, `test:gate`, and
       build pass.

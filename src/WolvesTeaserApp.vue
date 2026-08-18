@@ -3,6 +3,7 @@ import type { YoutubePlayer } from '@/composables/useYoutubeIframeApi'
 import type { ExperienceManifest } from '@/config/experience-manifest'
 import type { TrailerPlate } from '@/data/wolves-trailer-plates'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import WolvesBackCatalogue from '@/components/wolves/WolvesBackCatalogue.vue'
 import WolvesTrailerLine from '@/components/wolves/WolvesTrailerLine.vue'
 import { getChromeFreeYoutubePlayerVars, getYoutubePlayerConstructor, loadYoutubeIframeApi } from '@/composables/useYoutubeIframeApi'
@@ -29,9 +30,12 @@ const playerHost = ref<HTMLElement | null>(null)
 let player: YoutubePlayer | null = null
 let clockTimer: ReturnType<typeof setInterval> | null = null
 
-type TrailerPhase = 'idle' | 'playing' | 'ended'
+type TrailerPhase = 'idle' | 'playing' | 'paused' | 'ended'
 const trailerPhase = ref<TrailerPhase>('idle')
 const now = ref(0)
+const videoRevealed = ref(false)
+const YOUTUBE_CHROME_SETTLE_MS = 8000
+let revealTimer: ReturnType<typeof setTimeout> | null = null
 
 const visiblePlates = computed(() => activeTrailerPlates(now.value))
 const plateById = computed(() => new Map(visiblePlates.value.map(plate => [plate.id, plate])))
@@ -71,6 +75,17 @@ function stopClock() {
   }
 }
 
+function hideUntilYoutubeChromeSettles() {
+  videoRevealed.value = false
+  if (revealTimer) {
+    clearTimeout(revealTimer)
+  }
+  revealTimer = setTimeout(() => {
+    videoRevealed.value = true
+    revealTimer = null
+  }, YOUTUBE_CHROME_SETTLE_MS)
+}
+
 function tick() {
   const t = player?.getCurrentTime?.()
   if (typeof t !== 'number') {
@@ -82,6 +97,7 @@ function tick() {
     now.value = TRAILER_DURATION_SECONDS
     player?.pauseVideo?.()
     trailerPhase.value = 'ended'
+    videoRevealed.value = false
     stopClock()
     return
   }
@@ -95,13 +111,46 @@ function startClock() {
 
 function playTrailer() {
   trailerPhase.value = 'playing'
+  hideUntilYoutubeChromeSettles()
   player?.playVideo?.()
   startClock()
+}
+
+function toggleTrailer() {
+  if (trailerPhase.value === 'playing') {
+    player?.pauseVideo?.()
+    trailerPhase.value = 'paused'
+    videoRevealed.value = false
+    if (revealTimer) {
+      clearTimeout(revealTimer)
+      revealTimer = null
+    }
+    stopClock()
+    return
+  }
+  if (trailerPhase.value === 'ended') {
+    replayTrailer()
+    return
+  }
+  playTrailer()
+}
+
+function seekTrailer(ratio: number) {
+  const target = Math.min(Math.max(ratio, 0), 1) * TRAILER_DURATION_SECONDS
+  now.value = target
+  player?.seekTo?.(target, true)
+  if (trailerPhase.value === 'playing') {
+    hideUntilYoutubeChromeSettles()
+  }
+  if (trailerPhase.value === 'ended' && target < TRAILER_DURATION_SECONDS) {
+    trailerPhase.value = 'paused'
+  }
 }
 
 function replayTrailer() {
   now.value = 0
   trailerPhase.value = 'playing'
+  hideUntilYoutubeChromeSettles()
   player?.seekTo?.(0, true)
   player?.playVideo?.()
   startClock()
@@ -146,6 +195,9 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   stopClock()
+  if (revealTimer) {
+    clearTimeout(revealTimer)
+  }
   player?.destroy?.()
   player = null
 })
@@ -184,13 +236,9 @@ onBeforeUnmount(() => {
           >
         </div>
 
-        <div v-if="trailerPhase === 'idle'" class="wt-poster">
+        <div v-if="trailerPhase !== 'playing' || !videoRevealed" class="wt-poster">
           <span class="wc-label wt-poster-kicker">TRAILER 1</span>
           <span class="wt-poster-title">SEVEN DAYS TO THE WOLVES</span>
-          <button class="wt-play wc-cta--primary" type="button" @click="playTrailer">
-            <span class="wc-cta-icon" aria-hidden="true">▶</span>
-            Watch the Teaser
-          </button>
         </div>
 
         <div class="wt-overlays" aria-hidden="true">
@@ -271,22 +319,24 @@ onBeforeUnmount(() => {
             </template>
           </div>
         </div>
-
-        <button
-          v-if="trailerPhase === 'ended'"
-          class="wt-play wt-play--replay wc-cta--primary"
-          type="button"
-          @click="replayTrailer"
-        >
-          <span class="wc-cta-icon" aria-hidden="true">↺</span>
-          Watch Again
-        </button>
       </div>
 
       <p class="wt-standfirst">
         <span class="wc-label">SEVEN PARTS · ONE COMMUNITY · ONE DESTINY</span>
         <span class="wc-label wt-standfirst-date">2 NOVEMBER 2026</span>
       </p>
+
+      <MediaWidget
+        title="Trailer 1 — Seven Days to the Wolves"
+        :artwork="heroBackground"
+        :elapsed="now"
+        :duration="TRAILER_DURATION_SECONDS"
+        :playing="trailerPhase === 'playing'"
+        :show-skip-controls="false"
+        :auto-hide="trailerPhase === 'playing'"
+        @toggle-play="toggleTrailer"
+        @seek="seekTrailer"
+      />
     </section>
 
     <WolvesBackCatalogue @launch="openExperience" />
@@ -345,25 +395,29 @@ onBeforeUnmount(() => {
   container-type: inline-size;
 }
 
-/* The iframe is the PICTURE, not the frame: 2.39:1, centred, so the black
-   bars above and below it are ours and are actually black. Given a 16:9 box
-   YouTube letterboxes the source itself and then fills those bars with its own
-   title bar and logo, which the delivered cut does not have. */
+/* The wrapper is the 2.39:1 PICTURE aperture. The iframe inside it is 16:9:
+   YouTube puts its title/share/logo chrome into that iframe's letterbox bars,
+   which fall outside this clipped aperture. Pointer events stay on our widget,
+   so hover can never ask YouTube to paint the chrome again. */
 .wt-player-frame {
   position: absolute;
   left: 0;
   right: 0;
   top: 50%;
+  overflow: hidden;
   transform: translateY(-50%);
   aspect-ratio: 1920 / 804;
 
-  // YT.Player replaces the host div with its iframe in place, so the sizing
-  // rule must target the iframe itself, not a wrapper around it.
+  // YT.Player replaces the host div with the iframe in place. A 16:9 iframe is
+  // 134.328% as tall as this 1920:804 aperture; centring clips both bars.
   :deep(iframe) {
     position: absolute;
-    inset: 0;
+    top: 50%;
+    left: 0;
     width: 100%;
-    height: 100%;
+    height: 134.328%;
+    transform: translateY(-50%);
+    pointer-events: none;
   }
 }
 
@@ -409,8 +463,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  // The play button is absolutely centred on the frame; the title stack keeps
-  // to the upper third so the two never share the same space.
+  // Playback belongs to the media widget; this layer is only the poster art.
   justify-content: flex-start;
   padding-top: clamp(1.6rem, 7%, 5rem);
   gap: 1.6rem;
@@ -663,51 +716,6 @@ onBeforeUnmount(() => {
     0 0 16px rgb(37 99 235 / 45%);
 }
 
-.wt-play {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 4;
-  display: inline-flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.4rem 4.8rem;
-  border: 1px solid var(--wc-gold);
-  font-size: clamp(1.5rem, 1.45vw, 1.8rem);
-  font-weight: 700;
-  letter-spacing: 0.3em;
-  background: var(--wc-gold);
-  color: var(--wc-bg);
-  cursor: pointer;
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
-
-  &:hover,
-  &:focus-visible {
-    background: var(--wc-bg);
-    color: var(--wc-gold);
-  }
-}
-
-.wt-play .wc-cta-icon {
-  display: inline-grid;
-  width: 1.55em;
-  aspect-ratio: 1;
-  place-items: center;
-  background: var(--wc-bg);
-  color: var(--wc-gold);
-  font-size: 0.8em;
-  line-height: 1;
-}
-
-.wt-play:hover .wc-cta-icon,
-.wt-play:focus-visible .wc-cta-icon {
-  background: var(--wc-gold);
-  color: var(--wc-bg);
-}
-
 .wt-page :deep(.wc-back-catalogue) {
   margin-top: 0;
 }
@@ -722,15 +730,8 @@ onBeforeUnmount(() => {
     letter-spacing: 0.12em;
   }
 
-  .wt-play {
-    width: calc(100% - 3rem);
-    max-width: 34rem;
-    justify-content: center;
-    padding-inline: 1.8rem;
-  }
-
-  // The frame is short on a phone; the kicker/title stack does not fit, so the
-  // poster collapses to the play button alone.
+  // The frame is short on a phone; the poster copy stands down and the media
+  // widget remains the one playback control.
   .wt-poster {
     gap: 0.8rem;
   }

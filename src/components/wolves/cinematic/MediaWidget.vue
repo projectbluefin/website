@@ -12,6 +12,12 @@ const props = withDefaults(defineProps<{
   moods?: readonly { id: string, label: string }[]
   activeMoodId?: string
   autoHide?: boolean
+  /** Optional external single-track playback. Omit these to use the store. */
+  artwork?: string
+  elapsed?: number
+  duration?: number
+  playing?: boolean
+  showSkipControls?: boolean
 }>(), {
   showVoiceOverToggle: false,
   voiceOverEnabled: false,
@@ -19,6 +25,11 @@ const props = withDefaults(defineProps<{
   moods: () => [],
   activeMoodId: undefined,
   autoHide: false,
+  artwork: undefined,
+  elapsed: undefined,
+  duration: undefined,
+  playing: undefined,
+  showSkipControls: true,
 })
 
 // The widget is a pure store subscriber: playback intents are emitted upward and
@@ -38,12 +49,14 @@ function handleMoodChange(event: Event) {
 const store = useCinematicStore()
 const base = import.meta.env.BASE_URL
 const mediaTitle = computed(() => props.title ?? store.display.title)
+const externalPlayback = computed(() => props.elapsed !== undefined && props.duration !== undefined)
 const showCatalogueCredit = computed(() =>
-  !props.title && !store.isWolvesPresentation,
+  !externalPlayback.value && !props.title && !store.isWolvesPresentation,
 )
-const artworkSrc = computed(() =>
-  store.display.artwork.startsWith('http') ? store.display.artwork : `${base}${store.display.artwork}`,
-)
+const artworkSrc = computed(() => {
+  const artwork = props.artwork ?? store.display.artwork
+  return artwork.startsWith('http') || artwork.startsWith('/') ? artwork : `${base}${artwork}`
+})
 
 function formatTime(totalSeconds: number): string {
   const seconds = Math.max(0, Math.floor(totalSeconds))
@@ -52,15 +65,23 @@ function formatTime(totalSeconds: number): string {
   return `${minutes}:${rest < 10 ? '0' : ''}${rest}`
 }
 
-const segmentTime = computed(() => `${formatTime(store.segmentElapsed)} / ${formatTime(store.segmentDuration)}`)
-const overallTime = computed(() => `${formatTime(store.overallElapsed)} / ${formatTime(store.overallDuration)}`)
-const segmentPercent = computed(() => Math.round(store.segmentProgress * 100))
+const segmentElapsed = computed(() => externalPlayback.value ? props.elapsed! : store.segmentElapsed)
+const segmentDuration = computed(() => externalPlayback.value ? props.duration! : store.segmentDuration)
+const segmentProgress = computed(() => segmentDuration.value > 0
+  ? Math.min(Math.max(segmentElapsed.value / segmentDuration.value, 0), 1)
+  : 0)
+const overallElapsed = computed(() => externalPlayback.value ? segmentElapsed.value : store.overallElapsed)
+const overallDuration = computed(() => externalPlayback.value ? segmentDuration.value : store.overallDuration)
+const playing = computed(() => props.playing ?? store.playing)
+const segmentTime = computed(() => `${formatTime(segmentElapsed.value)} / ${formatTime(segmentDuration.value)}`)
+const overallTime = computed(() => `${formatTime(overallElapsed.value)} / ${formatTime(overallDuration.value)}`)
+const segmentPercent = computed(() => Math.round(segmentProgress.value * 100))
 const PROGRESS_CELLS = 40
 // Split so the cell array only rebuilds when a cell actually changes. The clock
 // polls ten times a second, but at 40 cells across a segment of several minutes
 // roughly one cell changes every ten seconds; keying the array off the filled
 // count instead of the raw progress lets Vue's computed cache absorb the rest.
-const filledProgressCells = computed(() => Math.round(store.segmentProgress * PROGRESS_CELLS))
+const filledProgressCells = computed(() => Math.round(segmentProgress.value * PROGRESS_CELLS))
 const progressCells = computed(() => {
   const filled = filledProgressCells.value
   return Array.from({ length: PROGRESS_CELLS }, (_, index) => ({
@@ -69,8 +90,8 @@ const progressCells = computed(() => {
   }))
 })
 
-const canPrevious = computed(() => store.widgetCanPrevious)
-const canNext = computed(() => store.widgetCanNext)
+const canPrevious = computed(() => props.showSkipControls && store.widgetCanPrevious)
+const canNext = computed(() => props.showSkipControls && store.widgetCanNext)
 const NOVA_GLITCH_RANGES = [
   [0.7, 0.78],
   [0.79, 0.87],
@@ -124,10 +145,22 @@ function resetAutoHide() {
   }, 3000)
 }
 
+watch(() => props.autoHide, (enabled) => {
+  if (enabled) {
+    resetAutoHide()
+    return
+  }
+  if (autoHideTimer) {
+    clearTimeout(autoHideTimer)
+    autoHideTimer = null
+  }
+  isVisible.value = true
+})
+
 onMounted(() => {
+  window.addEventListener('pointermove', resetAutoHide, { passive: true })
+  window.addEventListener('touchstart', resetAutoHide, { passive: true })
   if (props.autoHide) {
-    window.addEventListener('pointermove', resetAutoHide, { passive: true })
-    window.addEventListener('touchstart', resetAutoHide, { passive: true })
     resetAutoHide()
   }
 })
@@ -150,7 +183,7 @@ function handleSeek(event: MouseEvent) {
 
 function handleSeekKeydown(event: KeyboardEvent) {
   const step = event.shiftKey ? 0.1 : 0.02
-  let ratio = store.segmentProgress
+  let ratio = segmentProgress.value
   if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
     ratio += step
   }
@@ -259,6 +292,7 @@ function handleVoiceOverChange(event: Event) {
     </div>
     <div class="wc-widget-controls">
       <button
+        v-if="props.showSkipControls"
         class="wc-control"
         type="button"
         aria-label="Previous"
@@ -270,13 +304,14 @@ function handleVoiceOverChange(event: Event) {
       <button
         class="wc-control wc-control--primary"
         type="button"
-        :aria-label="store.playing ? 'Pause' : 'Play'"
+        :aria-label="playing ? 'Pause' : 'Play'"
         @click="emit('togglePlay')"
       >
-        <svg v-if="store.playing" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+        <svg v-if="playing" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
         <svg v-else viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
       </button>
       <button
+        v-if="props.showSkipControls"
         class="wc-control"
         type="button"
         aria-label="Next"
