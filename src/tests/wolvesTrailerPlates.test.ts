@@ -1,19 +1,29 @@
+import type { TrailerToken } from '@/data/wolves-trailer-plates'
 import { describe, expect, it } from 'vitest'
 import {
   activeTrailerPlates,
+  tokenizeTrailerLine,
+  TRAILER_BRIDGE_END_SECONDS,
+  TRAILER_BRIDGE_LEGS,
   TRAILER_CREDIT_JOIN_SECONDS,
+  TRAILER_CREDIT_LINE,
   TRAILER_DURATION_SECONDS,
+  TRAILER_PICTURE_END_SECONDS,
   TRAILER_PLATES,
+  TRAILER_TITLE_LABEL,
   TRAILER_VIDEO_ID,
+  trailerBridgeState,
+  trailerPlateOpacity,
+  trailerSegmentAt,
 } from '@/data/wolves-trailer-plates'
 
-// These windows are the owner's cut (destiny-vids stories/trailer-1-plates.json,
-// "Trailer 1.0", 2026-08-17). If the cut is recut, re-port the manifest — do
-// not nudge these numbers to make the test pass.
+// These windows are the owner's cut (destiny-vids stories/trailer-1-plates.json
+// and scripts/build_trailer1.py, "Trailer 1.0", 2026-08-17). If the cut is
+// recut, re-port the manifest — do not nudge these numbers to make a test pass.
 describe('wolves trailer plates', () => {
-  it('plays the Perfume Of The Timeless source for exactly 1:50', () => {
+  it('runs for exactly 1:50.020', () => {
     expect(TRAILER_VIDEO_ID).toBe('O0lyFqLr3Cc')
-    expect(TRAILER_DURATION_SECONDS).toBe(110)
+    expect(TRAILER_DURATION_SECONDS).toBe(110.02)
   })
 
   it('shows nothing before the main title and after the cut ends', () => {
@@ -38,7 +48,21 @@ describe('wolves trailer plates', () => {
       'One at their end',
       'These are their Real Stories',
     ])
-    expect(activeTrailerPlates(33.64).map(p => p.id)).toEqual([])
+  })
+
+  // The second book plate carries no copy: it is the box alone, keeping the
+  // page covered as the shot moves on. It deliberately overlaps book-a.
+  it('overlaps the two book boxes and gives the second one no copy', () => {
+    expect(activeTrailerPlates(32).map(p => p.id)).toEqual(['book-a', 'book-b'])
+    const [, boxOnly] = activeTrailerPlates(32)
+    expect(boxOnly.lines).toEqual([])
+    expect(activeTrailerPlates(34).map(p => p.id)).toEqual(['book-b'])
+    expect(activeTrailerPlates(34.9)).toEqual([])
+  })
+
+  it('walks each book box to its own anchor in the authoring frame', () => {
+    expect(TRAILER_PLATES.find(p => p.id === 'book-a')?.anchor).toEqual([1030, 443])
+    expect(TRAILER_PLATES.find(p => p.id === 'book-b')?.anchor).toEqual([1000, 470])
   })
 
   it('runs the marquee messages in the wolves fade', () => {
@@ -46,18 +70,119 @@ describe('wolves trailer plates', () => {
     expect(activeTrailerPlates(95).map(p => p.id)).toEqual(['daycard-survival'])
   })
 
-  it('lands on the KubeCon end card and holds it to the end', () => {
-    expect(activeTrailerPlates(102.2).map(p => p.id)).toEqual(['endcard-event'])
-    expect(activeTrailerPlates(109.9).map(p => p.id)).toEqual(['endcard-event'])
+  // The call to action is a second card OVER the event rows, arriving at the
+  // music's returning swell. Both are on screen together to the last frame.
+  it('lands on the KubeCon end card, then joins the call to action', () => {
+    expect(activeTrailerPlates(104).map(p => p.id)).toEqual(['endcard-event'])
+    expect(activeTrailerPlates(106).map(p => p.id)).toEqual(['endcard-event', 'endcard-cta'])
+    expect(activeTrailerPlates(109.9).map(p => p.id)).toEqual(['endcard-event', 'endcard-cta'])
+  })
+})
+
+// The cut is three concatenated pictures, not one video with overlays. The
+// first recreation missed this and drew the last 21.8 s over the music video.
+describe('wolves trailer segments', () => {
+  it('leaves the music video at 88.2 and never returns to it', () => {
+    expect(trailerSegmentAt(0)).toBe('picture')
+    expect(trailerSegmentAt(88.19)).toBe('picture')
+    expect(trailerSegmentAt(TRAILER_PICTURE_END_SECONDS)).toBe('bridge')
+    expect(trailerSegmentAt(102.19)).toBe('bridge')
+    expect(trailerSegmentAt(TRAILER_BRIDGE_END_SECONDS)).toBe('endcard')
+    expect(trailerSegmentAt(TRAILER_DURATION_SECONDS)).toBe('endcard')
   })
 
-  it('never overlaps plates', () => {
-    const windows = [...TRAILER_PLATES].sort((a, b) => a.start - b.start)
-    for (let i = 1; i < windows.length; i++) {
-      expect(windows[i].start, `${windows[i - 1].id} -> ${windows[i].id}`).toBeGreaterThanOrEqual(windows[i - 1].end)
-    }
-    for (let t = 0; t < TRAILER_DURATION_SECONDS; t += 0.5) {
-      expect(activeTrailerPlates(t).length, `t=${t}`).toBeLessThanOrEqual(1)
-    }
+  it('opens and closes the bridge on black', () => {
+    expect(trailerBridgeState(TRAILER_PICTURE_END_SECONDS).opacity).toBe(0)
+    expect(trailerBridgeState(88.2 + TRAILER_BRIDGE_LEGS.up).opacity).toBe(1)
+    expect(trailerBridgeState(TRAILER_BRIDGE_END_SECONDS).opacity).toBe(0)
+  })
+
+  it('turns the wallpaper from day to night across the authored leg', () => {
+    const { up, dayHold, turn } = TRAILER_BRIDGE_LEGS
+    const turnStart = TRAILER_PICTURE_END_SECONDS + up + dayHold
+    expect(trailerBridgeState(turnStart).nightMix).toBeCloseTo(0, 10)
+    expect(trailerBridgeState(turnStart + turn / 2).nightMix).toBeCloseTo(0.5, 5)
+    expect(trailerBridgeState(turnStart + turn).nightMix).toBe(1)
+    // The end card is the night image outright.
+    expect(trailerBridgeState(TRAILER_BRIDGE_END_SECONDS).nightMix).toBe(1)
+  })
+
+  it('the bridge legs sum to the authored 14 seconds', () => {
+    const total = Object.values(TRAILER_BRIDGE_LEGS).reduce((a, b) => a + b, 0)
+    expect(total).toBeCloseTo(TRAILER_BRIDGE_END_SECONDS - TRAILER_PICTURE_END_SECONDS, 5)
+  })
+})
+
+describe('trailer plate fades', () => {
+  it('honours a day card\'s authored fade in and out', () => {
+    const card = TRAILER_PLATES.find(p => p.id === 'daycard-extinction')!
+    expect(trailerPlateOpacity(card, 88.7)).toBe(0)
+    expect(trailerPlateOpacity(card, card.start)).toBe(0)
+    expect(trailerPlateOpacity(card, card.start + card.fadeIn! / 2)).toBeCloseTo(0.5, 5)
+    expect(trailerPlateOpacity(card, 91)).toBe(1)
+    expect(trailerPlateOpacity(card, card.end - card.fadeOut! / 2)).toBeCloseTo(0.5, 5)
+    expect(trailerPlateOpacity(card, card.end)).toBe(0)
+  })
+})
+
+// None of these edit copy. They change how a glyph is PAINTED.
+describe('trailer line treatments', () => {
+  /** The characters actually on screen, so a treatment can be proved lossless. */
+  function plain(tokens: TrailerToken[]): string {
+    return tokens.map(token => (token.kind === 'sear' ? '' : token.value)).join('')
+  }
+
+  function valuesOf(tokens: TrailerToken[], kind: TrailerToken['kind']): string[] {
+    return tokens.flatMap(token => (
+      token.kind === kind && token.kind !== 'sear' ? [token.value] : []
+    ))
+  }
+
+  it('colours every B and every F, and nothing else', () => {
+    const tokens = tokenizeTrailerLine(TRAILER_TITLE_LABEL)
+    expect(valuesOf(tokens, 'accent')).toEqual(['B', 'F'])
+    expect(plain(tokens)).toBe(TRAILER_TITLE_LABEL)
+  })
+
+  it('colours lower-case b and f too', () => {
+    const tokens = tokenizeTrailerLine(TRAILER_CREDIT_LINE)
+    expect(valuesOf(tokens, 'accent')).toEqual(['b', 'b', 'B'])
+  })
+
+  it('draws a spaced pipe as a sear and keeps the words either side', () => {
+    const tokens = tokenizeTrailerLine(TRAILER_CREDIT_LINE)
+    expect(tokens.filter(t => t.kind === 'sear')).toHaveLength(1)
+    expect(plain(tokens)).toBe(TRAILER_CREDIT_LINE.replace(' | ', ''))
+  })
+
+  it('leaves a pipe inside a word alone', () => {
+    expect(tokenizeTrailerLine('a|b').filter(t => t.kind === 'sear')).toHaveLength(0)
+  })
+
+  it('does not recolour someone else\'s trademark', () => {
+    const tokens = tokenizeTrailerLine('KubeCon | CloudNativeCon North America', { blue: false })
+    expect(tokens.filter(t => t.kind === 'accent')).toHaveLength(0)
+    expect(tokens.filter(t => t.kind === 'sear')).toHaveLength(1)
+  })
+
+  it('swaps only the o of the named word for the helm, keeping it as alt text', () => {
+    const tokens = tokenizeTrailerLine('seven days to the wolves', { markWord: 'wolves' })
+    const marks = valuesOf(tokens, 'mark')
+    expect(marks).toHaveLength(1)
+    // "to" also has an o; the instruction named one word.
+    expect(marks[0]).toBe('o')
+    expect(plain(tokens)).toBe('seven days to the wolves')
+  })
+
+  it('puts the helm on the O of Extinction', () => {
+    const tokens = tokenizeTrailerLine('Extinction is the Rule', { markWord: 'Extinction' })
+    expect(tokens.filter(t => t.kind === 'mark')).toHaveLength(1)
+    expect(plain(tokens)).toBe('Extinction is the Rule')
+  })
+
+  it('sears the URL\'s dots and keeps its b and f white', () => {
+    const tokens = tokenizeTrailerLine('wolves.projectbluefin.io', { accentDots: true })
+    expect(valuesOf(tokens, 'accent')).toEqual(['.', '.'])
+    expect(plain(tokens)).toBe('wolves.projectbluefin.io')
   })
 })

@@ -1,0 +1,23 @@
+Kubernetes icon (white)
+=======================
+
+File: public/brands/kubernetes-icon-white.svg
+
+The Kubernetes logo is a trademark of The Linux Foundation. Artwork from
+cncf/artwork (https://github.com/cncf/artwork), licensed under CC BY 4.0:
+https://creativecommons.org/licenses/by/4.0/
+
+Source path upstream:
+  projects/kubernetes/icon/white/kubernetes-icon-white.svg
+
+The mark is reproduced UNMODIFIED. The published white icon is already
+fill:#fff, so nothing here recolours it. On the Wolves teaser it stands in for
+the single "O" of WOLVES in the main title and the "O" of "Extinction" on the
+first day card, scaled and seated on the type's optical line and nothing else.
+The letter it replaces remains the element's alt text, so the word is still
+read as written.
+
+Note: public/brands/kubernetes.svg is the BLUE (#326ce5) full logo and is a
+different asset. The white symbolic icon is used for the Wolves title
+treatment at the owner's explicit direction ("not the blue one though, just
+the white symbolic one").
