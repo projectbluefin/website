@@ -8,6 +8,7 @@ import {
   TRAILER_CREDIT_JOIN_SECONDS,
   TRAILER_CREDIT_LINE,
   TRAILER_DURATION_SECONDS,
+  TRAILER_ENDCARD_HOLD_SECONDS,
   TRAILER_PICTURE_END_SECONDS,
   TRAILER_PLATES,
   TRAILER_TITLE_LABEL,
@@ -74,6 +75,12 @@ describe('wolves trailer plates', () => {
     expect(activeTrailerPlates(104).map(p => p.id)).toEqual(['endcard-event'])
     expect(activeTrailerPlates(106).map(p => p.id)).toEqual(['endcard-event', 'endcard-cta'])
     expect(activeTrailerPlates(109.9).map(p => p.id)).toEqual(['endcard-event', 'endcard-cta'])
+  })
+
+  it('holds the finished teaser where the URL card is fully visible', () => {
+    const plates = activeTrailerPlates(TRAILER_ENDCARD_HOLD_SECONDS)
+    expect(plates.map(plate => plate.id)).toEqual(['endcard-event', 'endcard-cta'])
+    expect(plates.every(plate => trailerPlateOpacity(plate, TRAILER_ENDCARD_HOLD_SECONDS) === 1)).toBe(true)
   })
 })
 

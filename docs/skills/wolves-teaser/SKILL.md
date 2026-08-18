@@ -207,6 +207,17 @@ Do not copy the widget markup or stylesheet into the teaser. A visual copy
 immediately drifts from the show and creates two transport accessibility
 surfaces to maintain.
 
+The widget is the ongoing transport, but the idle/paused poster also carries
+centered **Play** and **Fullscreen** convenience buttons. Fullscreen the entire
+`.wt-stage`, not the iframe, so title, authored overlays, and widget remain in
+the fullscreen tree. Hide the standfirst there and fit the 16:9 player to the
+remaining viewport.
+
+At natural end, keep transport time at `1:50 / 1:50` while the visual clock
+holds at `TRAILER_ENDCARD_HOLD_SECONDS`, immediately before the URL card's fade.
+Do not show the poster over the ended phase; it would replace the requested
+last screen.
+
 ## Inline Mark Trap
 
 Tailwind Preflight sets replaced elements, including `img`, to `display: block`.
@@ -241,6 +252,9 @@ element can collapse below the available width and wrap unexpectedly.
 - The title or *Extinction* wraps only when the helm is present.
 - YouTube chrome occupies the frame's black bars or overlays the picture.
 - A second teaser-only transport copies `MediaWidget` markup or styles.
+- Play is available only in the fixed widget and is not obvious on initial load.
+- Fullscreen targets the iframe, causing the title, overlays, or widget to disappear.
+- Ended state shows the poster or a faded/empty end card instead of the URL.
 - The iframe accepts pointer events.
 - The event title's B/F is recoloured, or the CTA's b/f is blue.
 - Plate timings are adjusted locally rather than re-ported from destiny-vids.
@@ -261,5 +275,9 @@ element can collapse below the available width and wrap unexpectedly.
 - [ ] Playback, pause, replay, and seek work through the external media-widget
       mode; the 8-second start/seek cover and paused poster leave no YouTube
       chrome visible.
+- [ ] Idle/paused Play and Fullscreen buttons are centered and keyboard accessible;
+      fullscreen owns `.wt-stage` and exposes an Exit Fullscreen label.
+- [ ] Natural end shows the fully opaque `wolves.projectbluefin.io` card while
+      the widget reads `1:50 / 1:50`; no poster is present.
 - [ ] `src/tests/wolvesTrailerPlates.test.ts`, lint, typecheck, `test:gate`, and
       build pass.

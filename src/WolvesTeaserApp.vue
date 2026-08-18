@@ -13,6 +13,7 @@ import {
   TRAILER_CREDIT_JOIN_SECONDS,
   TRAILER_CREDIT_LINE,
   TRAILER_DURATION_SECONDS,
+  TRAILER_ENDCARD_HOLD_SECONDS,
   TRAILER_TITLE_LABEL,
   TRAILER_TITLE_LINE,
   TRAILER_VIDEO_ID,
@@ -26,7 +27,9 @@ const heroBackground = `${base}img/wallpapers/wolves/people/Always There.webp`
 const dayWallpaper = `${base}img/wallpapers/bluefin-${TRAILER_BRIDGE_MONTH}-day.webp`
 const nightWallpaper = `${base}img/wallpapers/bluefin-${TRAILER_BRIDGE_MONTH}-night.webp`
 
+const stageHost = ref<HTMLElement | null>(null)
 const playerHost = ref<HTMLElement | null>(null)
+const fullscreenActive = ref(false)
 let player: YoutubePlayer | null = null
 let clockTimer: ReturnType<typeof setInterval> | null = null
 
@@ -37,7 +40,13 @@ const videoRevealed = ref(false)
 const YOUTUBE_CHROME_SETTLE_MS = 8000
 let revealTimer: ReturnType<typeof setTimeout> | null = null
 
-const visiblePlates = computed(() => activeTrailerPlates(now.value))
+const visualTime = computed(() => trailerPhase.value === 'ended' ? TRAILER_ENDCARD_HOLD_SECONDS : now.value)
+const posterVisible = computed(() =>
+  trailerPhase.value === 'idle'
+  || trailerPhase.value === 'paused'
+  || (trailerPhase.value === 'playing' && !videoRevealed.value),
+)
+const visiblePlates = computed(() => activeTrailerPlates(visualTime.value))
 const plateById = computed(() => new Map(visiblePlates.value.map(plate => [plate.id, plate])))
 
 function plate(id: string): TrailerPlate | undefined {
@@ -47,15 +56,15 @@ function plate(id: string): TrailerPlate | undefined {
 /** A plate's authored fade, so nothing hard-cuts that should not. */
 function opacityOf(id: string): number {
   const found = plate(id)
-  return found ? trailerPlateOpacity(found, now.value) : 0
+  return found ? trailerPlateOpacity(found, visualTime.value) : 0
 }
 
-const creditVisible = computed(() => now.value >= TRAILER_CREDIT_JOIN_SECONDS)
+const creditVisible = computed(() => visualTime.value >= TRAILER_CREDIT_JOIN_SECONDS)
 
 // The cut leaves the music video at 88.2 s and never returns to it: the day
 // cards and the end card play over the March Bluefin wallpaper at full frame.
-const segment = computed(() => trailerSegmentAt(now.value))
-const bridge = computed(() => trailerBridgeState(now.value))
+const segment = computed(() => trailerSegmentAt(visualTime.value))
+const bridge = computed(() => trailerBridgeState(visualTime.value))
 
 // Both book plates are boxes on the same page; each carries its own anchor,
 // which the delivered cut walks with the camera.
@@ -66,6 +75,24 @@ const dayCards = computed(() => visiblePlates.value.filter(p => p.kind === 'dayc
 function anchorStyle(anchored: TrailerPlate) {
   const [x, y] = anchored.anchor ?? [960, 540]
   return { left: `${(x / 1920) * 100}%`, top: `${(y / 1080) * 100}%` }
+}
+
+function syncFullscreen() {
+  fullscreenActive.value = document.fullscreenElement === stageHost.value
+}
+
+async function toggleFullscreen() {
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen()
+    }
+    else {
+      await stageHost.value?.requestFullscreen?.()
+    }
+  }
+  catch {
+    // Fullscreen can be denied by browser policy; playback remains usable.
+  }
 }
 
 function stopClock() {
@@ -91,8 +118,8 @@ function tick() {
   if (typeof t !== 'number') {
     return
   }
-  // Hold the end card on the exact 1:50.020 mark instead of letting the
-  // video roll past the cut's authored end into the prologue's next beat.
+  // Stop the transport at 1:50.020. The visual clock independently holds the
+  // fully visible URL card immediately before its authored fade-out.
   if (t >= TRAILER_DURATION_SECONDS) {
     now.value = TRAILER_DURATION_SECONDS
     player?.pauseVideo?.()
@@ -162,6 +189,8 @@ function openExperience(manifest: ExperienceManifest) {
   window.location.assign(`${base}wolves/experience/?album=${encodeURIComponent(manifest.id)}`)
 }
 
+onMounted(() => document.addEventListener('fullscreenchange', syncFullscreen))
+
 onMounted(async () => {
   try {
     await loadYoutubeIframeApi()
@@ -194,6 +223,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  document.removeEventListener('fullscreenchange', syncFullscreen)
   stopClock()
   if (revealTimer) {
     clearTimeout(revealTimer)
@@ -207,7 +237,7 @@ onBeforeUnmount(() => {
   <div class="wt-page" :style="{ '--wt-hero-background': `url('${heroBackground}')` }">
     <!-- Keep the film title above the trailer without restoring the old
          full-height hero that pushed the video below the fold. -->
-    <section class="wt-stage" aria-label="Official teaser trailer">
+    <section ref="stageHost" class="wt-stage" aria-label="Official teaser trailer">
       <h1 class="wt-heading">
         Seven Days to the Wolves
       </h1>
@@ -236,9 +266,19 @@ onBeforeUnmount(() => {
           >
         </div>
 
-        <div v-if="trailerPhase !== 'playing' || !videoRevealed" class="wt-poster">
+        <div v-if="posterVisible" class="wt-poster">
           <span class="wc-label wt-poster-kicker">TRAILER 1</span>
           <span class="wt-poster-title">SEVEN DAYS TO THE WOLVES</span>
+          <div v-if="trailerPhase === 'idle' || trailerPhase === 'paused'" class="wt-convenience-controls">
+            <button class="wt-convenience-play wc-cta--primary" type="button" @click="toggleTrailer">
+              <span aria-hidden="true">▶</span>
+              {{ trailerPhase === 'paused' ? 'Resume' : 'Play' }}
+            </button>
+            <button class="wt-convenience-fullscreen" type="button" @click="toggleFullscreen">
+              <span aria-hidden="true">⛶</span>
+              {{ fullscreenActive ? 'Exit Fullscreen' : 'Fullscreen' }}
+            </button>
+          </div>
         </div>
 
         <div class="wt-overlays" aria-hidden="true">
@@ -281,7 +321,7 @@ onBeforeUnmount(() => {
             v-for="card in dayCards"
             :key="card.id"
             class="wt-daycard"
-            :style="{ opacity: trailerPlateOpacity(card, now) }"
+            :style="{ opacity: trailerPlateOpacity(card, visualTime) }"
           >
             <p class="wt-daycard-line">
               <WolvesTrailerLine :text="card.title ?? ''" mark-word="Extinction" />
@@ -361,6 +401,24 @@ onBeforeUnmount(() => {
   gap: 1.6rem;
   margin: 0 calc(50% - 50vw);
   padding: 1.6rem 0 0;
+}
+
+.wt-stage:fullscreen {
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 1.6rem;
+  overflow: hidden;
+  background: var(--wc-bg);
+}
+
+.wt-stage:fullscreen .wt-player {
+  width: min(calc(100vw - 3.2rem), calc((100vh - 12rem) * 16 / 9));
+}
+
+.wt-stage:fullscreen .wt-standfirst {
+  display: none;
 }
 
 .wt-heading {
@@ -483,6 +541,42 @@ onBeforeUnmount(() => {
   letter-spacing: 0.2em;
   color: var(--wc-white);
   text-align: center;
+}
+
+.wt-convenience-controls {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  gap: 1.2rem;
+  transform: translate(-50%, -50%);
+}
+
+.wt-convenience-controls button {
+  display: inline-flex;
+  gap: 0.8rem;
+  align-items: center;
+  justify-content: center;
+  min-width: 15rem;
+  padding: 1.2rem 2rem;
+  border: 1px solid var(--wc-gold);
+  font-family: var(--wc-font-mono);
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.wt-convenience-fullscreen {
+  background: rgb(8 9 12 / 82%);
+  color: var(--wc-gold);
+}
+
+.wt-convenience-fullscreen:hover,
+.wt-convenience-fullscreen:focus-visible {
+  background: var(--wc-gold);
+  color: var(--wc-bg);
 }
 
 .wt-overlays {
@@ -730,8 +824,19 @@ onBeforeUnmount(() => {
     letter-spacing: 0.12em;
   }
 
-  // The frame is short on a phone; the poster copy stands down and the media
-  // widget remains the one playback control.
+  .wt-convenience-controls {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .wt-convenience-controls button {
+    min-width: 13rem;
+    padding: 0.9rem 1.2rem;
+    font-size: 1.1rem;
+  }
+
+  // The frame is short on a phone; the poster copy stands down while the
+  // centered convenience controls remain visible.
   .wt-poster {
     gap: 0.8rem;
   }

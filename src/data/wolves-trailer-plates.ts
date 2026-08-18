@@ -62,6 +62,8 @@ export const TRAILER_ENDCARD_EVENT_FADE = 1.1
 export const TRAILER_ENDCARD_CTA_IN = 3.1
 export const TRAILER_ENDCARD_CTA_FADE = 0.6
 export const TRAILER_ENDCARD_FADE = 1.2
+/** Freeze the completed teaser immediately before the URL card fades out. */
+export const TRAILER_ENDCARD_HOLD_SECONDS = TRAILER_DURATION_SECONDS - TRAILER_ENDCARD_FADE
 
 /**
  * The title plate stays up across both authored beats; the credit line joins
