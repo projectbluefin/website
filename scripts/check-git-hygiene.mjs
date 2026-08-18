@@ -25,6 +25,13 @@ function git(args, cwd = process.cwd()) {
 }
 
 export function classifyWorktree({ branch, dirty, ahead, prState, prNumber, prUrl, detached, isBase }) {
+  // A fork PR can have a head branch named `main`; the local base branch wins
+  // before any PR-state classification.
+  if (isBase) {
+    return dirty
+      ? { ok: true, reason: 'base branch has local edits' }
+      : { ok: true, reason: 'base branch' }
+  }
   if (prState === 'MERGED' || prState === 'CLOSED') {
     return {
       ok: false,
@@ -38,11 +45,6 @@ export function classifyWorktree({ branch, dirty, ahead, prState, prNumber, prUr
     return dirty
       ? { ok: true, reason: 'dirty detached worktree (preserved, but attach a branch before handoff)' }
       : { ok: false, reason: 'clean detached worktree with no open PR' }
-  }
-  if (isBase) {
-    return dirty
-      ? { ok: true, reason: 'base branch has local edits' }
-      : { ok: true, reason: 'base branch' }
   }
   if (dirty) {
     return { ok: true, reason: 'dirty work in progress on a fresh branch' }
@@ -83,31 +85,37 @@ function repositorySlug(cwd) {
   return match[1]
 }
 
-function prForBranch(slug, branch, cwd) {
-  if (!branch) {
-    return null
-  }
+function pullRequestsByBranch(slug, cwd) {
+  const upstreamOwner = slug.split('/')[0]
   const result = spawnSync('gh', [
     'pr',
     'list',
     '--repo',
     slug,
-    '--head',
-    branch,
     '--state',
     'all',
     '--limit',
-    '1',
+    '1000',
     '--json',
-    'number,state,url,mergedAt,closedAt',
+    'number,state,url,mergedAt,closedAt,headRefName,headRepositoryOwner,updatedAt',
   ], { cwd, encoding: 'utf8' })
   if (result.error?.code === 'ENOENT') {
     throw new Error('gh is required to distinguish active branches from squash-merged PRs')
   }
   if (result.status !== 0) {
-    throw new Error(`gh PR lookup failed for ${branch}: ${result.stderr.trim()}`)
+    throw new Error(`gh PR lookup failed: ${result.stderr.trim()}`)
   }
-  return JSON.parse(result.stdout)[0] ?? null
+
+  // `gh pr list` returns the newest records first. If a branch name was ever
+  // reused, classify it by its most recent PR — though reusing a completed PR
+  // branch is itself forbidden by AGENTS.md.
+  const byBranch = new Map()
+  for (const pr of JSON.parse(result.stdout)) {
+    if (pr.headRepositoryOwner?.login === upstreamOwner && !byBranch.has(pr.headRefName)) {
+      byBranch.set(pr.headRefName, pr)
+    }
+  }
+  return byBranch
 }
 
 function selfTest() {
@@ -132,6 +140,7 @@ function main() {
   git(['rev-parse', '--verify', BASE_REF], cwd)
   const slug = repositorySlug(cwd)
   const worktrees = parseWorktrees(git(['worktree', 'list', '--porcelain'], cwd))
+  const prsByBranch = pullRequestsByBranch(slug, cwd)
   const failures = []
   const active = []
 
@@ -149,7 +158,7 @@ function main() {
     const ahead = worktree.branch
       ? Number(git(['rev-list', '--count', `${BASE_REF}..${worktree.branch}`], cwd))
       : 0
-    const pr = prForBranch(slug, worktree.branch, cwd)
+    const pr = prsByBranch.get(worktree.branch)
     const result = classifyWorktree({
       branch: worktree.branch,
       dirty,
@@ -162,6 +171,29 @@ function main() {
     })
     const label = `${worktree.path} [${worktree.branch ?? 'detached'}]`
     ;(result.ok ? active : failures).push(`${label}: ${result.reason}`)
+  }
+
+  // A branch does not stop being stale merely because it is no longer mounted
+  // in a worktree. Check every local branch, not only `git worktree list`.
+  const mounted = new Set(worktrees.map(worktree => worktree.branch).filter(Boolean))
+  const localBranches = git(['for-each-ref', '--format=%(refname:short)', 'refs/heads'], cwd).split('\n').filter(Boolean)
+  for (const branch of localBranches) {
+    if (mounted.has(branch)) {
+      continue
+    }
+    const ahead = Number(git(['rev-list', '--count', `${BASE_REF}..${branch}`], cwd))
+    const pr = prsByBranch.get(branch)
+    const result = classifyWorktree({
+      branch,
+      dirty: false,
+      ahead,
+      prState: pr?.state ?? null,
+      prNumber: pr?.number ?? null,
+      prUrl: pr?.url ?? null,
+      detached: false,
+      isBase: branch === 'main',
+    })
+    ;(result.ok ? active : failures).push(`local branch [${branch}]: ${result.reason}`)
   }
 
   console.info('Git hygiene: active work')

@@ -149,6 +149,8 @@ handoff artifacts. Do not write session artifacts to `/tmp`.
   to a fresh branch first, then remove the old branch and worktree.
 - A linked worktree must have dirty work or an open PR. A clean worktree with
   no open PR is stale even when its branch still exists.
+- Unmounted local branches are not exempt: keep only `main` and branches with
+  open PRs. Delete merged/closed, zero-ahead, and unpublished clean branches.
 - After every merge and before every handoff, remove the completed worktree and
   branch, run `git worktree prune`, then run `npm run check:git-hygiene`. A
   failure blocks completion; do not dismiss it as local housekeeping.

@@ -76,7 +76,8 @@ runtime, or hands work to another agent.
    git worktree prune
    npm run check:git-hygiene
    ```
-   The checker uses GitHub PR state as well as Git ancestry. It fails on
+   The checker uses GitHub PR state as well as Git ancestry and inspects every
+   local branch, not only branches mounted in `git worktree list`. It fails on
    merged/closed PR branches, clean worktrees with no open PR, unpublished
    clean branches, detached worktrees, and prunable metadata. It never deletes
    automatically because dirty state and unique commits require human review.
