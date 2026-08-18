@@ -153,9 +153,10 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="wt-page" :style="{ '--wt-hero-background': `url('${heroBackground}')` }">
-    <!-- THE VIDEO IS THE HERO. It used to sit under a full-height title card,
-         so the thing the page exists for was below the fold. -->
+    <!-- Keep the film title above the trailer without restoring the old
+         full-height hero that pushed the video below the fold. -->
     <section class="wt-stage" aria-label="Official teaser trailer">
+      <h1 class="wt-heading">Seven Days to the Wolves</h1>
       <div class="wt-player wc-plate" data-wolves-trailer>
         <!-- The delivered frame is 16:9 with the 2.39:1 picture letterboxed
              inside it, so the embed is given a 16:9 box and YouTube pillars
@@ -300,8 +301,7 @@ onBeforeUnmount(() => {
   padding-bottom: 6rem;
 }
 
-/* The stage holds the video inside the first viewport, so the page opens on
-   the trailer rather than on a title the trailer already carries. */
+/* The stage holds the compact title and video inside the first viewport. */
 .wt-stage {
   display: flex;
   flex-direction: column;
@@ -311,6 +311,17 @@ onBeforeUnmount(() => {
   padding: 1.6rem 0 0;
 }
 
+.wt-heading {
+  margin: 0 -0.22em 0 0;
+  color: var(--wc-white);
+  font-size: clamp(2rem, 4vw, 6.4rem);
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  line-height: 1.02;
+  text-align: center;
+  text-transform: uppercase;
+}
+
 .wt-player {
   position: relative;
 
@@ -318,8 +329,8 @@ onBeforeUnmount(() => {
   // itself, exactly as the render does.
   aspect-ratio: 16 / 9;
 
-  // Height-capped so the whole frame plus its standfirst clears the fold.
-  width: min(100vw, calc((100svh - 9rem) * 16 / 9));
+  // Height-capped so title, frame, and standfirst all clear the fold.
+  width: min(100vw, calc((100svh - 13rem) * 16 / 9));
   overflow: hidden;
   background: #000;
 
@@ -699,6 +710,12 @@ onBeforeUnmount(() => {
 @media (max-width: 640px) {
   .wt-page {
     width: min(100% - 2.4rem, 78rem);
+  }
+
+  .wt-heading {
+    margin-right: -0.12em;
+    font-size: 2rem;
+    letter-spacing: 0.12em;
   }
 
   .wt-play {
