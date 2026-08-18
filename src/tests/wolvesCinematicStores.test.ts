@@ -1,11 +1,14 @@
+import type { IntroVideoSpec } from '@/data/wolves-intro-sequence'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { CINEMATIC_SEGMENTS } from '@/config/wolves-cinematic'
-import { buildDirectorsCutVideoSequence, buildIntroVideoSequence } from '@/data/wolves-intro-sequence'
+import { buildDirectorsCutVideoSequence } from '@/data/wolves-directors-cut-intro'
+import { buildIntroVideoSequence } from '@/data/wolves-intro-sequence'
 import {
   INTRO_SEQUENCE_DURATION,
   resolveOverallRatioTarget,
   useCinematicStore,
+  WOLVES_DIRECTORS_CUT_EXPERIENCE,
   WOLVES_EXPERIENCE,
 } from '@/stores/cinematic'
 
@@ -15,15 +18,40 @@ const CINEMATIC_DURATION = AUTHORED_DURATIONS.reduce((sum, value) => sum + value
 const OVERALL_DURATION = INTRO_SEQUENCE_DURATION + CINEMATIC_DURATION
 const LAST_INDEX = CINEMATIC_SEGMENTS.length - 1
 
+/**
+ * Authored runtime of one intro segment, taken from the segment itself: a text card plays its
+ * whole duration, a video segment plays from its rating-card offset to its authored cutoff.
+ * Mirrors the store's own intro timeline contract so an expectation never re-types a number.
+ */
+function introSegmentDuration(segment: IntroVideoSpec): number {
+  if (segment.kind === 'text') {
+    return segment.duration
+  }
+  const nativeStart = segment.startOffset ?? 0
+  return Math.max(0, (segment.maxDuration ?? nativeStart) - nativeStart)
+}
+
+/** Overall-timeline ratio landing in the middle of intro segment `index` of `sequence`. */
+function introRatio(sequence: readonly IntroVideoSpec[], index: number, introDuration: number): number {
+  const before = sequence
+    .slice(0, index)
+    .reduce((sum, segment) => sum + introSegmentDuration(segment), 0)
+  return (before + introSegmentDuration(sequence[index]) / 2) / (introDuration + CINEMATIC_DURATION)
+}
+
 describe('cinematic store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
   })
 
   afterEach(() => {
-    // The intro timeline is module-level state; leave the standard sequence
-    // active so a Director's Cut test cannot leak into the next one.
-    useCinematicStore().setIntroSequence(buildIntroVideoSequence())
+    // The intro list AND the active segments are module-level state; leave the
+    // standard show active so a Director's Cut test cannot leak into the next
+    // one (loadExperience resets `activeSegments`; setIntroSequence resets the
+    // intro list — a test that only did one would leave the other stale).
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_EXPERIENCE)
+    store.setIntroSequence(buildIntroVideoSequence())
   })
 
   it('carries one authored duration per curated segment, in segment order', () => {
@@ -213,13 +241,21 @@ describe('cinematic store', () => {
     // Cut duration, index clamp, and TOTAL readout described the wrong list.
     const standard = buildIntroVideoSequence()
     const directorsCut = buildDirectorsCutVideoSequence()
-    expect(directorsCut.length).toBeGreaterThan(standard.length)
+    // Both cuts are two segments, so a length comparison cannot tell them apart and a
+    // swapped or clamped list would look correct. What discriminates them is *which*
+    // segments the store's timeline resolves — their ids and their per-segment durations.
+    expect(directorsCut).toHaveLength(standard.length)
+    expect(directorsCut.map(segment => segment.id)).not.toEqual(standard.map(segment => segment.id))
 
     const store = useCinematicStore()
 
     store.setIntroSequence(standard)
     store.enterIntro()
     const standardDuration = store.sequenceDuration
+    const standardIds = standard.map((_, index) =>
+      resolveOverallRatioTarget(introRatio(standard, index, standardDuration)).segmentId,
+    )
+    expect(standardIds).toEqual(['wolves-title-card', 'wolves-intro'])
 
     store.setIntroSequence(directorsCut)
     store.enterIntro()
@@ -231,8 +267,22 @@ describe('cinematic store', () => {
     // The exported binding follows the active sequence for its importers.
     expect(INTRO_SEQUENCE_DURATION).toBeCloseTo(directorsCutDuration)
 
-    // Per-segment resolution reaches indices that do not exist in the standard
-    // sequence instead of being clamped into it.
+    // Every intro position now resolves to a Director's Cut segment. This is the assertion
+    // the old segment-count check used to carry: resolving 'wolves-title-card' or
+    // 'wolves-intro' here means the timeline is still built from the standard list.
+    const directorsCutIds = directorsCut.map((_, index) =>
+      resolveOverallRatioTarget(introRatio(directorsCut, index, directorsCutDuration)).segmentId,
+    )
+    expect(directorsCutIds).toEqual(directorsCut.map(segment => segment.id))
+    expect(directorsCutIds).not.toEqual(standardIds)
+
+    // Per-segment resolution follows the active list's own authored durations rather than
+    // being clamped into the standard one's.
+    const openingCut = resolveOverallRatioTarget(0)
+    expect(openingCut.segmentId).toBe(directorsCut[0].id)
+    expect(openingCut.segmentDuration).toBeCloseTo(introSegmentDuration(directorsCut[0]))
+    expect(openingCut.segmentDuration).not.toBeCloseTo(introSegmentDuration(standard[0]))
+
     const lastIndex = directorsCut.length - 1
     store.syncIntroStatus({
       segmentIndex: lastIndex,
@@ -241,15 +291,42 @@ describe('cinematic store', () => {
       nativeTime: 0,
     })
     expect(store.segmentIndex).toBe(lastIndex)
-    expect(store.segmentDuration).toBeGreaterThan(0)
+    expect(store.segmentDuration).toBeCloseTo(introSegmentDuration(directorsCut[lastIndex]))
     expect(store.sequenceElapsed).toBeCloseTo(directorsCutDuration - store.segmentDuration)
     expect(store.overallElapsed).toBeCloseTo(store.sequenceElapsed)
 
-    // And switching back restores the standard sequence's math.
+    // And switching back restores the standard sequence's math and its own segments.
     store.setIntroSequence(standard)
     store.enterIntro()
     expect(store.sequenceDuration).toBeCloseTo(standardDuration)
     expect(INTRO_SEQUENCE_DURATION).toBeCloseTo(standardDuration)
     expect(store.overallDuration).toBeCloseTo(standardDuration + CINEMATIC_DURATION)
+    expect(standard.map((_, index) =>
+      resolveOverallRatioTarget(introRatio(standard, index, standardDuration)).segmentId,
+    )).toEqual(standardIds)
+  })
+
+  /**
+   * The Director's Cut is a FORK of the Wolves show, not a re-edit of it: it keeps
+   * 7 Days to the Wolves, which the show is named for, and everything after it is
+   * material authored for this cut. The standard show keeps all seven of its
+   * tracks, unchanged.
+   *
+   * This is pinned as a test because it is a decision an agent cannot infer from
+   * the code — reusing a legacy track here would look like a reasonable way to
+   * lengthen the cut, and would silently undo the fork.
+   */
+  it('keeps the Director\'s Cut a fork: no legacy track but 7 Days to the Wolves', () => {
+    const directorsCutIds = WOLVES_DIRECTORS_CUT_EXPERIENCE.segments.map(segment => segment.id)
+    const standardIds = CINEMATIC_SEGMENTS.map(segment => segment.id)
+    const reusedLegacy = directorsCutIds.filter(id => standardIds.includes(id))
+
+    expect(reusedLegacy).toEqual(['seven-days-to-the-wolves'])
+    expect(directorsCutIds).toContain('europa-intro')
+
+    // And the fork does not reach back into the standard show, which still plays
+    // every one of its authored parts.
+    expect(standardIds).toHaveLength(7)
+    expect(standardIds).toContain('ghosts-in-the-mist')
   })
 })

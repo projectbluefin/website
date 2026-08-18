@@ -1,3 +1,4 @@
+import type { PresentationProfile } from '../config/experience-manifest'
 import type { SoundtrackTrack } from '../data/wolves-soundtrack'
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
@@ -11,7 +12,9 @@ import { CINEMATIC_SEGMENTS } from '../config/wolves-cinematic'
 import { bazziteArtworkWallpapers, ublueArtworkWallpapers } from '../data/artwork-wallpapers'
 import { backCatalogueCharacters } from '../data/back-catalogue-characters'
 import { wolvesComicHeroShots } from '../data/wolves-comic-hero-shots'
+import { DIRECTORS_CUT_FINALE_START } from '../data/wolves-directors-cut-slides'
 import { ghostsInTheMistOpeningSlide } from '../data/wolves-gallery-featured'
+import { TRACK_ZERO_SLIDE_MINIMUM_HOLD_SECONDS } from '../data/wolves-slide-preload'
 import {
   TRACK_ZERO_BEAT_TIMES,
   TRACK_ZERO_SECTIONS,
@@ -40,6 +43,7 @@ import {
   topheeTrackZeroWindow,
   trackZeroFastFinalePhotoIds,
 } from '../data/wolves-track-zero-slides'
+import { WOLVES_DIRECTORS_CUT_PROFILE_ID, WOLVES_STANDARD_PROFILE_ID } from '../stores/cinematic'
 import { isShowcaseSlide, slideAspectFromNaturalSize } from '../utils/slide-showcase'
 
 const source = {
@@ -676,19 +680,22 @@ describe('wolvesComicReader', () => {
   })
 
   // Blurring a surface that repaints a full-size image on every slide change is
-  // what produced the hitch on Ghosts In The Mist onward. Track 0 is the one
-  // segment whose look is locked, so it keeps its authored blur.
+  // what produced the hitch on Ghosts In The Mist onward. The standard show's
+  // Track 0 is the one segment whose look is locked, so it keeps its authored
+  // blur; the Director's Cut Track 0 runs a lock-free measured-beat montage and
+  // takes the static-background treatment with the later tracks.
   describe('slide crossfade blur', () => {
-    function crossfadeClass(trackIndex: number, wolvesExperience: boolean) {
+    function crossfadeClass(trackIndex: number, wolvesExperience: boolean, presentationProfile?: PresentationProfile) {
       mockGalleryData()
       const wrapper = mount(WolvesComicReader, {
-        props: { trackIndex, trackId: '1', playlistCurrentTime: 1, wolvesExperience },
+        props: { trackIndex, trackId: '1', playlistCurrentTime: 1, wolvesExperience, presentationProfile },
       })
       return wrapper.get('#comic-reader').classes()
     }
 
     it('keeps the authored blur on the primary song', () => {
       expect(crossfadeClass(0, true)).not.toContain('comic-reader-section--fast-crossfade')
+      expect(crossfadeClass(0, true, WOLVES_STANDARD_PROFILE_ID)).not.toContain('comic-reader-section--fast-crossfade')
     })
 
     it('drops the blur from Ghosts In The Mist onward', () => {
@@ -700,6 +707,26 @@ describe('wolvesComicReader', () => {
     it('drops the blur across every back-catalogue segment', () => {
       for (const trackIndex of [0, 1, 2]) {
         expect(crossfadeClass(trackIndex, false)).toContain('comic-reader-section--fast-crossfade')
+        expect(crossfadeClass(trackIndex, false, 'generic')).toContain('comic-reader-section--fast-crossfade')
+      }
+    })
+
+    // The blur was excluded from Track 0 because the standard cut does not run
+    // a rapid gallery crossfade there. The Director's Cut does — its Track 0 is
+    // the fastest schedule in the show — so the exclusion cannot be keyed to
+    // `trackIndex !== 0` alone without putting blur work back on the slide
+    // change path for the Director's montage.
+    it('drops the blur on the director\'s cut Track 0', () => {
+      expect(crossfadeClass(0, true, WOLVES_DIRECTORS_CUT_PROFILE_ID))
+        .toContain('comic-reader-section--fast-crossfade')
+    })
+
+    it('leaves the director\'s cut later tracks and the standard show alone', () => {
+      for (const trackIndex of [1, 2, 3]) {
+        expect(crossfadeClass(trackIndex, true, WOLVES_DIRECTORS_CUT_PROFILE_ID))
+          .toContain('comic-reader-section--fast-crossfade')
+        expect(crossfadeClass(trackIndex, true, WOLVES_STANDARD_PROFILE_ID))
+          .toContain('comic-reader-section--fast-crossfade')
       }
     })
   })
@@ -1829,6 +1856,96 @@ describe('pending segment preload of the authored opening slide', () => {
     await flushImageLoads()
     expect(activeTimelineImage(wrapper)).toBe(featuredOpeningUrl)
     expect((wrapper.vm as any).crossfadeActive).toBe(true)
+  })
+
+  describe('director\'s cut track zero schedule', () => {
+    async function mountCut(presentationProfile?: PresentationProfile) {
+      const wrapper = mount(WolvesComicReader, {
+        props: { trackIndex: 0, playlistCurrentTime: 0, presentationProfile },
+      })
+      await flushPromises()
+      return wrapper
+    }
+
+    function scheduleOf(wrapper: Awaited<ReturnType<typeof mountCut>>, key: 'trackZeroSlides' | 'timelineSlides') {
+      return (wrapper.vm as any)[key] as Array<{ id: string, startTime: number, duration: number, endTime: number }>
+    }
+
+    it('drives the standard show from the authored lock schedule, unchanged', async () => {
+      const standard = await mountCut(WOLVES_STANDARD_PROFILE_ID)
+      const noProfile = await mountCut()
+
+      expect(scheduleOf(standard, 'trackZeroSlides')).toEqual(scheduleOf(standard, 'timelineSlides'))
+      expect(scheduleOf(noProfile, 'trackZeroSlides')).toEqual(scheduleOf(noProfile, 'timelineSlides'))
+
+      const jono = scheduleOf(standard, 'trackZeroSlides').find(slide => slide.id === jonoBaconSlideId)
+      expect(jono?.startTime).toBe(jonoBaconTrackZeroWindow.startTime)
+      expect(jono?.endTime).toBe(jonoBaconTrackZeroWindow.endTime)
+    })
+
+    it('leaves the standard schedule byte-identical while the director cut plays', async () => {
+      const standard = await mountCut(WOLVES_STANDARD_PROFILE_ID)
+      const director = await mountCut(WOLVES_DIRECTORS_CUT_PROFILE_ID)
+
+      expect(scheduleOf(director, 'timelineSlides')).toEqual(scheduleOf(standard, 'timelineSlides'))
+      expect(scheduleOf(director, 'trackZeroSlides')).not.toEqual(scheduleOf(standard, 'trackZeroSlides'))
+    })
+
+    it('runs its own lock-free schedule to the reserved finale anchor', async () => {
+      const director = await mountCut(WOLVES_DIRECTORS_CUT_PROFILE_ID)
+      const slides = scheduleOf(director, 'trackZeroSlides')
+
+      expect(slides.length).toBeGreaterThan(scheduleOf(director, 'timelineSlides').length)
+      expect(Math.min(...slides.map(slide => slide.duration)))
+        .toBeGreaterThanOrEqual(TRACK_ZERO_SLIDE_MINIMUM_HOLD_SECONDS)
+      expect(slides[0].startTime).toBe(0)
+      expect(slides[slides.length - 1].endTime).toBe(DIRECTORS_CUT_FINALE_START)
+      expect(new Set(slides.map(slide => slide.id)).size).toBe(slides.length)
+      for (const slide of slides) {
+        expect(TRACK_ZERO_BEAT_TIMES.some(beat => Math.abs(beat - slide.endTime) < 0.0005)).toBe(true)
+      }
+      // Every authored hero lock is gone: Jono no longer owns 167.8-171.88.
+      // His portrait is still in the pool, so an absent slide would be a
+      // drawn-pool regression, not a pass.
+      const jono = slides.find(slide => slide.id === jonoBaconSlideId)
+      expect(jono).toBeDefined()
+      expect(jono?.startTime).not.toBe(jonoBaconTrackZeroWindow.startTime)
+      // Reza's two-window hold cannot exist here whether or not his portrait is
+      // drawn: nothing in the Director cut starts on his window or holds that long.
+      const rezaHold = rezaContributorTrackZeroWindow.endTime - rezaContributorTrackZeroWindow.startTime
+      expect(slides.some(slide => slide.startTime === rezaContributorTrackZeroWindow.startTime)).toBe(false)
+      expect(slides.every(slide => slide.duration < rezaHold)).toBe(true)
+    })
+
+    it('starts on the first image and changes images throughout the quote edit', async () => {
+      const director = await mountCut(WOLVES_DIRECTORS_CUT_PROFILE_ID)
+      const slides = scheduleOf(director, 'trackZeroSlides')
+      const firstImage = activeTimelineImage(director)
+
+      expect(firstImage).toBeDefined()
+
+      const checkpoints = [1, Math.floor(slides.length / 3), Math.floor((slides.length * 2) / 3)]
+      const seenImages = new Set([firstImage])
+      for (const index of checkpoints) {
+        await advanceTo(director, slides[index]!.startTime + 0.01)
+        await flushImageLoads()
+        seenImages.add(activeTimelineImage(director))
+      }
+
+      expect(seenImages.size).toBe(checkpoints.length + 1)
+    })
+
+    it('shows nothing scheduled once the finale interval opens', async () => {
+      const director = await mountCut(WOLVES_DIRECTORS_CUT_PROFILE_ID)
+      const slides = scheduleOf(director, 'trackZeroSlides')
+
+      for (const time of [DIRECTORS_CUT_FINALE_START, 380, TRACK_ZERO_SECTIONS.finaleStart, 422]) {
+        expect(slides.some(slide => slide.startTime <= time && slide.endTime > time)).toBe(false)
+      }
+      // The standard show is still scheduled across that same stretch.
+      const standard = scheduleOf(director, 'timelineSlides')
+      expect(standard.some(slide => slide.startTime <= 380 && slide.endTime > 380)).toBe(true)
+    })
   })
 })
 

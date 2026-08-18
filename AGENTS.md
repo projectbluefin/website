@@ -75,6 +75,27 @@ allows", not by whether it looks right on your monitor.
 
 Detail lives in `docs/reference/wolves-runtime.md`.
 
+## Which video is which
+
+The show is a sequence of videos, and **"the first video" is the prologue** —
+The Gardener and the Winnower, the scored Gayane narration reached by the
+Director's Cut button on `/wolves/`. The order is prologue, Destiny, Wolves, the
+video currently in review, Ghosts, then the rest.
+
+Videos 1 and 2 exist only on the `wolves-directors-cut` branch, not on `main`.
+
+Before opening a file for any request that names a video ordinal or a timestamp,
+resolve it in `docs/reference/wolves-video-order.md`, and answer "what is on
+screen at m:ss" with the show's own data rather than by eye:
+
+```bash
+node scripts/wolves-cue-at.mjs 4:41
+```
+
+Report the file and timestamp you actually inspected. Auditing the wrong
+artifact, or reporting a timestamp as checked after probing the seconds around
+it, is the most repeated failure on this route.
+
 ## Content sources
 
 - Main-site locale copy: `src/locales/en-US.json`
@@ -286,6 +307,7 @@ to report upstream manually.
 - `docs/SKILL.md`
 - `docs/skills/agent-workflow/SKILL.md`
 - `docs/skills/skill-improvement/SKILL.md`
+- `docs/reference/wolves-video-order.md`
 - `docs/reference/content-map.md`
 - `docs/reference/production-entrypoints.md`
 - `docs/architecture/application-map.md`

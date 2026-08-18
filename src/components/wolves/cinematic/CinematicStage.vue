@@ -2,11 +2,12 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { useDualBufferPlayer } from '@/composables/useDualBufferPlayer'
 import { getWolvesHudLabel } from '@/data/wolves-thesis-sequence'
-import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
+import { useCinematicStore } from '@/stores/cinematic'
 import CinematicCaptions from './CinematicCaptions.vue'
 import CinematicTransition from './CinematicTransition.vue'
 import Nameplate from './Nameplate.vue'
 import TheaterExperience from './TheaterExperience.vue'
+import WolvesDirectorFinale from './WolvesDirectorFinale.vue'
 
 const store = useCinematicStore()
 const hostA = ref<HTMLElement | null>(null)
@@ -15,7 +16,7 @@ const hostB = ref<HTMLElement | null>(null)
 const player = useDualBufferPlayer({ hostA, hostB })
 
 const isTrackZero = computed(() => store.segment.trackZeroExperience === true)
-const isWolvesExperience = computed(() => store.experienceId === WOLVES_EXPERIENCE.id)
+const isWolvesPresentation = computed(() => store.isWolvesPresentation)
 
 // The visual dissolve must run the same window as the audio ramp, and the ramp
 // is sized by the *incoming* segment. Binding to `segmentIndex` alone made the
@@ -40,7 +41,7 @@ const plateDetail = computed(() =>
   isTrackZero.value ? 'Seven Days to the Wolves' : store.segment.chapter,
 )
 const plateCreditArtist = computed(() =>
-  isWolvesExperience.value ? undefined : store.segment.artist,
+  isWolvesPresentation.value ? undefined : store.segment.artist,
 )
 
 onBeforeUnmount(() => player.destroy())
@@ -65,7 +66,7 @@ defineExpose({
       class="wc-layer"
       :class="{
         'wc-layer--active': player.activeSide.value === 'a',
-        'wc-layer--audio-only': isWolvesExperience,
+        'wc-layer--audio-only': isWolvesPresentation,
       }"
       :style="{ transitionDuration: `${layerFadeMs}ms` }"
     >
@@ -75,7 +76,7 @@ defineExpose({
       class="wc-layer"
       :class="{
         'wc-layer--active': player.activeSide.value === 'b',
-        'wc-layer--audio-only': isWolvesExperience,
+        'wc-layer--audio-only': isWolvesPresentation,
       }"
       :style="{ transitionDuration: `${layerFadeMs}ms` }"
     >
@@ -89,7 +90,10 @@ defineExpose({
          YouTube chrome can appear beneath the Destiny overlay. -->
     <TheaterExperience v-if="store.phase === 'cinematic'" />
 
-    <div class="wc-stage-nameplate">
+    <!-- Standing chrome stands down for the Director's Cut finale and returns
+         if the transport seeks back before it. Donation surfaces remain
+         removed under the owner's current-main instruction. -->
+    <div v-if="!store.directorFinaleActive" class="wc-stage-nameplate">
       <Nameplate
         :credit-artist="plateCreditArtist"
         :detail="plateDetail"
@@ -98,7 +102,11 @@ defineExpose({
       />
     </div>
 
-    <CinematicCaptions />
+    <CinematicCaptions v-if="!store.directorFinaleActive" />
+
+    <!-- Mounted from the pre-arm anchor so the companion player is warm; it
+         takes the frame only from its own cover anchor. -->
+    <WolvesDirectorFinale v-if="store.phase === 'cinematic' && store.directorFinalePrearmed" />
 
     <CinematicTransition />
   </div>

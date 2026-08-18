@@ -7,6 +7,7 @@ import {
   getYoutubePlayerState,
   invalidateYoutubeIframeApiLoad,
   loadYoutubeIframeApi,
+  suppressYoutubeCaptions,
 } from '@/composables/useYoutubeIframeApi'
 import {
   PRE_END_THRESHOLD_S,
@@ -41,6 +42,8 @@ interface SideState {
    * silence. Cleared by any fresh cue or load.
    */
   failed: boolean
+  /** Last IFrame API error code for this side, retained for browser diagnostics. */
+  errorCode: number | null
   /**
    * A park is in flight on this side. Parking pauses and seeks the player, and
    * those events describe the *buffer*, not the show. Once the active side was
@@ -82,6 +85,23 @@ export const COLD_SKIP_PLAYBACK_TIMEOUT_MS = 3000
  * so the wait is bounded and falls back to pushing play and opening the poll loop.
  */
 export const START_PLAYBACK_TIMEOUT_MS = 8000
+/** Consecutive advancing opening-frame clocks required before startup trusts player time. */
+export const OPENING_FRAME_CONFIRMATION_POLLS = 5
+/** A cold start farther into the segment than this is not its opening frame. */
+export const OPENING_FRAME_MAX_DRIFT_S = 1
+/** Duplicate iframe clock messages do not prove that playback is moving. */
+export const OPENING_FRAME_ADVANCE_EPSILON_S = 0.01
+
+/**
+ * Polls after a seek during which the end-of-segment boundary check is stood
+ * down.
+ *
+ * `getCurrentTime()` is a value the embed pushes across the message channel, so
+ * the first polls after a seek can still report the pre-seek time. Five polls
+ * is half a second at `TIME_POLL_MS`, which is well inside the shortest
+ * authored segment and long enough for the embed to acknowledge the seek.
+ */
+export const SEEK_GUARD_POLLS = 5
 
 /**
  * Double-buffered YouTube playback. While one player is on screen playing segment N,
@@ -99,11 +119,22 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
   const started = ref(false)
 
   const sides: Record<PlayerSide, SideState> = {
-    a: { player: null, segmentIndex: -1, prewarming: false, parked: false, parking: false, failed: false },
-    b: { player: null, segmentIndex: -1, prewarming: false, parked: false, parking: false, failed: false },
+    a: { player: null, segmentIndex: -1, prewarming: false, parked: false, parking: false, failed: false, errorCode: null },
+    b: { player: null, segmentIndex: -1, prewarming: false, parked: false, parking: false, failed: false, errorCode: null },
   }
 
   let pollTimer: ReturnType<typeof setInterval> | null = null
+  /** Remaining polls to ignore the end-of-segment boundary for; see `SEEK_GUARD_POLLS`. */
+  let seekGuardPolls = 0
+  /**
+   * Startup must not publish a late prewarm clock reply. The opening seek and
+   * the IFrame's time updates travel over separate channels, so an old terminal
+   * timestamp can otherwise make Track 0 appear finished before its first frame
+   * arrives.
+   */
+  let awaitingOpeningFrame = false
+  let openingFrameConfirmationPolls = 0
+  let openingFrameLastTime: number | null = null
   let swapping = false
   /**
    * The side that is still on air for store purposes while a swap runs. `activeSide`
@@ -143,7 +174,11 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
       state.parked = false
       state.parking = false
       state.failed = false
+      state.errorCode = null
     }
+    awaitingOpeningFrame = false
+    openingFrameConfirmationPolls = 0
+    openingFrameLastTime = null
   }
 
   /** Every bounded wait's timer, so `destroy()` can never leave one running. */
@@ -234,6 +269,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     state.parked = false
     state.parking = false
     state.failed = false
+    state.errorCode = null
     if (!state.player || segmentIndex >= store.segments.length) {
       state.segmentIndex = -1
       state.prewarming = false
@@ -314,9 +350,10 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
    * too: that buffer is the next segment, and an error nobody wrote down is a segment
    * that goes to air silent while the show confidently relabels itself.
    */
-  function markSideFailed(side: PlayerSide) {
+  function markSideFailed(side: PlayerSide, errorCode: number | null = null) {
     const state = sides[side]
     state.failed = true
+    state.errorCode = errorCode
     state.parked = false
     state.prewarming = false
     state.parking = false
@@ -339,7 +376,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
    * Promote a buffer to air. The seek is the guarantee: whatever the buffer did
    * while it was prewarming, a segment always begins on its authored opening frame.
    */
-  function startIncoming(side: PlayerSide) {
+  function startIncoming(side: PlayerSide, audible = true) {
     const state = sides[side]
     state.prewarming = false
     state.parked = false
@@ -349,7 +386,9 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     state.parking = false
     // Lift the prewarm's mute latch. Without this the segment reaches the screen
     // and the crossfade ramps a volume nobody can hear.
-    state.player?.unMute?.()
+    if (audible) {
+      state.player?.unMute?.()
+    }
     state.player?.seekTo?.(openingFrame(state.segmentIndex), true)
     state.player?.playVideo?.()
   }
@@ -409,7 +448,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     // before the audience is meant to hear anything from them. A boundary that runs in
     // that window puts a segment on air underneath the intro — a song playing over the
     // whole opening. Nothing may advance the show before `start()` has run.
-    if (swapping || !started.value) {
+    if (swapping || !started.value || awaitingOpeningFrame) {
       return
     }
     const fromSide = activeSide.value
@@ -580,6 +619,34 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     // window, while `time` stays on the video's native timeline for caption sync.
     const startAt = segment?.startSeconds ?? 0
     const endAt = segment?.endSeconds ?? duration
+    if (awaitingOpeningFrame) {
+      if (endAt <= 0) {
+        return
+      }
+      const outsideOpeningWindow = time < startAt - OPENING_FRAME_ADVANCE_EPSILON_S
+        || time > startAt + OPENING_FRAME_MAX_DRIFT_S
+      if (outsideOpeningWindow) {
+        player.seekTo?.(startAt, true)
+        player.playVideo?.()
+        openingFrameConfirmationPolls = 0
+        openingFrameLastTime = null
+        return
+      }
+      // IFrame clock messages can repeat while media is buffering. Five copies
+      // of one timestamp prove only that polling runs; require the clock itself
+      // to advance before startup may trust it for segment boundaries.
+      if (openingFrameLastTime !== null
+        && time <= openingFrameLastTime + OPENING_FRAME_ADVANCE_EPSILON_S) {
+        return
+      }
+      openingFrameLastTime = time
+      openingFrameConfirmationPolls += 1
+      if (openingFrameConfirmationPolls < OPENING_FRAME_CONFIRMATION_POLLS) {
+        return
+      }
+      awaitingOpeningFrame = false
+      openingFrameLastTime = null
+    }
     store.updateTime(Math.max(0, time - startAt), Math.max(0, endAt - startAt), time)
     if (swapping) {
       return
@@ -596,6 +663,18 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     const swapLeadSeconds = store.isLastSegment
       ? PRE_END_THRESHOLD_S
       : PRE_END_THRESHOLD_S + boundaryCrossfadeMs(store.segmentIndex + 1) / 1000
+    // A just-issued seek has not necessarily reached the iframe yet.
+    // `getCurrentTime()` is a value the embed pushes across the message channel,
+    // so the first polls after a seek can still report the PRE-seek time — and
+    // if the show had just ended, that stale time is past the boundary. Acting
+    // on it re-runs the end of the segment: the player is paused, `finish()`
+    // re-latches, polling stops, and the backward seek the presenter just made
+    // is undone with no way to recover. Ride out a bounded number of polls
+    // instead of racing the embed.
+    if (seekGuardPolls > 0) {
+      seekGuardPolls -= 1
+      return
+    }
     if (endAt > 0 && time >= endAt - swapLeadSeconds) {
       beginSwap()
     }
@@ -637,10 +716,20 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
       clearColdSkipWait()
       commit?.()
     }
+    // The buffers are live IFrame players while the intro owns the room.
+    // Delayed PLAYING/ENDED messages from that prewarm must not start the
+    // cinematic poller or advance its state before `start()` takes ownership.
+    if (!started.value) {
+      return
+    }
     if (side !== activeSide.value) {
       return
     }
     if (playerState === states.PLAYING) {
+      if (awaitingOpeningFrame) {
+        sides[side].player?.unMute?.()
+        applyVolume(sides[side].player, 100)
+      }
       store.setPlaying(true)
       startPolling()
       resolveStart?.()
@@ -650,6 +739,14 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
       store.setPlaying(false)
     }
     else if (playerState === states.ENDED) {
+      if (awaitingOpeningFrame) {
+        // This END belongs to the prewarm request that was still in YouTube's
+        // message queue when the show promoted the side. It is not a Track 0
+        // boundary: put the active player back on its authored first frame and
+        // wait for its real PLAYING lifecycle before allowing normal boundaries.
+        startIncoming(side)
+        return
+      }
       // Fallback if the pre-end poll tick was missed (tab throttling, etc).
       beginSwap()
     }
@@ -692,9 +789,18 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
         height: '100%',
         playerVars: getChromeFreeYoutubePlayerVars(),
         events: {
-          onReady: () => resolveReady(player),
+          // The cinematic tracks are music videos with their own caption
+          // tracks. Suppressed here for the same reason as the intro: a viewer
+          // preference for captions otherwise paints YouTube's own subtitles
+          // over the projection. `onApiChange` is when the module actually
+          // arrives; `onReady` covers a player that already had it.
+          onApiChange: () => suppressYoutubeCaptions(player),
+          onReady: () => {
+            suppressYoutubeCaptions(player)
+            resolveReady(player)
+          },
           onStateChange: (event: { data: number }) => handleStateChange(side, event.data),
-          onError: () => {
+          onError: (event: { data?: number }) => {
             if (rejectBeforeReady(new Error('YouTube player failed before readiness'))) {
               return
             }
@@ -703,7 +809,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
             // it used to be discarded entirely: the boundary then promoted a dead
             // player, the store advanced anyway, and the show ran that segment's
             // title, chapter, and slides over silence.
-            markSideFailed(side)
+            markSideFailed(side, event.data ?? null)
             // A cold load that failed is never going to report PLAYING, so release
             // the wait it is holding instead of letting the boundary sit on its
             // timeout with the outgoing segment stranded on air.
@@ -719,6 +825,16 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
               resolveStart = null
               beginSwap()
             }
+          },
+          onAutoplayBlocked: () => {
+            if (side !== activeSide.value || !started.value) {
+              return
+            }
+            // The documented recovery is another scripted play. Keep it muted
+            // for that retry; PLAYING restores the audience volume above.
+            sides[side].player?.mute?.()
+            applyVolume(sides[side].player, 100)
+            sides[side].player?.playVideo?.()
           },
         },
       })
@@ -806,6 +922,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     // Identity, not position: a parked buffer is only promoted when it is really
     // holding the segment the show is about to open on.
     const promoteParked = bufferCanPlay(side, store.segmentIndex) && state.parked && Boolean(segment)
+    const requiresOpeningFrameConfirmation = !state.parked
     state.prewarming = false
 
     const player = state.player
@@ -815,10 +932,15 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     }
 
     started.value = true
-    // Both sides were muted while they prewarmed. The side going to air lifts that
-    // latch here, so every startup path — parked promotion, cold load, or a bare
-    // play — opens audible.
-    player.unMute?.()
+    awaitingOpeningFrame = requiresOpeningFrameConfirmation
+    openingFrameConfirmationPolls = 0
+    openingFrameLastTime = null
+    // A player that did not finish parking must start muted. The intro's click
+    // has long expired by this handoff, so YouTube can reject an unmuted play;
+    // a muted start is policy-safe and is made audible on its PLAYING event.
+    if (!requiresOpeningFrameConfirmation) {
+      player.unMute?.()
+    }
     applyVolume(player, 100)
     // Album entry stays deterministic. Previously that meant an explicit
     // `loadVideoById`, because a bare cue-then-play could race YouTube's async cue
@@ -844,7 +966,7 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
       }, START_PLAYBACK_TIMEOUT_MS)
 
       if (promoteParked) {
-        startIncoming(side)
+        startIncoming(side, !requiresOpeningFrameConfirmation)
       }
       else if (player.loadVideoById && segment) {
         player.loadVideoById({ videoId: segment.youtubeId, startSeconds: segment.startSeconds })
@@ -896,6 +1018,8 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
         parked: state.parked,
         prewarming: state.prewarming,
         parking: state.parking,
+        failed: state.failed,
+        errorCode: state.errorCode,
         active: activeSide.value === side,
         muted: (() => {
           try {
@@ -948,6 +1072,8 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
       pendingSegmentIndex: store.pendingSegmentIndex,
       activeSide: activeSide.value,
       swapping,
+      awaitingOpeningFrame,
+      openingFrameConfirmationPolls,
       a: describe('a'),
       b: describe('b'),
     }
@@ -955,6 +1081,11 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
 
   function seekTo(seconds: number) {
     activePlayer()?.seekTo?.(seconds, true)
+    // The final segment stops the poll loop when it finishes. Without this the
+    // store's clock would stay pinned at the end after a backward seek, so
+    // anything derived from published time — the Director's Cut finale's chrome
+    // suppression, the progress readout — would never come back.
+    resumePollingAfterSeek()
   }
 
   /** Seek within the current segment's authored window by 0..1 ratio (widget progress bar). */
@@ -965,6 +1096,23 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     const startAt = store.segments[store.segmentIndex]?.startSeconds ?? 0
     const clamped = Math.min(Math.max(ratio, 0), 1)
     activePlayer()?.seekTo?.(startAt + clamped * store.segmentDuration, true)
+    resumePollingAfterSeek()
+  }
+
+  /**
+   * Restart the time poll after a seek, but only for a show that has already
+   * started. Polling during the prewarm window would publish a buffer's time as
+   * the show's, which is the same defect `beginSwap()` guards against.
+   *
+   * The guard counter is armed here rather than in `pollActiveTime` because it
+   * has to cover the polls issued between the seek request and the embed
+   * acknowledging it — see the comment on `seekGuardPolls` in `pollActiveTime`.
+   */
+  function resumePollingAfterSeek() {
+    seekGuardPolls = SEEK_GUARD_POLLS
+    if (started.value) {
+      startPolling()
+    }
   }
 
   function destroy() {

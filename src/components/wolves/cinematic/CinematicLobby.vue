@@ -104,18 +104,20 @@ onBeforeUnmount(() => {
           <p>If you don't like the metal then that's your problem.</p>
         </div>
       </blockquote>
-      <WolvesQrCodes />
-      <WolvesBackCatalogue @launch="manifest => emit('launchExperience', manifest)" />
-
       <div class="wc-lobby-directors-cut">
+        <p class="wc-lobby-directors-cut-copy">
+          Bluefin's universe is just beginning, and its future is bleaker than presented here. Enjoy the longer original vision as it comes together:
+        </p>
         <button
           class="wc-lobby-directors-cut-btn wc-plate"
           type="button"
           @click="emit('enterDirectorsCut')"
         >
-          DIRECTOR'S CUT (PROLOGUE + DESTINY)
+          SEVEN DAYS TO THE WOLVES: DIRECTOR'S CUT
         </button>
       </div>
+      <WolvesQrCodes />
+      <WolvesBackCatalogue @launch="manifest => emit('launchExperience', manifest)" />
     </div>
   </div>
 </template>
@@ -393,8 +395,22 @@ onBeforeUnmount(() => {
 
 .wc-lobby-directors-cut {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-self: center;
+  gap: 1.4rem;
+  width: min(100%, 58rem);
   margin-top: 1.2rem;
+  padding: 2rem 2.4rem;
+  border-left: 2px solid var(--wc-gold);
+  text-align: left;
+}
+
+.wc-lobby-directors-cut-copy {
+  margin: 0;
+  font-size: clamp(1.25rem, 1.25vw, 1.45rem);
+  line-height: 1.58;
+  color: var(--wc-white);
+  text-wrap: balance;
 }
 
 .wc-lobby-directors-cut-btn {
@@ -452,6 +468,23 @@ onBeforeUnmount(() => {
 
   .wc-lobby-quote {
     padding: 1.8rem;
+  }
+
+  .wc-lobby-directors-cut {
+    gap: 1.1rem;
+    margin-top: 1rem;
+    padding: 1.8rem;
+  }
+
+  .wc-lobby-directors-cut-copy {
+    font-size: 1.1rem;
+    line-height: 1.6;
+  }
+
+  .wc-lobby-directors-cut-btn {
+    width: 100%;
+    max-width: 34rem;
+    padding-inline: 1.8rem;
   }
 
   .wc-waypoint {

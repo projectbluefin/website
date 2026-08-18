@@ -56,6 +56,38 @@ and share page must stay compliant:
 5. Commit the changed files under `public/wolves/characters/` plus any
    manifest/tooling edits with explicit paths.
 
+## Renaming the person on a card
+
+A guardian's name is not a single string. Renaming one touches four kinds of
+reference, and the difference between them decides what is safe to change:
+
+| Kind | Example | Rename it? |
+|---|---|---|
+| Displayed name | `characters.json` `name`, the intro cue text | **Yes** — this is the rename |
+| Cross-file join key | `wolves-guardian-dinosaur-bonds.ts` `guardianName` | **Yes, in the same commit** |
+| Published identifier | the card `slug` | **No** — see below |
+| Internal key | the lore record id and its filename | Safe, if the manifest moves with it |
+
+**The bond lookup is an exact string match against the cue text.** The overlay
+resolves a guardian's dinosaur companion by matching `guardianName` against the
+name rendered on the plate, so renaming the cue text without renaming the bond
+silently drops the companion plate — with no error and no failing type check.
+Change both together.
+
+**A slug is a published URL.** `slug` appears in
+`https://projectbluefin.io/wolves/characters/<slug>/` and in the generated
+`<slug>.png` and `<slug>/index.html`. Renaming it breaks every shared link that
+already exists, so keep the slug stable and let it disagree with the displayed
+name. The same applies to companion identifiers and artwork filenames
+(`bob-torosaurus`, `bob-torosaurus.webp`): they are keys, not copy, and no
+audience-facing text derives from them.
+
+**Finish the rename in the generated output.** The name is baked into the card
+PNG, so `characters.json` alone leaves the share page and its OG image showing
+the old name. Regenerate (`capture-scenes.mjs` then `generate.mjs <slug>`) —
+and note that capture needs a browser that can actually play the source video,
+which a codec-limited Chromium cannot.
+
 ## Red Flags
 
 - Hand-editing files in `public/wolves/characters/` — they are generated.
@@ -63,6 +95,13 @@ and share page must stay compliant:
 - Share page URLs referencing `/wolves/social/` (the retired path).
 - Committing `scripts/guardian-cards/scenes/` stills.
 - Adding monetized or affiliate destinations to card links.
+- A rename that changes the displayed name but not
+  `wolves-guardian-dinosaur-bonds.ts`, or that changes a `slug` that is already
+  published.
+- A placeholder entry with `videoId: "TODO"`. It breaks both generator stages:
+  `capture-scenes.mjs` navigates to `?v=TODO`, and `generate.mjs` then exits
+  non-zero on the missing still. An absent record is better than one that stops
+  the generator.
 
 ## Verification
 

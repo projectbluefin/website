@@ -21,6 +21,13 @@ export interface IntroBackgroundCrossfade {
   readonly night: string
 }
 
+export interface IntroOverlayFigureMetadata {
+  /** Accessible figure label for an image-led cue. */
+  readonly label: string
+  /** Provenance or credit carried in assistive metadata, not painted on-screen. */
+  readonly credit: string
+}
+
 export interface IntroOverlayTextCue {
   readonly text: string
   readonly start: number
@@ -44,6 +51,35 @@ export interface IntroOverlayTextCue {
   readonly requiresCaptionToggle?: boolean
   /** Static background image shown behind the text for this cue only (e.g. a single hero photo). */
   readonly backgroundImage?: string
+  /** Accessible figure metadata for a background-led cue, without adding a visible caption. */
+  readonly backgroundFigure?: IntroOverlayFigureMetadata
+  /**
+   * Preserves a source painting's complete framing.
+   *
+   * The default treatment `cover`-crops a background to the frame, which is right for a
+   * backdrop and wrong for a painting: it amputates a 2.66:1 panorama top and bottom and a
+   * 1.37:1 canvas left and right, and it upscales whatever survives. A cue that carries this
+   * is letterboxed instead (`contain`) and capped at the source's own measured pixel
+   * geometry, so the painting is never cropped and never enlarged past what the artist
+   * delivered. The numbers come from the asset ledger, never from the file on disk.
+   */
+  readonly backgroundFraming?: {
+    readonly fit: 'contain'
+    readonly sourceWidth: number
+    readonly sourceHeight: number
+  }
+  /**
+   * How long this cue's *words* stay on screen, when that is shorter than the cue's own
+   * window.
+   *
+   * A scored cue is cut to a measured musical section, and a musical section is far longer
+   * than the reading cost of the thought it carries. Holding the words for the whole section
+   * leaves the audience re-reading a finished line for ten seconds; dropping the section to
+   * the reading cost would put the cut somewhere the music does not. This separates the two:
+   * the shot runs `start`→`end`, the words run `start`→`start + textHoldSeconds`. It is not a
+   * second clock — it is read off the same player time every other cue field is.
+   */
+  readonly textHoldSeconds?: number
   /** Renders a full-screen comic title card instead of the standard overlay treatment. */
   readonly comicHeroTitleCard?: boolean
   /**
@@ -64,12 +100,6 @@ export interface IntroOverlayTextCue {
    * unbroken text).
    */
   readonly backgroundCrossfade?: readonly IntroBackgroundCrossfade[]
-  /**
-   * Animated zoom/pan treatment for `backgroundImage` only. `'kenburns'` slowly zooms and pans
-   * the image over the cue's full duration, framed to keep faces in view rather than the empty
-   * plant/floor padding around a wide group photo.
-   */
-  readonly backgroundMotion?: 'kenburns'
   /**
    * Marks a cue that should dominate the screen visually (much larger, bolder, centered text)
    * rather than the standard lower-third caption treatment. Reserved for singular, high-impact
@@ -166,6 +196,16 @@ export interface IntroTextSegment extends IntroSegmentBase {
   /** Optional background-only YouTube embed (e.g. a music track) with no visible player. */
   readonly audioYoutubeVideoId?: string
   /**
+   * Seconds into the audio source where playback should begin.
+   *
+   * A segment's window is its own; a track is only borrowed. When a piece runs
+   * far longer than the segment it scores, this picks which part of it the
+   * audience actually hears. The cue clock reads the audio player's real
+   * `getCurrentTime()`, so anything comparing cue times against it has to
+   * subtract this offset or the segment starts mid-show.
+   */
+  readonly audioStartSeconds?: number
+  /**
    * Ramp the background audio's volume to zero over this many seconds leading into the
    * segment's cutoff, so the excerpt ends on a musical decay instead of a hard cut.
    */
@@ -173,6 +213,16 @@ export interface IntroTextSegment extends IntroSegmentBase {
 }
 
 export type IntroVideoSpec = IntroVideoSegment | IntroTextSegment
+
+/**
+ * Segment id of the standard conference cut's Destiny trailer.
+ *
+ * Exported because the overlay's CC switch is scoped to exactly this segment: the Director's
+ * Cut plays the same footage under a different id (`wolves-directors-destiny`) precisely so a
+ * presentation with no input device offers no switches. Compare against this constant rather
+ * than a retyped string so that intent survives a rename.
+ */
+export const STANDARD_DESTINY_SEGMENT_ID = 'wolves-intro'
 
 export interface IntroSequenceState {
   readonly index: number
@@ -194,6 +244,9 @@ export interface IntroStatusPayload {
   readonly voiceOverEnabled?: boolean
   readonly showCaptionToggle?: boolean
   readonly captionsEnabled?: boolean
+  /** Selectable scores for the current segment; fewer than two means no picker. */
+  readonly moods?: readonly { readonly id: string, readonly label: string }[]
+  readonly activeMoodId?: string
 }
 
 export function createIntroSequenceState(): IntroSequenceState {
@@ -364,10 +417,83 @@ export function isVideoCutoffReached(segment: IntroVideoSegment, currentTime: nu
 }
 
 /**
- * Whether a `text` segment's authored duration has elapsed and it should auto-advance.
+ * What the real background audio player is reporting about a scored `text` segment right now.
+ *
+ * Every field is derived from the player itself — its `ENDED` state, its `onError`, and whether
+ * its own clock is still moving. None of them is a second clock: cues still key off
+ * `elapsed`, which is that player's `getCurrentTime()`.
  */
-export function isTextSegmentComplete(segment: IntroTextSegment, elapsed: number): boolean {
-  return elapsed >= segment.duration
+export interface IntroAudioClockState {
+  /** The player published its own `ENDED` state. */
+  readonly ended?: boolean
+  /** Wall seconds the player's clock has sat frozen on the identical reading. */
+  readonly stalledSeconds?: number
+}
+
+/**
+ * How far short of a scored card's authored end its clock may plateau and still count as the
+ * end of the track.
+ *
+ * A YouTube player's `getCurrentTime()` routinely stops a fraction of a second below the
+ * duration it reports for the same video, so `elapsed >= duration` alone is a hang waiting to
+ * happen: the Director's Cut prologue is authored to the Gayane source's full 325.6 s container
+ * and would sit on its closing title forever in front of a live room. One second is measured
+ * against that source's own silent tail — its last audible sample is 321.34 s, 4.26 s before
+ * the container ends — so this window can only ever give back silence, never a note.
+ */
+export const TEXT_SEGMENT_END_SLACK_SECONDS = 1
+
+/**
+ * How long a frozen audio clock inside `TEXT_SEGMENT_END_SLACK_SECONDS` is tolerated before the
+ * card completes on its own.
+ *
+ * Deliberately generous: a frozen clock is normally buffering or a mid-roll ad, and a scored
+ * card must wait for the music rather than desync from it. Only a clock frozen *inside the
+ * track's silent tail* is read as "the track is over", which is why this backstop cannot fire
+ * anywhere else in the piece.
+ */
+export const TEXT_SEGMENT_STALL_GRACE_SECONDS = 3
+
+/**
+ * Whether an end-of-track signal arriving at this elapsed time can be believed.
+ *
+ * `ENDED` and a frozen clock both claim "the track is over", and both are only credible inside
+ * the source's measured silent tail. A YouTube embed also publishes state changes around ad
+ * breaks, and a mid-roll ad freezes the main video's clock at a nonzero time — so an `ENDED`
+ * from the body of the piece is an ad or a dead upload, and believing it would cut the scored
+ * act short in front of a live room. The caller hands the card back to its own clock instead.
+ */
+export function isInsideTrackEndWindow(segment: IntroTextSegment, elapsed: number): boolean {
+  return elapsed >= segment.duration - TEXT_SEGMENT_END_SLACK_SECONDS
+}
+
+/**
+ * Whether a `text` segment should auto-advance, given its elapsed clock and whatever the real
+ * background audio player is reporting.
+ *
+ * Two ways a card ends:
+ *
+ * 1. Its authored duration elapsed — the normal path, unchanged.
+ * 2. Inside the track's measured silent tail, the player either published `ENDED` or its clock
+ *    froze for longer than the stall grace. This is the backstop for a player that plateaus
+ *    short of the duration it reports, and it is deliberately the *only* window in which an
+ *    end-of-track claim is believed.
+ *
+ * A silent card (no audio embed) drives `elapsed` from its own origin, never stalls and never
+ * publishes a player state, so it only ever ends via (1).
+ */
+export function isTextSegmentComplete(
+  segment: IntroTextSegment,
+  elapsed: number,
+  clock: IntroAudioClockState = {},
+): boolean {
+  if (elapsed >= segment.duration) {
+    return true
+  }
+  if (!isInsideTrackEndWindow(segment, elapsed)) {
+    return false
+  }
+  return Boolean(clock.ended) || (clock.stalledSeconds ?? 0) >= TEXT_SEGMENT_STALL_GRACE_SECONDS
 }
 
 /**
@@ -510,177 +636,80 @@ function buildOpeningTitleCardSegment(): IntroTextSegment {
   }
 }
 
+function buildDestinyTrailerSegment(): IntroVideoSpec {
+  return {
+    // The Destiny segment now defaults to the unvoiced source and carries an optional voiced
+    // toggle. Guardian window timings below were re-verified frame-by-frame
+    // against the real embed (Playwright + the YouTube IFrame API, screenshotting every
+    // ~1-2s) per the Wolves content verification checklist, replacing the
+    // original automated hue/brightness pass that had mismatched two of the six windows:
+    // - Cortney Nickerson's Void Warlock (the first purple, a crystalline void-arm close-up) runs
+    //   5-17.5s footage-wise; the whip-pan cut to a Titan Ward of Dawn bubble forming happens
+    //   at ~17.5s (confirmed via 0.5s-resolution frame capture — 17.0s is still clearly the
+    //   Warlock's caped back, 18.5s is already the Titan crouched inside the bubble).
+    // - Kat Cosgrove's plate is deliberately cued ahead of the frame-verified footage cut,
+    //   at 14.5s (explicit user request, 2026-07-18: her plate replaces Cortney's with a quick
+    //   fade instead of overlapping). Cortney Nickerson's window is shortened to match (5-14.5s) —
+    //   neither has a `position`, so two simultaneous cues here would stack on top of each
+    //   other instead of rendering side-by-side. Her plate now runs 14.5-24.5s. This is an
+    //   intentional exception to frame-accurate cueing — do not "fix" the boundary back to
+    //   17.5 without a fresh user request.
+    // - Kaslin Fields' Arc Warlock lightning duel runs 40-48s, beginning on her visible
+    //   electric reveal (previously cut off at
+    //   40s, well before the footage itself ends).
+    // - Laura Santamaria's Solar Hunter window (70.5-77s) was already correct.
+    // - Christoph Blecker (Strand, green) and Natali Vlatko (Behemoth Titan, icy blue) share
+    //   the same shot from ~89.5-90s onward, so their windows overlap (85-95s and
+    //   89.5-96s) with `position` anchoring each to its own side of the frame instead of one
+    //   caption overwriting the other. Christoph's plate ends a second before Natali's so
+    //   the two nameplates do not linger together after his shot has settled. His complete leader plate is gold, while its
+    //   trustee label remains authoritative. His title line carries two segments joined the same way
+    //   ("First Among Equals — The North Star"), rendered on one `wolves-guardian-plate-title`
+    //   line with identical styling so both read with equal visual weight. "Uncompromising
+    //   Purity" and "Platinum Member" (added 2026-07-15, the latter with a `blingTitle`
+    //   shimmer) were removed the same day per a follow-up explicit user request to drop back
+    //   to just the original two titles — do not re-add either without a fresh user request.
+    // - Natali Vlatko's title line is "Punch first, document later.", per explicit user request.
+    // - The default unvoiced source (`BV3BZKbpBns`) runs ~124.0s naturally. Real-player frame
+    //   verification (Playwright + `.wolves-intro-overlay-player` screenshots, 0.1s steps)
+    //   showed its own authored black-frame outro beginning at ~119.0s: 118.8s still carries
+    //   the previous bright frame, 119.0s is fully black and stays there through the end card.
+    //   Cut both sources at 118.8s so YouTube's end-screen layer never becomes visible.
+    id: 'wolves-intro',
+    kind: 'video',
+    youtubeVideoId: 'BV3BZKbpBns',
+    alternateYoutubeVideoId: 'BKm0TPqeOjY',
+    alternateYoutubeVideoLabel: 'Ikora voice over',
+    // The source video opens on Bungie's own ESRB "TEEN" rating card (visible ~0-1.5s,
+    // confirmed frame-by-frame), which isn't part of the Guardian content we want to show.
+    // Starting 2s in skips past it entirely without touching any of the cue windows below,
+    // since those are keyed to the video's absolute/native timeline, not this offset.
+    startOffset: 2,
+    // Stop before YouTube's end-screen layer appears over the final source frames.
+    // Destiny dialogue captions are intentionally disabled; the Comic Hero Shots title card remains timed.
+    maxDuration: 118.8,
+    alternateMaxDuration: 118.8,
+    burnedInCaptions: buildDestinyCaptionCues(),
+    overlays: [
+      { text: 'Voidwalker Warlock — Cortney Nickerson — Reconciler of the Plane', start: 5, end: 14.5, trustee: true },
+      { text: 'Sentinel Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 },
+      { text: 'Stormcaller Warlock — Kaslin Fields — Rage of the Paradox', start: 40, end: 48 },
+      // #nova4ever easter egg: the default "fighting for something greater than themselves" status briefly
+      // glitches out to the hashtag a few times during the 48-70.5 montage, then snaps back.
+      { text: '#nova4ever', start: 52, end: 52.45, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
+      { text: '#nova4ever', start: 60.6, end: 61.05, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
+      { text: '#nova4ever', start: 68.1, end: 68.55, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
+      { text: 'Gunslinger Hunter — Laura Santamaria — The Order of Seven', start: 70.5, end: 77 },
+      { text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 85, end: 95, position: 'left', trustee: true, leader: true },
+      { text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 89.5, end: 96, position: 'right', raised: true },
+      { text: 'Follow the path, we\'ve got your back', start: 106.5, end: 118.8, nameplateDetail: 'Legends Sought', nameplateTitle: 'Follow the path, we\'ve got your back', statusOnly: true },
+    ],
+  }
+}
+
 export function buildIntroVideoSequence(): readonly IntroVideoSpec[] {
   return [
     buildOpeningTitleCardSegment(),
-    {
-      // The Destiny segment now defaults to the unvoiced source and carries an optional voiced
-      // toggle. Guardian window timings below were re-verified frame-by-frame
-      // against the real embed (Playwright + the YouTube IFrame API, screenshotting every
-      // ~1-2s) per the Wolves content verification checklist, replacing the
-      // original automated hue/brightness pass that had mismatched two of the six windows:
-      // - Bob Killen's Void Warlock (the first purple, a crystalline void-arm close-up) runs
-      //   5-17.5s footage-wise; the whip-pan cut to a Titan Ward of Dawn bubble forming happens
-      //   at ~17.5s (confirmed via 0.5s-resolution frame capture — 17.0s is still clearly the
-      //   Warlock's caped back, 18.5s is already the Titan crouched inside the bubble).
-      // - Kat Cosgrove's plate is deliberately cued ahead of the frame-verified footage cut,
-      //   at 14.5s (explicit user request, 2026-07-18: her plate replaces Bob's with a quick
-      //   fade instead of overlapping). Bob Killen's window is shortened to match (5-14.5s) —
-      //   neither has a `position`, so two simultaneous cues here would stack on top of each
-      //   other instead of rendering side-by-side. Her plate now runs 14.5-24.5s. This is an
-      //   intentional exception to frame-accurate cueing — do not "fix" the boundary back to
-      //   17.5 without a fresh user request.
-      // - Kaslin Fields' Arc Warlock lightning duel runs 40-48s, beginning on her visible
-      //   electric reveal (previously cut off at
-      //   40s, well before the footage itself ends).
-      // - Laura Santamaria's Solar Hunter window (70.5-77s) was already correct.
-      // - Christoph Blecker (Strand, green) and Natali Vlatko (Behemoth Titan, icy blue) share
-      //   the same shot from ~89.5-90s onward, so their windows overlap (85-95s and
-      //   89.5-96s) with `position` anchoring each to its own side of the frame instead of one
-      //   caption overwriting the other. Christoph's plate ends a second before Natali's so
-      //   the two nameplates do not linger together after his shot has settled. His complete leader plate is gold, while its
-      //   trustee label remains authoritative. His title line carries two segments joined the same way
-      //   ("First Among Equals — The North Star"), rendered on one `wolves-guardian-plate-title`
-      //   line with identical styling so both read with equal visual weight. "Uncompromising
-      //   Purity" and "Platinum Member" (added 2026-07-15, the latter with a `blingTitle`
-      //   shimmer) were removed the same day per a follow-up explicit user request to drop back
-      //   to just the original two titles — do not re-add either without a fresh user request.
-      // - Natali Vlatko's title line is "Punch first, document later.", per explicit user request.
-      // - The default unvoiced source (`BV3BZKbpBns`) runs ~124.0s naturally. Real-player frame
-      //   verification (Playwright + `.wolves-intro-overlay-player` screenshots, 0.1s steps)
-      //   showed its own authored black-frame outro beginning at ~119.0s: 118.8s still carries
-      //   the previous bright frame, 119.0s is fully black and stays there through the end card.
-      //   Cut both sources at 118.8s so YouTube's end-screen layer never becomes visible.
-      id: 'wolves-intro',
-      kind: 'video',
-      youtubeVideoId: 'BV3BZKbpBns',
-      alternateYoutubeVideoId: 'BKm0TPqeOjY',
-      alternateYoutubeVideoLabel: 'Ikora voice over',
-      // The source video opens on Bungie's own ESRB "TEEN" rating card (visible ~0-1.5s,
-      // confirmed frame-by-frame), which isn't part of the Guardian content we want to show.
-      // Starting 2s in skips past it entirely without touching any of the cue windows below,
-      // since those are keyed to the video's absolute/native timeline, not this offset.
-      startOffset: 2,
-      // Stop before YouTube's end-screen layer appears over the final source frames.
-      // Destiny dialogue captions are intentionally disabled; the Comic Hero Shots title card remains timed.
-      maxDuration: 118.8,
-      alternateMaxDuration: 118.8,
-      burnedInCaptions: buildDestinyCaptionCues(),
-      overlays: [
-        { text: 'Voidwalker Warlock — Bob Killen — Reconciler of the Plane', start: 5, end: 14.5, trustee: true },
-        { text: 'Sentinel Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 },
-        { text: 'Stormcaller Warlock — Kaslin Fields — Rage of the Paradox', start: 40, end: 48 },
-        // #nova4ever easter egg: the default "fighting for something greater than themselves" status briefly
-        // glitches out to the hashtag a few times during the 48-70.5 montage, then snaps back.
-        { text: '#nova4ever', start: 52, end: 52.45, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
-        { text: '#nova4ever', start: 60.6, end: 61.05, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
-        { text: '#nova4ever', start: 68.1, end: 68.55, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
-        { text: 'Gunslinger Hunter — Laura Santamaria — The Order of Seven', start: 70.5, end: 77 },
-        { text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 85, end: 95, position: 'left', trustee: true, leader: true },
-        { text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 89.5, end: 96, position: 'right', raised: true },
-        { text: 'Follow the path, we\'ve got your back', start: 106.5, end: 118.8, nameplateDetail: 'Legends Sought', nameplateTitle: 'Follow the path, we\'ve got your back', statusOnly: true },
-      ],
-    },
-  ] as const
-}
-
-/**
- * Director's Cut video sequence: includes the Gayane Ballet Suite (Adagio) prologue cold open
- * before the Destiny 2 trailer sequence.
- */
-export function buildDirectorsCutVideoSequence(): readonly IntroVideoSpec[] {
-  return [
-    buildOpeningTitleCardSegment(),
-    {
-      id: 'wolves-prologue',
-      kind: 'text',
-      duration: 94,
-      audioFadeOutSeconds: 2.5,
-      audioYoutubeVideoId: 'EB3IokHelRk',
-      overlays: [
-        { text: 'A Gardener and a Winnower walked among the stars.', start: 0, end: 5 },
-        {
-          text: `One to spread life,
-and one to cull the dross
-to shape the Garden of Earth.`,
-          start: 5,
-          end: 13.75,
-          backgroundCrossfade: [
-            {
-              day: 'img/wallpapers/bluefin-06-day.webp',
-              night: 'img/wallpapers/bluefin-06-night.webp',
-            },
-          ],
-          textPosition: 'bottom-right',
-          highlightSubstrings: ['life', 'dross', 'Garden'],
-        },
-        {
-          text: 'One day changed the Garden forever.',
-          start: 13.75,
-          end: 21.5,
-          backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
-        },
-        {
-          text: 'New Children arose and filled the pattern.',
-          start: 21.5,
-          end: 29.5,
-          emphasis: 'dominant',
-          textPosition: 'bottom',
-          backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
-        },
-        {
-          text: 'For eons, Maintainer-Guardians cultivated the Garden...',
-          start: 29.5,
-          end: 36.25,
-          backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
-        },
-        {
-          text: `Until an AI-fueled Society deemed Guardians unnecessary.
-And then, a threat.`,
-          start: 36.25,
-          end: 45,
-          backgroundImage: 'wolves-intro/bluefin-collapse-night.webp',
-        },
-        {
-          text: 'Others came to claim a bountiful and unprotected Garden.',
-          start: 45,
-          end: 50,
-        },
-        {
-          text: `In the space of a few days,
-humanity had lost its future`,
-          start: 50,
-          end: 59.375,
-          emphasis: 'dominant',
-          textPosition: 'bottom',
-          nameplateTitle: 'From the Age of Dinosaurs to the Pinnacle of Humanity',
-        },
-        {
-          text: `For the heart of any race is destroyed
-And its will to survive is utterly Broken`,
-          start: 59.375,
-          end: 65,
-          emphasis: 'dominant',
-          textPosition: 'bottom',
-        },
-        {
-          text: 'When its children are taken from it',
-          start: 65,
-          end: 72.5,
-          textPosition: 'bottom',
-        },
-        {
-          text: `Now, what's left of a proud order fights for survival,
-surrounded by predators.`,
-          start: 72.5,
-          end: 78.5,
-          emphasis: 'dominant',
-          textPosition: 'bottom',
-          highlightSubstring: 'fights',
-        },
-        { text: 'PROJECT BLUEFIN\nseven days to the wolves', start: 78.5, end: 94, slim: true },
-      ],
-    },
-    ...buildIntroVideoSequence(),
+    buildDestinyTrailerSegment(),
   ] as const
 }

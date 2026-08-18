@@ -1,9 +1,9 @@
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import CinematicStage from '@/components/wolves/cinematic/CinematicStage.vue'
-import { useCinematicStore } from '@/stores/cinematic'
+import { useCinematicStore, WOLVES_DIRECTORS_CUT_EXPERIENCE, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
 vi.mock('@/composables/useDualBufferPlayer', () => ({
   useDualBufferPlayer: () => ({
@@ -20,6 +20,12 @@ vi.mock('@/composables/useDualBufferPlayer', () => ({
 describe('wolves cinematic stage status plate', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+  })
+
+  afterEach(() => {
+    // `activeSegments` is module-level state (see cinematic.ts); restore the
+    // standard show so a Director's Cut test cannot leak into the next one.
+    useCinematicStore().loadExperience(WOLVES_EXPERIENCE)
   })
 
   it('does not mount the authored theater during the intro handoff', () => {
@@ -129,5 +135,31 @@ describe('wolves cinematic stage status plate', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.get('.nameplate-stub').text()).toBe('Seven Days to the Wolves|The Blue Delivers')
+  })
+
+  it('gives the Director\'s Cut the same audio-only theater treatment as the standard show', () => {
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
+    store.enterCinematic()
+
+    const wrapper = mount(CinematicStage, {
+      global: {
+        stubs: {
+          TheaterExperience: { template: '<div class="theater-experience-stub" />' },
+          WolvesOrgAds: { template: '<div class="org-ads-stub" />' },
+          Nameplate: true,
+          CinematicCaptions: true,
+          CinematicTransition: true,
+        },
+      },
+    })
+
+    expect(wrapper.find('.theater-experience-stub').exists()).toBe(true)
+    // Wolves runs both raw video layers audio-only (the theater draws the
+    // visuals) and shows no separate artist credit line, the same as the
+    // standard show — this is authored Wolves content played through a
+    // different manifest, not a generic album.
+    expect(wrapper.findAll('.wc-layer').every(layer => layer.classes().includes('wc-layer--audio-only'))).toBe(true)
+    expect(wrapper.get('nameplate-stub').attributes().creditartist).toBeUndefined()
   })
 })

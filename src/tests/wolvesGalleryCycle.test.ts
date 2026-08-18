@@ -129,4 +129,46 @@ describe('separateAdjacentEvents', () => {
 
     expect(separateAdjacentEvents(photos).map(photo => photo.id)).toEqual(['1', '2'])
   })
+
+  // The Director's Cut draws each authored section from its own ordered pools,
+  // then hands the flat list here. An unfenced repair swap is order-preserving
+  // in the list but not in the show: it fixes a seam by dragging a photo drawn
+  // for one section into another, past a boundary the schedule has already
+  // committed to.
+  it('never swaps a photo across a segment boundary it was given', () => {
+    const photos = [
+      { id: 'a1', title: 'KC+CNC_EU_240319_A_MN_1' },
+      { id: 'a2', title: 'KC+CNC_EU_240319_A_MN_2' },
+      { id: 'b1', title: 'KC+CNC_NA_251109_A_MN_1' },
+      { id: 'b2', title: 'KC+CNC_JP_260101_A_MN_1' },
+    ]
+
+    const unfenced = separateAdjacentEvents(photos)
+    const fenced = separateAdjacentEvents(photos, [2])
+
+    // Unfenced, the repair reaches into the second segment for its swap.
+    expect(unfenced.map(photo => photo.id)).toEqual(['a1', 'b1', 'a2', 'b2'])
+    // Fenced, the first segment keeps its own photos, because there is nothing
+    // inside it to swap with.
+    expect(fenced.slice(0, 2).map(photo => photo.id)).toEqual(['a1', 'a2'])
+    expect(fenced.slice(2).map(photo => photo.id)).toEqual(['b1', 'b2'])
+  })
+
+  // A seam it cannot fix must not stop it fixing the next one. The old pass
+  // broke out of the loop on the first unfixable pair, so one unlucky
+  // single-event stretch disabled repair for the whole rest of the show.
+  it('keeps repairing later seams after one it cannot fix', () => {
+    const photos = [
+      { id: 'a1', title: 'KC+CNC_EU_240319_A_MN_1' },
+      { id: 'a2', title: 'KC+CNC_EU_240319_A_MN_2' },
+      { id: 'b1', title: 'KC+CNC_NA_251109_A_MN_1' },
+      { id: 'b2', title: 'KC+CNC_NA_251109_A_MN_2' },
+      { id: 'c1', title: 'KC+CNC_JP_260101_A_MN_1' },
+    ]
+
+    const separated = separateAdjacentEvents(photos, [2])
+
+    expect(separated.slice(0, 2).map(photo => photo.id)).toEqual(['a1', 'a2'])
+    expect(getWolvesGalleryEventKey(separated[3]!)).not.toBe(getWolvesGalleryEventKey(separated[2]!))
+  })
 })

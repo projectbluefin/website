@@ -101,9 +101,22 @@ export function buildWolvesGalleryCycle<T extends WolvesGalleryPhoto>(
  * forward repair pass swaps the offender with the nearest later photo from a
  * different event. Order-preserving elsewhere, and a no-op once the pool holds
  * too few distinct events to separate.
+ *
+ * `segmentStarts` fences the search. A caller that has already assigned runs of
+ * this list to authored sections — the Director's Cut draws each section from
+ * its own ordered pools — cannot let a repair swap reach across a section
+ * boundary: the swap is order-preserving in the list but not in the show, and
+ * it drags a photo drawn for the ambient intro into the climax and vice versa.
+ * Fenced, seams are still repaired from inside the later section, which is
+ * where the offending pair actually meets.
  */
-export function separateAdjacentEvents<T extends WolvesGalleryPhoto>(photos: readonly T[]): T[] {
+export function separateAdjacentEvents<T extends WolvesGalleryPhoto>(
+  photos: readonly T[],
+  segmentStarts: readonly number[] = [],
+): T[] {
   const separated = [...photos]
+  const fences = [...new Set([0, ...segmentStarts, separated.length])].sort((left, right) => left - right)
+  const segmentEndFor = (index: number) => fences.find(fence => fence > index) ?? separated.length
 
   for (let index = 1; index < separated.length; index++) {
     const previousKey = getWolvesGalleryEventKey(separated[index - 1])
@@ -111,10 +124,11 @@ export function separateAdjacentEvents<T extends WolvesGalleryPhoto>(photos: rea
       continue
     }
 
+    const limit = segmentEndFor(index)
     const swapIndex = separated.findIndex((photo, candidate) =>
-      candidate > index && getWolvesGalleryEventKey(photo) !== previousKey)
+      candidate > index && candidate < limit && getWolvesGalleryEventKey(photo) !== previousKey)
     if (swapIndex === -1) {
-      break
+      continue
     }
 
     ;[separated[index], separated[swapIndex]] = [separated[swapIndex], separated[index]]

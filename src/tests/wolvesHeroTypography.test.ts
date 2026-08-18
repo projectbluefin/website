@@ -3,8 +3,14 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import TheaterExperience from '@/components/wolves/cinematic/TheaterExperience.vue'
+import { DIRECTORS_CUT_FINALE_ANCHORS } from '@/data/wolves-directors-cut-finale'
+import {
+  DIRECTORS_CUT_BULLETIN_ARTIFACT_ID,
+  getDirectorsCutNarrativeSlotForTime,
+} from '@/data/wolves-directors-cut-timeline'
+import { getNarrativeSlotForTime } from '@/data/wolves-narrative-timeline'
 import { TRACK_ZERO_SECTIONS } from '@/data/wolves-track-zero-beats'
-import { useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
+import { useCinematicStore, WOLVES_DIRECTORS_CUT_EXPERIENCE, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
 describe('wolves hero typography timeline', () => {
   beforeEach(() => {
@@ -269,10 +275,228 @@ describe('cinematic wallpaper transitions', () => {
     store.updateTime(258, 347, 258)
     const wrapper = mountTheater()
 
+    // One scene per song: the wallpaper changes on the segment boundary, not at
+    // a twelfth of overall progress. Advancing inside a song must not swap it.
     store.updateTime(262, 347, 262)
+    await nextTick()
+
+    expect(wrapper.find('.wc-wallpaper-buffer.fading-out').exists()).toBe(false)
+    expect(wrapper.find('.wc-wallpaper-buffer.is-transitioning').exists()).toBe(false)
+
+    store.jumpToSegment(2)
+    store.updateTime(0, 347, 0)
     await nextTick()
 
     expect(wrapper.find('.wc-wallpaper-buffer.fading-out').exists()).toBe(true)
     expect(wrapper.find('.wc-wallpaper-buffer.is-transitioning').exists()).toBe(true)
+  })
+
+  it('ramps each song from full day to full night exactly once', async () => {
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_EXPERIENCE)
+    store.enterCinematic()
+    store.jumpToSegment(0)
+    store.updateTime(0, 400, 0)
+    const wrapper = mountTheater()
+    await nextTick()
+
+    const nightOpacityAt = async (elapsed: number) => {
+      store.updateTime(elapsed, 400, elapsed)
+      await nextTick()
+      const night = wrapper.find('[data-wallpaper-night]')
+      return Number.parseFloat((night.attributes('style') ?? '').match(/opacity:\s*([\d.]+)/)?.[1] ?? 'NaN')
+    }
+
+    // Monotonic dawn-to-dusk across the song. The old sine returned to day at
+    // the end of every slot, which read as a pulse rather than as nightfall.
+    const opening = await nightOpacityAt(0)
+    const middle = await nightOpacityAt(200)
+    const close = await nightOpacityAt(400)
+
+    expect(opening).toBeCloseTo(0, 5)
+    expect(middle).toBeGreaterThan(opening)
+    expect(close).toBeGreaterThan(middle)
+    expect(close).toBeCloseTo(1, 5)
+  })
+})
+
+describe('theater experience wolves-experience prop wiring', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  afterEach(() => {
+    // `activeSegments` is module-level state (see cinematic.ts); restore the
+    // standard show so a Director's Cut test cannot leak into the next one.
+    useCinematicStore().loadExperience(WOLVES_EXPERIENCE)
+  })
+
+  const WolvesComicReaderProbe = {
+    props: {
+      wolvesExperience: { type: Boolean, default: false },
+      experienceId: { type: String, default: '' },
+    },
+    template: '<div class="wolves-comic-reader-probe" :data-wolves-experience="wolvesExperience" :data-experience-id="experienceId" />',
+  }
+
+  function mountTheater() {
+    return mount(TheaterExperience, {
+      global: {
+        stubs: {
+          WolvesComicReader: WolvesComicReaderProbe,
+          WolvesLoreColumn: true,
+        },
+      },
+    })
+  }
+
+  // The template used to carry a second, separate `experienceId === WOLVES_EXPERIENCE.id`
+  // check inline for this one prop, duplicating (and briefly diverging from) the
+  // component's own `isWolvesExperience` computed. That duplicate read the Director's
+  // Cut as a generic album — losing the beat-synced `timelineSlides` gallery for
+  // generic back-catalogue photos — even after the computed itself was fixed.
+  it('passes wolves-experience true for the standard show', () => {
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_EXPERIENCE)
+    store.enterCinematic()
+
+    const probe = mountTheater().get('.wolves-comic-reader-probe')
+
+    expect(probe.attributes('data-wolves-experience')).toBe('true')
+    expect(probe.attributes('data-experience-id')).toBe(WOLVES_EXPERIENCE.id)
+  })
+
+  it('passes wolves-experience true for the Director\'s Cut, not the generic default', () => {
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
+    store.enterCinematic()
+
+    const probe = mountTheater().get('.wolves-comic-reader-probe')
+
+    expect(probe.attributes('data-wolves-experience')).toBe('true')
+    expect(probe.attributes('data-experience-id')).toBe(WOLVES_DIRECTORS_CUT_EXPERIENCE.id)
+  })
+
+  it('passes wolves-experience false for a generic back-catalogue album', () => {
+    const store = useCinematicStore()
+    store.loadExperience({
+      id: 'album-test',
+      title: 'Album Test',
+      artwork: 'album.jpg',
+      segments: [{
+        id: 'track-one',
+        kind: 'youtube',
+        youtubeId: 'track-one',
+        chapter: 'Album Test',
+        title: 'Track One',
+        artist: 'Artist',
+        artwork: 'track.jpg',
+        durationSeconds: 200,
+      }],
+    })
+    store.enterCinematic()
+
+    const probe = mountTheater().get('.wolves-comic-reader-probe')
+
+    expect(probe.attributes('data-wolves-experience')).toBe('false')
+    expect(probe.attributes('data-experience-id')).toBe('album-test')
+  })
+})
+
+describe('theater experience lore column narrative timeline wiring', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  afterEach(() => {
+    // `activeSegments` is module-level state (see cinematic.ts); restore the
+    // standard show so a Director's Cut test cannot leak into the next one.
+    useCinematicStore().loadExperience(WOLVES_EXPERIENCE)
+  })
+
+  const WolvesLoreColumnProbe = {
+    props: {
+      artifactId: { type: String, default: '' },
+    },
+    template: '<div class="wolves-lore-column-probe" :data-artifact-id="artifactId" />',
+  }
+
+  function mountTheaterWithLoreProbe() {
+    return mount(TheaterExperience, {
+      global: {
+        stubs: {
+          WolvesComicReader: true,
+          WolvesLoreColumn: WolvesLoreColumnProbe,
+        },
+      },
+    })
+  }
+
+  // The lore column's `artifact-id` binding read `getNarrativeSlotForTime()` — the
+  // standard show's own timeline — unconditionally, with no `presentationProfile`
+  // branch. The Director's Cut's nine registered science/humanity quotes and its
+  // missing-scientist bulletin (`wolves-directors-cut-timeline.ts`) were fully built,
+  // scheduled and tested at the data layer, but a live Director's Cut run never
+  // reached them: it showed whatever the standard show's Jono/Marina/Hikari/Bluefin
+  // timeline resolves to at that same clock reading instead.
+  //
+  // t=100 is deliberately not the shared closing bulletin both timelines fall back to
+  // once their own schedule runs out (a fallback both cuts happen to share, which would
+  // make the two expectations coincide and pass either way): it is inside both cuts'
+  // authored schedules, where the two resolve to genuinely different artifacts.
+  it('reads the Director\'s Cut narrative timeline for its own lore column, not the standard show\'s', () => {
+    const directorSlot = getDirectorsCutNarrativeSlotForTime(100)
+    if (!directorSlot) {
+      throw new Error('Director slot missing at 100s')
+    }
+    expect(directorSlot.artifactId).not.toBe(getNarrativeSlotForTime(100).artifactId)
+
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
+    store.enterCinematic()
+    store.updateTime(100, 425, 100)
+
+    const probe = mountTheaterWithLoreProbe().get('.wolves-lore-column-probe')
+
+    expect(probe.attributes('data-artifact-id')).toBe(directorSlot.artifactId)
+  })
+
+  it('still reads the standard show\'s own timeline at the same clock reading', () => {
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_EXPERIENCE)
+    store.enterCinematic()
+    store.updateTime(100, 425, 100)
+
+    const probe = mountTheaterWithLoreProbe().get('.wolves-lore-column-probe')
+
+    expect(probe.attributes('data-artifact-id')).toBe(getNarrativeSlotForTime(100).artifactId)
+  })
+
+  it('clears Director lore during image-only gaps and after the bulletin handoff', async () => {
+    const store = useCinematicStore()
+    store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)
+    store.enterCinematic()
+    store.updateTime(0, 425, 0)
+
+    const wrapper = mountTheaterWithLoreProbe()
+    const probe = () => wrapper.get('.wolves-lore-column-probe')
+
+    const firstQuote = getDirectorsCutNarrativeSlotForTime(0)!
+    store.updateTime(firstQuote.endTime + 1, 425, firstQuote.endTime + 1)
+    await nextTick()
+    expect(probe().attributes('data-artifact-id')).toBe('')
+
+    store.updateTime(DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart, 425, DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart)
+    await nextTick()
+    expect(probe().attributes('data-artifact-id')).toBe(DIRECTORS_CUT_BULLETIN_ARTIFACT_ID)
+
+    store.updateTime(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd, 425, DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
+    await nextTick()
+    // The bulletin's end *is* the finale's start — `bulletinEnd` and `finaleStart` are the same
+    // beat — and the finale unmounts the ordinary grid rather than covering it. So the handoff
+    // clears the bulletin by taking the whole lore column off the stage, which is a stronger
+    // guarantee than blanking its id: nothing is left mounted to keep running behind the frame.
+    // Asserting an empty id here instead would demand the column survive its own handoff.
+    expect(wrapper.find('.wolves-lore-column-probe').exists()).toBe(false)
   })
 })

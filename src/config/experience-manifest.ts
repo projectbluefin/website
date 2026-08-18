@@ -11,6 +11,17 @@ import type { CinematicSegment } from '@/config/wolves-cinematic'
 export type ExperienceMediaKind = 'youtube' | 'image'
 
 /**
+ * Which authored presentation a manifest belongs to, if any. `'generic'` (the
+ * default when omitted) is any back-catalogue album — its own title/artist
+ * credit and freeform decorative treatment. `'wolves-standard'` and
+ * `'wolves-directors-cut'` are both the authored Wolves show and share its
+ * display and theater treatment; they differ only in which segments and intro
+ * play. Consumers that mean "is this an authored Wolves presentation" must
+ * check both, not just one.
+ */
+export type PresentationProfile = 'generic' | 'wolves-standard' | 'wolves-directors-cut'
+
+/**
  * One playable segment. Extends the wolves CinematicSegment so the existing
  * runtime consumes it unchanged; adds the authored duration (drives the
  * overall seek-bar timeline) and the media kind.
@@ -42,6 +53,8 @@ export interface ExperienceManifest {
    * Wolves experience sets this; it is authored content, not generic.
    */
   includeIntro?: boolean
+  /** Which authored presentation this manifest belongs to; see `PresentationProfile`. */
+  presentationProfile?: PresentationProfile
   segments: ExperienceSegment[]
 }
 
@@ -51,8 +64,17 @@ export interface BackCatalogue {
 }
 
 /**
- * Runtime validation for the fetched catalogue. Trust boundary: the JSON is
- * generated in-repo, so only structural sanity is checked.
+ * Runtime validation for the fetched catalogue.
+ *
+ * Trust boundary: the JSON is generated in-repo, so only structural sanity is
+ * checked — with one exception. `presentationProfile` is not structure, it is
+ * authority: it selects the authored Wolves intro, timeline, slide schedule and
+ * finale. The generator never writes it, so a catalogue entry carrying anything
+ * but `'generic'` is a corrupt or tampered file trying to launch the authored
+ * show out of a back-catalogue card, and the whole catalogue is rejected rather
+ * than quietly normalised. Rejecting is what the parser already does for every
+ * other violated expectation, and the caller renders the lobby without the
+ * catalogue.
  */
 export function parseBackCatalogue(data: unknown): BackCatalogue {
   if (!data || typeof data !== 'object' || !Array.isArray((data as BackCatalogue).experiences)) {
@@ -62,6 +84,9 @@ export function parseBackCatalogue(data: unknown): BackCatalogue {
     if (typeof experience?.id !== 'string' || typeof experience?.title !== 'string'
       || typeof experience?.artwork !== 'string' || !Array.isArray(experience?.segments)) {
       throw new TypeError('Malformed back catalogue: bad experience entry')
+    }
+    if (experience.presentationProfile !== undefined && experience.presentationProfile !== 'generic') {
+      throw new TypeError(`Malformed back catalogue: ${experience.id} declares a non-generic presentation profile`)
     }
     for (const segment of experience.segments) {
       if (typeof segment?.id !== 'string' || typeof segment?.title !== 'string'

@@ -1,7 +1,13 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
-import { COLD_SKIP_PLAYBACK_TIMEOUT_MS, PREPARE_TIMEOUT_MS, START_PLAYBACK_TIMEOUT_MS, useDualBufferPlayer } from '@/composables/useDualBufferPlayer'
+import {
+  COLD_SKIP_PLAYBACK_TIMEOUT_MS,
+  OPENING_FRAME_CONFIRMATION_POLLS,
+  PREPARE_TIMEOUT_MS,
+  START_PLAYBACK_TIMEOUT_MS,
+  useDualBufferPlayer,
+} from '@/composables/useDualBufferPlayer'
 import { invalidateYoutubeIframeApiLoad, resetYoutubeIframeApiCacheForTests } from '@/composables/useYoutubeIframeApi'
 import { CINEMATIC_SEGMENTS, PRE_END_THRESHOLD_S, TIME_POLL_MS } from '@/config/wolves-cinematic'
 import { useCinematicStore } from '@/stores/cinematic'
@@ -10,6 +16,7 @@ interface FakeEvents {
   onReady?: (event: unknown) => void
   onStateChange?: (event: { data: number }) => void
   onError?: (event: unknown) => void
+  onAutoplayBlocked?: (event: unknown) => void
 }
 
 interface FakePlayerOptions {
@@ -446,6 +453,32 @@ describe('useDualBufferPlayer', () => {
     expect(settled).toBe(true)
   })
 
+  it('does not finish Track 0 when a late prewarm state reports the source end before its opening frame', async () => {
+    FakePlayer.emitPlayingOnPlay = false
+    const store = useCinematicStore()
+    store.enterCinematic()
+    const player = buildPlayer()
+    await player.prepare()
+    const [playerA] = FakePlayer.instances
+
+    playerA.duration = 424
+    const startup = player.start()
+    await flushMicrotasks()
+
+    // A real IFrame can deliver its original prewarm PLAYING after startup has
+    // already requested Track 0. Its first clock reply is then the old media's
+    // terminal frame, before the opening seek reaches the player.
+    playerA.currentTime = playerA.duration
+    playerA.events.onStateChange?.({ data: 0 })
+
+    expect(store.finished).toBe(false)
+    expect(store.crossfading).toBe(false)
+    expect(store.nativeTime).toBe(0)
+
+    player.destroy()
+    await startup
+  })
+
   it('prewarms and parks the active side so Track 0 never enters the show cold', async () => {
     const store = useCinematicStore()
     store.enterCinematic()
@@ -471,6 +504,18 @@ describe('useDualBufferPlayer', () => {
     // Promoted by seek from its park, not re-fetched: a cold loadVideoById here is
     // exactly the buffering gap this whole double buffer exists to avoid.
     expect(playerA.loadedId).toBe('')
+  })
+
+  it('retries a blocked startup muted so the real player can reach PLAYING', async () => {
+    const player = await startPlayer()
+    const [playerA] = FakePlayer.instances
+    const playsBeforeRetry = playerA.playCount
+
+    playerA.events.onAutoplayBlocked?.({})
+
+    expect(playerA.muted).toBe(true)
+    expect(playerA.playCount).toBe(playsBeforeRetry + 1)
+    player.destroy()
   })
 
   it('lands the active side\'s park before startup raises the volume', async () => {
@@ -672,8 +717,21 @@ describe('useDualBufferPlayer', () => {
     expect(settled).toBe(true)
     playerA.currentTime = 7
     playerA.duration = 300
+
+    // A stale clock in the body of the segment is not an opening-frame
+    // confirmation. The runtime must reseek it instead of accepting five
+    // duplicate polls as proof that playback is moving.
     vi.advanceTimersByTime(TIME_POLL_MS)
-    expect(store.segmentElapsed).toBe(7)
+    expect(playerA.currentTime).toBe(0)
+    vi.advanceTimersByTime(TIME_POLL_MS * OPENING_FRAME_CONFIRMATION_POLLS)
+    expect(store.segmentElapsed).toBe(0)
+
+    // Only advancing opening-frame clocks release the boundary guard.
+    for (let i = 0; i < OPENING_FRAME_CONFIRMATION_POLLS; i += 1) {
+      playerA.tickClock(0.1)
+      vi.advanceTimersByTime(TIME_POLL_MS)
+    }
+    expect(store.segmentElapsed).toBeCloseTo(0.5)
 
     player.destroy()
   })
@@ -941,6 +999,46 @@ describe('useDualBufferPlayer', () => {
     player.skip(-1)
     vi.advanceTimersByTime(3000)
     expect(store.segmentIndex).toBe(CINEMATIC_SEGMENTS.length - 2)
+  })
+
+  it('gives the clock back after the show has finished and the presenter seeks away', async () => {
+    const player = await startPlayer()
+    const store = useCinematicStore()
+    for (let i = 0; i < CINEMATIC_SEGMENTS.length - 1; i++) {
+      const active = player.activeSide.value === 'a' ? FakePlayer.instances[0] : FakePlayer.instances[1]
+      active.duration = 1000
+      active.currentTime = 1000
+      vi.advanceTimersByTime(TIME_POLL_MS)
+      vi.advanceTimersByTime(3000)
+    }
+    const active = player.activeSide.value === 'a' ? FakePlayer.instances[0] : FakePlayer.instances[1]
+    active.duration = 1000
+    active.currentTime = 1000
+    vi.advanceTimersByTime(TIME_POLL_MS)
+    expect(store.finished).toBe(true)
+    expect(store.playing).toBe(false)
+
+    // A real embed answers `getCurrentTime()` from a value it pushes across the
+    // message channel, so the first polls after a seek still report the
+    // pre-seek time. Model that: the seek lands on the player, but its clock
+    // reports the end for another two polls. Without a guard those polls run
+    // the end of the segment again — pause, `finish()`, `stopPolling()` — and
+    // the backward seek the presenter just made is silently undone, with no
+    // way to restart the clock live.
+    const staleTime = active.currentTime
+    const realSeek = active.seekTo.bind(active)
+    active.seekTo = () => {}
+    player.seekTo(120)
+    vi.advanceTimersByTime(TIME_POLL_MS * 2)
+    expect(active.currentTime).toBe(staleTime)
+
+    active.seekTo = realSeek
+    active.seekTo(120)
+    vi.advanceTimersByTime(TIME_POLL_MS * 2)
+
+    expect(store.finished).toBe(false)
+    expect(store.nativeTime).toBe(120)
+    expect(store.segmentIndex).toBe(CINEMATIC_SEGMENTS.length - 1)
   })
 
   it('abandons a stalled preparation instead of hanging the show on the intro overlay', async () => {
