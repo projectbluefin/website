@@ -12,15 +12,22 @@ describe('serverFeatures.vue', () => {
 
     const grids = wrapper.findAll('.app-grid')
     const cards = grids[0].findAll('.app-card')
-    expect(cards.length).toBeGreaterThanOrEqual(10)
+    expect(cards).toHaveLength(11)
 
     const names = cards.map(c => c.get('.app-name').text())
-    expect(names).toContain('Falco')
-    expect(names).toContain('k3s')
-    expect(names).toContain('Podman')
-    expect(names).toContain('Docker')
-    expect(names).toContain('Tailscale')
-    expect(names).toContain('ZFS')
+    expect(names).toEqual([
+      'Falco',
+      'KubeVirt',
+      'KubeStellar',
+      'k3s',
+      'Inspektor Gadget',
+      'kured',
+      'Podman',
+      'Docker',
+      'Tailscale',
+      'Incus',
+      'ZFS',
+    ])
 
     // All cards are external links
     cards.forEach((card) => {
@@ -34,14 +41,21 @@ describe('serverFeatures.vue', () => {
     const wrapper = mountFeatures()
 
     const graduatedCards = wrapper.findAll('.app-card.graduated')
-    expect(graduatedCards.length).toBeGreaterThanOrEqual(1)
+    expect(graduatedCards).toHaveLength(1)
     expect(graduatedCards[0].get('.app-badge.graduated').text()).toBe('CNCF Graduated')
 
     const incubatingCards = wrapper.findAll('.app-card.incubating')
-    expect(incubatingCards.length).toBeGreaterThanOrEqual(1)
+    expect(incubatingCards).toHaveLength(2)
+    expect(incubatingCards.map(card => card.get('.app-name').text())).toEqual(['KubeVirt', 'KubeStellar'])
 
     const sandboxCards = wrapper.findAll('.app-card.sandbox')
-    expect(sandboxCards.length).toBeGreaterThanOrEqual(3)
+    expect(sandboxCards).toHaveLength(4)
+    expect(sandboxCards.map(card => card.get('.app-name').text())).toEqual([
+      'k3s',
+      'Inspektor Gadget',
+      'kured',
+      'Podman',
+    ])
   })
 
   it('renders AI client cards with org badges', () => {
@@ -51,12 +65,10 @@ describe('serverFeatures.vue', () => {
     const clientGrid = allGrids[1]
 
     const clientNames = clientGrid.findAll('.app-name').map(n => n.text())
-    expect(clientNames).toContain('Goose')
-    expect(clientNames).toContain('linux-mcp-server')
+    expect(clientNames).toEqual(['Goose', 'linux-mcp-server'])
 
     const badges = clientGrid.findAll('.app-badge').map(b => b.text())
-    expect(badges).toContain('Agentic AI Foundation')
-    expect(badges).toContain('RHEL Lightspeed')
+    expect(badges).toEqual(['Agentic AI Foundation', 'RHEL Lightspeed'])
   })
 
   it('renders the RHEL Lightspeed attribution row', () => {

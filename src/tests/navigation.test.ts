@@ -7,6 +7,8 @@ import { i18n } from '../locales/schema'
 
 const section = ref('null')
 const visibleSection = computed(() => section.value)
+const originalScrollIntoView = Element.prototype.scrollIntoView
+const originalScrollTo = window.scrollTo
 
 function mountNavigation() {
   return mount(Navigation, {
@@ -32,6 +34,8 @@ describe('navigation.vue', () => {
   })
 
   afterEach(() => {
+    Element.prototype.scrollIntoView = originalScrollIntoView
+    window.scrollTo = originalScrollTo
     document.body.innerHTML = ''
     setLocale('en-US')
     // happy-dom defaults; tests that override scroll geometry must not leak it

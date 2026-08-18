@@ -82,6 +82,7 @@ describe('dakotaVersionChips.vue', () => {
     const wrapper = mountChips()
     await flushPromises()
 
+    expect(getDakotaVersionsMock).toHaveBeenCalledOnce()
     expect(wrapper.find('.version-chips').exists()).toBe(false)
     expect(wrapper.findAll('.version-chip')).toHaveLength(0)
   })
@@ -95,6 +96,7 @@ describe('dakotaVersionChips.vue', () => {
     const wrapper = mountChips()
     await flushPromises()
 
+    expect(getDakotaVersionsMock).toHaveBeenCalledOnce()
     expect(wrapper.find('.version-chips').exists()).toBe(false)
     expect(wrapper.findAll('.version-chip')).toHaveLength(0)
   })
@@ -105,6 +107,7 @@ describe('dakotaVersionChips.vue', () => {
     const wrapper = mountChips({ keys: [] })
     await flushPromises()
 
+    expect(getDakotaVersionsMock).toHaveBeenCalledOnce()
     expect(wrapper.find('.version-chips').exists()).toBe(false)
     expect(wrapper.findAll('.version-chip')).toHaveLength(0)
   })

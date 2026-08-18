@@ -26,7 +26,9 @@ describe('sectionNews.vue', () => {
 
   it('renders the news section title from i18n', async () => {
     const wrapper = mountNews()
-    expect(wrapper.get('h2').text()).toBeTruthy()
+    const title = wrapper.get('h2').text()
+    expect(title).toBe(i18n.global.t('News.Title'))
+    expect(title).not.toBe('News.Title')
     // Let RssFeed's onMounted fetch settle before the test ends
     await flushPromises()
   })

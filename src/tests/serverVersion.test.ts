@@ -105,33 +105,39 @@ describe('serverVersion.vue', () => {
   })
 
   it('stays in the loading state when the fetch rejects', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => {
+    const fetchMock = vi.fn(async () => {
       throw new TypeError('Failed to fetch')
-    }))
+    })
+    vi.stubGlobal('fetch', fetchMock)
 
     const wrapper = mount(ServerVersion)
     await flushPromises()
 
+    expect(fetchMock).toHaveBeenCalledWith('/server-versions.json')
     expect(wrapper.find('.loading-state').exists()).toBe(true)
     expect(wrapper.find('.release-panel').exists()).toBe(false)
   })
 
   it('stays in the loading state when the response is not ok', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 503 })))
+    const fetchMock = vi.fn(async () => ({ ok: false, status: 503 }))
+    vi.stubGlobal('fetch', fetchMock)
 
     const wrapper = mount(ServerVersion)
     await flushPromises()
 
+    expect(fetchMock).toHaveBeenCalledWith('/server-versions.json')
     expect(wrapper.find('.loading-state').exists()).toBe(true)
     expect(wrapper.find('.release-panel').exists()).toBe(false)
   })
 
   it('stays in the loading state when the payload has no stable stream', async () => {
-    vi.stubGlobal('fetch', stubFetchJson({ streams: { beta: STABLE_STREAM } }))
+    const fetchMock = stubFetchJson({ streams: { beta: STABLE_STREAM } })
+    vi.stubGlobal('fetch', fetchMock)
 
     const wrapper = mount(ServerVersion)
     await flushPromises()
 
+    expect(fetchMock).toHaveBeenCalledWith('/server-versions.json')
     expect(wrapper.find('.loading-state').exists()).toBe(true)
     expect(wrapper.find('.release-panel').exists()).toBe(false)
   })

@@ -129,26 +129,30 @@ describe('imageChooser.vue', () => {
   })
 
   it('renders no version information when the versions fetch fails', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => {
+    const fetchMock = vi.fn(async () => {
       throw new Error('offline')
-    }))
+    })
+    vi.stubGlobal('fetch', fetchMock)
 
     const wrapper = mountChooser()
     await flushPromises()
 
+    expect(fetchMock).toHaveBeenCalledWith('/stream-versions.yml')
     expect(wrapper.findAll('.release-box')).toHaveLength(2)
     expect(wrapper.find('.version-info').exists()).toBe(false)
   })
 
   it('renders no version information when the versions YAML is malformed', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => ({
+    const fetchMock = vi.fn(async () => ({
       ok: true,
       text: async () => '{{{{ not yaml',
-    })))
+    }))
+    vi.stubGlobal('fetch', fetchMock)
 
     const wrapper = mountChooser()
     await flushPromises()
 
+    expect(fetchMock).toHaveBeenCalledWith('/stream-versions.yml')
     expect(wrapper.findAll('.release-box')).toHaveLength(2)
     expect(wrapper.find('.version-info').exists()).toBe(false)
   })

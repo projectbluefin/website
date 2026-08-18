@@ -53,7 +53,11 @@ describe('sectionCommunity.vue', () => {
     const img = cardIcon.get('img')
     expect(img.attributes('alt')).toBe('Bluefin Documentation')
 
-    expect(wrapper.get('.card-content h3').text()).toBeTruthy()
-    expect(wrapper.get('.card-content p').text()).toBeTruthy()
+    const title = wrapper.get('.card-content h3').text()
+    const description = wrapper.get('.card-content p').text()
+    expect(title).toBe(i18n.global.t('Community.Documentation.Title'))
+    expect(description).toBe(i18n.global.t('Community.Documentation.Description'))
+    expect(title).not.toBe('Community.Documentation.Title')
+    expect(description).not.toBe('Community.Documentation.Description')
   })
 })
