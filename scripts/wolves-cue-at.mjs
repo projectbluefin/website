@@ -2,16 +2,15 @@
 /**
  * Answer "what is on screen at m:ss" for a Wolves video, from the real show data.
  *
- * Every previous audit of a timestamp was done by hand-simulating the mark grid, or by
- * screenshotting nearby seconds and hoping. Both fail silently: one session probed 263s,
- * 266s and 320s and stepped straight over the 281s cue the owner was asking about.
+ * Hand-simulating the mark grid and screenshotting nearby seconds both fail silently:
+ * either can step straight over the exact cue the owner named.
  *
  * This loads the authored modules through Vite (so the aliases and TypeScript resolve
  * exactly as the app sees them) and reports the cue whose window contains the timestamp.
  * If it disagrees with the show, the show is what changed — fix the caller, not this.
  *
- *   node scripts/wolves-cue-at.mjs 4:41
- *   node scripts/wolves-cue-at.mjs prologue 281
+ *   node scripts/wolves-cue-at.mjs 1:50
+ *   node scripts/wolves-cue-at.mjs prologue 110
  *   node scripts/wolves-cue-at.mjs prologue --all
  */
 
@@ -21,7 +20,7 @@ import { isKnownVideo, knownVideoNames, resolveVideo } from './wolves-videos.mjs
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
 
-/** Accept `281`, `4:41`, or `4m41s`. Timestamps are how the owner reports defects. */
+/** Accept `110`, `1:50`, or `1m50s`. Timestamps are how the owner reports defects. */
 function parseTimestamp(value) {
   const colon = /^(\d+):(\d{1,2}(?:\.\d+)?)$/.exec(value)
   if (colon) {
@@ -100,7 +99,7 @@ async function main() {
   const wantsAll = args.includes('--all')
   const stamp = positional.find(arg => arg !== named && !Number.isNaN(parseTimestamp(arg)))
   if (!wantsAll && stamp == null) {
-    console.error('give a timestamp (4:41 or 281) or --all')
+    console.error('give a timestamp (1:50 or 110) or --all')
     process.exit(1)
   }
 

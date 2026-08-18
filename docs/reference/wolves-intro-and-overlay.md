@@ -387,13 +387,10 @@ coordination at the conjunction) so every line now holds. No wording changed —
 `wolvesDirectorsCutIntro.test.ts` checks wording independently of lining, on a
 whitespace-normalized form, precisely so re-lining stays a projection decision.
 
-**`emphasis: 'dominant'` is retired from this prologue, and that is a
-measurement rather than a taste.** It renders at 81px, leaving ~1075px of usable
-box, and *every* line of this narration is wider than that at 81px —
-`New Children arose` alone is 1417px. A dominant cue therefore cannot honour its
-own line breaks; it is re-wrapped mid-phrase and the beat lands as a ragged
-block. The 4:41 crescendo cue was the worst case: 13 words at 81px over the
-Collapse crossfade. It now plays at 45px in four authored lines, widest 1048px.
+**`emphasis: 'dominant'` is reserved for the prologue's current crescendo.**
+The 1:49 cue carries 13 words in four authored lines; its desktop treatment
+keeps those lines intact, and the narrow-viewport rule rescales rather than
+blanking them. `wolves-directors-cut-prologue.mjs` measures both layouts.
 
 `DIRECTORS_CUT_MAX_CUE_WORDS` (13) still bounds a cue's total words. It was
 derived from rendered *pixel height* in a 720p frame, so it answers whether a

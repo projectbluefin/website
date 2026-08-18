@@ -17,6 +17,14 @@ export const VIDEOS = {
     title: 'The Gardener and the Winnower (scored prologue)',
     load: async loadModule =>
       (await loadModule('/src/data/wolves-directors-cut-intro.ts')).buildDirectorsCutPrologueSegment(),
+    loadGeometry: async (loadModule) => {
+      const artwork = await loadModule('/src/data/wolves-directors-cut-artwork.ts')
+      return artwork.DIRECTORS_CUT_DESTINY_CONCEPTS.map(record => ({
+        file: record.localPath.split('/').pop(),
+        width: record.sourceWidth,
+        height: record.sourceHeight,
+      }))
+    },
   },
 }
 

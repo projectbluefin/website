@@ -32,22 +32,20 @@ player synchronization, or generated manifests.
 
 ## Resolve the artifact before you audit it
 
-"The first video" is the prologue, and videos 1 and 2 exist only on the
-`wolves-directors-cut` branch. The running order and the branch map are in
-`../../reference/wolves-video-order.md` — read it before opening a file for any
-request naming a video ordinal or a timestamp.
+"The first video" is the Director's Cut prologue. The running order and source
+ownership are in `../../reference/wolves-video-order.md` — read it before
+opening a file for any request naming a video ordinal or a timestamp.
 
 Answer "what is on screen at m:ss" with the show's own data, never by eye:
 
 ```bash
-node scripts/wolves-cue-at.mjs 4:41
+node scripts/wolves-cue-at.mjs 1:50
 ```
 
-Screenshotting the seconds *around* a reported timestamp is not verification: a
-prior session probed 263s, 266s and 320s, never rendered the 281s cue in
-question, and reported it as checked. Quote the cue text in your report. Note
-that a cue's shot outlives its text, so "the shot contains 4:41" and "words are
-on screen at 4:41" are different questions; the tool answers the second.
+Screenshotting the seconds *around* a reported timestamp is not verification.
+Quote the cue text in your report. A cue's shot outlives its text, so "the shot
+contains 1:50" and "words are on screen at 1:50" are different questions; the
+tool answers the second.
 
 ## Red Flags
 

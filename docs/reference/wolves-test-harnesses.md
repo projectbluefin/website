@@ -357,14 +357,13 @@ stale unnoticed. All of them take `WOLVES_BASE_URL` (default
 The harnesses above seek and screenshot. That is the right tool for *how it
 looks* and the wrong one for *what is scheduled*: a probe only sees the seconds
 it was told to visit, and a timestamp the owner reported can sit in the gap
-between two of them. That has happened — 263s, 266s and 320s were captured while
-the 281s cue under discussion never rendered at all.
+between two of them. Nearby screenshots are not evidence for the exact second.
 
 `scripts/wolves-cue-at.mjs` answers the scheduling question directly, with no
 browser and no seek:
 
 ```bash
-node scripts/wolves-cue-at.mjs 4:41        # defaults to the prologue
+node scripts/wolves-cue-at.mjs 1:50        # defaults to the prologue
 node scripts/wolves-cue-at.mjs prologue --all
 ```
 
@@ -409,6 +408,13 @@ shipped:
   its shot by a fade, so the previous line is still clearing at the start of the
   next one. Demanding an empty caption stalls past the end of a short window and
   measures the following shot instead.
+- **Full-bleed means painted pixels, not the `<img>` rectangle.** `object-fit:
+  contain` leaves the element at 1280×720 while a 4:3 image paints only 960×720.
+  Derive the painted box from natural dimensions, fit, and object position; the
+  audit's `--self-test` pins both contain and cover geometry.
+- **Page exceptions are independent evidence.** Capture `pageerror` as well as
+  console errors and failed local requests; an uncaught application exception
+  can otherwise leave both network arrays empty and produce a false green.
 
 Only the app's own requests count toward the request check: the embedded player
 beats its telemetry endpoints constantly and they fail for reasons that have

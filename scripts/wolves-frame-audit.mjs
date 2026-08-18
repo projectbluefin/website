@@ -68,6 +68,53 @@ function normalise(text) {
   return String(text ?? '').replace(/[^a-z0-9]+/gi, ' ').replace(/\s+/g, ' ').trim().toLowerCase()
 }
 
+function objectPosition(token, free) {
+  if (token === 'left' || token === 'top') {
+    return 0
+  }
+  if (token === 'right' || token === 'bottom') {
+    return free
+  }
+  if (token === 'center') {
+    return free / 2
+  }
+  return free * (Number.parseFloat(token) / 100)
+}
+
+/** The pixels the image actually paints inside its element box. */
+export function paintedBox({ elementBox, naturalWidth, naturalHeight, objectFit, objectPosition: position }) {
+  if (!naturalWidth || !naturalHeight || objectFit === 'fill') {
+    return elementBox
+  }
+  const contain = Math.min(elementBox.width / naturalWidth, elementBox.height / naturalHeight)
+  const scale = objectFit === 'cover'
+    ? Math.max(elementBox.width / naturalWidth, elementBox.height / naturalHeight)
+    : objectFit === 'none'
+      ? 1
+      : objectFit === 'scale-down'
+        ? Math.min(1, contain)
+        : contain
+  const width = naturalWidth * scale
+  const height = naturalHeight * scale
+  const [x = '50%', y = '50%'] = position.split(/\s+/)
+  const left = elementBox.left + objectPosition(x, elementBox.width - width)
+  const top = elementBox.top + objectPosition(y, elementBox.height - height)
+  return { left, top, right: left + width, bottom: top + height, width, height }
+}
+
+function selfTest() {
+  const elementBox = { left: 0, top: 0, right: 1280, bottom: 720, width: 1280, height: 720 }
+  const contained = paintedBox({ elementBox, naturalWidth: 1024, naturalHeight: 768, objectFit: 'contain', objectPosition: '50% 50%' })
+  if (contained.left !== 160 || contained.width !== 960 || contained.height !== 720) {
+    throw new Error(`contain self-test failed: ${JSON.stringify(contained)}`)
+  }
+  const covered = paintedBox({ elementBox, naturalWidth: 1024, naturalHeight: 768, objectFit: 'cover', objectPosition: '50% 50%' })
+  if (covered.left !== 0 || covered.top !== -120 || covered.width !== 1280 || covered.height !== 960) {
+    throw new Error(`cover self-test failed: ${JSON.stringify(covered)}`)
+  }
+  console.info('wolves-frame-audit self-test: pass')
+}
+
 async function loadCues(videoKey) {
   const server = await createServer({
     root: ROOT,
@@ -77,8 +124,10 @@ async function loadCues(videoKey) {
   })
   try {
     const { video } = resolveVideo(videoKey)
-    const segment = await video.load(specifier => server.ssrLoadModule(specifier))
-    return { segment, cues: segment.overlays }
+    const loadModule = specifier => server.ssrLoadModule(specifier)
+    const segment = await video.load(loadModule)
+    const geometry = video.loadGeometry ? await video.loadGeometry(loadModule) : []
+    return { segment, cues: segment.overlays, geometry }
   }
   finally {
     await server.close()
@@ -87,8 +136,12 @@ async function loadCues(videoKey) {
 
 async function main() {
   const args = process.argv.slice(2)
+  if (args.includes('--self-test')) {
+    selfTest()
+    return
+  }
   if (args.includes('--help')) {
-    console.info('usage: node scripts/wolves-frame-audit.mjs [video] [--base URL] [--viewport WxH] [--shots]')
+    console.info('usage: node scripts/wolves-frame-audit.mjs [video] [--base URL] [--viewport WxH] [--shots] [--self-test]')
     console.info(`videos: ${knownVideoNames()} (default: prologue)`)
     process.exit(0)
   }
@@ -105,7 +158,8 @@ async function main() {
   const viewport = parseViewport(flagValue(args, '--viewport')) ?? { width: 1920, height: 1080 }
   const wantsShots = args.includes('--shots')
 
-  const { segment, cues } = await loadCues(key)
+  const { segment, cues, geometry } = await loadCues(key)
+  const expectedGeometry = new Map(geometry.map(record => [record.file, record]))
 
   // Imported lazily so `--help` and a bad argument do not require a browser.
   const { chromium } = await import('playwright')
@@ -113,6 +167,7 @@ async function main() {
   const page = await browser.newPage({ viewport })
 
   const consoleErrors = []
+  const pageErrors = []
   const badRequests = []
   const appOrigin = new URL(baseUrl).origin
   page.on('console', (message) => {
@@ -120,6 +175,7 @@ async function main() {
       consoleErrors.push(message.text())
     }
   })
+  page.on('pageerror', error => pageErrors.push(error.message))
   // Only the app's own requests. The embedded player beats its telemetry endpoints
   // constantly and they fail for reasons that have nothing to do with this show.
   page.on('requestfailed', (request) => {
@@ -135,7 +191,7 @@ async function main() {
 
   const problems = []
   try {
-    await page.goto(`${baseUrl}/wolves/`, { waitUntil: 'domcontentloaded', timeout: 30000 })
+    await page.goto(`${baseUrl}/wolves/experience/`, { waitUntil: 'domcontentloaded', timeout: 30000 })
     await page.getByRole('button', { name: /DIRECTOR'S CUT/i }).click()
     await page.waitForSelector('.wolves-intro-overlay', { state: 'attached', timeout: 20000 })
     await page.waitForFunction(() => typeof window.__wolvesIntro?.seekTo === 'function', null, { timeout: 20000 })
@@ -203,7 +259,9 @@ async function main() {
                   src: decodeURIComponent(image.currentSrc).split('/').pop(),
                   width: image.naturalWidth,
                   height: image.naturalHeight,
-                  box: box(image),
+                  elementBox: box(image),
+                  objectFit: getComputedStyle(image).objectFit,
+                  objectPosition: getComputedStyle(image).objectPosition,
                 },
                 // Report and geometry-check the caption whenever this cue has words — the
                 // predicate above already proved they are the right ones, even mid fade-in.
@@ -243,15 +301,28 @@ async function main() {
         continue
       }
 
-      const painting = shot.image.box
-      const bledOff = Math.abs(painting.left) > 1
-        || Math.abs(painting.top) > 1
-        || Math.abs(painting.width - shot.frame.width) > 1
-        || Math.abs(painting.height - shot.frame.height) > 1
-      if (bledOff) {
+      const painting = paintedBox({
+        elementBox: shot.image.elementBox,
+        naturalWidth: shot.image.width,
+        naturalHeight: shot.image.height,
+        objectFit: shot.image.objectFit,
+        objectPosition: shot.image.objectPosition,
+      })
+      const letterboxed = painting.left > 1
+        || painting.top > 1
+        || painting.right < shot.frame.width - 1
+        || painting.bottom < shot.frame.height - 1
+      if (letterboxed) {
         problems.push(
           `${label}: painting is not full-bleed `
           + `(${Math.round(painting.left)},${Math.round(painting.top)} ${Math.round(painting.width)}x${Math.round(painting.height)})`,
+        )
+      }
+      const ledger = expectedGeometry.get(shot.image.src)
+      if (ledger && (shot.image.width !== ledger.width || shot.image.height !== ledger.height)) {
+        problems.push(
+          `${label}: decoded geometry ${shot.image.width}x${shot.image.height} `
+          + `does not match ledger ${ledger.width}x${ledger.height}`,
         )
       }
       if (shot.caption) {
@@ -281,12 +352,12 @@ async function main() {
 
   const unique = list => [...new Set(list)]
   console.info(`\nduration ${segment.duration}s, ${cues.length} shots checked`)
-  for (const [heading, list] of [['console errors', consoleErrors], ['bad requests', badRequests], ['problems', problems]]) {
+  for (const [heading, list] of [['console errors', consoleErrors], ['page errors', pageErrors], ['bad requests', badRequests], ['problems', problems]]) {
     console.info(`\n${heading}:`)
     console.info(unique(list).length ? unique(list).map(entry => `  ${entry}`).join('\n') : '  (none)')
   }
 
-  process.exit(problems.length || consoleErrors.length || badRequests.length ? 1 : 0)
+  process.exit(problems.length || consoleErrors.length || pageErrors.length || badRequests.length ? 1 : 0)
 }
 
 main().catch((error) => {

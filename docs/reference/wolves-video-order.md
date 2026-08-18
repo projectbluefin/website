@@ -49,15 +49,14 @@ be used to decide whether a video exists.
 ## What is on screen at a timestamp
 
 Do not hand-simulate the mark grid, and do not screenshot nearby seconds and
-infer. Both have failed here: one session probed 263s, 266s and 320s and stepped
-straight over the 281s cue the owner was asking about, then reported the
-timestamp as checked.
+infer. A probe that samples only nearby frames can step over the exact cue the
+owner named and still report the timestamp as checked.
 
 Ask the show:
 
 ```bash
-node scripts/wolves-cue-at.mjs 4:41        # defaults to the prologue
-node scripts/wolves-cue-at.mjs prologue 281
+node scripts/wolves-cue-at.mjs 1:50        # defaults to the prologue
+node scripts/wolves-cue-at.mjs prologue 110
 node scripts/wolves-cue-at.mjs prologue --all
 ```
 
@@ -65,7 +64,7 @@ It loads the authored modules through Vite, so it reads the same data the app
 does and cannot drift from it. It reports the cue window, the exact text, its
 word and line counts, the longest line, the emphasis, and whether the words are
 still up at the second you asked about — a cue's *shot* outlives its *text*, so
-"the shot contains 4:41" and "words are on screen at 4:41" are different
+"the shot contains 1:50" and "words are on screen at 1:50" are different
 questions.
 
 Only the prologue is registered so far. Add a video to the `VIDEOS` table in the
