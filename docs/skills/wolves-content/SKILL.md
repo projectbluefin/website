@@ -365,6 +365,54 @@ live feed has hundreds of single-photo events, and dealing every bucket once per
 round put all of them in round one.
 
 
+## `/wolves/` is the teaser; the show moved to `/wolves/experience/`
+
+`wolves/index.html` mounts `WolvesTeaserApp.vue`: hero, the recreated trailer,
+and the back-catalogue album strip. The full cinematic presentation moved
+as-is to `wolves/experience/index.html`, registered as the `'wolves/experience'`
+rollup input in `vite.config.ts`. Moving an entry point means updating the vite
+inputs and `docs/reference/wolves-runtime.md` together.
+
+Donation surfaces were removed at the owner's direction: the org-ads strip
+(`WolvesOrgAds.vue`, `wolves-org-ads.ts`, its test, the QR SVGs, and the
+`generate-qrs.js` wiring) is deleted, including the mount in
+`CinematicStage.vue` and its assertion in `wolvesCinematicStage.test.ts`.
+`WolvesQrCodes.vue` is misnamed — it is a Chromecast launcher, not donation —
+and stays.
+
+### Recreating a trailer from the destiny-vids cut list
+
+The source of truth is the owner-authored record
+`~/src/destiny-vids/stories/trailer-1-plates.json` — video id, exact duration,
+and every plate's window and copy. Port it verbatim into
+`src/data/wolves-trailer-plates.ts` and pin windows and copy with
+`src/tests/wolvesTrailerPlates.test.ts`. Never reword plate copy; if the cut is
+recut, re-port from the record instead of editing the website copy.
+
+The player is a chromeless YouTube iframe behind a poster overlay; plate
+overlays are polled against `player.getCurrentTime()` at 100 ms and the clock
+is clamped at `TRAILER_DURATION_SECONDS` with a replay affordance.
+
+Traps, all of which already cost a debugging cycle:
+
+- `new YT.Player(div, …)` **replaces** the host div with the iframe — style it
+  via `.frame :deep(iframe)` with `position: absolute; inset: 0`.
+- An unresolved `var()` inside a `background` shorthand invalidates the whole
+  declaration at computed-value time (silently transparent poster). Set shared
+  image variables on a common ancestor, never on a sibling of the consumer.
+- `wolves-cinematic.scss` sets the root font-size to ~10px, so `rem` widths are
+  ~62.5% of what they read as (`78rem` ≈ 780px, not 1248px).
+- YouTube rejects numeric loopback origins — test on
+  `http://projectbluefin.io.localhost:5173/wolves/`, not `localhost`.
+- A 2.39:1 frame is ~160px tall on a phone; the poster's kicker/title stack
+  must collapse to the play button alone below ~640px or it overflows and
+  overlaps the absolutely-centred button.
+
+Teaser album cards deep-link into the show:
+`/wolves/experience/?album=<id>` makes `WolvesApp` fetch `catalogue.json`,
+resolve the id, and launch that experience; an unknown id falls back to the
+lobby.
+
 ## Wire every generated feed into the weekly refresh
 
 `update-content.yml` refreshed Flickr photos weekly while

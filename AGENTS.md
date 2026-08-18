@@ -34,7 +34,8 @@ approval if the requested result needs a design file or runtime behavior change.
 | Path | Entry file | Status |
 |---|---|---|
 | `/` | `index.html` | Public main site |
-| `/wolves/` | `wolves/index.html` | Public presentation (see below) |
+| `/wolves/` | `wolves/index.html` | Public teaser page (see below) |
+| `/wolves/experience/` | `wolves/experience/index.html` | The presentation, deep-linked from the teaser |
 | `/dakota/` | `dakota/index.html` | Unlisted sub-application |
 | `/server/` | `server/index.html` | Separate production entry |
 

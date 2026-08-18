@@ -106,11 +106,16 @@ describe('content exports', () => {
   })
 
   it('publishes the Wolves campaign entrypoint', async () => {
-    const html = await readFile(resolve(process.cwd(), 'wolves/index.html'), 'utf8')
+    const teaser = await readFile(resolve(process.cwd(), 'wolves/index.html'), 'utf8')
+    const experience = await readFile(resolve(process.cwd(), 'wolves/experience/index.html'), 'utf8')
 
-    expect(html).toContain('<title>Bluefin: Seven Days to the Wolves</title>')
-    expect(html).toContain('property="og:url" content="https://projectbluefin.io/wolves/"')
-    expect(html).toContain('src="%BASE_URL%src/wolves-main.ts"')
+    expect(teaser).toContain('<title>Bluefin: Seven Days to the Wolves — Official Teaser</title>')
+    expect(teaser).toContain('property="og:url" content="https://projectbluefin.io/wolves/"')
+    expect(teaser).toContain('src="%BASE_URL%src/wolves-teaser-main.ts"')
+
+    expect(experience).toContain('<title>Bluefin: Seven Days to the Wolves</title>')
+    expect(experience).toContain('property="og:url" content="https://projectbluefin.io/wolves/experience/"')
+    expect(experience).toContain('src="%BASE_URL%src/wolves-main.ts"')
   })
 
   it('never truncates site copy with CSS ellipses', async () => {
