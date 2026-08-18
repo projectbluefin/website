@@ -10,7 +10,7 @@ async function verifyMobileSoundtrackProgress() {
     const pageErrors = []
     page.on('pageerror', error => pageErrors.push(error.message))
 
-    await page.goto(`${baseUrl}/wolves/`, { waitUntil: 'networkidle', timeout: 60_000 })
+    await page.goto(`${baseUrl}/wolves/experience/`, { waitUntil: 'networkidle', timeout: 60_000 })
     await page.getByRole('button', { name: /meet your teammates/i }).click()
     await page.waitForSelector('.wc-widget-progress')
 
@@ -49,7 +49,7 @@ async function verifySourceFragmentLayout() {
   try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
 
-    await page.goto(`${baseUrl}/wolves/`, { waitUntil: 'networkidle', timeout: 60_000 })
+    await page.goto(`${baseUrl}/wolves/experience/`, { waitUntil: 'networkidle', timeout: 60_000 })
     await page.getByRole('button', { name: /join the evolution|begin transmission/i }).click()
     await page.waitForTimeout(1_000)
     await page.evaluate(() => {
@@ -88,7 +88,7 @@ async function verifyNewsBulletinLayout() {
   try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
 
-    await page.goto(`${baseUrl}/wolves/`, { waitUntil: 'networkidle', timeout: 60_000 })
+    await page.goto(`${baseUrl}/wolves/experience/`, { waitUntil: 'networkidle', timeout: 60_000 })
     await page.getByRole('button', { name: /join the evolution|begin transmission/i }).click()
     await page.waitForTimeout(1_000)
     await page.evaluate(() => {

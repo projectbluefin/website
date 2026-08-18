@@ -15,7 +15,8 @@ workflow needed for the task.
 | Path | Entry | Status |
 |---|---|---|
 | `/` | `index.html` | Public main site |
-| `/wolves/` | `wolves/index.html` | Public presentation |
+| `/wolves/` | `wolves/index.html` | Public teaser page |
+| `/wolves/experience/` | `wolves/experience/index.html` | Public presentation |
 | `/dakota/` | `dakota/index.html` | Unlisted |
 | `/server/` | `server/index.html` | Separate entry |
 

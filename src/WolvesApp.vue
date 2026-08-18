@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import type { ExperienceManifest } from '@/config/experience-manifest'
 import type { IntroStatusPayload } from '@/data/wolves-intro-sequence'
-import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import CinematicLobby from '@/components/wolves/cinematic/CinematicLobby.vue'
 import CinematicStage from '@/components/wolves/cinematic/CinematicStage.vue'
 import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import Nameplate from '@/components/wolves/cinematic/Nameplate.vue'
 import WolvesIntroOverlay from '@/components/wolves/WolvesIntroOverlay.vue'
+import { parseBackCatalogue } from '@/config/experience-manifest'
 import { buildDirectorsCutVideoSequence, buildIntroVideoSequence, guardianIntroStartTime, isTextSegment } from '@/data/wolves-intro-sequence'
 import { INTRO_SEQUENCE_DURATION, useCinematicStore, WOLVES_EXPERIENCE } from '@/stores/cinematic'
 
@@ -298,6 +299,31 @@ async function handleSegmentSeek(ratio: number) {
 onBeforeUnmount(() => {
   unmounted = true
   handoffToken += 1
+})
+
+// Teaser deep link: `/wolves/experience/?album=<id>` skips the lobby and
+// launches that back-catalogue album straight into the cinematic runtime.
+// The canonical Wolves card still routes through its authored intro, exactly
+// like a lobby click. An unknown id just lands on the lobby.
+onMounted(async () => {
+  const albumId = new URLSearchParams(window.location.search).get('album')
+  if (!albumId) {
+    return
+  }
+  try {
+    const response = await fetch(`${import.meta.env.BASE_URL}experiences/catalogue.json`)
+    if (!response.ok) {
+      return
+    }
+    const catalogue = parseBackCatalogue(await response.json())
+    const manifest = catalogue.experiences.find(experience => experience.id === albumId)
+    if (manifest && !unmounted) {
+      await launchExperience(manifest)
+    }
+  }
+  catch {
+    // The lobby is the safe fallback when the catalogue cannot be read.
+  }
 })
 </script>
 

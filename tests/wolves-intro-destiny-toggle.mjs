@@ -2,7 +2,7 @@ import { mkdirSync } from 'node:fs'
 import { chromium } from 'playwright'
 
 const BASE_URL = process.env.WOLVES_BASE_URL ?? 'http://127.0.0.1:5173'
-const WOLVES_URL = `${BASE_URL}/wolves/`
+const WOLVES_URL = `${BASE_URL}/wolves/experience/`
 const [width, height] = (process.env.WOLVES_VIEWPORT ?? '1440x900').split('x').map(Number)
 const VIEWPORT = { width, height }
 const SCREENSHOT_DIR = process.env.WOLVES_SCREENSHOT_DIR

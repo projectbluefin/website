@@ -7,7 +7,6 @@ import CinematicCaptions from './CinematicCaptions.vue'
 import CinematicTransition from './CinematicTransition.vue'
 import Nameplate from './Nameplate.vue'
 import TheaterExperience from './TheaterExperience.vue'
-import WolvesOrgAds from './WolvesOrgAds.vue'
 
 const store = useCinematicStore()
 const hostA = ref<HTMLElement | null>(null)
@@ -89,8 +88,6 @@ defineExpose({
          cinematic phase. Keep them out of the intro so no companion videos or
          YouTube chrome can appear beneath the Destiny overlay. -->
     <TheaterExperience v-if="store.phase === 'cinematic'" />
-
-    <WolvesOrgAds />
 
     <div class="wc-stage-nameplate">
       <Nameplate

@@ -27,17 +27,26 @@ runtime, or hands work to another agent.
    area-specific skill before editing. Design/runtime work requires explicit
    user approval and browser verification.
 
-3. **Build a narrow feedback loop first.** For UI/runtime work, use a
+3. **Keep one compact task record.** When the task arrives as a Hive assignment
+   or GitHub issue, resolve it through the API first and verify the repository,
+   issue, branch target, and requested scope against it. Maintain one compact
+   record for the session — task ID, verified repository and issue, skills
+   loaded, evidence, confidence, and learned facts — and hand it off with the
+   work. The record lives in the agent's session folder; it is never committed
+   (see the banned-artifacts list in
+   [`../skill-improvement/SKILL.md`](../skill-improvement/SKILL.md)).
+
+4. **Build a narrow feedback loop first.** For UI/runtime work, use a
    deterministic Chromium flow at desktop and mobile sizes. Measure the actual
    rendered node, computed style, bounds, state, and URL—not just source CSS or
    a build result.
 
-4. **Keep experience boundaries explicit.** Wolves-authored presentation must
+5. **Keep experience boundaries explicit.** Wolves-authored presentation must
    be gated by the Wolves experience identity. Generic album slideshow,
    transport, ads, and controls must remain generic. Never use only a numeric
    track index to identify Wolves content.
 
-5. **Commit the complete fix.** First classify every dirty path; never bundle
+6. **Commit the complete fix.** First classify every dirty path; never bundle
    unrelated local deletions into the task. For deleted content, search all
    manifests, imports, timelines, and generated-data sources before committing.
    Stage explicit paths only. Include regression coverage in the same commit.
@@ -45,18 +54,33 @@ runtime, or hands work to another agent.
    Carry both attribution trailers (see `## Commit attribution`).
    Do not leave a tested fix uncommitted.
 
-6. **Push the production remote.**
+7. **Push the production remote.**
    ```bash
    git push upstream main
    sha=$(git rev-parse HEAD)
    ```
    Verify the deployment workflow for that exact SHA before calling it live.
 
-7. **Verify production, not just localhost.** Check the deployed URL after the
+8. **Verify production, not just localhost.** Check the deployed URL after the
    workflow succeeds. Use a hard refresh when testing changed bundles. For a
    route with eager manifest loading, open it in Chromium and assert there are
    no page errors or failed module requests; a successful Vite build is not
    sufficient.
+
+9. **Close the git session.** A squash merge does not make the feature branch
+   an ancestor of `main`, so `git branch --merged` cannot identify completed
+   PR branches reliably. After a merge, move any preserved edits to a fresh
+   branch, remove the completed worktree and branch, and prune Git's metadata.
+   Before every handoff, run:
+   ```bash
+   git worktree prune
+   npm run check:git-hygiene
+   ```
+   The checker uses GitHub PR state as well as Git ancestry and inspects every
+   local branch, not only branches mounted in `git worktree list`. It fails on
+   merged/closed PR branches, clean worktrees with no open PR, unpublished
+   clean branches, detached worktrees, and prunable metadata. It never deletes
+   automatically because dirty state and unique commits require human review.
 
 ## Commit attribution
 
@@ -172,6 +196,8 @@ an API token scoped to the target zone. Do not compensate by deploying a Worker.
 - A local build is treated as proof that route initialization succeeds.
 - A commit authored by an agent is missing the `Assisted-by` or
   `Co-authored-by` trailer.
+- A merged/closed PR branch remains checked out, or a clean worktree has no
+  open PR and is kept "just in case."
 - A PR opened speculatively past a factory gate, or review requested without
   the five evidence items.
 - A fork or feature-branch checkout of `common` cited as the shared contract.
@@ -187,6 +213,8 @@ an API token scoped to the target zone. Do not compensate by deploying a Worker.
 - [ ] Cloudflare changes used `wrangler` and documented permissions.
 - [ ] The exact commit's CI/deploy status is reported.
 - [ ] Every AI-authored commit carries both attribution trailers.
+- [ ] `npm run check:git-hygiene` passes after completed branches/worktrees are
+      removed and `git worktree prune` runs.
 - [ ] Gate stops were signalled (`hold` + `needs-human/agent-ready`) and
       explicitly approved before any PR was opened.
 

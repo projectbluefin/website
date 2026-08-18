@@ -219,7 +219,7 @@ describe('back catalogue experiences', () => {
 
     const cards = wrapper.findAll('.wc-back-catalogue-card')
     expect(cards).toHaveLength(1)
-    expect(wrapper.text()).toContain('BACK CATALOGUE')
+    expect(wrapper.text()).toContain('Music to Slay By')
     expect(wrapper.get('.wc-back-catalogue-art').attributes('src')).toContain('experiences/test-album.jpg')
 
     await cards[0].trigger('click')

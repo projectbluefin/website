@@ -11,10 +11,13 @@
 
 ## Two different products
 
-This repository ships a **website** at `/` and a **presentation** at
-`/wolves/`. They have different rules. The presentation is performed to a live
+This repository ships a **website** at `/`, a **teaser page** at `/wolves/`,
+and a **presentation** at
+`/wolves/experience/`. They have different rules. The presentation is performed
+to a live
 audience in theater seats, is read from a distance, is paced by music, and
-cannot be interacted with. See `../AGENTS.md` under "`/wolves/` is a
+cannot be interacted with. See `../AGENTS.md` under
+"`/wolves/experience/` is a
 presentation" and `reference/wolves-runtime.md`.
 
 ## Architecture

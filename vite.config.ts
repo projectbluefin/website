@@ -78,11 +78,12 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
-        testing: resolve(__dirname, 'public/testing.html'),
-        dakota: resolve(__dirname, 'dakota/index.html'),
-        server: resolve(__dirname, 'server/index.html'),
-        wolves: resolve(__dirname, 'wolves/index.html'),
+        'main': resolve(__dirname, 'index.html'),
+        'testing': resolve(__dirname, 'public/testing.html'),
+        'dakota': resolve(__dirname, 'dakota/index.html'),
+        'server': resolve(__dirname, 'server/index.html'),
+        'wolves': resolve(__dirname, 'wolves/index.html'),
+        'wolves/experience': resolve(__dirname, 'wolves/experience/index.html'),
       },
       output: {
         manualChunks: (id: string) => {

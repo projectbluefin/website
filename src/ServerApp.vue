@@ -52,7 +52,7 @@ if (i18n.global.availableLocales.includes(currentLocale)) {
           <span class="coming-soon-icon">🚧</span>
           <div class="coming-soon-text">
             <strong>Coming Soon!</strong>
-            <span>Alpha in October 2026 - Stay Tned!</span>
+            <span>Alpha in October 2026 - Stay Tuned!</span>
           </div>
         </div>
 

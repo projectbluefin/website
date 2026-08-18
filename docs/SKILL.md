@@ -16,11 +16,12 @@ Do not load every skill. Load the smallest skill that answers the job.
 
 ## Know what you are editing
 
-`/` is a website. `/wolves/` is a **presentation** performed to a live audience
-seated in a theater, projected and synchronized to music, with no interaction
-available to anyone. Web-page instincts — scroll it, shrink the type, add a
+`/` is a website. `/wolves/experience/` is a **presentation** performed to a
+live audience seated in a theater, projected and synchronized to music, with no
+interaction available to anyone. (`/wolves/` itself is the teaser page that
+introduces it.) Web-page instincts — scroll it, shrink the type, add a
 control, add more words — are defects there. Read `AGENTS.md` under
-"`/wolves/` is a presentation" before touching that route.
+"`/wolves/experience/` is a presentation" before touching that route.
 
 ## Skill index
 
@@ -33,6 +34,7 @@ control, add more words — are defects there. Read `AGENTS.md` under
 | Route a session, set remotes, commit, signal a factory gate, or hand off production | [`agent-workflow/SKILL.md`](skills/agent-workflow/SKILL.md) |
 | Work on Cloudflare DNS, Workers, Pages, domains, or Wrangler | [`cloudflare/SKILL.md`](skills/cloudflare/SKILL.md) |
 | Edit Wolves content or assets | [`wolves-content/SKILL.md`](skills/wolves-content/SKILL.md) |
+| Edit the `/wolves/` teaser, Trailer 1 player, plates, bridge, or end card | [`wolves-teaser/SKILL.md`](skills/wolves-teaser/SKILL.md) |
 | Edit Wolves guardian cards, share pages, or lobby gallery data | [`guardian-character-cards/SKILL.md`](skills/guardian-character-cards/SKILL.md) |
 | Do explicitly approved Wolves runtime engineering | [`wolves-runtime-engineering/SKILL.md`](skills/wolves-runtime-engineering/SKILL.md) |
 | Write back what I learned before finishing | [`skill-improvement/SKILL.md`](skills/skill-improvement/SKILL.md) |
@@ -71,7 +73,9 @@ without it.
 ## Every task loop
 
 1. **Preflight** — verify repository, remote, branch, dirty paths, and the
-   skill set you loaded.
+   skill set you loaded. When the task arrives as a Hive assignment or GitHub
+   issue, resolve it through the API and verify the repository, issue, branch
+   target, and requested scope before editing.
 2. **Detect** — treat stale, contradictory, missing, or failed guidance as a
    repair signal; do not silently fall back.
 3. **Repair** — make the smallest scoped change inside the approved boundary.

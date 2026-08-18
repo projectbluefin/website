@@ -30,7 +30,7 @@ describe('wolves cinematic stage status plate', () => {
       global: {
         stubs: {
           TheaterExperience: { template: '<div class="theater-experience-stub" />' },
-          WolvesOrgAds: { template: '<div class="org-ads-stub" />' },
+
           Nameplate: {
             name: 'NameplateStub',
             props: ['creditArtist', 'detail', 'label'],
@@ -45,7 +45,7 @@ describe('wolves cinematic stage status plate', () => {
     expect(wrapper.find('.theater-experience-stub').exists()).toBe(false)
   })
 
-  it('keeps the generic theater and ads while hiding Wolves-only presentation', async () => {
+  it('keeps the generic theater while hiding Wolves-only presentation', async () => {
     const store = useCinematicStore()
     store.loadExperience({
       id: 'album-test',
@@ -78,7 +78,7 @@ describe('wolves cinematic stage status plate', () => {
       global: {
         stubs: {
           TheaterExperience: { template: '<div class="theater-experience-stub" />' },
-          WolvesOrgAds: { template: '<div class="org-ads-stub" />' },
+
           Nameplate: true,
           CinematicCaptions: true,
           CinematicTransition: true,
@@ -87,7 +87,6 @@ describe('wolves cinematic stage status plate', () => {
     })
 
     expect(wrapper.find('.theater-experience-stub').exists()).toBe(true)
-    expect(wrapper.find('.org-ads-stub').exists()).toBe(true)
     expect(wrapper.findAll('.wc-layer').every(layer => !layer.classes().includes('wc-layer--audio-only'))).toBe(true)
     expect(wrapper.get('nameplate-stub').attributes()).toMatchObject({
       creditartist: 'Artist',
@@ -122,7 +121,7 @@ describe('wolves cinematic stage status plate', () => {
           },
           CinematicCaptions: true,
           CinematicTransition: true,
-          WolvesOrgAds: true,
+
         },
       },
     })

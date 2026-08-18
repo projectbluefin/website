@@ -22,24 +22,30 @@ approval if the requested result needs a design file or runtime behavior change.
 
 1. Read this file.
 2. Read `docs/SKILL.md` and load the one matching skill it names.
-3. Read the source file that owns the requested content.
-4. Check `git status --short` before editing.
-5. Before finishing, write back what you learned. See `## Self-Improvement`.
+3. If the task arrived as a Hive assignment or GitHub issue, resolve it
+   through the API and verify the repository, issue, branch target, and
+   requested scope before editing.
+4. Read the source file that owns the requested content.
+5. Check `git status --short` before editing.
+6. Before finishing, write back what you learned. See `## Self-Improvement`.
 
 ## Production entry points
 
 | Path | Entry file | Status |
 |---|---|---|
 | `/` | `index.html` | Public main site |
-| `/wolves/` | `wolves/index.html` | Public presentation (see below) |
+| `/wolves/` | `wolves/index.html` | Public teaser page (see below) |
+| `/wolves/experience/` | `wolves/experience/index.html` | The presentation, deep-linked from the teaser |
 | `/dakota/` | `dakota/index.html` | Unlisted sub-application |
 | `/server/` | `server/index.html` | Separate production entry |
 
 Do not promote an unlisted path through navigation, metadata, or a sitemap.
 
-## `/wolves/` is a presentation
+## `/wolves/experience/` is a presentation
 
-`/wolves/` is not a web page that happens to animate. It is a cinematic
+`/wolves/` is the public teaser page; the presentation it introduces lives at
+`/wolves/experience/`. That presentation is not a web page that happens to
+animate. It is a cinematic
 presentation performed to a live audience seated in a theater, projected on a
 large screen and synchronized to music by the media player clock.
 
@@ -139,6 +145,15 @@ handoff artifacts. Do not write session artifacts to `/tmp`.
   timeline, or generated-data references.
 - Stage explicit paths only.
 - Never use `git add .` or `git add -A`.
+- Never reuse a merged or closed PR branch for new work. Move preserved edits
+  to a fresh branch first, then remove the old branch and worktree.
+- A linked worktree must have dirty work or an open PR. A clean worktree with
+  no open PR is stale even when its branch still exists.
+- Unmounted local branches are not exempt: keep only `main` and branches with
+  open PRs. Delete merged/closed, zero-ahead, and unpublished clean branches.
+- After every merge and before every handoff, remove the completed worktree and
+  branch, run `git worktree prune`, then run `npm run check:git-hygiene`. A
+  failure blocks completion; do not dismiss it as local housekeeping.
 - Do not use destructive reset or restore commands. To resync local `main`
   after a squash merge — which always diverges, because the squash is not your
   commits — use `git reset --keep upstream/main`. It aborts rather than
@@ -218,7 +233,7 @@ repair, validate, write back, escalate.
 
 Stop at the four factory gates:
 
-- **Design** — any design or behavior change, including the frozen `/wolves/`
+- **Design** — any design or behavior change, including the frozen `/wolves/experience/`
   presentation. See `## Design gate` and `docs/skills/design-gate/SKILL.md`.
 - **Security** — credentials, secrets, tokens, signing, or the supply chain.
 - **Breakage** — anything that could break another factory repository or a

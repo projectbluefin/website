@@ -22,7 +22,7 @@
 import { chromium } from 'playwright'
 
 const BASE_URL = process.env.WOLVES_BASE_URL ?? 'http://127.0.0.1:5173'
-const WOLVES_URL = `${BASE_URL}/wolves/`
+const WOLVES_URL = `${BASE_URL}/wolves/experience/`
 const SEGMENT_SECONDS = 40
 
 let passed = 0
