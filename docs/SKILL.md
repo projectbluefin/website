@@ -71,7 +71,9 @@ without it.
 ## Every task loop
 
 1. **Preflight** — verify repository, remote, branch, dirty paths, and the
-   skill set you loaded.
+   skill set you loaded. When the task arrives as a Hive assignment or GitHub
+   issue, resolve it through the API and verify the repository, issue, branch
+   target, and requested scope before editing.
 2. **Detect** — treat stale, contradictory, missing, or failed guidance as a
    repair signal; do not silently fall back.
 3. **Repair** — make the smallest scoped change inside the approved boundary.

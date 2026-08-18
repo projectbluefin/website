@@ -22,9 +22,12 @@ approval if the requested result needs a design file or runtime behavior change.
 
 1. Read this file.
 2. Read `docs/SKILL.md` and load the one matching skill it names.
-3. Read the source file that owns the requested content.
-4. Check `git status --short` before editing.
-5. Before finishing, write back what you learned. See `## Self-Improvement`.
+3. If the task arrived as a Hive assignment or GitHub issue, resolve it
+   through the API and verify the repository, issue, branch target, and
+   requested scope before editing.
+4. Read the source file that owns the requested content.
+5. Check `git status --short` before editing.
+6. Before finishing, write back what you learned. See `## Self-Improvement`.
 
 ## Production entry points
 
