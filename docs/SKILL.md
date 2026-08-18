@@ -34,6 +34,7 @@ control, add more words — are defects there. Read `AGENTS.md` under
 | Route a session, set remotes, commit, signal a factory gate, or hand off production | [`agent-workflow/SKILL.md`](skills/agent-workflow/SKILL.md) |
 | Work on Cloudflare DNS, Workers, Pages, domains, or Wrangler | [`cloudflare/SKILL.md`](skills/cloudflare/SKILL.md) |
 | Edit Wolves content or assets | [`wolves-content/SKILL.md`](skills/wolves-content/SKILL.md) |
+| Edit the `/wolves/` teaser, Trailer 1 player, plates, bridge, or end card | [`wolves-teaser/SKILL.md`](skills/wolves-teaser/SKILL.md) |
 | Edit Wolves guardian cards, share pages, or lobby gallery data | [`guardian-character-cards/SKILL.md`](skills/guardian-character-cards/SKILL.md) |
 | Do explicitly approved Wolves runtime engineering | [`wolves-runtime-engineering/SKILL.md`](skills/wolves-runtime-engineering/SKILL.md) |
 | Write back what I learned before finishing | [`skill-improvement/SKILL.md`](skills/skill-improvement/SKILL.md) |

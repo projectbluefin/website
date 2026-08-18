@@ -41,5 +41,6 @@ When YouTube rejects a numeric loopback origin, open
 `http://projectbluefin.io.localhost:<port>/wolves/`. Run the relevant tests,
 typecheck, build, and browser flow before reporting completion.
 
-See `docs/reference/wolves-runtime.md` and
-`docs/skills/wolves-content/SKILL.md` for the canonical procedure.
+See `docs/skills/wolves-teaser/SKILL.md` for teaser and Trailer 1 work, and
+`docs/reference/wolves-runtime.md` plus `docs/skills/wolves-content/SKILL.md`
+for the full experience and its content.

@@ -413,89 +413,14 @@ Teaser album cards deep-link into the show:
 resolve the id, and launch that experience; an unknown id falls back to the
 lobby.
 
-### The cut is three pictures; the music video stops at 88.2 s
+### Match the trailer's authored composition, not only its copy
 
-The first recreation played the embed for the whole 1:50 and drew every plate
-over it. The delivered trailer does not do that, and reading only
-`trailer-1-plates.json` will not tell you so — `scripts/build_trailer1.py`
-concatenates three segments:
-
-| Window | Picture |
-|---|---|
-| 0 → 88.2 | the music video, letterboxed 2.39:1 into a 16:9 frame |
-| 88.2 → 102.2 | the March Bluefin wallpaper, **day falling into night** |
-| 102.2 → 110.02 | the March Bluefin **night** wallpaper, as a poster end card |
-
-So both day cards and the entire end card sit on the wallpaper at full frame,
-with no letterbox, and the last 21.8 s of the teaser must cover the embed
-entirely. The bridge's five legs (`up 1.4`, `dayHold 1.0`, `turn 4.4`,
-`nightHold 1.4`, `down 5.8`) sum to 14.000 and open and close on black.
-
-### Author plates against the cards, not against the manifest
-
-`trailer-1-plates.json` carries the windows and the copy. It does **not**
-carry the design. That lives in `cards/maintitle.html`, `cards/bookline.html`
-and `cards/daycard.html`, each of which records the owner instruction behind
-every value. Reproducing the schedule without reading the cards produces a
-plausible-looking overlay that is not the film:
-
-- **Every B and every F is blue**, at `#4285f4` — the published fill of the fin
-  ligature in the Bluefin wordmark. It is **not** `--wc-gold` (#60a5fa), which
-  is a UI token. Not applied to the end card title (a Linux Foundation mark)
-  and not to the CTA's b/f ("keep the f and b white on this one").
-- **The O of WOLVES is the Kubernetes helm**, and so is the O of *Extinction*.
-  The site's `public/brands/kubernetes.svg` is the BLUE logo and is the wrong
-  asset — the owner asked for "just the white symbolic one". The white icon is
-  now at `public/brands/kubernetes-icon-white.svg` (CC BY 4.0, unmodified).
-- **A spaced ` | ` is drawn, not set** — a glowing blue rule spanning the caps
-  it divides. Blue heat, never amber.
-- **There is no scrim.** The owner had the black box removed; contrast is a
-  halo on the glyphs. Any `background: rgb(8 9 12 / …)` behind plate type is a
-  regression.
-
-The first recreation also set the title and day cards in `--wc-font-weyland`
-(Michroma) and the book in `--wc-font-weyland-mono`. The cards use
-`--wc-font-display`, which they took *from this site* — check which token the
-card names before picking one.
-
-### Size plates in `cqw`, against the frame's width
-
-The cards are authored at 1920x1080 and every clamp resolves to its **maximum**
-at that width, so each value is a fixed fraction of frame width. Put
-`container-type: inline-size` on the player and express plate type in `cqw`
-(1cqw = 1/1920 of the design frame): title `4.0833cqw`, eyebrow `2.1667cqw`,
-credits `1.25cqw`, day card and CTA `4.3333cqw`. Everything then scales with
-the frame at any viewport, phone included.
-
-Convert through **px at a 16px root**, never by copying `rem` across: the card
-root is 16px and `wolves-cinematic.scss` sets this site's to ~10px.
-
-### Give the iframe the picture's aspect, not the frame's
-
-The delivered frame is 16:9 with the picture letterboxed inside it, so the
-player is 16:9 and every card coordinate maps 1:1 (anchor `[1030,443]` →
-`left: 53.6%; top: 41%`; day cards → `top: 58%`).
-
-But do **not** give the iframe that 16:9 box. YouTube then letterboxes the
-2.39:1 source itself and fills the resulting bars with its title bar, share
-button and logo — chrome the delivered cut does not have, sitting exactly
-where the render has pure black. Size the iframe to `aspect-ratio: 1920 / 804`
-and centre it, so the bars belong to the page. The chrome then behaves as it
-always did over the picture, and fades once playback settles.
-
-### Tailwind's preflight makes an inline mark a block
-
-`img { display: block }` comes from Tailwind preflight, so an image standing in
-for a letter takes its own line, ignores `text-align`, and sits flush left —
-the title renders as "SEVEN DAYS TO THE W", helm, "LVES". Set `display: inline`
-on any mark that substitutes for a glyph, and state `width: 100%` on lockup
-rows: a flex item containing a replaced element collapses below the room
-available and wraps for no visible reason.
-
-Verify the fix by measuring, not by looking: a one-line title's
-`getBoundingClientRect().height` equals one computed `line-height`, and both
-day cards must report the same centre — only one of them carries a helm, so a
-mismatch means that one is wrapping.
+The plate manifest carries timing and copy; the design and the three-picture
+composition live in destiny-vids' card templates and builder. Teaser work has
+its own procedure: load [`../wolves-teaser/SKILL.md`](../wolves-teaser/SKILL.md).
+It preserves the picture/bridge/end-card boundaries, frame-relative sizing,
+letter and mark treatments, iframe geometry, and the Tailwind inline-image
+trap without turning this content skill into a runtime-engineering manual.
 
 ## Wire every generated feed into the weekly refresh
 
