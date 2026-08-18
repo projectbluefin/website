@@ -12,7 +12,7 @@ import process from 'node:process'
 import { chromium } from 'playwright'
 
 const BASE_URL = process.env.WOLVES_BASE_URL ?? 'http://127.0.0.1:5173'
-const BASE = `${BASE_URL}/wolves/`
+const BASE = `${BASE_URL}/wolves/experience/`
 const WATCH_MS = Number(process.env.WATCH_MS ?? 45000)
 
 const log = (...args) => console.log(...args)

@@ -12,7 +12,7 @@ const totalMemGiB = Math.max(4, Math.floor(os.totalmem() / (1024 ** 3)))
 const defaultMemoryHighGiB = Math.max(8, Math.floor(totalMemGiB * 0.65))
 const defaultMemoryMaxGiB = Math.max(defaultMemoryHighGiB + 2, Math.floor(totalMemGiB * 0.8))
 const defaults = {
-  url: 'http://127.0.0.1:5173/wolves/',
+  url: 'http://127.0.0.1:5173/wolves/experience/',
   width: 2560,
   height: 1440,
   fps: 25,

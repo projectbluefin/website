@@ -7,7 +7,8 @@
 | Path | Entry | Mount |
 |---|---|---|
 | `/` | `index.html` | `src/main.ts` -> `src/App.vue` |
-| `/wolves/` | `wolves/index.html` | `src/wolves-main.ts` -> `src/WolvesApp.vue` |
+| `/wolves/` | `wolves/index.html` | `src/wolves-teaser-main.ts` -> `src/WolvesTeaserApp.vue` |
+| `/wolves/experience/` | `wolves/experience/index.html` | `src/wolves-main.ts` -> `src/WolvesApp.vue` |
 | `/dakota/` | `dakota/index.html` | `src/dakota-main.ts` |
 | `/server/` | `server/index.html` | `src/server-main.ts` |
 
@@ -28,8 +29,10 @@ lists live in `src/content.ts`.
 
 ## Wolves areas
 
-`/wolves/` is a cinematic presentation performed to a live seated audience, not
-a browsable page. See `AGENTS.md` under "`/wolves/` is a presentation" for the
+`/wolves/` is a public teaser page. `/wolves/experience/` is a cinematic
+presentation performed to a live seated audience, not
+a browsable page. See `AGENTS.md` under "`/wolves/experience/` is a
+presentation" for the
 production rules that constrain every change.
 
 The Wolves runtime is documented in `docs/reference/wolves-runtime.md`. Do not

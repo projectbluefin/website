@@ -41,9 +41,11 @@ approval if the requested result needs a design file or runtime behavior change.
 
 Do not promote an unlisted path through navigation, metadata, or a sitemap.
 
-## `/wolves/` is a presentation
+## `/wolves/experience/` is a presentation
 
-`/wolves/` is not a web page that happens to animate. It is a cinematic
+`/wolves/` is the public teaser page; the presentation it introduces lives at
+`/wolves/experience/`. That presentation is not a web page that happens to
+animate. It is a cinematic
 presentation performed to a live audience seated in a theater, projected on a
 large screen and synchronized to music by the media player clock.
 
@@ -222,7 +224,7 @@ repair, validate, write back, escalate.
 
 Stop at the four factory gates:
 
-- **Design** — any design or behavior change, including the frozen `/wolves/`
+- **Design** — any design or behavior change, including the frozen `/wolves/experience/`
   presentation. See `## Design gate` and `docs/skills/design-gate/SKILL.md`.
 - **Security** — credentials, secrets, tokens, signing, or the supply chain.
 - **Breakage** — anything that could break another factory repository or a
