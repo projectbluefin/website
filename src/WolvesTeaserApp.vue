@@ -327,7 +327,7 @@ onBeforeUnmount(() => {
       </p>
 
       <MediaWidget
-        title="Trailer 1 — Seven Days to the Wolves"
+        title="November 2026"
         :artwork="heroBackground"
         :elapsed="now"
         :duration="TRAILER_DURATION_SECONDS"

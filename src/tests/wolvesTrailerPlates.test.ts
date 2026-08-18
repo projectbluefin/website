@@ -50,17 +50,15 @@ describe('wolves trailer plates', () => {
     ])
   })
 
-  // The second book plate carries no copy: it is the box alone, keeping the
-  // page covered as the shot moves on. It deliberately overlaps book-a.
-  it('overlaps the two book boxes and gives the second one no copy', () => {
-    expect(activeTrailerPlates(32).map(p => p.id)).toEqual(['book-a', 'book-b'])
-    const [, boxOnly] = activeTrailerPlates(32)
-    expect(boxOnly.lines).toEqual([])
-    expect(activeTrailerPlates(34).map(p => p.id)).toEqual(['book-b'])
-    expect(activeTrailerPlates(34.9)).toEqual([])
+  // The second source record has no alpha pixels. It remains in the manifest
+  // but is not an active visible plate and must never collapse to a tiny box.
+  it('does not render the transparent book timing continuation', () => {
+    expect(activeTrailerPlates(32).map(p => p.id)).toEqual(['book-a'])
+    expect(activeTrailerPlates(34)).toEqual([])
+    expect(TRAILER_PLATES.find(p => p.id === 'book-b')?.lines).toEqual([])
   })
 
-  it('walks each book box to its own anchor in the authoring frame', () => {
+  it('preserves both source anchors in the authoring record', () => {
     expect(TRAILER_PLATES.find(p => p.id === 'book-a')?.anchor).toEqual([1030, 443])
     expect(TRAILER_PLATES.find(p => p.id === 'book-b')?.anchor).toEqual([1000, 470])
   })

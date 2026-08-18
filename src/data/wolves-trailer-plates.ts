@@ -135,8 +135,9 @@ export const TRAILER_PLATES: readonly TrailerPlate[] = [
     ],
   },
   {
-    // The box alone, carrying no copy: it keeps the book's printed words
-    // covered as the shot moves on. Empty `lines` is the authored state.
+    // Authored timing continuation with no visible pixels: the rendered
+    // plate_book-b.png has an empty alpha channel. Keep the record for fidelity
+    // to the source manifest, but never turn it into a collapsed empty box.
     id: 'book-b',
     kind: 'bookline',
     start: 31.0,
@@ -194,7 +195,11 @@ export function activeTrailerPlates(timeSeconds: number): TrailerPlate[] {
   if (!Number.isFinite(timeSeconds)) {
     return []
   }
-  return TRAILER_PLATES.filter(plate => timeSeconds >= plate.start && timeSeconds < plate.end)
+  return TRAILER_PLATES.filter(plate =>
+    timeSeconds >= plate.start
+    && timeSeconds < plate.end
+    && !(plate.kind === 'bookline' && plate.lines?.length === 0),
+  )
 }
 
 export type TrailerSegment = 'picture' | 'bridge' | 'endcard'

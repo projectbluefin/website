@@ -111,7 +111,8 @@ the letterboxed frame.
 - Day cards use `top: 58%` directly because they are on the full-frame
   wallpaper, not the letterboxed picture.
 - Book anchor `[1030,443]` maps to `left: 53.6%; top: 41%` in the 16:9 frame.
-- The second book anchor is `[1000,470]`.
+- The second book record keeps source anchor `[1000,470]` but its rendered PNG
+  has no alpha pixels; it is timing metadata, not a visible box.
 
 All plate type sizes key off **player width**. Every card clamp resolves to its
 maximum at 1920px. Put `container-type: inline-size` on the player and express
@@ -163,7 +164,7 @@ authored token unless the owner asks to reproduce the render host's fallback.
 | `maintitle-a` | 11.0–15.4 | title only; credits hidden |
 | `maintitle-b` | 15.4–22.6 | credits and sear appear; title must not move |
 | `book-a` | 26.9–33.64 | four-line box at `[1030,443]` |
-| `book-b` | 31.0–34.9 | empty box at `[1000,470]`; overlaps `book-a` |
+| `book-b` | 31.0–34.9 | transparent timing continuation at `[1000,470]`; never render |
 | `daycard-extinction` | 88.8–93.8 | fade in 0.4; fade out 0.5 |
 | `daycard-survival` | 94.4–100.6 | fade in 0.5; fade out 0.6 |
 | `endcard-event` | 102.2–110.02 | title, subtitle, hairline |
@@ -236,6 +237,7 @@ element can collapse below the available width and wrap unexpectedly.
 - Day cards appear over the music video instead of the March wallpaper.
 - Plate type uses Michroma.
 - A plate has a full-card translucent background.
+- An empty `book-b` record renders as a collapsed box.
 - The title or *Extinction* wraps only when the helm is present.
 - YouTube chrome occupies the frame's black bars or overlays the picture.
 - A second teaser-only transport copies `MediaWidget` markup or styles.
@@ -248,7 +250,8 @@ element can collapse below the available width and wrap unexpectedly.
 - [ ] Compare the browser against `renders/trailer-1.mp4` at 16, 29, 91, and
       107 seconds through `window.__wolvesTeaser.seekTo()`.
 - [ ] Main title occupies exactly one computed line-height.
-- [ ] Book box centre is 53.6% / 41% for `book-a`.
+- [ ] Book box centre is 53.6% / 41% for `book-a`; transparent `book-b`
+      produces no `.wt-book` element.
 - [ ] Both day cards report the same vertical centre; only one has a helm, so a
       mismatch means the inline mark is wrapping.
 - [ ] Player is fully above the fold on desktop and mobile.
