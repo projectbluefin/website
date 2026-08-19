@@ -7,6 +7,7 @@ import {
   TRAILER_BRIDGE_LEGS,
   TRAILER_CREDIT_JOIN_SECONDS,
   TRAILER_CREDIT_LINE,
+  TRAILER_CUT_DURATION_SECONDS,
   TRAILER_DURATION_SECONDS,
   TRAILER_ENDCARD_HOLD_SECONDS,
   TRAILER_HEADING_YIELD_SECONDS,
@@ -21,18 +22,20 @@ import {
 } from '@/data/wolves-trailer-plates'
 
 // These windows are the owner's cut (destiny-vids stories/trailer-1-plates.json
-// and scripts/build_trailer1.py, "Trailer 1.0", 2026-08-17). If the cut is
+// and scripts/build_trailer1.py, "Trailer 1.1", 2026-08-18). If the cut is
 // recut, re-port the manifest — do not nudge these numbers to make a test pass.
 describe('wolves trailer plates', () => {
-  it('runs for exactly 1:50.020', () => {
+  it('keeps the music at 1:50.020 and the picture through 1:55.020', () => {
     expect(TRAILER_VIDEO_ID).toBe('O0lyFqLr3Cc')
     expect(TRAILER_DURATION_SECONDS).toBe(110.02)
+    expect(TRAILER_CUT_DURATION_SECONDS).toBe(115.02)
   })
 
   it('shows nothing before the main title and after the cut ends', () => {
     expect(activeTrailerPlates(0)).toEqual([])
     expect(activeTrailerPlates(10.9)).toEqual([])
-    expect(activeTrailerPlates(TRAILER_DURATION_SECONDS)).toEqual([])
+    expect(activeTrailerPlates(TRAILER_DURATION_SECONDS).map(p => p.id)).toEqual(['endcard-event', 'endcard-cta'])
+    expect(activeTrailerPlates(TRAILER_CUT_DURATION_SECONDS)).toEqual([])
     expect(activeTrailerPlates(Number.NaN)).toEqual([])
   })
 
@@ -124,6 +127,7 @@ describe('wolves trailer plates', () => {
     expect(activeTrailerPlates(104).map(p => p.id)).toEqual(['endcard-event'])
     expect(activeTrailerPlates(106).map(p => p.id)).toEqual(['endcard-event', 'endcard-cta'])
     expect(activeTrailerPlates(109.9).map(p => p.id)).toEqual(['endcard-event', 'endcard-cta'])
+    expect(activeTrailerPlates(112.5).map(p => p.id)).toEqual(['endcard-event', 'endcard-cta'])
   })
 
   it('holds the finished teaser where the URL card is fully visible', () => {

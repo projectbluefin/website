@@ -1,8 +1,8 @@
 /**
  * Trailer 1 — the teaser's recreation of the owner's cut.
  *
- * PROVENANCE: this is a web recreation of the owner's cut "Trailer 1.0"
- * (delivered 2026-08-17), whose authoritative record is the destiny-vids repo
+ * PROVENANCE: this is a web recreation of the owner's cut "Trailer 1.1"
+ * (delivered 2026-08-18), whose authoritative record is the destiny-vids repo
  * at `stories/trailer-1-plates.json`, with the plate DESIGN authored in
  * `cards/maintitle.html`, `cards/bookline.html` and `cards/daycard.html` and
  * the composition in `scripts/build_trailer1.py`. Every string below is
@@ -16,7 +16,7 @@
  *
  *   0      -> 88.2    the music video, letterboxed 2.39:1 into a 16:9 frame
  *   88.2   -> 102.2   the March Bluefin wallpaper, day falling into night
- *   102.2  -> 110.02  the March Bluefin night wallpaper, as a poster end card
+ *   102.2  -> 115.02  the March Bluefin night wallpaper, as a poster end card
  *
  * So both day cards and the whole end card sit on the wallpaper at FULL
  * frame, with no letterbox — which is also why they carry no scrim: the
@@ -30,12 +30,14 @@
  */
 export const TRAILER_VIDEO_ID = 'O0lyFqLr3Cc'
 
-/** The trailer is exactly 1:50.020; the player pauses (not ends) at this mark. */
+/** The source music and embedded player stop at the approved 1:50.020 mark. */
 export const TRAILER_DURATION_SECONDS = 110.02
+/** The delivered picture holds the URL for five silent seconds after the music. */
+export const TRAILER_CUT_DURATION_SECONDS = 115.02
 
 /**
  * Segment boundaries, from `scripts/build_trailer1.py`:
- * picture 88.200 + bridge 14.000 + end card 7.820 = 110.020.
+ * picture 88.200 + bridge 14.000 + end card 12.820 = 115.020.
  */
 export const TRAILER_PICTURE_END_SECONDS = 88.2
 export const TRAILER_BRIDGE_END_SECONDS = 102.2
@@ -63,7 +65,7 @@ export const TRAILER_ENDCARD_CTA_IN = 3.1
 export const TRAILER_ENDCARD_CTA_FADE = 0.6
 export const TRAILER_ENDCARD_FADE = 1.2
 /** Freeze the completed teaser immediately before the URL card fades out. */
-export const TRAILER_ENDCARD_HOLD_SECONDS = TRAILER_DURATION_SECONDS - TRAILER_ENDCARD_FADE
+export const TRAILER_ENDCARD_HOLD_SECONDS = TRAILER_CUT_DURATION_SECONDS - TRAILER_ENDCARD_FADE
 
 /**
  * The title plate stays up across both authored beats; the credit line joins
@@ -172,7 +174,7 @@ export const TRAILER_PLATES: readonly TrailerPlate[] = [
     id: 'endcard-event',
     kind: 'endcard-event',
     start: TRAILER_BRIDGE_END_SECONDS + TRAILER_ENDCARD_EVENT_IN,
-    end: TRAILER_DURATION_SECONDS,
+    end: TRAILER_CUT_DURATION_SECONDS,
     title: 'KubeCon | CloudNativeCon North America',
     subtitle: 'Salt Lake City, Utah',
     fadeIn: TRAILER_ENDCARD_EVENT_FADE,
@@ -184,7 +186,7 @@ export const TRAILER_PLATES: readonly TrailerPlate[] = [
     id: 'endcard-cta',
     kind: 'endcard-cta',
     start: TRAILER_BRIDGE_END_SECONDS + TRAILER_ENDCARD_CTA_IN,
-    end: TRAILER_DURATION_SECONDS,
+    end: TRAILER_CUT_DURATION_SECONDS,
     title: 'wolves.projectbluefin.io',
     tags: ['#KubeCon', '#CloudNativeCon', '#7wolves'],
     fadeIn: TRAILER_ENDCARD_CTA_FADE,

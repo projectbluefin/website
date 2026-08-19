@@ -79,15 +79,16 @@ The real trailer is three concatenated segments, not one video with overlays:
 |---|---|
 | 0 → 88.2 | Nightwish video, letterboxed 2.39:1 into 16:9 |
 | 88.2 → 102.2 | March Bluefin wallpaper, day fading to night |
-| 102.2 → 110.02 | March Bluefin night wallpaper, as the end-card poster |
+| 102.2 → 115.02 | March Bluefin night wallpaper, as the end-card poster |
 
 `BRIDGE_MONTH = 3`; the local assets are:
 
 - `public/img/wallpapers/bluefin-03-day.webp`
 - `public/img/wallpapers/bluefin-03-night.webp`
 
-The last 21.8 seconds must cover the embed completely. Both day cards and the
-whole end card sit on the wallpaper at full-frame 16:9, with no letterbox.
+The last 26.82 seconds must cover the embed completely. Both day cards and the
+whole end card sit on the wallpaper at full-frame 16:9, with no letterbox. The
+music ends at 110.02 seconds, then the URL card holds for five silent seconds.
 The bridge's black backing is opaque from the 88.2-second cut onward; fade the
 wallpaper images over that backing, never the whole backdrop. Fading the
 backdrop itself exposes post-cut YouTube frames during the black-to-day rise.
@@ -171,8 +172,8 @@ authored token unless the owner asks to reproduce the render host's fallback.
 | `book-b` | 31.0–34.9 | transparent timing continuation at `[1000,470]`; never render |
 | `daycard-extinction` | 88.8–93.8 | fade in 0.4; fade out 0.5 |
 | `daycard-survival` | 94.4–100.6 | fade in 0.5; fade out 0.6 |
-| `endcard-event` | 102.2–110.02 | title, subtitle, hairline |
-| `endcard-cta` | 105.2–110.02 | CTA and tags over the event card |
+| `endcard-event` | 102.2–115.02 | title, subtitle, hairline |
+| `endcard-cta` | 105.2–115.02 | CTA and tags over the event card |
 
 The book box is opaque `rgb(4 10 20)`, with a 4px `#60a5fa` left border,
 3px radius, `1.35rem 2rem` card-root padding, line-height 1.7, and max-width
