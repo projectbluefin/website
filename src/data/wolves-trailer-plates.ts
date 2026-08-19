@@ -30,10 +30,12 @@
  */
 export const TRAILER_VIDEO_ID = 'O0lyFqLr3Cc'
 
-/** The source music and embedded player stop at the approved 1:50.020 mark. */
-export const TRAILER_DURATION_SECONDS = 110.02
+/** The source music stops after the howl and its approved fade. */
+export const TRAILER_MUSIC_END_SECONDS = 110.02
 /** The delivered picture holds the URL for five silent seconds after the music. */
-export const TRAILER_CUT_DURATION_SECONDS = 115.02
+export const TRAILER_DURATION_SECONDS = 115.02
+/** Compatibility name for records that describe picture rather than transport. */
+export const TRAILER_CUT_DURATION_SECONDS = TRAILER_DURATION_SECONDS
 
 /**
  * Segment boundaries, from `scripts/build_trailer1.py`:

@@ -15,6 +15,7 @@ import {
   TRAILER_CREDIT_LINE,
   TRAILER_DURATION_SECONDS,
   TRAILER_ENDCARD_HOLD_SECONDS,
+  TRAILER_MUSIC_END_SECONDS,
   TRAILER_TITLE_LABEL,
   TRAILER_TITLE_LINE,
   TRAILER_VIDEO_ID,
@@ -36,12 +37,15 @@ const fullscreenActive = ref(false)
 let player: YoutubePlayer | null = null
 let playerReady = false
 let clockTimer: ReturnType<typeof setInterval> | null = null
+let silentHoldStartedAtMs: number | null = null
 
 type TrailerPhase = 'idle' | 'playing' | 'paused' | 'ended'
 const trailerPhase = ref<TrailerPhase>('idle')
 const now = ref(0)
 
-const visualTime = computed(() => trailerPhase.value === 'ended' ? TRAILER_ENDCARD_HOLD_SECONDS : now.value)
+const visualTime = computed(() => now.value >= TRAILER_MUSIC_END_SECONDS
+  ? TRAILER_ENDCARD_HOLD_SECONDS
+  : now.value)
 const openingBlackOpacity = computed(() => trailerOpeningBlackOpacity(visualTime.value))
 const visiblePlates = computed(() => activeTrailerPlates(visualTime.value))
 const plateById = computed(() => new Map(visiblePlates.value.map(plate => [plate.id, plate])))
@@ -104,7 +108,25 @@ function stopClock() {
   }
 }
 
+function startSilentHold(from = now.value) {
+  player?.pauseVideo?.()
+  now.value = Math.min(Math.max(from, TRAILER_MUSIC_END_SECONDS), TRAILER_DURATION_SECONDS)
+  silentHoldStartedAtMs = Date.now() - (now.value - TRAILER_MUSIC_END_SECONDS) * 1000
+}
+
 function tick() {
+  if (silentHoldStartedAtMs !== null) {
+    now.value = Math.min(
+      TRAILER_MUSIC_END_SECONDS + (Date.now() - silentHoldStartedAtMs) / 1000,
+      TRAILER_DURATION_SECONDS,
+    )
+    if (now.value >= TRAILER_DURATION_SECONDS) {
+      silentHoldStartedAtMs = null
+      trailerPhase.value = 'ended'
+      stopClock()
+    }
+    return
+  }
   if (!playerReady) {
     return
   }
@@ -112,13 +134,8 @@ function tick() {
   if (typeof t !== 'number') {
     return
   }
-  // Stop the transport at 1:50.020. The visual clock independently holds the
-  // fully visible URL card immediately before its authored fade-out.
-  if (t >= TRAILER_DURATION_SECONDS) {
-    now.value = TRAILER_DURATION_SECONDS
-    player?.pauseVideo?.()
-    trailerPhase.value = 'ended'
-    stopClock()
+  if (t >= TRAILER_MUSIC_END_SECONDS) {
+    startSilentHold(TRAILER_MUSIC_END_SECONDS)
     return
   }
   now.value = t
@@ -131,7 +148,10 @@ function startClock() {
 
 function playTrailer() {
   trailerPhase.value = 'playing'
-  if (playerReady) {
+  if (now.value >= TRAILER_MUSIC_END_SECONDS) {
+    startSilentHold(now.value)
+  }
+  else if (playerReady) {
     player?.playVideo?.()
   }
   startClock()
@@ -139,7 +159,11 @@ function playTrailer() {
 
 function toggleTrailer() {
   if (trailerPhase.value === 'playing') {
-    if (playerReady) {
+    if (silentHoldStartedAtMs !== null) {
+      tick()
+      silentHoldStartedAtMs = null
+    }
+    else if (playerReady) {
       player?.pauseVideo?.()
     }
     trailerPhase.value = 'paused'
@@ -156,16 +180,27 @@ function toggleTrailer() {
 function seekTrailer(ratio: number) {
   const target = Math.min(Math.max(ratio, 0), 1) * TRAILER_DURATION_SECONDS
   now.value = target
-  if (playerReady) {
-    player?.seekTo?.(target, true)
-  }
-  if (trailerPhase.value === 'idle' || (trailerPhase.value === 'ended' && target < TRAILER_DURATION_SECONDS)) {
+  if (trailerPhase.value === 'idle' || trailerPhase.value === 'ended') {
     trailerPhase.value = 'paused'
+  }
+  if (target >= TRAILER_MUSIC_END_SECONDS) {
+    player?.seekTo?.(TRAILER_MUSIC_END_SECONDS, true)
+    player?.pauseVideo?.()
+    silentHoldStartedAtMs = trailerPhase.value === 'playing'
+      ? Date.now() - (target - TRAILER_MUSIC_END_SECONDS) * 1000
+      : null
+  }
+  else {
+    silentHoldStartedAtMs = null
+    if (playerReady) {
+      player?.seekTo?.(target, true)
+    }
   }
 }
 
 function replayTrailer() {
   now.value = 0
+  silentHoldStartedAtMs = null
   trailerPhase.value = 'playing'
   if (playerReady) {
     player?.seekTo?.(0, true)
@@ -199,9 +234,12 @@ onMounted(async () => {
           }
           playerReady = true
           if (now.value > 0) {
-            target.seekTo?.(now.value, true)
+            target.seekTo?.(Math.min(now.value, TRAILER_MUSIC_END_SECONDS), true)
           }
-          if (trailerPhase.value === 'playing') {
+          if (trailerPhase.value === 'playing' && now.value >= TRAILER_MUSIC_END_SECONDS) {
+            startSilentHold(now.value)
+          }
+          else if (trailerPhase.value === 'playing') {
             target.playVideo?.()
           }
         },
@@ -212,10 +250,7 @@ onMounted(async () => {
       // browser verification can jump the trailer clock instead of watching
       // 110 seconds of footage on every run.
       ;(window as any).__wolvesTeaser = {
-        seekTo: (s: number) => {
-          player?.seekTo?.(s, true)
-          now.value = s
-        },
+        seekTo: (s: number) => seekTrailer(s / TRAILER_DURATION_SECONDS),
         now: () => now.value,
         segment: () => segment.value,
       }
@@ -233,6 +268,7 @@ onBeforeUnmount(() => {
   player?.destroy?.()
   player = null
   playerReady = false
+  silentHoldStartedAtMs = null
 })
 </script>
 

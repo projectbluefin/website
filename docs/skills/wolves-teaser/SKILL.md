@@ -93,6 +93,8 @@ two 59.94 fps frames (`2 * 1001 / 60000`). The explosion blooms out of black.
 The last 26.82 seconds must cover the embed completely. Both day cards and the
 whole end card sit on the wallpaper at full-frame 16:9, with no letterbox. The
 music ends at 110.02 seconds, then the URL card holds for five silent seconds.
+The raw player must pause only after the 1:47 howl and the music fade complete.
+A wall clock then advances the transport to the full 115.02-second picture end.
 The bridge's black backing is opaque from the 88.2-second cut onward; fade the
 wallpaper images over that backing, never the whole backdrop. Fading the
 backdrop itself exposes post-cut YouTube frames during the black-to-day rise.
@@ -266,10 +268,12 @@ The progress control must seek continuously during pointer drag. A click-only
 `touch-action: none` on the track so a touch drag seeks instead of scrolling
 the page.
 
-At natural end, keep transport time at `1:50 / 1:50` while the visual clock
-holds at `TRAILER_ENDCARD_HOLD_SECONDS`, immediately before the URL card's fade.
-Do not show the poster over the ended phase; it would replace the requested
-last screen.
+The transport has two clocks. YouTube supplies 0–110.02 seconds so the 1:47
+howl and final music fade play. Pause YouTube at 110.02, then use a wall clock
+for the five-second silent URL hold. The widget must reach `1:55 / 1:55` while
+the visual clock stays at `TRAILER_ENDCARD_HOLD_SECONDS`, immediately before
+the URL card's fade. Do not show the poster over the ended phase; it would
+replace the requested last screen.
 
 ## Inline Mark Trap
 
@@ -308,6 +312,7 @@ element can collapse below the available width and wrap unexpectedly.
 - A second teaser-only transport copies `MediaWidget` markup or styles.
 - Play is available only in the fixed widget and is not obvious on initial load.
 - Fullscreen targets the iframe, causing the title, overlays, or widget to disappear.
+- The transport ends at 1:50 instead of advancing through the silent hold to 1:55.
 - Ended state shows the poster or a faded/empty end card instead of the URL.
 - Play or Seek advances behind an opaque poster, or Pause replaces the current frame.
 - The progress control jumps on click but does not track mouse or touch drag.
@@ -340,7 +345,8 @@ element can collapse below the available width and wrap unexpectedly.
       work through the external media-widget mode without restoring the poster.
 - [ ] The idle Play and Fullscreen buttons are centered and keyboard accessible;
       fullscreen owns `.wt-stage` and exposes an Exit Fullscreen label.
-- [ ] Natural end shows the fully opaque `wolves.projectbluefin.io` card while
-      the widget reads `1:50 / 1:50`; no poster is present.
+- [ ] The 1:47 howl plays before YouTube pauses at 1:50.02; the silent hold
+      advances to `1:55 / 1:55` with a fully opaque `wolves.projectbluefin.io`
+      card and no poster.
 - [ ] `src/tests/wolvesTrailerPlates.test.ts`, lint, typecheck, `test:gate`, and
       build pass.

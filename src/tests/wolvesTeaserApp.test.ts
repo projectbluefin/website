@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import {
+  TRAILER_DURATION_SECONDS,
+  TRAILER_MUSIC_END_SECONDS,
   TRAILER_PICTURE_END_SECONDS,
   TRAILER_PICTURE_REVEAL_FADE_SECONDS,
   TRAILER_PICTURE_REVEAL_SECONDS,
@@ -60,6 +62,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  vi.useRealTimers()
   delete (window as typeof window & { __wolvesTeaser?: TeaserHarness }).__wolvesTeaser
 })
 
@@ -173,8 +176,27 @@ describe('wolves teaser transport', () => {
     expect(wrapper.find('.wt-poster').exists()).toBe(false)
 
     youtube.ready()
-    expect(youtube.latest()!.seekTo).toHaveBeenCalledWith(55.01, true)
+    expect(youtube.latest()!.seekTo).toHaveBeenCalledWith(TRAILER_DURATION_SECONDS / 2, true)
     expect(youtube.latest()!.playVideo).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  it('plays through the howl, then advances a silent five-second URL hold', async () => {
+    vi.useFakeTimers()
+    const wrapper = shallowMount(WolvesTeaserApp)
+    await flushPromises()
+    youtube.ready()
+    await wrapper.get('.wt-convenience-play').trigger('click')
+
+    youtube.latest()!.currentTime = TRAILER_MUSIC_END_SECONDS
+    await vi.advanceTimersByTimeAsync(100)
+    expect(youtube.latest()!.pauseVideo).toHaveBeenCalled()
+    expect(wrapper.getComponent(MediaWidget).props('duration')).toBe(TRAILER_DURATION_SECONDS)
+    expect(wrapper.getComponent(MediaWidget).props('elapsed')).toBeCloseTo(TRAILER_MUSIC_END_SECONDS, 2)
+
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(wrapper.getComponent(MediaWidget).props('elapsed')).toBeCloseTo(TRAILER_DURATION_SECONDS, 2)
+    expect(wrapper.getComponent(MediaWidget).props('playing')).toBe(false)
     wrapper.unmount()
   })
 
