@@ -2,7 +2,11 @@ import { flushPromises, mount, shallowMount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
-import { TRAILER_PICTURE_END_SECONDS } from '@/data/wolves-trailer-plates'
+import {
+  TRAILER_PICTURE_END_SECONDS,
+  TRAILER_PICTURE_REVEAL_FADE_SECONDS,
+  TRAILER_PICTURE_REVEAL_SECONDS,
+} from '@/data/wolves-trailer-plates'
 import WolvesTeaserApp from '@/WolvesTeaserApp.vue'
 
 const youtube = vi.hoisted(() => {
@@ -60,6 +64,33 @@ afterEach(() => {
 })
 
 describe('wolves teaser bridge', () => {
+  it('covers Nightwish with black until the authored explosion bloom', async () => {
+    const wrapper = mount(WolvesTeaserApp, {
+      global: {
+        stubs: {
+          MediaWidget: true,
+          WolvesBackCatalogue: true,
+          WolvesTrailerLine: true,
+        },
+      },
+    })
+    await flushPromises()
+    const harness = (window as typeof window & { __wolvesTeaser: TeaserHarness }).__wolvesTeaser
+
+    harness.seekTo(TRAILER_PICTURE_REVEAL_SECONDS - 0.01)
+    await nextTick()
+    expect(wrapper.get<HTMLElement>('.wt-opening-black').element.style.opacity).toBe('1')
+
+    harness.seekTo(TRAILER_PICTURE_REVEAL_SECONDS + TRAILER_PICTURE_REVEAL_FADE_SECONDS / 2)
+    await nextTick()
+    expect(Number(wrapper.get<HTMLElement>('.wt-opening-black').element.style.opacity)).toBeCloseTo(0.5, 5)
+
+    harness.seekTo(TRAILER_PICTURE_REVEAL_SECONDS + TRAILER_PICTURE_REVEAL_FADE_SECONDS)
+    await nextTick()
+    expect(wrapper.find('.wt-opening-black').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
   it('keeps an opaque black backing over the YouTube picture while the wolf-day wallpaper rises', async () => {
     const wrapper = mount(WolvesTeaserApp, {
       global: {

@@ -77,7 +77,7 @@ The real trailer is three concatenated segments, not one video with overlays:
 
 | Window | Picture |
 |---|---|
-| 0 → 88.2 | Nightwish video, letterboxed 2.39:1 into 16:9 |
+| 0 → 88.2 | Nightwish video, letterboxed 2.39:1 into 16:9; black through 12.2 |
 | 88.2 → 102.2 | March Bluefin wallpaper, day fading to night |
 | 102.2 → 115.02 | March Bluefin night wallpaper, as the end-card poster |
 
@@ -85,6 +85,10 @@ The real trailer is three concatenated segments, not one video with overlays:
 
 - `public/img/wallpapers/bluefin-03-day.webp`
 - `public/img/wallpapers/bluefin-03-night.webp`
+
+The raw Nightwish upload is not the authored opening. Keep an opaque black gate
+over the complete player through `BURST = 12.200`, then clear it across exactly
+two 59.94 fps frames (`2 * 1001 / 60000`). The explosion blooms out of black.
 
 The last 26.82 seconds must cover the embed completely. Both day cards and the
 whole end card sit on the wallpaper at full-frame 16:9, with no letterbox. The
@@ -194,7 +198,8 @@ entry surface only: remove it as soon as playback starts and never restore it
 for pause or seek. Covering the player while its clock advances makes Play and
 Seek look broken, and replacing a paused frame with poster art hides the video.
 A transient YouTube centre glyph is less destructive than hiding the requested
-frame.
+frame. This rule applies to the poster, not the authored black gate. The black
+gate still covers the raw upload until the 12.2-second explosion bloom.
 
 `new YT.Player(div, …)` replaces the host div with the iframe. Target the
 resulting iframe through the wrapper's `:deep(iframe)` rule.
@@ -292,6 +297,7 @@ element can collapse below the available width and wrap unexpectedly.
 
 ## Red Flags
 
+- The raw Nightwish upload is visible before the 12.2-second explosion bloom.
 - The embed remains visible after 88.2 seconds.
 - Day cards appear over the music video instead of the March wallpaper.
 - Plate type uses Michroma.
@@ -314,6 +320,8 @@ element can collapse below the available width and wrap unexpectedly.
 
 ## Verification
 
+- [ ] After Play, the complete player is pixel-black at 0 and 12.19 seconds;
+      black opacity is 0.5 halfway through the two-frame reveal and 0 afterward.
 - [ ] Compare the browser against `renders/trailer-1.mp4` at 16, 29, 91, and
       107 seconds through `window.__wolvesTeaser.seekTo()`.
 - [ ] Exactly one surface spells the film title at 0, 12, 18, 24, and 107

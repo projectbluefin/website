@@ -41,6 +41,10 @@ export const TRAILER_CUT_DURATION_SECONDS = 115.02
  */
 export const TRAILER_PICTURE_END_SECONDS = 88.2
 export const TRAILER_BRIDGE_END_SECONDS = 102.2
+/** The source picture stays black until the explosion blooms out of it. */
+export const TRAILER_PICTURE_REVEAL_SECONDS = 12.2
+/** Two 59.94 fps frames, matching the delivered trailer's opening gate. */
+export const TRAILER_PICTURE_REVEAL_FADE_SECONDS = 2 * 1001 / 60000
 
 /** `BRIDGE_MONTH = 3` — the owner named `03-bluefin-day`. */
 export const TRAILER_BRIDGE_MONTH = '03'
@@ -207,6 +211,19 @@ export function activeTrailerPlates(timeSeconds: number): TrailerPlate[] {
 }
 
 export type TrailerSegment = 'picture' | 'bridge' | 'endcard'
+
+/** Black cover over the raw Nightwish picture before the authored burst. */
+export function trailerOpeningBlackOpacity(timeSeconds: number): number {
+  if (!Number.isFinite(timeSeconds) || timeSeconds <= TRAILER_PICTURE_REVEAL_SECONDS) {
+    return 1
+  }
+  if (timeSeconds >= TRAILER_PICTURE_REVEAL_SECONDS + TRAILER_PICTURE_REVEAL_FADE_SECONDS) {
+    return 0
+  }
+  return 1 - (
+    timeSeconds - TRAILER_PICTURE_REVEAL_SECONDS
+  ) / TRAILER_PICTURE_REVEAL_FADE_SECONDS
+}
 
 /** Which of the cut's three pictures is on screen at a given timestamp. */
 export function trailerSegmentAt(timeSeconds: number): TrailerSegment {

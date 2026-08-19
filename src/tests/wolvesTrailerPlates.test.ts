@@ -12,11 +12,14 @@ import {
   TRAILER_ENDCARD_HOLD_SECONDS,
   TRAILER_HEADING_YIELD_SECONDS,
   TRAILER_PICTURE_END_SECONDS,
+  TRAILER_PICTURE_REVEAL_FADE_SECONDS,
+  TRAILER_PICTURE_REVEAL_SECONDS,
   TRAILER_PLATES,
   TRAILER_TITLE_LABEL,
   TRAILER_VIDEO_ID,
   trailerBridgeState,
   trailerHeadingOpacity,
+  trailerOpeningBlackOpacity,
   trailerPlateOpacity,
   trailerSegmentAt,
 } from '@/data/wolves-trailer-plates'
@@ -140,6 +143,18 @@ describe('wolves trailer plates', () => {
 // The cut is three concatenated pictures, not one video with overlays. The
 // first recreation missed this and drew the last 21.8 s over the music video.
 describe('wolves trailer segments', () => {
+  it('holds the opening black until the authored explosion bloom', () => {
+    expect(TRAILER_PICTURE_REVEAL_SECONDS).toBe(12.2)
+    expect(trailerOpeningBlackOpacity(0)).toBe(1)
+    expect(trailerOpeningBlackOpacity(TRAILER_PICTURE_REVEAL_SECONDS)).toBe(1)
+    expect(trailerOpeningBlackOpacity(
+      TRAILER_PICTURE_REVEAL_SECONDS + TRAILER_PICTURE_REVEAL_FADE_SECONDS / 2,
+    )).toBeCloseTo(0.5, 5)
+    expect(trailerOpeningBlackOpacity(
+      TRAILER_PICTURE_REVEAL_SECONDS + TRAILER_PICTURE_REVEAL_FADE_SECONDS,
+    )).toBe(0)
+  })
+
   it('leaves the music video at 88.2 and never returns to it', () => {
     expect(trailerSegmentAt(0)).toBe('picture')
     expect(trailerSegmentAt(88.19)).toBe('picture')

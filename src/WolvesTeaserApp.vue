@@ -20,6 +20,7 @@ import {
   TRAILER_VIDEO_ID,
   trailerBridgeState,
   trailerHeadingOpacity,
+  trailerOpeningBlackOpacity,
   trailerPlateOpacity,
   trailerSegmentAt,
 } from '@/data/wolves-trailer-plates'
@@ -41,6 +42,7 @@ const trailerPhase = ref<TrailerPhase>('idle')
 const now = ref(0)
 
 const visualTime = computed(() => trailerPhase.value === 'ended' ? TRAILER_ENDCARD_HOLD_SECONDS : now.value)
+const openingBlackOpacity = computed(() => trailerOpeningBlackOpacity(visualTime.value))
 const visiblePlates = computed(() => activeTrailerPlates(visualTime.value))
 const plateById = computed(() => new Map(visiblePlates.value.map(plate => [plate.id, plate])))
 
@@ -250,6 +252,15 @@ onBeforeUnmount(() => {
         <div class="wt-player-frame">
           <div ref="playerHost" class="wt-player-host" />
         </div>
+
+        <!-- The raw Nightwish upload is not the authored opening. The delivered
+             cut holds black until the explosion blooms at 12.2 seconds. -->
+        <div
+          v-if="openingBlackOpacity > 0"
+          class="wt-opening-black"
+          :style="{ opacity: openingBlackOpacity }"
+          aria-hidden="true"
+        />
 
         <!-- Segments two and three: the March wallpaper, day falling into
              night, covering the picture for the last 21.8 s. -->
@@ -491,6 +502,7 @@ onBeforeUnmount(() => {
   }
 }
 
+.wt-opening-black,
 .wt-backdrop {
   position: absolute;
   inset: 0;
