@@ -189,10 +189,12 @@ chrome without masking or cropping the film itself.
 
 Set `pointer-events: none` on the iframe. Playback belongs to the site's media
 widget; allowing pointer hover over the cross-origin iframe asks YouTube to
-paint chrome again, and the page cannot style it away. YouTube also paints a
-centre play/pause glyph briefly after API playback starts. Keep the opaque
-poster over the iframe for the first 8 seconds (and whenever paused); reveal it
-before the first authored plate at 11 seconds.
+paint chrome again, and the page cannot style it away. The opaque poster is an
+entry surface only: remove it as soon as playback starts and never restore it
+for pause or seek. Covering the player while its clock advances makes Play and
+Seek look broken, and replacing a paused frame with poster art hides the video.
+A transient YouTube centre glyph is less destructive than hiding the requested
+frame.
 
 `new YT.Player(div, …)` replaces the host div with the iframe. Target the
 resulting iframe through the wrapper's `:deep(iframe)` rule.
@@ -240,16 +242,24 @@ Do not copy the widget markup or stylesheet into the teaser. A visual copy
 immediately drifts from the show and creates two transport accessibility
 surfaces to maintain.
 
-The widget is the ongoing transport, but the idle/paused poster also carries
-centered **Play** and **Fullscreen** convenience buttons. Fullscreen the entire
-`.wt-stage`, not the iframe, so title, authored overlays, and widget remain in
-the fullscreen tree. Hide the standfirst there and fit the 16:9 player to the
-remaining viewport.
+The widget is the ongoing transport, while the idle poster carries centered
+**Play** and **Fullscreen** convenience buttons. Once entered, pause, resume,
+and seek stay in the widget so the video frame remains visible. Fullscreen the
+entire `.wt-stage`, not the iframe, so title, authored overlays, and widget
+remain in the fullscreen tree. Hide the standfirst there and fit the 16:9
+player to the remaining viewport.
+
+Treat Play and Seek as user intent even when the IFrame API or player is still
+loading. The button appears before `onReady`, so queue intent in teaser state;
+on readiness, restore the requested time and start only if the phase is still
+playing. Calling `playVideo()` on a missing or not-ready player loses the click.
 
 The progress control must seek continuously during pointer drag. A click-only
 `div` with `role="slider"` is not a working slider. Use pointer capture from
-`pointerdown` through `pointerup` or `pointercancel`, and set `touch-action:
-none` on the track so a touch drag seeks instead of scrolling the page.
+`pointerdown` through `pointerup` or `pointercancel`, seek on the final
+`pointerup` coordinate rather than trusting the last move event, and set
+`touch-action: none` on the track so a touch drag seeks instead of scrolling
+the page.
 
 At natural end, keep transport time at `1:50 / 1:50` while the visual clock
 holds at `TRAILER_ENDCARD_HOLD_SECONDS`, immediately before the URL card's fade.
@@ -293,6 +303,7 @@ element can collapse below the available width and wrap unexpectedly.
 - Play is available only in the fixed widget and is not obvious on initial load.
 - Fullscreen targets the iframe, causing the title, overlays, or widget to disappear.
 - Ended state shows the poster or a faded/empty end card instead of the URL.
+- Play or Seek advances behind an opaque poster, or Pause replaces the current frame.
 - The progress control jumps on click but does not track mouse or touch drag.
 - The iframe accepts pointer events.
 - The page heading and the authored title card are legible at the same time, or
@@ -318,9 +329,8 @@ element can collapse below the available width and wrap unexpectedly.
 - [ ] A 16:9 iframe is centred at 134.328% height inside the clipped 1920:804
       aperture and has `pointer-events: none`.
 - [ ] Playback, pause, replay, click seek, keyboard seek, and pointer-drag seek
-      work through the external media-widget mode; the 8-second start/seek cover
-      and paused poster leave no YouTube chrome visible.
-- [ ] Idle/paused Play and Fullscreen buttons are centered and keyboard accessible;
+      work through the external media-widget mode without restoring the poster.
+- [ ] The idle Play and Fullscreen buttons are centered and keyboard accessible;
       fullscreen owns `.wt-stage` and exposes an Exit Fullscreen label.
 - [ ] Natural end shows the fully opaque `wolves.projectbluefin.io` card while
       the widget reads `1:50 / 1:50`; no poster is present.

@@ -33,21 +33,14 @@ const stageHost = ref<HTMLElement | null>(null)
 const playerHost = ref<HTMLElement | null>(null)
 const fullscreenActive = ref(false)
 let player: YoutubePlayer | null = null
+let playerReady = false
 let clockTimer: ReturnType<typeof setInterval> | null = null
 
 type TrailerPhase = 'idle' | 'playing' | 'paused' | 'ended'
 const trailerPhase = ref<TrailerPhase>('idle')
 const now = ref(0)
-const videoRevealed = ref(false)
-const YOUTUBE_CHROME_SETTLE_MS = 8000
-let revealTimer: ReturnType<typeof setTimeout> | null = null
 
 const visualTime = computed(() => trailerPhase.value === 'ended' ? TRAILER_ENDCARD_HOLD_SECONDS : now.value)
-const posterVisible = computed(() =>
-  trailerPhase.value === 'idle'
-  || trailerPhase.value === 'paused'
-  || (trailerPhase.value === 'playing' && !videoRevealed.value),
-)
 const visiblePlates = computed(() => activeTrailerPlates(visualTime.value))
 const plateById = computed(() => new Map(visiblePlates.value.map(plate => [plate.id, plate])))
 
@@ -109,18 +102,10 @@ function stopClock() {
   }
 }
 
-function hideUntilYoutubeChromeSettles() {
-  videoRevealed.value = false
-  if (revealTimer) {
-    clearTimeout(revealTimer)
-  }
-  revealTimer = setTimeout(() => {
-    videoRevealed.value = true
-    revealTimer = null
-  }, YOUTUBE_CHROME_SETTLE_MS)
-}
-
 function tick() {
+  if (!playerReady) {
+    return
+  }
   const t = player?.getCurrentTime?.()
   if (typeof t !== 'number') {
     return
@@ -131,7 +116,6 @@ function tick() {
     now.value = TRAILER_DURATION_SECONDS
     player?.pauseVideo?.()
     trailerPhase.value = 'ended'
-    videoRevealed.value = false
     stopClock()
     return
   }
@@ -145,20 +129,18 @@ function startClock() {
 
 function playTrailer() {
   trailerPhase.value = 'playing'
-  hideUntilYoutubeChromeSettles()
-  player?.playVideo?.()
+  if (playerReady) {
+    player?.playVideo?.()
+  }
   startClock()
 }
 
 function toggleTrailer() {
   if (trailerPhase.value === 'playing') {
-    player?.pauseVideo?.()
-    trailerPhase.value = 'paused'
-    videoRevealed.value = false
-    if (revealTimer) {
-      clearTimeout(revealTimer)
-      revealTimer = null
+    if (playerReady) {
+      player?.pauseVideo?.()
     }
+    trailerPhase.value = 'paused'
     stopClock()
     return
   }
@@ -172,11 +154,10 @@ function toggleTrailer() {
 function seekTrailer(ratio: number) {
   const target = Math.min(Math.max(ratio, 0), 1) * TRAILER_DURATION_SECONDS
   now.value = target
-  player?.seekTo?.(target, true)
-  if (trailerPhase.value === 'playing') {
-    hideUntilYoutubeChromeSettles()
+  if (playerReady) {
+    player?.seekTo?.(target, true)
   }
-  if (trailerPhase.value === 'ended' && target < TRAILER_DURATION_SECONDS) {
+  if (trailerPhase.value === 'idle' || (trailerPhase.value === 'ended' && target < TRAILER_DURATION_SECONDS)) {
     trailerPhase.value = 'paused'
   }
 }
@@ -184,9 +165,10 @@ function seekTrailer(ratio: number) {
 function replayTrailer() {
   now.value = 0
   trailerPhase.value = 'playing'
-  hideUntilYoutubeChromeSettles()
-  player?.seekTo?.(0, true)
-  player?.playVideo?.()
+  if (playerReady) {
+    player?.seekTo?.(0, true)
+    player?.playVideo?.()
+  }
   startClock()
 }
 
@@ -208,6 +190,20 @@ onMounted(async () => {
     player = new Player(playerHost.value, {
       videoId: TRAILER_VIDEO_ID,
       playerVars: getChromeFreeYoutubePlayerVars({ autoplay: 0 }),
+      events: {
+        onReady: ({ target }: { target: YoutubePlayer }) => {
+          if (player !== target) {
+            return
+          }
+          playerReady = true
+          if (now.value > 0) {
+            target.seekTo?.(now.value, true)
+          }
+          if (trailerPhase.value === 'playing') {
+            target.playVideo?.()
+          }
+        },
+      },
     })
     if (import.meta.env.DEV) {
       // Same contract as the main app's __wolvesCinematic: a harness hook so
@@ -232,11 +228,9 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   document.removeEventListener('fullscreenchange', syncFullscreen)
   stopClock()
-  if (revealTimer) {
-    clearTimeout(revealTimer)
-  }
   player?.destroy?.()
   player = null
+  playerReady = false
 })
 </script>
 
@@ -278,12 +272,12 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div v-if="posterVisible" class="wt-poster">
+        <div v-if="trailerPhase === 'idle'" class="wt-poster">
           <span class="wc-label wt-poster-kicker">TRAILER 1</span>
-          <div v-if="trailerPhase === 'idle' || trailerPhase === 'paused'" class="wt-convenience-controls">
+          <div class="wt-convenience-controls">
             <button class="wt-convenience-play wc-cta--primary" type="button" @click="toggleTrailer">
               <span aria-hidden="true">▶</span>
-              {{ trailerPhase === 'paused' ? 'Resume' : 'Play' }}
+              Play
             </button>
             <button class="wt-convenience-fullscreen" type="button" @click="toggleFullscreen">
               <span aria-hidden="true">⛶</span>

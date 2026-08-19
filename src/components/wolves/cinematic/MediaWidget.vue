@@ -202,6 +202,7 @@ function endSeek(event: PointerEvent) {
   if (event.pointerId !== seekPointerId) {
     return
   }
+  seekToClientX(event.clientX)
   if (progressEl.value?.hasPointerCapture(event.pointerId)) {
     progressEl.value.releasePointerCapture(event.pointerId)
   }

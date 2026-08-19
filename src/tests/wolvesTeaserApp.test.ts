@@ -1,29 +1,47 @@
-import { flushPromises, mount } from '@vue/test-utils'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount, shallowMount } from '@vue/test-utils'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
+import MediaWidget from '@/components/wolves/cinematic/MediaWidget.vue'
 import { TRAILER_PICTURE_END_SECONDS } from '@/data/wolves-trailer-plates'
 import WolvesTeaserApp from '@/WolvesTeaserApp.vue'
+
+const youtube = vi.hoisted(() => {
+  let onReady: ((event: { target: FakePlayer }) => void) | undefined
+
+  class FakePlayer {
+    static latest: FakePlayer | undefined
+
+    currentTime = 0
+    destroy = vi.fn()
+    getCurrentTime = vi.fn(() => this.currentTime)
+    pauseVideo = vi.fn()
+    playVideo = vi.fn()
+    seekTo = vi.fn((seconds: number) => { this.currentTime = seconds })
+
+    constructor(_element: Element, options: { events?: { onReady?: typeof onReady } }) {
+      FakePlayer.latest = this
+      onReady = options.events?.onReady
+    }
+  }
+
+  return {
+    Player: FakePlayer,
+    load: vi.fn<() => Promise<void>>(),
+    latest: () => FakePlayer.latest,
+    ready: () => FakePlayer.latest && onReady?.({ target: FakePlayer.latest }),
+    reset: () => {
+      FakePlayer.latest = undefined
+      onReady = undefined
+    },
+  }
+})
 
 vi.mock('@/composables/useYoutubeIframeApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/composables/useYoutubeIframeApi')>()
   return {
     ...actual,
-    loadYoutubeIframeApi: () => Promise.resolve(),
-    getYoutubePlayerConstructor: () => class FakePlayer {
-      currentTime = 0
-
-      seekTo(seconds: number) {
-        this.currentTime = seconds
-      }
-
-      getCurrentTime() {
-        return this.currentTime
-      }
-
-      playVideo() {}
-      pauseVideo() {}
-      destroy() {}
-    },
+    getYoutubePlayerConstructor: () => youtube.Player,
+    loadYoutubeIframeApi: youtube.load,
   }
 })
 
@@ -31,11 +49,17 @@ interface TeaserHarness {
   seekTo: (seconds: number) => void
 }
 
-describe('wolves teaser bridge', () => {
-  afterEach(() => {
-    delete (window as typeof window & { __wolvesTeaser?: TeaserHarness }).__wolvesTeaser
-  })
+beforeEach(() => {
+  youtube.reset()
+  youtube.load.mockReset()
+  youtube.load.mockResolvedValue()
+})
 
+afterEach(() => {
+  delete (window as typeof window & { __wolvesTeaser?: TeaserHarness }).__wolvesTeaser
+})
+
+describe('wolves teaser bridge', () => {
   it('keeps an opaque black backing over the YouTube picture while the wolf-day wallpaper rises', async () => {
     const wrapper = mount(WolvesTeaserApp, {
       global: {
@@ -82,6 +106,76 @@ describe('wolves teaser bridge', () => {
     expect(Number(wallpaperGroup.element.style.opacity)).toBeCloseTo(0.5, 5)
     expect(night.element.style.opacity).toBe('1')
 
+    wrapper.unmount()
+  })
+})
+
+describe('wolves teaser transport', () => {
+  it('honours Play when the YouTube player becomes ready after the click', async () => {
+    let finishLoading!: () => void
+    youtube.load.mockImplementationOnce(() => new Promise<void>((resolve) => {
+      finishLoading = resolve
+    }))
+    const wrapper = shallowMount(WolvesTeaserApp)
+
+    await wrapper.get('.wt-convenience-play').trigger('click')
+    expect(youtube.latest()).toBeUndefined()
+
+    finishLoading()
+    await flushPromises()
+    expect(youtube.latest()!.playVideo).not.toHaveBeenCalled()
+
+    youtube.ready()
+    await nextTick()
+
+    expect(youtube.latest()!.playVideo).toHaveBeenCalledOnce()
+    expect(wrapper.find('.wt-poster').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('reveals an idle seek and applies it when the player becomes ready', async () => {
+    const wrapper = shallowMount(WolvesTeaserApp)
+    await flushPromises()
+
+    wrapper.getComponent(MediaWidget).vm.$emit('seek', 0.5)
+    await nextTick()
+    expect(wrapper.find('.wt-poster').exists()).toBe(false)
+
+    youtube.ready()
+    expect(youtube.latest()!.seekTo).toHaveBeenCalledWith(55.01, true)
+    expect(youtube.latest()!.playVideo).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  it('ignores a late player-ready event after unmount', async () => {
+    const wrapper = shallowMount(WolvesTeaserApp)
+    await flushPromises()
+    await wrapper.get('.wt-convenience-play').trigger('click')
+
+    wrapper.unmount()
+    youtube.ready()
+
+    expect(youtube.latest()!.destroy).toHaveBeenCalledOnce()
+    expect(youtube.latest()!.playVideo).not.toHaveBeenCalled()
+  })
+
+  it('keeps the video visible while playing, seeking, and paused', async () => {
+    const wrapper = shallowMount(WolvesTeaserApp)
+    await flushPromises()
+    youtube.ready()
+
+    expect(wrapper.find('.wt-poster').exists()).toBe(true)
+
+    await wrapper.get('.wt-convenience-play').trigger('click')
+    expect(wrapper.find('.wt-poster').exists()).toBe(false)
+
+    wrapper.getComponent(MediaWidget).vm.$emit('seek', 0.5)
+    await nextTick()
+    expect(wrapper.find('.wt-poster').exists()).toBe(false)
+
+    wrapper.getComponent(MediaWidget).vm.$emit('togglePlay')
+    await nextTick()
+    expect(wrapper.find('.wt-poster').exists()).toBe(false)
     wrapper.unmount()
   })
 })

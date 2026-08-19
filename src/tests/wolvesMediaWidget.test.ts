@@ -135,7 +135,6 @@ describe('media widget', () => {
     element.releasePointerCapture = vi.fn()
 
     await slider.trigger('pointerdown', { clientX: 200, pointerId: 7, button: 0 })
-    await slider.trigger('pointermove', { clientX: 400, pointerId: 7 })
     await slider.trigger('pointerup', { clientX: 400, pointerId: 7 })
 
     expect(wrapper.emitted('seek')).toEqual([[0.25], [0.75]])
