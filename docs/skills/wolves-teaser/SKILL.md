@@ -246,6 +246,11 @@ centered **Play** and **Fullscreen** convenience buttons. Fullscreen the entire
 the fullscreen tree. Hide the standfirst there and fit the 16:9 player to the
 remaining viewport.
 
+The progress control must seek continuously during pointer drag. A click-only
+`div` with `role="slider"` is not a working slider. Use pointer capture from
+`pointerdown` through `pointerup` or `pointercancel`, and set `touch-action:
+none` on the track so a touch drag seeks instead of scrolling the page.
+
 At natural end, keep transport time at `1:50 / 1:50` while the visual clock
 holds at `TRAILER_ENDCARD_HOLD_SECONDS`, immediately before the URL card's fade.
 Do not show the poster over the ended phase; it would replace the requested
@@ -288,6 +293,7 @@ element can collapse below the available width and wrap unexpectedly.
 - Play is available only in the fixed widget and is not obvious on initial load.
 - Fullscreen targets the iframe, causing the title, overlays, or widget to disappear.
 - Ended state shows the poster or a faded/empty end card instead of the URL.
+- The progress control jumps on click but does not track mouse or touch drag.
 - The iframe accepts pointer events.
 - The page heading and the authored title card are legible at the same time, or
   the poster names the film.
@@ -311,9 +317,9 @@ element can collapse below the available width and wrap unexpectedly.
 - [ ] No horizontal scroll exists at 1920×1080 or 390×844.
 - [ ] A 16:9 iframe is centred at 134.328% height inside the clipped 1920:804
       aperture and has `pointer-events: none`.
-- [ ] Playback, pause, replay, and seek work through the external media-widget
-      mode; the 8-second start/seek cover and paused poster leave no YouTube
-      chrome visible.
+- [ ] Playback, pause, replay, click seek, keyboard seek, and pointer-drag seek
+      work through the external media-widget mode; the 8-second start/seek cover
+      and paused poster leave no YouTube chrome visible.
 - [ ] Idle/paused Play and Fullscreen buttons are centered and keyboard accessible;
       fullscreen owns `.wt-stage` and exposes an Exit Fullscreen label.
 - [ ] Natural end shows the fully opaque `wolves.projectbluefin.io` card while

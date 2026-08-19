@@ -113,6 +113,36 @@ describe('media widget', () => {
     expect(store.segmentElapsed).toBe(0)
   })
 
+  it('seeks continuously while the progress slider is dragged', async () => {
+    const wrapper = mount(MediaWidget, {
+      props: { elapsed: 0, duration: 110 },
+    })
+    const slider = wrapper.get('.wc-widget-progress')
+    const element = slider.element as HTMLElement
+    element.getBoundingClientRect = vi.fn(() => ({
+      x: 100,
+      y: 0,
+      left: 100,
+      top: 0,
+      right: 500,
+      bottom: 32,
+      width: 400,
+      height: 32,
+      toJSON: () => ({}),
+    }))
+    element.setPointerCapture = vi.fn()
+    element.hasPointerCapture = vi.fn(() => true)
+    element.releasePointerCapture = vi.fn()
+
+    await slider.trigger('pointerdown', { clientX: 200, pointerId: 7, button: 0 })
+    await slider.trigger('pointermove', { clientX: 400, pointerId: 7 })
+    await slider.trigger('pointerup', { clientX: 400, pointerId: 7 })
+
+    expect(wrapper.emitted('seek')).toEqual([[0.25], [0.75]])
+    expect(element.setPointerCapture).toHaveBeenCalledWith(7)
+    expect(element.releasePointerCapture).toHaveBeenCalledWith(7)
+  })
+
   it('shows the plain authored title, not a catalogue credit, for the Director\'s Cut', () => {
     const store = useCinematicStore()
     store.loadExperience(WOLVES_DIRECTORS_CUT_EXPERIENCE)

@@ -173,12 +173,39 @@ onBeforeUnmount(() => {
   window.removeEventListener('touchstart', resetAutoHide)
 })
 
-function handleSeek(event: MouseEvent) {
+let seekPointerId: number | null = null
+
+function seekToClientX(clientX: number) {
   const rect = progressEl.value?.getBoundingClientRect()
   if (!rect || rect.width <= 0) {
     return
   }
-  emit('seek', (event.clientX - rect.left) / rect.width)
+  emit('seek', Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1))
+}
+
+function beginSeek(event: PointerEvent) {
+  if (event.button !== 0) {
+    return
+  }
+  seekPointerId = event.pointerId
+  progressEl.value?.setPointerCapture(event.pointerId)
+  seekToClientX(event.clientX)
+}
+
+function continueSeek(event: PointerEvent) {
+  if (event.pointerId === seekPointerId) {
+    seekToClientX(event.clientX)
+  }
+}
+
+function endSeek(event: PointerEvent) {
+  if (event.pointerId !== seekPointerId) {
+    return
+  }
+  if (progressEl.value?.hasPointerCapture(event.pointerId)) {
+    progressEl.value.releasePointerCapture(event.pointerId)
+  }
+  seekPointerId = null
 }
 
 function handleSeekKeydown(event: KeyboardEvent) {
@@ -253,7 +280,10 @@ function handleVoiceOverChange(event: Event) {
         aria-valuemin="0"
         aria-valuemax="100"
         tabindex="0"
-        @click="handleSeek"
+        @pointerdown="beginSeek"
+        @pointermove="continueSeek"
+        @pointerup="endSeek"
+        @pointercancel="endSeek"
         @keydown="handleSeekKeydown"
       >
         <span class="wc-widget-progress-ascii" aria-hidden="true">
@@ -438,7 +468,7 @@ function handleVoiceOverChange(event: Event) {
   align-items: center;
   height: 32px;
   cursor: pointer;
-  touch-action: manipulation;
+  touch-action: none;
   -webkit-tap-highlight-color: transparent;
 }
 
