@@ -30,7 +30,7 @@ import {
 // recut, re-port the manifest — do not nudge these numbers to make a test pass.
 describe('wolves trailer plates', () => {
   it('keeps the music at 1:50.020 and the picture through 1:55.020', () => {
-    expect(TRAILER_VIDEO_ID).toBe('iHXBTH_fwB0')
+    expect(TRAILER_VIDEO_ID).toBe('2zDT_6Xs2Wo')
     expect(TRAILER_MUSIC_END_SECONDS).toBe(110.02)
     expect(TRAILER_DURATION_SECONDS).toBe(115.02)
     expect(TRAILER_CUT_DURATION_SECONDS).toBe(TRAILER_DURATION_SECONDS)
@@ -38,14 +38,14 @@ describe('wolves trailer plates', () => {
 
   it('shows nothing before the main title and after the cut ends', () => {
     expect(activeTrailerPlates(0)).toEqual([])
-    expect(activeTrailerPlates(10.9)).toEqual([])
+    expect(activeTrailerPlates(6.9)).toEqual([])
     expect(activeTrailerPlates(TRAILER_MUSIC_END_SECONDS).map(p => p.id)).toEqual(['endcard-event', 'endcard-cta'])
     expect(activeTrailerPlates(TRAILER_DURATION_SECONDS)).toEqual([])
     expect(activeTrailerPlates(Number.NaN)).toEqual([])
   })
 
   it('holds the main title across both authored beats', () => {
-    expect(activeTrailerPlates(11).map(p => p.id)).toEqual(['maintitle'])
+    expect(activeTrailerPlates(7).map(p => p.id)).toEqual(['maintitle'])
     expect(activeTrailerPlates(TRAILER_CREDIT_JOIN_SECONDS).map(p => p.id)).toEqual(['maintitle'])
     expect(activeTrailerPlates(22.6).map(p => p.id)).toEqual([])
   })

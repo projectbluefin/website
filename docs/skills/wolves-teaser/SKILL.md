@@ -62,7 +62,7 @@ Use this skill when changing:
 
 ## Sources of Truth
 
-The playable picture is the owner's own upload: YouTube `iHXBTH_fwB0`,
+The playable picture is the owner's own upload: YouTube `2zDT_6Xs2Wo`,
 "Wolves Trailer Final" — the delivered 4K60 render of Trailer 1.1. Verify any
 swap beat by beat against the authored schedule before trusting it.
 
