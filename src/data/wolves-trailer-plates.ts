@@ -2,7 +2,7 @@
  * Trailer 1 — the owner's delivered cut, played directly.
  *
  * PROVENANCE: the teaser embeds the owner's own render of "Trailer 1.1"
- * (delivered 2026-08-18), whose authoritative record is the destiny-vids repo
+ * (delivered 2026-08-22), whose authoritative record is the destiny-vids repo
  * at `stories/trailer-1-plates.json`, with the plate DESIGN authored in
  * `cards/maintitle.html`, `cards/bookline.html` and `cards/daycard.html` and
  * the composition in `scripts/build_trailer1.py`. The teaser used to recreate
@@ -32,7 +32,7 @@
  * cut, "Wolves Trailer Final". NOT the destiny-vids ingest, and deliberately
  * left as it was found — the video is the owner's call, not this file's.
  */
-export const TRAILER_VIDEO_ID = 'iHXBTH_fwB0'
+export const TRAILER_VIDEO_ID = 'u-ZWdKcHyXM'
 
 /** The source music stops after the howl and its approved fade. */
 export const TRAILER_MUSIC_END_SECONDS = 110.02
@@ -82,7 +82,7 @@ export const TRAILER_ENDCARD_HOLD_SECONDS = TRAILER_CUT_DURATION_SECONDS - TRAIL
  * at the second beat (maintitle-b). The title must not move when it does, so
  * the credit row always occupies its space.
  */
-export const TRAILER_CREDIT_JOIN_SECONDS = 15.4
+export const TRAILER_CREDIT_JOIN_SECONDS = 12.2
 
 /** Authored casing preserved: the card uppercases in CSS, as the film does. */
 export const TRAILER_TITLE_LABEL = 'PROJECT BLUEFIN'
@@ -124,10 +124,10 @@ export const TRAILER_PLATES: readonly TrailerPlate[] = [
   {
     id: 'maintitle',
     kind: 'maintitle',
-    // maintitle-a 11.0+4.4 and maintitle-b 15.4+7.2 are one continuous title
+    // maintitle-a 7.0+5.2 and maintitle-b 12.2+10.4 are one continuous title
     // presence in the cut; the credit line appears mid-way (see
     // TRAILER_CREDIT_JOIN_SECONDS).
-    start: 11.0,
+    start: 7.0,
     end: 22.6,
     title: TRAILER_TITLE_LINE,
     lines: [TRAILER_CREDIT_LINE],
@@ -284,9 +284,9 @@ export function trailerPlateOpacity(plate: TrailerPlate, timeSeconds: number): n
  * THE PAGE HEADING YIELDS TO THE PICTURE.
  *
  * The teaser page carries the film's name in an `h1` above the frame, and the
- * cut carries the same four words in its own main-title card at 11.0 s. Both
+ * cut carries the same four words in its own main-title card at 7.0 s. Both
  * were on screen at once, so the title card revealed a title the audience had
- * already been reading for eleven seconds — the reveal had nothing left to
+ * already been reading for seconds — the reveal had nothing left to
  * reveal, and the page read as if it were stuttering.
  *
  * A theater darkens before the title hits. The heading is therefore fully down

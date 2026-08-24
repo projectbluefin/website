@@ -15,7 +15,7 @@ behavior for a content request.
 
 - Teaser entry: `wolves/index.html` → `src/wolves-teaser-main.ts` →
   `src/WolvesTeaserApp.vue`. The teaser embeds the owner's delivered render of
-  Trailer 1 (YouTube `iHXBTH_fwB0`, "Wolves Trailer Final") — the cut's plates,
+  Trailer 1 (YouTube `u-ZWdKcHyXM`, "Seven Days to the Wolves") — the cut's plates,
   bridge, and end card are burned in, and the browser only masks the opening
   black, yields the page heading, and holds the URL card over YouTube's
   endscreen. The authored record of the cut stays in
