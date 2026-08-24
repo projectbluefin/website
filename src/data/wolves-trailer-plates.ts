@@ -32,7 +32,7 @@
  * cut, "Wolves Trailer Final". NOT the destiny-vids ingest, and deliberately
  * left as it was found — the video is the owner's call, not this file's.
  */
-export const TRAILER_VIDEO_ID = 'iHXBTH_fwB0'
+export const TRAILER_VIDEO_ID = 'u-ZWdKcHyXM'
 
 /** The source music stops after the howl and its approved fade. */
 export const TRAILER_MUSIC_END_SECONDS = 110.02

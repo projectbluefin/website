@@ -30,7 +30,7 @@ import {
 // recut, re-port the manifest — do not nudge these numbers to make a test pass.
 describe('wolves trailer plates', () => {
   it('keeps the music at 1:50.020 and the picture through 1:55.020', () => {
-    expect(TRAILER_VIDEO_ID).toBe('iHXBTH_fwB0')
+    expect(TRAILER_VIDEO_ID).toBe('u-ZWdKcHyXM')
     expect(TRAILER_MUSIC_END_SECONDS).toBe(110.02)
     expect(TRAILER_DURATION_SECONDS).toBe(115.02)
     expect(TRAILER_CUT_DURATION_SECONDS).toBe(TRAILER_DURATION_SECONDS)

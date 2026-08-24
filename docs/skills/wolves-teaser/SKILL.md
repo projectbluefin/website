@@ -62,8 +62,8 @@ Use this skill when changing:
 
 ## Sources of Truth
 
-The playable picture is the owner's own upload: YouTube `iHXBTH_fwB0`,
-"Wolves Trailer Final" — the delivered 4K60 render of Trailer 1.1. Verify any
+The playable picture is the owner's own upload: YouTube `u-ZWdKcHyXM`,
+"Seven Days to the Wolves" (the re-upload of "Wolves Trailer Final") — the delivered 4K60 render of Trailer 1.1. Verify any
 swap beat by beat against the authored schedule before trusting it.
 
 All paths in this table are relative to `~/src/destiny-vids`.
