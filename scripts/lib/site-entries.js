@@ -20,7 +20,7 @@ export const siteEntries = [
  * Builds the rollupOptions.input dictionary mapping entry names to absolute file paths.
  *
  * @param {string} rootDir
- * @returns {Record<string, string>}
+ * @returns {Record<string, string>} Map of entry names to resolved absolute file paths.
  */
 export function createRollupInput(rootDir) {
   const input = {}
@@ -37,7 +37,7 @@ export function createRollupInput(rootDir) {
  * A directory entry is structurally defined as any entry whose html file ends in `/index.html`
  * (excluding the root `index.html`), formatted as `/<directory-path>`.
  *
- * @returns {Set<string>}
+ * @returns {Set<string>} Set of root-relative directory paths requiring trailing-slash redirects.
  */
 export function createDirectoryEntryPaths() {
   const paths = new Set()
