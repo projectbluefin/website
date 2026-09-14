@@ -23,7 +23,6 @@ describe('siteEntries', () => {
 
     expect(Object.keys(input)).toEqual([
       'main',
-      'testing',
       'dakota',
       'server',
       'wolves',

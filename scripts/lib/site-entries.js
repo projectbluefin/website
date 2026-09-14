@@ -9,7 +9,6 @@ import { resolve } from 'node:path'
  */
 export const siteEntries = [
   { name: 'main', html: 'index.html' },
-  { name: 'testing', html: 'public/testing.html' },
   { name: 'dakota', html: 'dakota/index.html' },
   { name: 'server', html: 'server/index.html' },
   { name: 'wolves', html: 'wolves/index.html' },
