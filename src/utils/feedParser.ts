@@ -28,6 +28,26 @@ function getAttribute(parent: { getElementsByTagName: (tagName: string) => Array
   return getFirstElement(parent, tagName)?.getAttribute?.(name) ?? ''
 }
 
+/**
+ * Feed entry links are cross-origin, externally authored content bound to
+ * `<a :href>`, and Vue does not sanitize href bindings: a `javascript:` or
+ * `data:` href executes in this origin on click (stored XSS). Only allow
+ * http(s) and root-relative links; everything else falls back to `#`.
+ */
+export function sanitizeFeedLink(href: string): string {
+  const trimmed = href.trim()
+  if (trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+    return trimmed
+  }
+  try {
+    const url = new URL(trimmed)
+    return url.protocol === 'https:' || url.protocol === 'http:' ? trimmed : '#'
+  }
+  catch {
+    return '#'
+  }
+}
+
 export function formatFeedDate(value: string) {
   if (!value) {
     return ''
@@ -59,7 +79,7 @@ export function parseAtomFeed(xmlText: string, parser: XmlParser = new DOMParser
 
     return {
       title: getTextContent(entry, 'title') || 'Untitled',
-      link: getAttribute(entry, 'link', 'href') || '#',
+      link: sanitizeFeedLink(getAttribute(entry, 'link', 'href')),
       description: getTextContent(entry, 'summary') || getTextContent(entry, 'content'),
       pubDate: published,
       formattedDate: formatFeedDate(published),
