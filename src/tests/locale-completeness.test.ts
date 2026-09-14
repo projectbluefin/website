@@ -27,6 +27,7 @@ function flatKeys(obj: Record<string, unknown>, prefix = ''): string[] {
 const localeFiles = readdirSync(localesDir).filter(f => f.endsWith('.json'))
 const enUS = loadLocale('en-US.json')
 const enKeys = flatKeys(enUS)
+const enKeySet = new Set(enKeys)
 
 describe('locale files', () => {
   it('en-US.json exists and has keys', () => {
@@ -38,6 +39,8 @@ describe('locale files', () => {
       continue
     }
 
+    // Missing keys are ADVISORY. vue-i18n falls back to en-US, so a partial
+    // translation is a legitimate state and must not fail the build.
     it(`${file} has all keys from en-US.json`, () => {
       const locale = loadLocale(file)
       const localeKeys = flatKeys(locale)
@@ -48,6 +51,21 @@ describe('locale files', () => {
       }
       // At minimum, the locale should have SOME keys
       expect(localeKeys.length).toBeGreaterThan(0)
+    })
+
+    // Orphaned keys are a HARD FAILURE. en-US.json is the authoritative message
+    // schema (src/locales/schema.ts derives MessageSchema from it), so a key
+    // absent there can never be read by any component: it is dead weight in a
+    // bundle that loads every locale eagerly, and it misleads translators about
+    // which keys are still live.
+    it(`${file} declares no key that is absent from en-US.json`, () => {
+      const localeKeys = flatKeys(loadLocale(file))
+      const orphaned = localeKeys.filter(k => !enKeySet.has(k))
+      expect(
+        orphaned,
+        `${file} declares ${orphaned.length} key(s) that do not exist in en-US.json. `
+        + `These can never render. Remove them, or add them to en-US.json first: ${orphaned.join(', ')}`,
+      ).toEqual([])
     })
   }
 
