@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import RssFeed from '../components/RssFeed.vue'
 import { i18n } from '../locales/schema'
+import { sanitizeFeedLink } from '../utils/feedParser'
 
 const FEED_URL = 'https://docs.projectbluefin.io/atom.xml'
 
@@ -187,5 +188,47 @@ describe('rssFeed.vue', () => {
     await flushPromises()
 
     expect(wrapper.findAll('article.blog-post')).toHaveLength(3)
+  })
+
+  it('sanitizes non-http(s) entry link hrefs from the feed', async () => {
+    const MALICIOUS_XML = `<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <title>Evil Post</title>
+    <link href="javascript:alert(1)"/>
+    <published>2024-02-01T10:00:00Z</published>
+    <summary>xss attempt</summary>
+  </entry>
+</feed>`
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      text: async () => MALICIOUS_XML,
+    })))
+
+    const wrapper = mountFeed({ feedUrl: FEED_URL })
+    await flushPromises()
+
+    expect(wrapper.get('.post-title a').attributes('href')).toBe('#')
+  })
+})
+
+describe('sanitizeFeedLink', () => {
+  it('keeps https and http links', () => {
+    expect(sanitizeFeedLink('https://docs.projectbluefin.io/blog/x')).toBe('https://docs.projectbluefin.io/blog/x')
+    expect(sanitizeFeedLink('http://example.com/y')).toBe('http://example.com/y')
+  })
+
+  it('keeps root-relative links but rejects protocol-relative ones', () => {
+    expect(sanitizeFeedLink('/blog/post')).toBe('/blog/post')
+    expect(sanitizeFeedLink('//evil.example/x')).toBe('#')
+  })
+
+  it('replaces javascript:, data: and malformed hrefs with #', () => {
+    expect(sanitizeFeedLink('javascript:alert(1)')).toBe('#')
+    expect(sanitizeFeedLink('  JavaScript:alert(1)')).toBe('#')
+    expect(sanitizeFeedLink('data:text/html,<script>alert(1)</script>')).toBe('#')
+    expect(sanitizeFeedLink('vbscript:msgbox(1)')).toBe('#')
+    expect(sanitizeFeedLink('')).toBe('#')
+    expect(sanitizeFeedLink('not a url')).toBe('#')
   })
 })
