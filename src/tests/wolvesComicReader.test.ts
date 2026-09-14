@@ -444,6 +444,9 @@ describe('wolvesComicReader', () => {
     expect(archiveWrapper.get('.wallpaper-theater-caption.is-title-only').text()).toContain('The Cult Psychology of Kubernetes')
   })
 
+  // Iterates the full wallpaper/theater cycle under real `nextTick` ticks —
+  // ~4.8s alone, so the vitest default 5000ms timeout flakes under the CPU
+  // contention of a full parallel run even though nothing is actually hung.
   it('keeps the music-authoritative Track 0 selection unique', async () => {
     const wrapper = mount(WolvesComicReader, {
       props: {
@@ -476,7 +479,7 @@ describe('wolvesComicReader', () => {
     expect(new Set(shownImages).size).toBeLessThan(wallpapers.length + missingReservedPaths.length)
     expect(shownImages.some(image => image.includes('wolves/showcase/claw.gif'))).toBe(false)
     expect([...reservedFirstSeenAt.values()].every(time => time >= 359 && time < 408.2)).toBe(true)
-  })
+  }, 15000)
 
   it('keeps every photo in a later-track shuffle available only once', async () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
@@ -1079,6 +1082,9 @@ describe('wolvesComicReader', () => {
     expect(generator).toContain('\'bluefin-huntress\': \'Bluefin created by Andy Frazer and Jacob Schnurr\'')
   })
 
+  // Reads and hashes every wallpaper file on disk — under 1s alone, but disk
+  // contention from a full parallel test run can push it past the vitest
+  // default 5000ms timeout and fail the run without any real regression.
   it('collapses byte-identical wallpaper files to a single manifest entry', () => {
     // Several shots exist on disk under both a stock feed filename and a
     // curated captioned filename; the generator must keep exactly one.
@@ -1098,7 +1104,7 @@ describe('wolvesComicReader', () => {
         seen.set(hash, name)
       }
     }
-  })
+  }, 15000)
 
   it('uses the contributor-focused beat barrage from the 5:55 pickup', async () => {
     const feed = Array.from({ length: 200 }, (_, index) => ({
