@@ -47,6 +47,17 @@ jobs:
             website-live-data-
           fail-on-cache-miss: false
 
+      # catalogue.json is version-controlled, and only a local `npm run
+      # update:back-catalogue` (yt-dlp) can build its track segments, so CI can
+      # never hold a fresher catalogue than the committed one. The cache restore
+      # above can therefore only make it *staler* — and a stale catalogue fails
+      # this run hard (a missing album escalates to an issue), it does not merely
+      # ship stale data. Restore the committed catalogue over the cache so a stale
+      # cache from before an ingest can never wedge the next one; the
+      # auto-generated feeds below the fold are still carried by the cache.
+      - name: Restore committed catalogue over cache
+        run: git checkout HEAD -- public/experiences/catalogue.json
+
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:

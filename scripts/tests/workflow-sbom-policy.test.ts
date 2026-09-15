@@ -245,4 +245,22 @@ describe('update-content.yml restores the previous live data', () => {
     const restore = getAllSteps(workflow).find(s => s.uses?.includes('actions/cache/restore'))!
     expect(String(restore.with!['fail-on-cache-miss'])).toBe('false')
   })
+
+  it('restores the committed catalogue.json over the cache, so a stale cache can never wedge an ingest', () => {
+    const steps = getAllSteps(workflow)
+    const restoreIndex = steps.findIndex(s => s.uses?.includes('actions/cache/restore'))
+    expect(restoreIndex, 'no cache restore step').toBeGreaterThanOrEqual(0)
+    // The committed catalogue is version-controlled and only a local yt-dlp
+    // ingest can rebuild, so CI can never hold a fresher one than HEAD. The
+    // cache restore above can therefore only make it staler, and a stale
+    // catalogue fails this run hard. The next runnable step must restore the
+    // committed catalogue over the cache before any refresh runs.
+    const reconcile = steps.slice(restoreIndex + 1).find(
+      s => s.run?.includes('git checkout HEAD -- public/experiences/catalogue.json'),
+    )
+    expect(
+      reconcile,
+      'a step must restore the committed catalogue.json over the cache restore',
+    ).toBeDefined()
+  })
 })
