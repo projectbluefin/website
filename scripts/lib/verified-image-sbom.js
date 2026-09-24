@@ -175,6 +175,46 @@ export function verifyImageProvenance(imageAtDigest, policy, run = execFileSync)
 }
 
 /**
+ * Verify that the discovered SPDX referrer artifact itself carries a keyless
+ * signature from the publisher identity the image's provenance is held to.
+ *
+ * `oras discover` is an unsigned registry listing: any writer to the
+ * repository can attach a referrer, and the provenance check binds the image
+ * digest only. Without this check the artifact whose bytes become the
+ * published version claims is trusted merely because the registry listed it
+ * next to a well-signed image.
+ *
+ * @param {string} repository - image repository without tag/digest
+ * @param {string} digest - sha256:... digest of the SPDX referrer manifest
+ * @param {{ certificateIdentityRegexp: string, certificateOidcIssuer: string }} policy
+ * @param {Function} run - execFileSync-compatible function
+ */
+export function verifySbomSignature(repository, digest, policy, run = execFileSync) {
+  const ref = `${repository}@${digest}`
+  try {
+    run('cosign', [
+      'verify',
+      '--certificate-identity-regexp',
+      policy.certificateIdentityRegexp,
+      '--certificate-oidc-issuer',
+      policy.certificateOidcIssuer,
+      ref,
+    ], { encoding: 'utf8' })
+  }
+  catch (err) {
+    const tooling = classifyToolFailure(err, 'cosign')
+    if (tooling != null) {
+      throw tooling
+    }
+    const msg = failureText(err)
+    if (/no signatures|no matching signatures|manifest unknown|not found/i.test(msg)) {
+      throw new EvidenceError('missing-sbom-signature', ref, `No publisher signature found on the SPDX referrer ${ref}: ${msg}`)
+    }
+    throw new EvidenceError('invalid-sbom-signature', ref, `SPDX referrer signature verification failed for ${ref}: ${msg}`)
+  }
+}
+
+/**
  * Pull and parse an SPDX referrer by its digest.
  * @param {string} repository - image repository without tag/digest
  * @param {string} digest - sha256:... digest of the SPDX referrer
@@ -246,6 +286,16 @@ export async function collectVerifiedImageSbom(record, dependencies = {}) {
   }, run)
 
   const repository = record.image.replace(/[:@].*$/, '')
+
+  // The referrer digest comes from the unsigned discovery listing, and the
+  // provenance check above binds the image digest only. Hold the artifact we
+  // are about to read to the same publisher identity before its bytes are
+  // trusted.
+  verifySbomSignature(repository, sbomDigest, {
+    certificateIdentityRegexp: record.certificateIdentityRegexp,
+    certificateOidcIssuer: record.certificateOidcIssuer,
+  }, run)
+
   const sbom = pullSpdxReferrer(repository, sbomDigest, run, fsImpl)
 
   return {

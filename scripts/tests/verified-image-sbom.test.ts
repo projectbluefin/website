@@ -9,6 +9,7 @@ import {
   resolveImageDigest,
   ToolingError,
   verifyImageProvenance,
+  verifySbomSignature,
 } from '../lib/verified-image-sbom.js'
 
 const dakotaDiscovery = JSON.parse(
@@ -154,6 +155,57 @@ describe('verifyImageProvenance', () => {
   })
 })
 
+describe('verifySbomSignature', () => {
+  const policy = {
+    certificateIdentityRegexp: '^https://github.com/projectbluefin/dakota/.github/workflows/[^@]+@refs/.+$',
+    certificateOidcIssuer: 'https://token.actions.githubusercontent.com',
+  }
+
+  it('runs cosign verify with the identity policy against the referrer digest reference', () => {
+    const run = vi.fn().mockReturnValue('')
+    verifySbomSignature('ghcr.io/projectbluefin/dakota', SBOM_DIGEST, policy, run)
+    expect(run).toHaveBeenCalledWith(
+      'cosign',
+      [
+        'verify',
+        '--certificate-identity-regexp',
+        policy.certificateIdentityRegexp,
+        '--certificate-oidc-issuer',
+        policy.certificateOidcIssuer,
+        `ghcr.io/projectbluefin/dakota@${SBOM_DIGEST}`,
+      ],
+      expect.objectContaining({ encoding: 'utf8' }),
+    )
+  })
+
+  it('throws EvidenceError missing-sbom-signature when the referrer carries no signature', () => {
+    const run = vi.fn().mockImplementation(() => {
+      throw new Error('no matching signatures')
+    })
+    expect(() => verifySbomSignature('ghcr.io/projectbluefin/dakota', SBOM_DIGEST, policy, run))
+      .toThrow(expect.objectContaining({ name: 'EvidenceError', code: 'missing-sbom-signature' }))
+  })
+
+  it('throws EvidenceError invalid-sbom-signature when the signature is by the wrong publisher', () => {
+    const run = vi.fn().mockImplementation(() => {
+      throw withStderr(
+        'cosign failed',
+        'none of the expected identities matched what was in the certificate, got subjects [https://github.com/attacker/evil/.github/workflows/build.yml@refs/heads/main]',
+      )
+    })
+    expect(() => verifySbomSignature('ghcr.io/projectbluefin/dakota', SBOM_DIGEST, policy, run))
+      .toThrow(expect.objectContaining({ name: 'EvidenceError', code: 'invalid-sbom-signature' }))
+  })
+
+  it('blocks as a ToolingError when the signature check fails for tooling reasons', () => {
+    const run = vi.fn().mockImplementation(() => {
+      throw spawnEnoent('cosign')
+    })
+    expect(() => verifySbomSignature('ghcr.io/projectbluefin/dakota', SBOM_DIGEST, policy, run))
+      .toThrow(expect.objectContaining({ name: 'ToolingError', code: 'tool-missing' }))
+  })
+})
+
 describe('pullSpdxReferrer', () => {
   it('cleans up temp directory on success', () => {
     const mockFs = {
@@ -210,6 +262,7 @@ describe('collectVerifiedImageSbom', () => {
       run: vi.fn()
         .mockReturnValueOnce(JSON.stringify({ digest: DAKOTA_DIGEST }))
         .mockReturnValueOnce(JSON.stringify(dakotaDiscovery))
+        .mockReturnValueOnce('')
         .mockReturnValueOnce('')
         .mockReturnValueOnce(''),
       fs: mockFs,
@@ -456,10 +509,65 @@ describe('collectVerifiedImageSbom — publisher identity', () => {
 
     await collectVerifiedImageSbom(DAKOTA_RECORD, { run, fs: mockFs })
 
-    const cosignCall = run.mock.calls.find(call => call[0] === 'cosign')
-    expect(cosignCall![1]).toContain(DAKOTA_RECORD.certificateIdentityRegexp)
-    expect(cosignCall![1]).toContain(DAKOTA_RECORD.certificateOidcIssuer)
-    expect(cosignCall![1]).toContain(`ghcr.io/projectbluefin/dakota@${DAKOTA_DIGEST}`)
+    const cosignCalls = run.mock.calls.filter(call => call[0] === 'cosign')
+    expect(cosignCalls).toHaveLength(2)
+    const provenanceCall = cosignCalls.find(call => call[1].includes('verify-attestation'))!
+    expect(provenanceCall[1]).toContain(DAKOTA_RECORD.certificateIdentityRegexp)
+    expect(provenanceCall[1]).toContain(DAKOTA_RECORD.certificateOidcIssuer)
+    expect(provenanceCall[1]).toContain(`ghcr.io/projectbluefin/dakota@${DAKOTA_DIGEST}`)
+
+    // The SPDX referrer is held to the same publisher identity as the image:
+    // its digest comes from the unsigned registry listing, so the bytes about
+    // to be pulled must be proven before they are read.
+    const sbomCall = cosignCalls.find(call => !call[1].includes('verify-attestation'))!
+    expect(sbomCall[1].slice(0, 5)).toEqual([
+      'verify',
+      '--certificate-identity-regexp',
+      DAKOTA_RECORD.certificateIdentityRegexp,
+      '--certificate-oidc-issuer',
+      DAKOTA_RECORD.certificateOidcIssuer,
+    ])
+    expect(sbomCall[1]).toContain(`ghcr.io/projectbluefin/dakota@${SBOM_DIGEST}`)
+    // The SBOM must be proven before its bytes are pulled.
+    const cosignIndex = run.mock.calls.findIndex(call => call[0] === 'cosign' && !call[1].includes('verify-attestation'))
+    const pullIndex = run.mock.calls.findIndex(call => call[0] === 'oras' && call[1][0] === 'pull')
+    expect(pullIndex).toBeGreaterThan(cosignIndex)
+  })
+
+  it('rejects a referrer that carries no publisher signature', async () => {
+    const run = vi.fn()
+      .mockReturnValueOnce(JSON.stringify({ digest: DAKOTA_DIGEST }))
+      .mockReturnValueOnce(JSON.stringify(dakotaDiscovery))
+      .mockReturnValueOnce('') // provenance verifies
+      .mockImplementationOnce(() => {
+        throw new Error('no matching signatures')
+      })
+
+    await expect(collectVerifiedImageSbom(DAKOTA_RECORD, { run })).rejects.toMatchObject({
+      name: 'EvidenceError',
+      code: 'missing-sbom-signature',
+    })
+    // Never pulled: the unsigned referrer's bytes must not be read.
+    expect(run.mock.calls.some(call => call[0] === 'oras' && call[1][0] === 'pull')).toBe(false)
+  })
+
+  it('rejects a referrer signed by the wrong publisher', async () => {
+    const identityFailure = new Error('cosign failed') as Error & { stderr?: string }
+    identityFailure.stderr = 'none of the expected identities matched what was in the certificate, '
+      + 'got subjects [https://github.com/attacker/evil/.github/workflows/build.yml@refs/heads/main]'
+
+    const run = vi.fn()
+      .mockReturnValueOnce(JSON.stringify({ digest: DAKOTA_DIGEST }))
+      .mockReturnValueOnce(JSON.stringify(dakotaDiscovery))
+      .mockReturnValueOnce('') // provenance verifies
+      .mockImplementationOnce(() => {
+        throw identityFailure
+      })
+
+    await expect(collectVerifiedImageSbom(DAKOTA_RECORD, { run })).rejects.toMatchObject({
+      name: 'EvidenceError',
+      code: 'invalid-sbom-signature',
+    })
   })
 })
 
@@ -477,6 +585,11 @@ describe('collectVerifiedImageSbom — a pending image starts publishing an SBOM
       .mockReturnValue('')
 
     const result = await collectVerifiedImageSbom(GAMING_RECORD, { run, fs: mockFs })
+
+    // Even the pending-then-published path proves the referrer's signature.
+    const cosignCalls = run.mock.calls.filter(call => call[0] === 'cosign')
+    expect(cosignCalls).toHaveLength(2)
+    expect(cosignCalls.some(call => call[1].includes(`ghcr.io/projectbluefin/dakota-gaming@sha256:${'f'.repeat(64)}`))).toBe(true)
 
     expect(result.imageDigest).toBe(GAMING_DIGEST)
     expect(result.sbomDigest).toBe(`sha256:${'f'.repeat(64)}`)
