@@ -205,6 +205,8 @@ npx vitest run scripts/tests/image-sbom-registry.test.ts
 | "The tests pass so highest-version fallback is fine." | A fallback silently hides element ambiguity. Return undefined; let the caller decide. |
 | "I'll update the fixture hash later." | Use `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` from the start; it is verifiable. |
 | "The implementation is only dirty, not missing." | Tests that import a dirty file fail in a clean worktree. Commit together. |
+| "The registry listed the SBOM next to a signed image, so it is the publisher's." | `oras discover` is unsigned. The sigstore-bundle referrer beside the SPDX one is the image's provenance, subject to the image digest — it says nothing about the SBOM artifact. Only `cosign verify <repository>@<sbomDigest>` proves authorship. |
+| "Signature verification will break the site, so skip it." | The audit surfaces the gap (`missing-sbom-signature` issue) instead of publishing unproven claims. Fix the publisher; do not re-disable the check. |
 
 ## Red Flags
 
@@ -310,8 +312,11 @@ Then, in the same commit:
 
 Provenance is already proven when a `pending-mapping` issue exists:
 `verifyRegistry` reaches that branch only after `collectVerifiedImageSbom`
-returned, which runs `cosign verify-attestation` first. Clearing the flag
-therefore cannot surface a hidden `missing-provenance`.
+returned, which runs `cosign verify-attestation` (the image) and
+`verifySbomSignature` (the SPDX referrer itself) first. Clearing the flag
+therefore cannot surface a hidden `missing-provenance` or
+`missing-sbom-signature`. What `pending-mapping` does **not** cover is the
+package mapping: that review is human work on the real document.
 
 **Pin an element only when the name is actually ambiguous.** The registry's own
 convention: Dakota pins `kernel`, `mesa`, and `systemd` because BuildStream
@@ -358,11 +363,63 @@ Only these stay `EvidenceError`:
 - `missing-sbom`, `ambiguous-sbom` — referrer count is not exactly one
 - `missing-provenance` — cosign found no matching attestation
 - `invalid-provenance` — cosign rejected the identity (wrong publisher)
+- `missing-sbom-signature` — the SPDX referrer artifact carries no signature at all
+- `invalid-sbom-signature` — the SPDX referrer's signature exists but fails the
+  publisher identity policy (wrong signer, bad certificate, broken bundle)
 - `invalid-sbom` — the discovered SBOM artifact is absent or corrupt
 
 Note the deliberate asymmetry in `pullSpdxReferrer`: a *network* failure while
 pulling blocks, but a discovered artifact that is missing or unparseable is an
 evidence failure, because the publisher attached a referrer it cannot serve.
+
+`collectVerifiedImageSbom` runs three proofs, in order: resolve the digest,
+verify the image's provenance attestation (`cosign verify-attestation`), then —
+before a single byte of the referrer is pulled — verify the SPDX referrer
+artifact's own signature (`cosign verify` against `<repository>@<sbomDigest>`,
+`verifySbomSignature`). The referrer digest comes from `oras discover`, which
+is an **unsigned registry listing**: any writer to the repository can attach a
+referrer, and the provenance check binds the image digest only. The signature
+check holds the artifact we are about to read to the same
+`certificateIdentityRegexp` / `certificateOidcIssuer` policy as the image.
+
+### Do the publishers sign the SPDX referrer? (checked 2026-09-24)
+
+No — **no active publisher currently signs the SPDX referrer**, so enabling
+`verifySbomSignature` in `collectVerifiedImageSbom` makes every non-pending
+registry record fail with `missing-sbom-signature` and sanitizes the published
+version claims until the publishers close the gap. Verified live with cosign
+v3.1.3 / oras v1.2.0 against GHCR:
+
+- Every registered image carries exactly one
+  `application/vnd.dev.sigstore.bundle.v0.3+json` referrer next to the
+  `application/vnd.spdx+json` one. That bundle is the **image's provenance
+  attestation**, not a signature on the SBOM: its DSSE payload is
+  `https://slsa.dev/provenance/v1` and its subject is the *image* digest —
+  checked on `ublue-os/bluefin`, `ublue-os/bluefin-dx`,
+  `ublue-os/bluefin-nvidia-open`, `projectbluefin/dakota`, and
+  `projectbluefin/dakota-nvidia`.
+- `cosign verify-attestation --type spdxjson` finds no spdxjson attestation
+  ("none of the attestations matched the predicate type: spdxjson, found:
+  https://slsa.dev/provenance/v1"), and `cosign verify` against
+  `<repository>@<sbomDigest>` finds no signature on the referrer manifest.
+
+Closing the gap is a publisher-side change, in the image repositories, not
+here. Either of these makes the check pass:
+
+- `cosign attest --predicate sbom.json --type slsaprovenance ...` style
+  signing of an attestation whose subject covers the SBOM artifact, verified
+  with `cosign verify-attestation`, or
+- `cosign sign <repository>@<sbomDigest>` (or `cosign attach` + sign) putting
+  a verifiable signature on the referrer manifest itself, verified with
+  `cosign verify` — the form this repo's code consumes.
+
+Because an unsigned SBOM is the current steady state, the check is wired in
+`collectVerifiedImageSbom` and flagged here explicitly: until a publisher
+signs, the affected product's public block becomes `unavailable` with
+`missing-sbom-signature` and the daily issue carries the exact code. That is
+the honest state — `verified` previously implied a check that did not run.
+Rolling the check back to restore the old values would be publishing unproven
+evidence again; fix the publishers instead.
 
 Do not widen the transport pattern to bare `certificate` or `x509`: cosign
 reports identity failures with those words, and misclassifying one as transport
