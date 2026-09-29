@@ -20,8 +20,7 @@ const leftNavLinks: NavLink[] = [
   {
     name: t('TopBar.Docs'),
     href: 'https://docs.projectbluefin.io/introduction'
-  },
-  { name: t('TopBar.AskBluefin'), href: 'https://ask.projectbluefin.io', external: true }
+  }
 ]
 
 // Right side navigation

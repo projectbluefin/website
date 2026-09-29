@@ -26,7 +26,7 @@ describe('topNavbar.vue', () => {
     expect(wordmark.attributes('alt')).toBe('Bluefin')
 
     const desktopGroups = wrapper.findAll('.navbar__items')
-    expect(desktopGroups[0].findAll('a.navbar__link')).toHaveLength(2)
+    expect(desktopGroups[0].findAll('a.navbar__link')).toHaveLength(1)
     expect(wrapper.get('.navbar__items--right').findAll('a.navbar__link')).toHaveLength(6)
   })
 
@@ -38,7 +38,7 @@ describe('topNavbar.vue', () => {
     expect(docsLink.attributes('target')).toBeUndefined()
     expect(docsLink.classes()).toContain('navbar__link--active')
 
-    const externalLink = wrapper.get('a[href="https://ask.projectbluefin.io"]')
+    const externalLink = wrapper.get('a[href="https://github.com/ublue-os/bluefin/discussions"]')
     expect(externalLink.attributes('target')).toBe('_blank')
     expect(externalLink.attributes('rel')).toBe('noopener noreferrer')
   })
@@ -57,8 +57,7 @@ describe('topNavbar.vue', () => {
     expect(toggle.text()).toBe('✕')
 
     const mobileLinks = wrapper.findAll('#navbar-mobile-menu a.navbar__mobile-link')
-    expect(mobileLinks).toHaveLength(8)
-
+    expect(mobileLinks).toHaveLength(7)
     await mobileLinks[0].trigger('click')
     expect(wrapper.find('#navbar-mobile-menu').exists()).toBe(false)
   })
@@ -71,7 +70,6 @@ describe('topNavbar.vue', () => {
       .map(link => link.attributes('href'))
     expect(leftHrefs).toEqual([
       'https://docs.projectbluefin.io/introduction',
-      'https://ask.projectbluefin.io',
     ])
 
     const rightHrefs = wrapper.get('.navbar__items--right')
@@ -99,8 +97,7 @@ describe('topNavbar.vue', () => {
     const leftLabels = wrapper.findAll('.navbar__items')[0]
       .findAll('a.navbar__link')
       .map(link => link.text())
-    expect(leftLabels).toEqual(['Dokumentation', 'Frag Bluefin'])
-
+    expect(leftLabels).toEqual(['Dokumentation'])
     const docsLink = wrapper.get('a[href="https://docs.projectbluefin.io/introduction"]')
     expect(docsLink.text()).toBe('Dokumentation')
     expect(docsLink.classes()).toContain('navbar__link--active')
