@@ -34,7 +34,10 @@ describe('useLocale', () => {
   })
 
   it('bundles the supported locales', () => {
-    expect(Object.keys(i18n.global.messages).sort()).toEqual(SUPPORTED_LOCALES)
+    // 'uk' is added by this branch; keep it out of the list above so the
+    // literal stays mergeable with locales added on main.
+    const expected = [...SUPPORTED_LOCALES, 'uk'].sort()
+    expect(Object.keys(i18n.global.messages).sort()).toEqual(expected)
   })
 
   it('uses en-US as the default locale', () => {
