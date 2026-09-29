@@ -1,0 +1,156 @@
+{
+  "TopBar": {
+    "Docs": "Документація",
+    "Blog": "Блог",
+    "Changelog": "Журнали змін",
+    "Reports": "Звіти",
+    "Discussions": "Обговорення",
+    "Feedback": "Зворотний зв'язок",
+    "Store": "Магазин (лише США)"
+  },
+  "Landing": {
+    "Title": "Робоча станція Linux нового покоління, створена з думкою про надійність, продуктивність і сталий розвиток.",
+    "DiscoverButton": "Дізнатися",
+    "TryOutButton": "Спробувати"
+  },
+  "Users": {
+    "Tag": "Для",
+    "Title": "Вас",
+    "Intro": "Bluefin — це операційна система для вашого комп'ютера. Найкраще з двох світів: надійність і простота Chromebook разом із потужністю робочого середовища GNOME.",
+    "Box1": "Застосунки з Flathub",
+    "Box2": "Майже нульове обслуговування",
+    "Box3": "Включені драйвери GPU",
+    "Features": "Завдяки автоматичним оновленням на основі образів і простому графічному магазину застосунків Bluefin створено, щоб не заважати вам. Отримуйте потрібне, не втрачаючи стабільності системи. Клієнт Linux еволюціонував, готуючи чистий старт для нового покоління. Дивіться [оголошення в блозі](https://www.ypsidanger.com/announcing-project-bluefin/) та [вступну документацію](https://docs.projectbluefin.io) для детальнішої інформації.",
+    "BluefinArtworkAlt": "Bluefin дивиться на майбутнє Linux — воно, схоже, ліворуч"
+  },
+  "EvolutionQuote": {
+    "Quote": "Еволюція — це процес постійного розгалуження та розширення.",
+    "Author": "Стефен Джей Гулд",
+    "WikiLink": "https://en.wikipedia.org/wiki/Stephen_Jay_Gould"
+  },
+  "Devs": {
+    "Tag": "Для",
+    "Title": "Розробників",
+    "Features": "Bluefin має необов'язковий «режим розробника», який перетворює ваш пристрій на потужну робочу станцію. Він пропонує робочі процеси, зосереджені на контейнерах, щоб ви могли швидко почати незалежно від попереднього досвіду, або принести власні інструменти. У світі налічується [20 мільйонів хмарних нативних розробників](https://www.cncf.io/announcements/2026/03/24/cncf-and-slashdata-report-finds-cloud-native-community-reaches-nearly-20-million-developers/) — користуйтеся цими [провідними інструментами індустрії](https://landscape.cncf.io/) без зусиль...",
+    "BoxOne": "Visual Studio Code з devcontainers",
+    "BoxTwo": "Працюйте з улюбленими дистрибутивами Linux у контейнерному терміналі",
+    "BoxThree": "Створено для хмарної нативної розробки з найкращими інструментами CNCF, зокрема Kubernetes",
+    "BoxFour": "Homebrew увімкнено за замовчуванням, ті самі інструменти, що й на вашому Mac",
+    "BoxFive": "Podman Desktop для графічного керування контейнерами",
+    "BoxSix": "IDE від JetBrains — на відстані однієї команди",
+    "RuntimeContainers": "Підтримка [контейнерного середовища виконання](https://podman.io) розкриває потенціал вашої команди. Використовуйте на робочому столі ті самі інструменти, що живлять сучасну інтернет-інфраструктуру. Bluefin вміє доставляти робочу версію в продакшн.",
+    "CNJourney": "Ми орієнтуємося на операторів Linux, які не використовують Linux на робочому столі, бо він їх підвів. Тому ми проводимо робочий стіл Linux через його шлях до хмарної нативності та будуємо його разом із спільнотою. ",
+    "KarlArtworkAlt": "Карл, що виростає над вашим списком завдань",
+    "TowerJoke": "<b>Карл</b> над вашим списком завдань!"
+  },
+  "InitiativeQuote": {
+    "Quote": "Будьте тим, хто рухається, а не тим, кого рухають.",
+    "Author": "Командир Завала (Destiny)",
+    "WikiLink": "https://en.wikipedia.org/wiki/Lance_Reddick"
+  },
+  "Mission": {
+    "Tag": "Наша",
+    "Title": "Місія",
+    "Text": {
+      "NewBreed": "Bluefin — це не просто програмне забезпечення, це новий вид тварин, здатний витримати суворість екосистеми, якою панують гіганти, і водночас захистити свою родину.",
+      "Change": "Технології починаються з локального комп'ютера — пристрою, який ви торкаєтеся, і він має бути таким самим важливим, як і решта екосистеми Linux.",
+      "CloudNative": "Впроваджуючи хмарні нативні підходи на робочий стіл, ми сподіваємося запалити інтерес до робочих комп'ютерів і водночас підтримати наступне покоління контриб'юторів з відкритим кодом. Bluefin створено як інструмент, на який ви покладаєтеся, щоб робити те, що вмієте найкраще. Наша відповідь проста: користуйтеся тим, чим користуються експерти з інфраструктури. Нинішній робочий стіл Linux не довів нас туди, але ми віримо, що те, що було створено, може бути перероблене. Давайте зробимо це краще.",
+      "Sustainability": "Bluefin — про сталий розвиток, що охоплює програмне забезпечення, апаратне забезпечення та людей."
+    },
+    "CleverGirl": "Або вона може випотрошити нас дорогою. Розумниця.",
+    "BluefinChillAlt": "Bluefin лежить і відпочиває"
+  },
+  "SpreadQuote": {
+    "Quote": "Є два способи поширювати світло: бути свічкою або дзеркалом, що її відображає.",
+    "Author": "Едіт Уортон",
+    "WikiLink": "https://en.wikipedia.org/wiki/Edith_Wharton"
+  },
+  "Video": {
+    "Url": "https://www.youtube.com/embed/Nz-yyDwTfRM&autoplay=1",
+    "Title": "Вступ до Bluefin",
+    "Text": {
+      "Passion": "Project Bluefin — це не завершений продукт, а пристрасний проєкт, який підтримують [ентузіасти хмарної нативності](https://github.com/ublue-os/bluefin/graphs/contributors), що прагнуть до надійнішого та придатнішого для підтримки робочого столу Linux. Перегляньте [відкриті задачі](https://github.com/ublue-os/bluefin/issues).",
+      "StateOfTheArt": "Вона втілює найсучасніші технології: красива й унікальна істота. Ідеальний хижак для світу, який неминуче зіткнеться з викликами. Ми мусимо адаптуватися. Ми можемо зробити це **разом**."
+    }
+  },
+  "Bazaar": {
+    "Tag": "Запускайте улюблені",
+    "Title": "Застосунки",
+    "Description": "Bluefin використовує магазин застосунків <a href=\"https://usebazaar.org\" target=\"_blank\">Bazaar</a>, що дозволяє легко встановлювати всі ваші улюблені застосунки з <a href=\"https://flathub.org\" target=\"_blank\">Flathub</a> та добірки застосунків, які, на нашу думку, вам сподобаються.",
+    "Additional": "Крім того, Bluefin надає <a href=\"https://docs.brew.sh/Homebrew-on-Linux\" target=\"_blank\">Homebrew</a> і робочі процери з контейнерами для застосунків, тож запуск будь-якої програми стає легким. Оскільки весь програмний світ постачається в контейнерах, використовувати їх стає швидко та зручно! <br><br><strong>Bluefin розробляється на Bluefin.</strong>",
+    "FlathubButton": "Переглянути застосунки на Flathub"
+  },
+  "TryBluefin": {
+    "Tag": "Спробуйте",
+    "Title": "Bluefin",
+    "LegacyDownloads": "Старіші версії на базі Fedora [все ще можна завантажити](https://docs.projectbluefin.io/downloads/), але для нових користувачів вони не рекомендовані.",
+    "Wolves": {
+      "Cards": {
+        "AlphaBadge": "⚠️ Альфа.",
+        "AlphaBadgeSub": "Вживайте належних застережень.",
+        "ComingSoonBadge": "Скоро",
+        "Dakota": "Dakota",
+        "DakotaDescription": "Остаточна форма. Удосконалений Bluefin.",
+        "Utah": "Utah",
+        "UtahDescription": "",
+        "Server": "Bluefin Server",
+        "ServerDescription": "Провідна у світі серверна операційна система на базі FSDK."
+      }
+    }
+  },
+  "Community": {
+    "Tag": "Наша",
+    "Title": "Спільнота",
+    "Documentation": {
+      "Title": "Документація",
+      "Description": "Потрібна підтримка? Перегляньте наш сайт документації з актуальними посібниками з встановлення, загального використання та усунення несправностей.",
+      "Button": "Переглянути документацію",
+      "DiscordButton": "Приєднатися до Discord",
+      "DiscussionsButton": "Обговорення"
+    },
+    "Contribute": {
+      "Tag": "Наші контриб'ютори",
+      "Title": "Долучитися",
+      "Description": "Допомагайте розвитку Bluefin, додаючи код, повідомляючи про помилки або пропонуючи нові можливості. Ви також можете підтримати окремих контриб'юторів фінансово, якщо захочете зробити внесок у грошовому виразі.",
+      "Button": "Відвідайте наш GitHub",
+      "DonateButton": "Підтримати"
+    }
+  },
+  "News": {
+    "Title": "Новини",
+    "Loading": "Завантаження дописів блогу...",
+    "NoPosts": "Дописів блогу не знайдено.",
+    "ViewAll": "Переглянути всі дописи в офіційному блозі"
+  },
+  "Flock": {
+    "Title": "Наше стадо",
+    "Description": "Bluefin створюється групою відданих супроводжувачів і контриб'юторів.",
+    "AlumniTitle": "Серед наших учасників — представники компаній, зокрема",
+    "SponsorsTitle": "Наші спонсори",
+    "Attribution": "Статистику надано"
+  },
+  "Footer": {
+    "PoweredBy": "Працює на",
+    "Project": {
+      "Title": "Project Bluefin створено з використанням",
+      "Ublue": "Спільнотний інструментарій, створений для перезавантаження робочого столу Linux. Зроблено з любові до справи. Ласкаво просимо до інді-Cloud Native."
+    },
+    "Credits": {
+      "Intro": "Уся графіка створена людьми.",
+      "Website": "Вебсайт — [Jan Dolanský](https://dolansky.dev/) та [Kyle Gospodnetich](https://kylegospodneti.ch/)",
+      "Logos": "Логотипи та шпалери — [Jacob Schnurr](https://www.etsy.com/shop/JSchnurrCommissions?listing_id=1425657775)",
+      "ImageEdit": "Редагування зображень — [Delphic Melody](https://github.com/delphicmelody/)",
+      "Wallpapers": "Ілюстративні шпалери Bluefin — Andy Frazer, [DragonsofWales](https://www.etsy.com/fi-en/shop/DragonsofWales?ref=profile_header)",
+      "Translations": "Переклади — [Tulip Blossom](https://github.com/tulilirockz), [karhima](https://github.com/karhima), [Niklas](https://niklas.tech), [Crono](https://github.com/EPOCHvoyager), [Tsu-gu](https://github.com/Tsu-gu) та [Mimolet](https://github.com/theMimolet)",
+      "Thanks": "Особлива подяка — [Aaron Lake](https://www.linkedin.com/in/aaron-lake/), [Brian Ketelsen](https://brian.dev/), [Dustin Kirkland](https://www.kotterva.com/), [Wayne Witzel](https://github.com/wwitzel3) та [Marco Ceppi](https://github.com/marcoceppi)"
+    },
+    "Copyright": "Авторські права {date} © Project Bluefin та Universal Blue"
+  },
+  "Navbar": {
+    "ForYou": "Для вас",
+    "ForDevs": "Для розробників",
+    "OurMission": "Наша місія",
+    "TryOut": "Спробувати",
+    "Community": "Спільнота"
+  }
+}
