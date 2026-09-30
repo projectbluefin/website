@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { setLocale } from '../composables/useLocale'
+import { resolveLocale, setLocale } from '../composables/useLocale'
 import { i18n } from '../locales/schema'
 
 const DEFAULT_LOCALE = 'en-US'
@@ -22,6 +22,7 @@ const SUPPORTED_LOCALES = [
   'sk-SK',
   'sv',
   'tr',
+  'uk',
   'vi-VN',
   'zh-HK',
   'zh-Hans',
@@ -34,10 +35,7 @@ describe('useLocale', () => {
   })
 
   it('bundles the supported locales', () => {
-    // 'uk' is added by this branch; keep it out of the list above so the
-    // literal stays mergeable with locales added on main.
-    const expected = [...SUPPORTED_LOCALES, 'uk'].sort()
-    expect(Object.keys(i18n.global.messages).sort()).toEqual(expected)
+    expect(Object.keys(i18n.global.messages).sort()).toEqual([...SUPPORTED_LOCALES].sort())
   })
 
   it('uses en-US as the default locale', () => {
@@ -50,5 +48,21 @@ describe('useLocale', () => {
 
     setLocale('de-DE')
     expect((i18n.global as any).locale).toBe('de-DE')
+  })
+
+  it('resolves exact locale tags', () => {
+    expect(resolveLocale('uk')).toBe('uk')
+    expect(resolveLocale('pt-BR')).toBe('pt-BR')
+  })
+
+  it('resolves regional tags to a bundled base language', () => {
+    expect(resolveLocale('uk-UA')).toBe('uk')
+    expect(resolveLocale('de')).toBe('de-DE')
+  })
+
+  it('returns undefined for unknown or empty tags', () => {
+    expect(resolveLocale('xx-XX')).toBeUndefined()
+    expect(resolveLocale('')).toBeUndefined()
+    expect(resolveLocale(null)).toBeUndefined()
   })
 })
