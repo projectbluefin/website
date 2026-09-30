@@ -60,6 +60,11 @@ describe('useLocale', () => {
     expect(resolveLocale('de')).toBe('de-DE')
   })
 
+  it('leaves ambiguous base languages unresolved', () => {
+    expect(resolveLocale('zh')).toBeUndefined()
+    expect(resolveLocale('zh-CN')).toBeUndefined()
+  })
+
   it('returns undefined for unknown or empty tags', () => {
     expect(resolveLocale('xx-XX')).toBeUndefined()
     expect(resolveLocale('')).toBeUndefined()

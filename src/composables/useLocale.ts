@@ -13,6 +13,11 @@ export function setLocale(locale: string): void {
  * Resolve a requested locale tag (e.g. from ?lang= or navigator.language)
  * to a bundled locale. Falls back to a base-language match so tags like
  * 'uk-UA' resolve to 'uk' and 'de' resolves to 'de-DE'.
+ *
+ * The base-language fallback only applies when exactly one bundled locale
+ * shares the base language. When several do (e.g. zh-HK and zh-TW), picking
+ * one would depend on bundling order, so the tag is left unresolved and the
+ * caller keeps the default locale.
  */
 export function resolveLocale(requested: string | null | undefined): string | undefined {
   if (!requested) {
@@ -26,5 +31,6 @@ export function resolveLocale(requested: string | null | undefined): string | un
   }
 
   const base = requested.split('-')[0].toLowerCase()
-  return available.find(locale => locale.toLowerCase().split('-')[0] === base)
+  const baseMatches = available.filter(locale => locale.toLowerCase().split('-')[0] === base)
+  return baseMatches.length === 1 ? baseMatches[0] : undefined
 }

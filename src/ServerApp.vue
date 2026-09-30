@@ -6,8 +6,7 @@ import ServerDesc from './components/server/ServerDesc.vue'
 import ServerTitle from './components/server/ServerTitle.vue'
 import ServerVersion from './components/server/ServerVersion.vue'
 import TopNavbar from './components/TopNavbar.vue'
-import { setLocale } from './composables/useLocale'
-import { i18n } from './locales/schema'
+import { resolveLocale, setLocale } from './composables/useLocale'
 
 const visibleSection = ref<string>('')
 provide('visibleSection', visibleSection)
@@ -34,8 +33,8 @@ onBeforeMount(() => {
 })
 
 const urlParams = new URLSearchParams(window.location.search)
-const currentLocale = urlParams.get('lang') || window.navigator.language
-if (i18n.global.availableLocales.includes(currentLocale)) {
+const currentLocale = resolveLocale(urlParams.get('lang') || window.navigator.language)
+if (currentLocale) {
   setLocale(currentLocale)
 }
 </script>
