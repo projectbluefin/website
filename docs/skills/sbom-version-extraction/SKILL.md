@@ -114,6 +114,12 @@ import from it pass locally but fail in a clean worktree. Always commit the
 implementation in the same commit as the tests that import it, or in a prior
 commit. Never commit a test file before the module it imports.
 
+### Element pins follow the published SBOM, not the last known name
+
+`missing-required` for a shipping component means the `element` pin drifted
+(dakota#1687 moved mesa to `extensions/mesa/mesa-extra.bst`; `mesa.bst` still
+exists). Re-pin against live SPDX, never weaken `required`; update pin+fixture+test.
+
 ### Bluefin projection-layer normalisation
 
 User-facing RPM versions in `stream-versions.yml` are normalised by

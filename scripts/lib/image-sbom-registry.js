@@ -191,7 +191,12 @@ export const IMAGE_SBOM_REGISTRY = Object.freeze([
       // and the bpf component (7.2.2); the booted kernel is core/linux-fdsdk.bst.
       kernel: { name: 'linux', element: 'core/linux-fdsdk.bst', required: true },
       gnome: { name: 'gnome-shell', required: true },
-      mesa: { name: 'mesa', element: 'freedesktop-sdk.bst:extensions/mesa/mesa.bst', required: true },
+      // dakota#1687 (2d69f9ec) pointed elements/core/mesa-default.bst at
+      // freedesktop-sdk's extensions/mesa/mesa-extra.bst (both mesa.bst and
+      // mesa-extra.bst still exist upstream), so the published SPDX carries
+      // `mesa` only under mesa-extra.bst and the pin must track that element
+      // or mesa reads as missing-required.
+      mesa: { name: 'mesa', element: 'freedesktop-sdk.bst:extensions/mesa/mesa-extra.bst', required: true },
       systemd: { name: 'systemd', element: 'gnome-build-meta.bst:core-deps/systemd-base.bst', required: false },
       podman: { name: 'podman', required: false },
       pipewire: { name: 'pipewire', required: false },
