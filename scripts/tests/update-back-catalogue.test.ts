@@ -1,6 +1,13 @@
 import type { Buffer } from 'node:buffer'
 import { describe, expect, it } from 'vitest'
-import { auditExperience, buildExperience, refreshMetadata } from '../update-back-catalogue.js'
+import {
+  auditExperience,
+  buildExperience,
+  isPlaylistUrl,
+  readPlaylistEntries,
+  refreshMetadata,
+  shouldIncludeAlbum,
+} from '../update-back-catalogue.js'
 
 const album = { id: 'PLtest', title: 'Test Album', description: 'A test album' }
 
@@ -62,6 +69,42 @@ describe('auditExperience', () => {
     experience.segments[0].durationSeconds = 0
 
     expect(() => auditExperience(album, entries, experience)).toThrow(/bad duration/)
+  })
+})
+
+describe('shouldIncludeAlbum', () => {
+  it('accepts a URL-safe YouTube playlist id', () => {
+    expect(shouldIncludeAlbum({ id: 'PLtest_1-2', title: 'Album' })).toBe(true)
+  })
+
+  it('rejects the featured album', () => {
+    expect(shouldIncludeAlbum({ id: 'PLA78oiE-RGAE', title: 'Album' })).toBe(false)
+    expect(shouldIncludeAlbum({ id: 'PLother', title: 'Seven Days to the Wolves' })).toBe(false)
+  })
+
+  it('rejects ids that could escape the experiences directory or carry URL syntax', () => {
+    for (const id of ['../../.github/x', 'a/b', 'a\\b', 'PL.test', 'PL test', 'PL?x=1', '', 42]) {
+      expect(shouldIncludeAlbum({ id, title: 'Album' }), String(id)).toBe(false)
+    }
+  })
+})
+
+describe('isPlaylistUrl', () => {
+  it('accepts https YouTube playlist URLs', () => {
+    expect(isPlaylistUrl('https://www.youtube.com/playlist?list=PLtest')).toBe(true)
+    expect(isPlaylistUrl('https://music.youtube.com/playlist?list=PLtest')).toBe(true)
+  })
+
+  it('rejects option-like, non-https and non-YouTube values', () => {
+    for (const value of ['--exec=id', '-a', 'http://www.youtube.com/playlist?list=PL', 'https://evil.example/playlist', 'not a url', undefined]) {
+      expect(isPlaylistUrl(value), String(value)).toBe(false)
+    }
+  })
+})
+
+describe('readPlaylistEntries', () => {
+  it('refuses to spawn yt-dlp for a rejected playlist URL', () => {
+    expect(() => readPlaylistEntries('--exec=id')).toThrow(/Refusing to pass/)
   })
 })
 
