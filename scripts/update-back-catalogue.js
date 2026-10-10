@@ -37,6 +37,13 @@ const COVER_URL = id => `https://docs.projectbluefin.io/img/playlists/${id}.jpg`
 const MAX_SEGMENT_SECONDS = 60 * 60
 const FEATURED_ALBUM_IDS = new Set(['PLA78oiE-RGAE'])
 const FEATURED_ALBUM_TITLES = new Set(['Seven Days to the Wolves'])
+/**
+ * YouTube playlist ids are URL-safe base64. The id is spliced into a cover
+ * filename under public/experiences and a cover URL, so anything outside this
+ * alphabet (path separators, dots, whitespace) is rejected before either use.
+ */
+const PLAYLIST_ID_PATTERN = /^[\w-]{1,64}$/
+const PLAYLIST_HOSTS = new Set(['www.youtube.com', 'youtube.com', 'music.youtube.com'])
 const MODULE_PATH = import.meta.url.startsWith('file:')
   ? fileURLToPath(import.meta.url)
   : null
@@ -198,11 +205,32 @@ export function shouldIncludeAlbum(album) {
   }
   const id = typeof album.id === 'string' ? album.id : ''
   const title = typeof album.title === 'string' ? album.title : ''
-  return id.length > 0 && !FEATURED_ALBUM_IDS.has(id) && !FEATURED_ALBUM_TITLES.has(title)
+  return PLAYLIST_ID_PATTERN.test(id) && !FEATURED_ALBUM_IDS.has(id) && !FEATURED_ALBUM_TITLES.has(title)
+}
+
+/**
+ * The playlist URL is handed to yt-dlp as a positional argument. yt-dlp parses
+ * any argument beginning with `-` as an option, so only an https YouTube URL is
+ * accepted; anything else is refused before the process is spawned.
+ */
+export function isPlaylistUrl(value) {
+  if (typeof value !== 'string' || value.startsWith('-')) {
+    return false
+  }
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' && PLAYLIST_HOSTS.has(url.hostname)
+  }
+  catch {
+    return false
+  }
 }
 
 export function readPlaylistEntries(playlistUrl) {
-  const output = execFileSync('yt-dlp', ['--flat-playlist', '--dump-single-json', playlistUrl], {
+  if (!isPlaylistUrl(playlistUrl)) {
+    throw new TypeError(`Refusing to pass non-YouTube playlist URL to yt-dlp: ${String(playlistUrl)}`)
+  }
+  const output = execFileSync('yt-dlp', ['--flat-playlist', '--dump-single-json', '--', playlistUrl], {
     encoding: 'utf8',
     maxBuffer: 64 * 1024 * 1024,
   })
@@ -267,7 +295,7 @@ export async function main() {
   const experiences = []
   for (const album of albums) {
     if (!shouldIncludeAlbum(album)) {
-      console.info(`Skipping featured album ${album.title} (${album.id})`)
+      console.info(`Skipping album ${album?.title} (${album?.id}): featured or malformed id`)
       continue
     }
     console.info(`Reading ${album.title} (${album.id})`)
