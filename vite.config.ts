@@ -72,7 +72,7 @@ export default defineConfig({
   ],
   build: {
     rollupOptions: {
-      input: createRollupInput(__dirname),
+      input: createRollupInput(import.meta.dirname),
       output: {
         manualChunks: (id: string) => {
           if (['vue', 'vue-i18n'].some(mod => id.includes(`/node_modules/${mod}`))) {
