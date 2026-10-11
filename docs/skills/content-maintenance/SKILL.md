@@ -192,7 +192,8 @@ as the `LOCALE_ALIASES` map and the `resolveLocale()` function. Aliases are
 allowed only when the alias target is the *only* bundle that fits the source
 region — the current single-bundle entries (`cs-CZ` → `cs` for issue #928,
 `uk-UA` → `uk` for issue #905) and the Simplified-Chinese entries
-(`zh-CN` → `zh-Hans`, `zh-SG` → `zh-Hans`, `zh-MY` → `zh-Hans`) close the
+(`zh-CN` → `zh-Hans`, `zh-SG` → `zh-Hans`, `zh-MY` → `zh-Hans`, plus the
+script-qualified `zh-Hans-CN`, `zh-Hans-SG`, `zh-Hans-MY` for issue #907) close the
 gap where a browser reporting a regional tag would otherwise fall to
 `en-US`. `cs-CZ` → `cs` closes #928: a Czech browser reporting the regional
 tag previously fell to the default even though `?lang=cs` works, and `cs`
