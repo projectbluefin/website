@@ -1,7 +1,7 @@
 # Website
 
 This repository builds a production website and separately mounted
-sub-applications with Vue 3, TypeScript 7, Vite 8, SCSS, and Tailwind.
+sub-applications with Vue 3, TypeScript 6, Vite 8, SCSS, and Tailwind.
 
 ## Boundary
 
