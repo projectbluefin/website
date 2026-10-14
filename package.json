@@ -27,6 +27,7 @@
     "check:image-sboms": "node scripts/update-image-versions.js --check-only"
   },
   "dependencies": {
+    "@antfu/eslint-config": "^7.7.3",
     "@fontsource/michroma": "^5.3.0",
     "@fontsource/share-tech-mono": "^5.3.0",
     "@iconify-prerendered/vue-mdi": "^0.28.1737398331",
@@ -55,8 +56,8 @@
     "@vitest/coverage-v8": "^5.0.3",
     "@vue/test-utils": "^2.5.1",
     "@xmldom/xmldom": "^0.9.12",
-    "eslint": "^10.12.0",
-    "eslint-plugin-format": "^2.0.1",
+    "eslint": "^9.39.5",
+    "eslint-plugin-format": "^1.4.0",
     "happy-dom": "^20.14.6",
     "playwright": "^1.64.0",
     "tailwindcss": "^4.3.3",
