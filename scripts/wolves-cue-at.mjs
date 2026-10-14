@@ -124,7 +124,7 @@ async function main() {
       // the first shot, or inside a hole in the grid, sends the reader looking for a
       // missing cue at the wrong end of the video.
       const first = cues[0]
-      const last = cues[cues.length - 1]
+      const last = cues.at(-1)
       if (first && at < first.start) {
         console.info(`  nothing scheduled — the first shot starts at ${formatTimestamp(first.start)}.\n`)
       }

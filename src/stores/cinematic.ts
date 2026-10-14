@@ -288,7 +288,7 @@ export function resolveOverallElapsedTarget(elapsed: number): OverallTimelineTar
   const overallDuration = overallSequenceDuration()
   const overallElapsed = clamp(elapsed, 0, overallDuration)
   let consumed = 0
-  const lastEntry = OVERALL_TIMELINE[OVERALL_TIMELINE.length - 1]
+  const lastEntry = OVERALL_TIMELINE.at(-1)
 
   for (const entry of OVERALL_TIMELINE) {
     const segmentEnd = consumed + entry.segmentDuration
@@ -317,12 +317,12 @@ export function resolveOverallElapsedTarget(elapsed: number): OverallTimelineTar
   return {
     phase: 'cinematic',
     segmentIndex: CINEMATIC_TIMELINE.length - 1,
-    segmentId: CINEMATIC_TIMELINE[CINEMATIC_TIMELINE.length - 1]?.segmentId ?? '',
-    segmentElapsed: CINEMATIC_TIMELINE[CINEMATIC_TIMELINE.length - 1]?.segmentDuration ?? 0,
-    segmentDuration: CINEMATIC_TIMELINE[CINEMATIC_TIMELINE.length - 1]?.segmentDuration ?? 0,
+    segmentId: CINEMATIC_TIMELINE.at(-1)?.segmentId ?? '',
+    segmentElapsed: CINEMATIC_TIMELINE.at(-1)?.segmentDuration ?? 0,
+    segmentDuration: CINEMATIC_TIMELINE.at(-1)?.segmentDuration ?? 0,
     seekRatio: 1,
-    nativeTime: (CINEMATIC_TIMELINE[CINEMATIC_TIMELINE.length - 1]?.nativeStart ?? 0)
-      + (CINEMATIC_TIMELINE[CINEMATIC_TIMELINE.length - 1]?.segmentDuration ?? 0),
+    nativeTime: (CINEMATIC_TIMELINE.at(-1)?.nativeStart ?? 0)
+      + (CINEMATIC_TIMELINE.at(-1)?.segmentDuration ?? 0),
     overallElapsed: overallDuration,
     overallDuration,
   }

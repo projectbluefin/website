@@ -253,7 +253,7 @@ export function directorsCutSectionSlideCount(
 ): number {
   const totalBeats = trackZeroNearestBeatIndex(endTime) - trackZeroNearestBeatIndex(startTime)
   const longest = beatGroups[0]!
-  const shortest = beatGroups[beatGroups.length - 1]!
+  const shortest = beatGroups.at(-1)!
   if (totalBeats < shortest) {
     return 0
   }

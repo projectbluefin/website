@@ -55,7 +55,7 @@ describe('wolves narrative timeline', () => {
     const ids = wolvesNarrativeTimeline.map(slot => slot.artifactId)
     expect(ids.indexOf('lorem-pursuit-1')).toBeGreaterThan(ids.indexOf('arthur-c-clarke-1'))
     expect(ids).not.toContain('john-seager')
-    expect(ids[ids.length - 1]).toBe('blue-universal-acquires-wayland-yutani')
+    expect(ids.at(-1)).toBe('blue-universal-acquires-wayland-yutani')
   })
 
   it('preserves the approved first, middle, and final anchors', () => {
@@ -107,7 +107,7 @@ describe('wolves narrative timeline', () => {
   })
 
   it('allocates unlocked lore between the locked anchors', () => {
-    const finalStart = wolvesNarrativeTimeline[wolvesNarrativeTimeline.length - 1].startTime
+    const finalStart = wolvesNarrativeTimeline.at(-1).startTime
     const pursuitEnd = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'lorem-pursuit-1')!.endTime
     const middle = wolvesNarrativeTimeline.filter(slot => slot.startTime >= pursuitEnd && slot.endTime <= finalStart)
     expect(middle.length).toBeGreaterThan(0)
@@ -115,7 +115,7 @@ describe('wolves narrative timeline', () => {
   })
 
   it('keeps the recomputed middle contiguous', () => {
-    const finalStart = wolvesNarrativeTimeline[wolvesNarrativeTimeline.length - 1].startTime
+    const finalStart = wolvesNarrativeTimeline.at(-1).startTime
     const pursuitEnd = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'lorem-pursuit-1')!.endTime
     const middle = wolvesNarrativeTimeline.filter(slot => slot.startTime >= pursuitEnd && slot.endTime <= finalStart)
     for (let index = 1; index < middle.length; index++) {
@@ -148,7 +148,7 @@ describe('wolves narrative timeline', () => {
   })
 
   it('keeps the recomputed unlocked pool contiguous and authored', () => {
-    const finalStart = wolvesNarrativeTimeline[wolvesNarrativeTimeline.length - 1].startTime
+    const finalStart = wolvesNarrativeTimeline.at(-1).startTime
     const pursuitEnd = wolvesNarrativeTimeline.find(slot => slot.artifactId === 'lorem-pursuit-1')!.endTime
     const middle = wolvesNarrativeTimeline.filter(slot => slot.startTime >= pursuitEnd && slot.endTime <= finalStart)
     for (let index = 1; index < middle.length; index++) {
@@ -272,7 +272,7 @@ describe('wolves director\'s cut narrative timeline', () => {
   })
 
   it('places the missing-scientist bulletin on the finale\'s own bulletin window, at its full reading cost', () => {
-    const bulletinSlot = wolvesDirectorsCutNarrativeTimeline[wolvesDirectorsCutNarrativeTimeline.length - 1]!
+    const bulletinSlot = wolvesDirectorsCutNarrativeTimeline.at(-1)!
 
     expect(bulletinSlot.artifactId).toBe(DIRECTORS_CUT_BULLETIN_ARTIFACT_ID)
     expect(bulletinSlot.startTime).toBe(DIRECTORS_CUT_FINALE_ANCHORS.bulletinStart)
@@ -286,7 +286,7 @@ describe('wolves director\'s cut narrative timeline', () => {
   // first Sagan clause. It now begins earlier and is gone before the corner
   // opens, so the impact has the frame to itself.
   it('starts the bulletin earlier and clears it before the companion impact reveal', () => {
-    const bulletinSlot = wolvesDirectorsCutNarrativeTimeline[wolvesDirectorsCutNarrativeTimeline.length - 1]!
+    const bulletinSlot = wolvesDirectorsCutNarrativeTimeline.at(-1)!
 
     expect(bulletinSlot.startTime).toBeLessThan(TRACK_ZERO_SECTIONS.pivotalStart)
     expect(bulletinSlot.startTime).toBeGreaterThan(TRACK_ZERO_SECTIONS.buildStart)
@@ -304,7 +304,7 @@ describe('wolves director\'s cut narrative timeline', () => {
       }
     }
     expect(wolvesDirectorsCutNarrativeTimeline[0]?.startTime).toBe(0)
-    expect(wolvesDirectorsCutNarrativeTimeline[wolvesDirectorsCutNarrativeTimeline.length - 1]?.endTime)
+    expect(wolvesDirectorsCutNarrativeTimeline.at(-1)?.endTime)
       .toBe(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
   })
 

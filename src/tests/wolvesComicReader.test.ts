@@ -1962,7 +1962,7 @@ describe('pending segment preload of the authored opening slide', () => {
       expect(Math.min(...slides.map(slide => slide.duration)))
         .toBeGreaterThanOrEqual(TRACK_ZERO_SLIDE_MINIMUM_HOLD_SECONDS)
       expect(slides[0].startTime).toBe(0)
-      expect(slides[slides.length - 1].endTime).toBe(DIRECTORS_CUT_FINALE_START)
+      expect(slides.at(-1).endTime).toBe(DIRECTORS_CUT_FINALE_START)
       expect(new Set(slides.map(slide => slide.id)).size).toBe(slides.length)
       for (const slide of slides) {
         expect(TRACK_ZERO_BEAT_TIMES.some(beat => Math.abs(beat - slide.endTime) < 0.0005)).toBe(true)

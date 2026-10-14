@@ -167,7 +167,7 @@ describe('director\'s cut track zero slide schedule', () => {
     for (let index = 1; index < schedule.length; index++) {
       expect(schedule[index].startTime).toBe(schedule[index - 1].endTime)
     }
-    expect(schedule[schedule.length - 1].endTime).toBe(DIRECTORS_CUT_FINALE_START)
+    expect(schedule.at(-1).endTime).toBe(DIRECTORS_CUT_FINALE_START)
     for (const slide of schedule) {
       expect(slide.duration).toBeGreaterThan(0)
       expect(slide.duration).toBeCloseTo(slide.endTime - slide.startTime, 9)
@@ -189,7 +189,7 @@ describe('director\'s cut track zero slide schedule', () => {
       ],
     })
 
-    expect(earlier[earlier.length - 1].endTime).toBe(TRACK_ZERO_SECTIONS.buildStart)
+    expect(earlier.at(-1).endTime).toBe(TRACK_ZERO_SECTIONS.buildStart)
     expect(earlier.every(slide => slide.endTime <= TRACK_ZERO_SECTIONS.buildStart)).toBe(true)
   })
 
@@ -199,7 +199,7 @@ describe('director\'s cut track zero slide schedule', () => {
     const offGrid = buildSchedule({
       reservedIntervals: [{ startTime: 300, endTime: Number.POSITIVE_INFINITY }],
     })
-    const finalCut = offGrid[offGrid.length - 1].endTime
+    const finalCut = offGrid.at(-1).endTime
 
     expect(isOnMeasuredGrid(300)).toBe(false)
     expect(isOnMeasuredGrid(finalCut)).toBe(true)
@@ -214,7 +214,7 @@ describe('director\'s cut track zero slide schedule', () => {
       reservedIntervals: [{ startTime: TRACK_ZERO_SECTIONS.bridgeStart, endTime: TRACK_ZERO_SECTIONS.buildStart }],
     })
 
-    expect(handedOff[handedOff.length - 1].endTime).toBe(TRACK_ZERO_SECTIONS.bridgeStart)
+    expect(handedOff.at(-1).endTime).toBe(TRACK_ZERO_SECTIONS.bridgeStart)
     expect(handedOff.some(slide => slide.startTime >= TRACK_ZERO_SECTIONS.buildStart)).toBe(false)
   })
 
@@ -275,13 +275,13 @@ describe('director\'s cut track zero slide schedule', () => {
       const sectionSlides = schedule.filter(slide =>
         slide.startTime >= section.startTime && slide.endTime <= section.endTime)
       expect(sectionSlides.length, `empty section ${section.id}`).toBeGreaterThan(0)
-      expect(sectionSlides[0].duration).toBeGreaterThanOrEqual(sectionSlides[sectionSlides.length - 1].duration)
+      expect(sectionSlides[0].duration).toBeGreaterThanOrEqual(sectionSlides.at(-1).duration)
     })
 
     // Tightening across the whole cut: the opening hold is the longest in the
     // show and the climax holds are the shortest.
     const first = DIRECTORS_CUT_TRACK_ZERO_SECTIONS[0]
-    const last = DIRECTORS_CUT_TRACK_ZERO_SECTIONS[DIRECTORS_CUT_TRACK_ZERO_SECTIONS.length - 1]
+    const last = DIRECTORS_CUT_TRACK_ZERO_SECTIONS.at(-1)
     expect(first.beatGroups[0]).toBeGreaterThan(last.beatGroups[0])
     expect(last.endTime).toBe(DIRECTORS_CUT_FINALE_START)
   })
@@ -316,7 +316,7 @@ describe('director\'s cut track zero slide schedule', () => {
   // anchors — 5.526s and 4.737s of held frame. The Director's Cut has no
   // freezes at all: it is still cutting when the finale takes the frame.
   it('replaces the standard cut\'s two climax freezes with a running montage', () => {
-    const climax = DIRECTORS_CUT_TRACK_ZERO_SECTIONS[DIRECTORS_CUT_TRACK_ZERO_SECTIONS.length - 1]
+    const climax = DIRECTORS_CUT_TRACK_ZERO_SECTIONS.at(-1)
     expect(climax.id).toBe('soloClimax')
 
     const holds = sectionHolds(schedule, climax)
@@ -387,7 +387,7 @@ describe('director\'s cut track zero slide schedule', () => {
     expect(thin.length).toBe(schedule.length)
     expect(thin.filter(slide => slide.kind === 'cncf').length).toBeGreaterThan(schedule.length - 10)
     expect(new Set(thin.map(slide => slide.id)).size).toBe(thin.length)
-    expect(thin[thin.length - 1].endTime).toBe(DIRECTORS_CUT_FINALE_START)
+    expect(thin.at(-1).endTime).toBe(DIRECTORS_CUT_FINALE_START)
   })
 
   it('never draws a CNCF feed photo that duplicates a local curated copy', () => {
@@ -442,7 +442,7 @@ describe('director\'s cut track zero slide schedule', () => {
 
     expect(tiny.length).toBe(4)
     expect(new Set(tiny.map(slide => slide.id)).size).toBe(4)
-    expect(tiny[tiny.length - 1].endTime).toBeLessThanOrEqual(DIRECTORS_CUT_FINALE_START)
+    expect(tiny.at(-1).endTime).toBeLessThanOrEqual(DIRECTORS_CUT_FINALE_START)
   })
 
   it('returns nothing when every pool is empty', () => {

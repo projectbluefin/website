@@ -1153,7 +1153,7 @@ export function trackZeroBeatAtOrAfter(time: number): number {
   const beat = TRACK_ZERO_BEAT_TIMES[index]!
   return beat >= time
     ? beat
-    : (TRACK_ZERO_BEAT_TIMES[index + 1] ?? TRACK_ZERO_BEAT_TIMES[TRACK_ZERO_BEAT_TIMES.length - 1]!)
+    : (TRACK_ZERO_BEAT_TIMES[index + 1] ?? TRACK_ZERO_BEAT_TIMES.at(-1)!)
 }
 
 /**
@@ -1197,13 +1197,13 @@ export function trackZeroBeatCuts(
   const startIndex = trackZeroNearestBeatIndex(startTime)
   const endIndex = trackZeroNearestBeatIndex(endTime)
   const totalBeats = endIndex - startIndex
-  const base = tiers[tiers.length - 1]
+  const base = tiers.at(-1)
   if (totalBeats < base * count) {
     const uniform = (endTime - startTime) / count
     return Array.from({ length: count }, (_, i) =>
       i === count - 1 ? endTime : startTime + uniform * (i + 1))
   }
-  const perSlide = Array.from({ length: count }, () => base)
+  const perSlide = Array.from({ length: count }).fill(base)
   let remaining = totalBeats - base * count
   for (const tier of tiers.slice(0, -1)) {
     for (let i = 0; i < count; i++) {

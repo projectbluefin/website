@@ -219,7 +219,7 @@ describe('wolves Track 0 slide locks', () => {
     const small = [{ id: 'showcase-a' }, microraptor, { id: 'showcase-b' }]
 
     const pinnedSmall = pinBluefinMicroraptorSlide(small)
-    expect(pinnedSmall[pinnedSmall.length - 1]).toEqual(microraptor)
+    expect(pinnedSmall.at(-1)).toEqual(microraptor)
     expect(pinBluefinMicroraptorSlide([{ id: 'showcase-a' }])).toEqual([{ id: 'showcase-a' }])
   })
 })

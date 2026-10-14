@@ -89,7 +89,7 @@ describe('social cards wallpaper pool', () => {
     expect(first).toEqual(pool[0])
 
     const last = selectRandomWallpaper(pool, () => 0.999)
-    expect(last).toEqual(pool[pool.length - 1])
+    expect(last).toEqual(pool.at(-1))
 
     const mid = selectRandomWallpaper(pool, () => 0.5)
     expect(pool).toContain(mid)

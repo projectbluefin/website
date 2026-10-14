@@ -390,7 +390,7 @@ describe('director\'s cut finale composition', () => {
 
     expect(companionState(wrapper)).toBe('revealed')
     const seeks = calls('seekTo')
-    expect(seeks[seeks.length - 1]?.args[0]).toBeCloseTo(
+    expect(seeks.at(-1)?.args[0]).toBeCloseTo(
       companionSourceTimeAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal),
       3,
     )
@@ -611,7 +611,7 @@ describe('director\'s cut finale composition', () => {
     const { store } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
     const lastSeek = () => {
       const seeks = calls('seekTo')
-      return seeks[seeks.length - 1]?.args[0] as number | undefined
+      return seeks.at(-1)?.args[0] as number | undefined
     }
 
     // A frozen companion clock is exactly what a stalled embed looks like: the
@@ -642,7 +642,7 @@ describe('director\'s cut finale composition', () => {
     const { store } = await mountFinaleAt(DIRECTORS_CUT_FINALE_ANCHORS.companionReveal)
     const lastSeek = () => {
       const seeks = calls('seekTo')
-      return seeks[seeks.length - 1]?.args[0] as number | undefined
+      return seeks.at(-1)?.args[0] as number | undefined
     }
 
     const forward = DIRECTORS_CUT_FINALE_ANCHORS.companionReveal + 6

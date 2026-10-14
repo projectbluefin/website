@@ -12,7 +12,7 @@ describe('track zero measured beat grid', () => {
   it('holds the measured 1050-beat grid in strictly increasing order', () => {
     expect(TRACK_ZERO_BEAT_TIMES.length).toBe(1050)
     expect(TRACK_ZERO_BEAT_TIMES[0]).toBeCloseTo(0.139, 3)
-    expect(TRACK_ZERO_BEAT_TIMES[TRACK_ZERO_BEAT_TIMES.length - 1]).toBeCloseTo(422.301, 3)
+    expect(TRACK_ZERO_BEAT_TIMES.at(-1)).toBeCloseTo(422.301, 3)
     for (let i = 1; i < TRACK_ZERO_BEAT_TIMES.length; i++) {
       expect(TRACK_ZERO_BEAT_TIMES[i]).toBeGreaterThan(TRACK_ZERO_BEAT_TIMES[i - 1])
     }
@@ -56,7 +56,7 @@ describe('track zero measured beat grid', () => {
       expect(cut).toBeGreaterThan(previous)
       previous = cut
     }
-    expect(cuts[cuts.length - 1]).toBe(TRACK_ZERO_SECTIONS.chorusStart)
+    expect(cuts.at(-1)).toBe(TRACK_ZERO_SECTIONS.chorusStart)
     for (const cut of cuts.slice(0, -1)) {
       const onGrid = TRACK_ZERO_BEAT_TIMES.some(beat => Math.abs(beat - cut) < 0.0005)
       expect(onGrid).toBe(true)
@@ -66,7 +66,7 @@ describe('track zero measured beat grid', () => {
   it('front-loads longer holds so pacing tightens toward the section end', () => {
     const cuts = trackZeroBeatCuts(0, TRACK_ZERO_SECTIONS.verseStart, 4, [32, 24])
     const durations = cuts.map((cut, index) => cut - (index === 0 ? 0 : cuts[index - 1]))
-    expect(durations[0]).toBeGreaterThanOrEqual(durations[durations.length - 1])
+    expect(durations[0]).toBeGreaterThanOrEqual(durations.at(-1))
     // First hold covers the 8.4s prey anchor; second covers 14.99-19.99s.
     expect(cuts[0]).toBeGreaterThan(8.4)
     expect(cuts[0]).toBeLessThanOrEqual(14.99)
@@ -112,13 +112,13 @@ describe('track zero measured beat grid', () => {
     const beatDurations = cutIndices.map((cut, index) =>
       cut - (index === 0 ? startIndex : cutIndices[index - 1]))
     expect(beatDurations.every(duration => duration >= 4 && duration <= 5)).toBe(true)
-    expect(cuts[cuts.length - 1]).toBe(TRACK_ZERO_SECTIONS.finaleStart)
+    expect(cuts.at(-1)).toBe(TRACK_ZERO_SECTIONS.finaleStart)
   })
 
   it('falls back to a uniform split when the pool exceeds the beat budget', () => {
     const cuts = trackZeroBeatCuts(0, 4, 100, [2, 1])
     expect(cuts.length).toBe(100)
-    expect(cuts[cuts.length - 1]).toBe(4)
+    expect(cuts.at(-1)).toBe(4)
     expect(cuts[0]).toBeCloseTo(0.04, 6)
   })
 })

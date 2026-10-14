@@ -61,7 +61,7 @@ async function playChat(wrapper: VueWrapper, duration: number, steps = 600): Pro
       isSfx: message.classes('sfx-message'),
     }
 
-    const previous = observed[observed.length - 1]
+    const previous = observed.at(-1)
     if (!previous || previous.text !== beat.text || previous.speaker !== beat.speaker) {
       observed.push(beat)
     }
@@ -219,7 +219,7 @@ describe('wolvesLoreColumn Logic', () => {
     const quoteArtifacts = wolvesRelease.artifacts.filter(artifact => quoteIds.has(artifact.id))
 
     expect(quoteArtifacts).toHaveLength(18)
-    expect(quoteArtifacts.every(artifact => !Object.prototype.hasOwnProperty.call(artifact, 'sourceLabel'))).toBe(true)
+    expect(quoteArtifacts.every(artifact => !Object.hasOwn(artifact, 'sourceLabel'))).toBe(true)
   })
 
   it('types transmission source characters without generated glyphs', async () => {
@@ -517,8 +517,8 @@ describe('wolvesLoreColumn Logic', () => {
     // whole rather than being cut off with the slot.
     expect(spoken('BUR//S')).toContain(vision)
     // Sarah closes the transmission, and hers is the last thing left standing.
-    expect(observed[observed.length - 1]!.speaker).toBe('SARAH')
-    expect(sarah.text).toContain(observed[observed.length - 1]!.text)
+    expect(observed.at(-1)!.speaker).toBe('SARAH')
+    expect(sarah.text).toContain(observed.at(-1)!.text)
     expect(scrollTo).not.toHaveBeenCalled()
   })
 
@@ -530,7 +530,7 @@ describe('wolvesLoreColumn Logic', () => {
     }
     const duration = slot.endTime - slot.startTime
     const chatPages = loreChatPages(record.body)
-    const finalBeat = chatPages[chatPages.length - 1]!
+    const finalBeat = chatPages.at(-1)!
     const wrapper = mount(WolvesLoreColumn, {
       props: {
         artifactId: record.id,
@@ -579,7 +579,7 @@ describe('wolvesLoreColumn Logic', () => {
     // holding the last line, never on blanking the panel early.
     const duration = chatReadSeconds(record.body) + 20
     const chatPages = loreChatPages(record.body)
-    const finalBeat = chatPages[chatPages.length - 1]!
+    const finalBeat = chatPages.at(-1)!
     const wrapper = mount(WolvesLoreColumn, {
       props: {
         artifactId: record.id,

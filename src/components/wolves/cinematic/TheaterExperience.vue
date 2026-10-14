@@ -235,10 +235,7 @@ watch(
     }
     if (mode === 'growing-corruption') {
       glyphTimer = setInterval(() => {
-        corruptionText.value = Array.from(
-          { length: 24 },
-          () => GLYPHS[Math.floor(Math.random() * GLYPHS.length)],
-        ).join('')
+        corruptionText.value = Array.from({ length: 24 }).fill(GLYPHS[Math.floor(Math.random() * GLYPHS.length)]).join('')
       }, 80)
     }
     else {

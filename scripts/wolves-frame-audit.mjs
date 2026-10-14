@@ -284,8 +284,7 @@ async function main() {
         // Report what was actually on screen, so a failure names the frame it found.
         const found = await page.evaluate(() => {
           const root = document.querySelector('.wolves-intro-overlay')
-          const image = [...root?.querySelectorAll('img.wolves-intro-overlay-background') ?? []]
-            .map(candidate => ({ element: candidate, opacity: Number(getComputedStyle(candidate).opacity) }))
+          const image = Array.from(root?.querySelectorAll('img.wolves-intro-overlay-background') ?? [], candidate => ({ element: candidate, opacity: Number(getComputedStyle(candidate).opacity) }))
             .sort((a, b) => b.opacity - a.opacity)[0]
             ?.element ?? null
           const caption = root?.querySelector('.wolves-intro-overlay-text')

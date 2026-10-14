@@ -57,7 +57,7 @@ const APPROVED_PROLOGUE_TEXT = new Set([
  * two be checked independently — an edited *word* still fails.
  */
 const APPROVED_PROLOGUE_WORDING = new Set(
-  [...APPROVED_PROLOGUE_TEXT].map(text => text.replace(/\s+/g, ' ')),
+  Array.from(APPROVED_PROLOGUE_TEXT, text => text.replace(/\s+/g, ' ')),
 )
 
 function prologue() {
@@ -128,7 +128,7 @@ describe('director\'s cut intro sequence', () => {
 
     expect(segment.audioYoutubeVideoId).toBe(TRIBULATION_SOURCE_VIDEO_ID)
     expect(segment.duration).toBe(TRIBULATION_TRACK_SECONDS)
-    expect(segment.duration).toBe(TRIBULATION_PROLOGUE_MARKS[TRIBULATION_PROLOGUE_MARKS.length - 1])
+    expect(segment.duration).toBe(TRIBULATION_PROLOGUE_MARKS.at(-1))
     // The measured fade only covers the source's already-silent tail, so nothing musical is cut.
     expect(segment.audioFadeOutSeconds).toBeGreaterThan(0)
     expect(segment.duration - segment.audioFadeOutSeconds!).toBeGreaterThan(TRIBULATION_LAST_AUDIBLE_SECOND)
@@ -159,7 +159,7 @@ describe('director\'s cut intro sequence', () => {
 
   it('holds every displayed thought for its reading cost and not much longer', () => {
     const all = cues()
-    const closing = all[all.length - 1]
+    const closing = all.at(-1)
 
     for (const cue of all.filter(candidate => candidate.text.trim().length > 0)) {
       const cost = estimatePageSeconds(cue.text)
@@ -365,7 +365,7 @@ describe('director\'s cut intro sequence', () => {
 
   it('closes on the authored title, over the Collapse at night, running to the track end', () => {
     const all = cues()
-    const closing = all[all.length - 1]
+    const closing = all.at(-1)
 
     expect(closing.text).toBe('PROJECT BLUEFIN\nseven days to the wolves')
     expect(closing.slim).toBe(true)

@@ -46,7 +46,7 @@ interface IntroStatusSnapshot {
 /** The overlay's most recent published status, which names the segment currently on stage. */
 function latestStatus(wrapper: any): IntroStatusSnapshot {
   const events = wrapper.emitted('status') as Array<[IntroStatusSnapshot]>
-  return events[events.length - 1][0]
+  return events.at(-1)[0]
 }
 
 function mountOverlay(component: any, options: Record<string, any> = {}) {
@@ -561,7 +561,7 @@ describe('wolvesIntroOverlay video segments', () => {
 
     // The Jorge hero shots bookend the rotation.
     expect(ids[0]).toBe('youre-holding-it-wrong-post1')
-    expect(ids[ids.length - 1]).toBe('youre-holding-it-wrong2-post2')
+    expect(ids.at(-1)).toBe('youre-holding-it-wrong2-post2')
 
     // Same-character art must never sit adjacent, or the fast title-card
     // cycle reads as one dinosaur jumping between poses.
@@ -645,7 +645,7 @@ describe('wolvesIntroOverlay video segments', () => {
     // Gating is published through the status emit for the hero widget.
     const lastStatus = () => {
       const events = wrapper.emitted('status') as Array<[{ canGoPrevious: boolean }]>
-      return events[events.length - 1][0]
+      return events.at(-1)[0]
     }
     expect(lastStatus().canGoPrevious).toBe(false)
 
@@ -987,7 +987,7 @@ describe('wolvesIntroOverlay text segments', () => {
       const events = wrapper.emitted('status') as Array<[{
         nameplateTitle?: string
       }]>
-      return events[events.length - 1][0]
+      return events.at(-1)[0]
     }
 
     expect(lastStatus().nameplateTitle).toBe('From the Age of Dinosaurs to the Pinnacle of Humanity')
@@ -1430,7 +1430,7 @@ describe('wolvesIntroOverlay guardian plate', () => {
 
   it('anchors every companion card independently to the lower-right screen edge', () => {
     const overlay = readFileSync(resolve(process.cwd(), 'src/components/wolves/WolvesIntroOverlay.vue'), 'utf8')
-    const companionRules = [...overlay.matchAll(/\.wolves-companion-plate \{([\s\S]*?)\n\}/g)].map(match => match[1])
+    const companionRules = Array.from(overlay.matchAll(/\.wolves-companion-plate \{([\s\S]*?)\n\}/g), match => match[1])
 
     expect(companionRules.some(rule =>
       rule.includes('position: fixed')
@@ -1480,8 +1480,8 @@ describe('wolvesIntroOverlay guardian plate', () => {
     expect(overlay).toContain('wolves-companion-plate-art')
     // The artwork breaks out of the chamfered card: the card carries the
     // clip-path while the art rides above it with a negative overlap.
-    const artRules = [...overlay.matchAll(/\.wolves-companion-plate-art \{([^}]*)\}/g)].map(m => m[1])
-    const cardRules = [...overlay.matchAll(/\.wolves-companion-plate-card \{([^}]*)\}/g)].map(m => m[1])
+    const artRules = Array.from(overlay.matchAll(/\.wolves-companion-plate-art \{([^}]*)\}/g), m => m[1])
+    const cardRules = Array.from(overlay.matchAll(/\.wolves-companion-plate-card \{([^}]*)\}/g), m => m[1])
     expect(artRules.some(rule => rule.includes('z-index: 1'))).toBe(true)
     expect(artRules.some(rule => rule.includes('-3.4rem'))).toBe(true)
     expect(cardRules.some(rule => rule.includes('clip-path'))).toBe(true)
@@ -1557,7 +1557,7 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     await seekPrologue(DIRECTORS_CUT_IKORA_PREWARM_SECOND + 1)
     resolveIframeApi()
     await flushPromises()
-    const warmed = players[players.length - 1]
+    const warmed = players.at(-1)
     warmed.triggerReady()
     await flushPromises()
     return warmed
@@ -1709,7 +1709,7 @@ describe('wolvesIntroOverlay director\'s cut', () => {
 
     // The warmed iframe *is* the show player. Rebuilding it here throws away the warm-up.
     expect(players).toHaveLength(2)
-    expect(players[players.length - 1]).toBe(ikora)
+    expect(players.at(-1)).toBe(ikora)
     // A cued player is already parked on its opening frame; loading and seeking it again
     // is the visible stutter this prewarm exists to remove.
     expect(ikora.loadVideoById).not.toHaveBeenCalled()
@@ -1762,7 +1762,7 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     resolveIframeApi()
     await flushPromises()
 
-    const destiny = players[players.length - 1]
+    const destiny = players.at(-1)
     expect(destiny.videoId).toBe(IKORA_SOURCE_VIDEO_ID)
     expect(destiny.config.playerVars.start).toBe(IKORA_RATING_CARD_SECONDS)
 
@@ -1789,7 +1789,7 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
-    const destiny = players[players.length - 1]
+    const destiny = players.at(-1)
     destiny.triggerReady()
     await flushPromises()
 
@@ -1848,7 +1848,7 @@ describe('wolvesIntroOverlay director\'s cut', () => {
     await flushPromises()
 
     expect(latestStatus(wrapper).segmentId).toBe(DIRECTORS_CUT_DESTINY_SEGMENT_ID)
-    expect(players[players.length - 1].videoId).toBe(IKORA_SOURCE_VIDEO_ID)
+    expect(players.at(-1).videoId).toBe(IKORA_SOURCE_VIDEO_ID)
     // Exactly once: a second advance would run off the end of this two-segment cut and
     // complete the intro, dropping the audience straight into Track 0.
     expect(wrapper.emitted('complete')).toBeUndefined()
@@ -1942,7 +1942,7 @@ describe('wolvesIntroOverlay director\'s cut', () => {
 
     // A late ENDED from the abandoned audio embed must not advance a second time, even once the
     // Destiny player is up and running with a clock of its own.
-    const destiny = players[players.length - 1]
+    const destiny = players.at(-1)
     destiny.triggerReady()
     destiny.setCurrentTime(30)
     await vi.advanceTimersByTimeAsync(200)

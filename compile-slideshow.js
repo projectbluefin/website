@@ -226,7 +226,7 @@ for (const entry of concatEntries) {
   ffconcatLines.push(`duration ${entry.duration}`)
 }
 // Repeat final file per concat demuxer duration rules.
-const finalEscapedPath = concatEntries[concatEntries.length - 1].path.split('\'').join('\'\\\'\'')
+const finalEscapedPath = concatEntries.at(-1).path.split('\'').join('\'\\\'\'')
 ffconcatLines.push(`file '${finalEscapedPath}'`)
 fs.writeFileSync(concatFilePath, `${ffconcatLines.join('\n')}\n`, 'utf8')
 

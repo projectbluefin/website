@@ -165,5 +165,5 @@ export const wolvesNarrativeTimeline: readonly WolvesNarrativeSlot[] = [
 export function getNarrativeSlotForTime(time: number): WolvesNarrativeSlot {
   const normalizedTime = Math.max(0, time)
   return wolvesNarrativeTimeline.find(slot => normalizedTime < slot.endTime)
-    ?? wolvesNarrativeTimeline[wolvesNarrativeTimeline.length - 1]
+    ?? wolvesNarrativeTimeline.at(-1)
 }

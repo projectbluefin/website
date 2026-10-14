@@ -62,7 +62,7 @@ describe('wolves lore timing', () => {
     )
 
     expect(slots[0].startTime).toBe(220)
-    expect(slots[slots.length - 1]?.endTime).toBe(398)
+    expect(slots.at(-1)?.endTime).toBe(398)
     for (const slot of slots) {
       expect(slot.duration).toBeGreaterThanOrEqual(slot.minimumDuration)
     }

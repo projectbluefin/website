@@ -30,7 +30,7 @@ describe('wolves thesis sequence', () => {
       'TARGET ACQUIRED: GOSPO, KYLE',
       'TARGETS ACQUIRED: ZEGLIUS, RENNER, INFFY, LEDIF, GLORIOUS EGGROLL',
     ])
-    expect(wolvesIncomingSignalMessages[wolvesIncomingSignalMessages.length - 1]).toBe('The equation must be balanced, think like a dinosaur')
+    expect(wolvesIncomingSignalMessages.at(-1)).toBe('The equation must be balanced, think like a dinosaur')
     expect(wolvesIncomingSignalMessages.every(message => message.length > 0)).toBe(true)
   })
 
@@ -46,7 +46,7 @@ describe('wolves thesis sequence', () => {
       'TARGET ACQUIRED: GOSPO, KYLE',
     ])
     expect(messages.filter(message => message === 'Software is Supposed to Die')).toHaveLength(3)
-    expect(messages[messages.length - 1]).toBe('The equation must be balanced, think like a dinosaur')
+    expect(messages.at(-1)).toBe('The equation must be balanced, think like a dinosaur')
   })
 
   it('keeps the finale entries out of the smooth front status queue', () => {
@@ -54,7 +54,7 @@ describe('wolves thesis sequence', () => {
 
     expect(messages).not.toContain('Why do they shackle themselves')
     expect(messages.filter(message => message === 'Mechaphippy Deployment: [UNAUTHORIZED]')).toHaveLength(2)
-    expect(messages[messages.length - 1]).toBe('Falling back to "humans/trying-their-best:v1"')
+    expect(messages.at(-1)).toBe('Falling back to "humans/trying-their-best:v1"')
   })
 
   it('splits the early ambient signals from the climax reports at the delimiter', () => {
@@ -126,7 +126,7 @@ describe('wolves thesis sequence', () => {
     const slotDuration = (408 - 365) / finale.length
     expect(getWolvesHudLabel(365)).toBe(finale[0])
     expect(getWolvesHudLabel(365 + slotDuration)).toBe(finale[1])
-    expect(getWolvesHudLabel(407.999)).toBe(finale[finale.length - 1])
+    expect(getWolvesHudLabel(407.999)).toBe(finale.at(-1))
     expect(getWolvesHudLabel(408)).toBe('Bazzite Mk6 Units: Prepare for Titanfall')
     expect(getWolvesHudLabel(425)).toBe('Bazzite Mk6 Units: Prepare for Titanfall')
     expect(getWolvesHudLabel(425.001)).toBe('Bazzite Mk6 Units: Prepare for Titanfall')

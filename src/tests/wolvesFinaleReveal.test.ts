@@ -115,7 +115,7 @@ describe('finale reveal', () => {
     const last = pageAt(slot.endTime - 0.1)
 
     expect(last).toContain('truly a great loss for humanity')
-    expect(last).toBe(pages[pages.length - 1])
+    expect(last).toBe(pages.at(-1))
   })
 
   // The scheduler derives the bulletin's start time from what it thinks the
@@ -209,12 +209,12 @@ describe('finale reveal', () => {
       }
       expect(revealTimes.length, 'the Director\'s Cut never shows the death reveal').toBeGreaterThan(0)
       expect(revealTimes[0]!).toBeGreaterThan(DIRECTORS_CUT_FINALE_ANCHORS.coverStart)
-      expect(revealTimes[revealTimes.length - 1]!).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
+      expect(revealTimes.at(-1)!).toBeLessThan(DIRECTORS_CUT_FINALE_ANCHORS.bulletinEnd)
     }, 30000)
 
     it('lands the elegy page, read in full, before the bulletin clears', () => {
       const pages = getFinalPages()
-      const elegy = pages[pages.length - 1]!
+      const elegy = pages.at(-1)!
       // The last frame the bulletin is on screen is also the last frame of its
       // complete paging window. The page must be the authored elegy, not a
       // truncated record dropped early to make room for the finale.

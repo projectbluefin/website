@@ -73,7 +73,7 @@ function mergeAbbreviationSplits(sentences: readonly string[]): string[] {
   const merged: string[] = []
 
   for (const sentence of sentences) {
-    const previous = merged[merged.length - 1]
+    const previous = merged.at(-1)
     if (previous !== undefined && ABBREVIATION_ENDING.test(previous)) {
       merged[merged.length - 1] = `${previous} ${sentence}`
     }
@@ -94,7 +94,7 @@ function fuseTitledNames(words: readonly string[]): string[] {
   const fused: string[] = []
 
   for (const word of words) {
-    const previous = fused[fused.length - 1]
+    const previous = fused.at(-1)
     const continuesName = previous !== undefined
       && (ABBREVIATION_ENDING.test(previous) || TITLED_NAME_RUN.test(previous))
       && /^[A-Z]/.test(word)

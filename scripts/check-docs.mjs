@@ -100,7 +100,7 @@ for (const path of markdown) {
     addError(`${relativePath}: missing Verification section`)
   }
 
-  const links = [...source.matchAll(/\[[^\]]+\]\([^)]+\)/g)].map(([match]) => {
+  const links = Array.from(source.matchAll(/\[[^\]]+\]\([^)]+\)/g), ([match]) => {
     const start = match.lastIndexOf('](') + 2
     return match.slice(start, -1)
   })

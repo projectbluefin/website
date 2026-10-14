@@ -382,7 +382,7 @@ export function parseDestinyCaptionFile(source: string): readonly IntroOverlayTe
       continue
     }
     const timestamp = Number.parseFloat(parts[0])
-    const explicitEnd = parts.length >= 3 ? Number.parseFloat(parts[parts.length - 1]) : Number.NaN
+    const explicitEnd = parts.length >= 3 ? Number.parseFloat(parts.at(-1)) : Number.NaN
     const text = parts.length >= 3
       ? parts.slice(1, -1).join('|').trim()
       : parts.slice(1).join('|').trim()

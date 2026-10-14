@@ -62,6 +62,6 @@ describe('dakotaVersionChips', () => {
 
   it('baseline chip is last in order', () => {
     const chips = makeChips({ kernel: '6.19.11', gnome: '50.0', baseline: 'x86-64-v3' })
-    expect(chips[chips.length - 1].label).toBe('x86-64')
+    expect(chips.at(-1).label).toBe('x86-64')
   })
 })

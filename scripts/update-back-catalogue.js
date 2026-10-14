@@ -53,7 +53,7 @@ function isCi() {
 
 function bestThumbnail(entry) {
   if (Array.isArray(entry.thumbnails) && entry.thumbnails.length > 0) {
-    const last = entry.thumbnails[entry.thumbnails.length - 1]
+    const last = entry.thumbnails.at(-1)
     if (last && typeof last.url === 'string' && last.url.length > 0) {
       return last.url.split('?')[0]
     }

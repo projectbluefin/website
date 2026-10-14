@@ -307,7 +307,7 @@ export async function scrapeAlbum(album, config, fetcher = fetchWithRateLimit) {
         photos.push({ ...p, albumId: album.id, albumTitle: album.title })
       }
     }
-    if (page !== targetPages[targetPages.length - 1]) {
+    if (page !== targetPages.at(-1)) {
       await sleep(config.requestDelayMs)
     }
   }
