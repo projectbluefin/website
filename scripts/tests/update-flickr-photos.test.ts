@@ -1,4 +1,5 @@
-import { readFileSync, unlinkSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -17,6 +18,7 @@ import {
   selectFreshPhotos,
   selectSpreadPages,
   shuffleArray,
+  updateFlickrPhotos,
 } from '../update-flickr-photos.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -341,5 +343,71 @@ describe('scrapeAlbum', () => {
       albums: [],
       peopleFirst: { allowPatterns: [], blockPatterns: [] },
     }, fetcher)).rejects.toThrow('HTTP error 404')
+  })
+})
+
+describe('updateFlickrPhotos', () => {
+  let dir: string
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  function setup(existing?: unknown[]) {
+    dir = mkdtempSync(join(tmpdir(), 'flickr-update-'))
+    const configPath = join(dir, 'config.json')
+    const targetPath = join(dir, 'flickr-photos.json')
+    writeFileSync(configPath, JSON.stringify({
+      requestDelayMs: 0,
+      maxPagesPerAlbum: 1,
+      albums: [{ id: '1', title: 'One' }, { id: '2', title: 'Two' }],
+      peopleFirst: { allowPatterns: ['summit'], blockPatterns: [] },
+    }))
+    if (existing) {
+      writeFileSync(targetPath, `${JSON.stringify(existing)}\n`)
+    }
+    return { configPath, targetPath }
+  }
+
+  const previous = [{ id: '9', server: '1', secret: 's', title: 'Old summit photo' }]
+
+  it('keeps the previous cache when every album fails', async () => {
+    const { configPath, targetPath } = setup(previous)
+    const fetcher = vi.fn().mockImplementation(() => new Response('blocked', { status: 403 }))
+
+    await updateFlickrPhotos({ configPath, targetPath, fetcher })
+
+    expect(fetcher).toHaveBeenCalledTimes(2)
+    expect(JSON.parse(readFileSync(targetPath, 'utf8'))).toEqual(previous)
+  })
+
+  it('keeps the previous cache when albums return no matching photos', async () => {
+    const { configPath, targetPath } = setup(previous)
+    const fetcher = vi.fn().mockImplementation(() => new Response('<html></html>', { status: 200 }))
+
+    await updateFlickrPhotos({ configPath, targetPath, fetcher })
+
+    expect(JSON.parse(readFileSync(targetPath, 'utf8'))).toEqual(previous)
+  })
+
+  it('writes an empty list only when no previous cache exists', async () => {
+    const { configPath, targetPath } = setup()
+    const fetcher = vi.fn().mockImplementation(() => new Response('blocked', { status: 403 }))
+
+    await updateFlickrPhotos({ configPath, targetPath, fetcher })
+
+    expect(readFileSync(targetPath, 'utf8')).toBe('[]\n')
+  })
+
+  it('replaces the cache when a scrape yields photos', async () => {
+    const { configPath, targetPath } = setup(previous)
+    const html = fixture('flickr-album.html')
+    const fetcher = vi.fn().mockImplementation(() => new Response(html, { status: 200 }))
+
+    await updateFlickrPhotos({ configPath, targetPath, fetcher })
+
+    const written = JSON.parse(readFileSync(targetPath, 'utf8'))
+    expect(written.length).toBeGreaterThan(0)
+    expect(written.map((p: { id: string }) => p.id)).not.toContain('9')
   })
 })
