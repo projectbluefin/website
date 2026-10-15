@@ -379,6 +379,11 @@ Grouped roughly by surface: boundaries and scheduling, transport and buffers, im
   the list"), an unknown value must fall back to it, and a test must prove an
   untouched run completes. See `PROLOGUE_MOODS` in
   [`../../../reference/wolves-intro-and-overlay.md`](../../../reference/wolves-intro-and-overlay.md).
+- An offline tool re-implements the show's slide schedule instead of importing
+  it. A hand-copied `timelineSlides` drifts the first time the component
+  changes, and the video it renders no longer matches what the room sees. To
+  produce a video of the show, record the real page with `record-wolves.cjs`
+  (`npm run record:wolves`).
 - A `<select>` is rendered inside the overlay root. `handleOverlayClick`
   ignores `button, a, input, [role="button"]` and **not** `select`, so opening
   a picker inside the overlay advances the cue every time. Keep controls
