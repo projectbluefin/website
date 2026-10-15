@@ -315,9 +315,18 @@ export async function scrapeAlbum(album, config, fetcher = fetchWithRateLimit) {
   return photos
 }
 
-async function main() {
+/**
+ * Rebuilds the gallery cache. A run that collects no photos at all (every
+ * album failed, or Flickr's markup stopped matching) is a failed refresh, not
+ * an empty gallery: the previous cache is kept rather than replaced with [].
+ */
+export async function updateFlickrPhotos({
+  configPath = CONFIG_PATH,
+  targetPath = TARGET_PATH,
+  fetcher = fetchWithRateLimit,
+} = {}) {
   try {
-    const config = await loadCurationConfig()
+    const config = await loadCurationConfig(configPath)
 
     if (!config.albums || config.albums.length === 0) {
       throw new Error('No curated albums configured in scripts/flickr-curation.json')
@@ -329,7 +338,7 @@ async function main() {
     for (const album of config.albums) {
       console.info(`Album: ${album.title || album.id}`)
       try {
-        const albumPhotos = await scrapeAlbum(album, config)
+        const albumPhotos = await scrapeAlbum(album, config, fetcher)
         console.info(`  ${albumPhotos.length} raw photos scraped`)
         const peopleFirstPhotos = albumPhotos.filter(p => isPeopleFirstPhoto(p, config))
         console.info(`  ${peopleFirstPhotos.length} passed people-first filter`)
@@ -344,24 +353,27 @@ async function main() {
     }
 
     const shuffledPhotos = selectFreshPhotos(allCandidates, config.targetTotalPhotos)
+    if (shuffledPhotos.length === 0) {
+      throw new Error('No photos collected from any curated album')
+    }
     console.info(`Selected ${shuffledPhotos.length} fresh unique photos from curated albums.`)
 
-    await writeFile(TARGET_PATH, `${JSON.stringify(shuffledPhotos, null, 2)}\n`)
+    await writeFile(targetPath, `${JSON.stringify(shuffledPhotos, null, 2)}\n`)
     console.info(`Successfully rebuilt cache with ${shuffledPhotos.length} photos and saved to public/flickr-photos.json`)
   }
   catch (error) {
     console.error('Error updating Flickr photos:', error)
     try {
-      await readFile(TARGET_PATH, 'utf8')
+      await readFile(targetPath, 'utf8')
       console.info('Preserving previous cache state of public/flickr-photos.json')
     }
     catch {
       console.info('No previous cache found. Writing empty array to avoid breaking client-side.')
-      await writeFile(TARGET_PATH, '[]\n')
+      await writeFile(targetPath, '[]\n')
     }
   }
 }
 
 if (isMainModule()) {
-  main()
+  updateFlickrPhotos()
 }
