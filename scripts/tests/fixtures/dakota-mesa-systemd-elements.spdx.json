@@ -52,19 +52,19 @@
     },
     {
       "name": "mesa",
-      "SPDXID": "SPDXRef-freedesktop-sdk.bst-extensions-mesa-mesa.bst",
+      "SPDXID": "SPDXRef-freedesktop-sdk.bst-extensions-mesa-mesa-extra.bst",
       "filesAnalyzed": false,
       "downloadLocation": "NOASSERTION",
       "externalRefs": [
         {
           "referenceCategory": "OTHER",
           "referenceType": "bst-element",
-          "referenceLocator": "freedesktop-sdk.bst:extensions/mesa/mesa.bst"
+          "referenceLocator": "freedesktop-sdk.bst:extensions/mesa/mesa-extra.bst"
         }
       ]
     },
     {
-      "SPDXID": "SPDXRef-freedesktop-sdk.bst-extensions-mesa-mesa.bst-0",
+      "SPDXID": "SPDXRef-freedesktop-sdk.bst-extensions-mesa-mesa-extra.bst-0",
       "filesAnalyzed": false,
       "name": "mesa",
       "downloadLocation": "https://gitlab.freedesktop.org/mesa/mesa.git",
@@ -74,7 +74,7 @@
         {
           "referenceCategory": "OTHER",
           "referenceType": "bst-element",
-          "referenceLocator": "freedesktop-sdk.bst:extensions/mesa/mesa.bst"
+          "referenceLocator": "freedesktop-sdk.bst:extensions/mesa/mesa-extra.bst"
         }
       ]
     },

@@ -144,7 +144,7 @@ describe('registry selectors resolve known live ambiguities', () => {
 
   it('pins Dakota mesa to the mesa extension element', () => {
     const { packages } = recordFor('dakota')
-    expect(packages.mesa.element).toBe('freedesktop-sdk.bst:extensions/mesa/mesa.bst')
+    expect(packages.mesa.element).toBe('freedesktop-sdk.bst:extensions/mesa/mesa-extra.bst')
 
     const result = extractMappedVersions(dakotaElements, { mesa: packages.mesa })
     expect(result.ambiguous).toEqual([])
