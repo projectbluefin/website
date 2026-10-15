@@ -34,9 +34,11 @@ export const DEFAULT_LOCALE = 'en-US'
  *   region (e.g. `eo`, where browsers send the bare tag because Esperanto
  *   has no associated region subtag) exact-match through the first
  *   `resolveLocale` branch and need no alias entry.
- * - **Simplified-Chinese region tags** (`zh-CN`, `zh-SG`, `zh-MY`): a
- *   browser with no Simplified-Chinese bundle of its own must reach the
- *   only Simplified-Chinese bundle (`zh-Hans`). Traditional-Chinese
+ * - **Simplified-Chinese region tags** (`zh-CN`, `zh-SG`, `zh-MY`, and
+ *   their script-qualified forms `zh-Hans-CN`, `zh-Hans-SG`, `zh-Hans-MY`
+ *   that Apple platforms report): a browser with no Simplified-Chinese
+ *   bundle of its own must reach the only Simplified-Chinese bundle
+ *   (`zh-Hans`). Traditional-Chinese
  *   regions (`zh-HK`, `zh-TW`) each have their own bundle; the
  *   script-side region `zh-MO` is not aliased and has no bundle of its
  *   own, so it falls to the default. Collapsing any of them onto another
@@ -54,6 +56,9 @@ export const LOCALE_ALIASES: Readonly<Record<string, string>> = {
   'zh-CN': 'zh-Hans',
   'zh-SG': 'zh-Hans',
   'zh-MY': 'zh-Hans',
+  'zh-Hans-CN': 'zh-Hans',
+  'zh-Hans-SG': 'zh-Hans',
+  'zh-Hans-MY': 'zh-Hans',
 }
 
 /**

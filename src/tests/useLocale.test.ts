@@ -73,6 +73,17 @@ describe('useLocale', () => {
       expect(resolveLocale('zh-MY')).toBe('zh-Hans')
     })
 
+    it('aliases script-qualified Simplified-Chinese tags to the zh-Hans bundle', () => {
+      // Apple platforms report the script subtag (zh-Hans-CN). Without an
+      // alias the exact-match check rejects it and the user gets en-US (#907).
+      expect(resolveLocale('zh-Hans-CN')).toBe('zh-Hans')
+      expect(resolveLocale('zh-Hans-SG')).toBe('zh-Hans')
+      expect(resolveLocale('zh-Hans-MY')).toBe('zh-Hans')
+      // Traditional script tags are not aliased onto the Simplified bundle.
+      expect(resolveLocale('zh-Hant-TW')).not.toBe('zh-Hans')
+      expect(resolveLocale('zh-Hant-HK')).not.toBe('zh-Hans')
+    })
+
     it('aliases the Ukrainian regional tag to the uk bundle', () => {
       // uk-UA has no bundle of its own and uk is the only Ukrainian bundle,
       // so the region tag resolves unambiguously to uk. This is issue #905:
