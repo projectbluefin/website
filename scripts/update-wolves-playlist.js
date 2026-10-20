@@ -26,12 +26,30 @@ const ARTIST_OVERRIDES = {
   '9skBT5TUqzo': 'Avatar',
 }
 
+// The video id becomes the artwork filename under public/wolves-artwork, so it
+// must never carry path separators or dots. Mirrors PLAYLIST_ID_PATTERN in
+// update-back-catalogue.js.
+const VIDEO_ID_PATTERN = /^[\w-]{1,64}$/
+
+// Thumbnails are fetched and written into public/ as .jpg; only YouTube's
+// image hosts over https are acceptable sources.
+const THUMBNAIL_HOSTS = new Set(['i.ytimg.com', 'i9.ytimg.com', 'yt3.ggpht.com'])
+
 function requireString(value, fieldName, index) {
   if (typeof value !== 'string' || value.length === 0) {
     throw new TypeError(`Malformed yt-dlp entry at index ${index}: expected non-empty ${fieldName}`)
   }
 
   return value
+}
+
+function requireVideoId(value, index) {
+  const id = requireString(value, 'id', index)
+  if (!VIDEO_ID_PATTERN.test(id)) {
+    throw new TypeError(`Malformed yt-dlp entry at index ${index}: id must match ${VIDEO_ID_PATTERN}`)
+  }
+
+  return id
 }
 
 function readThumbnailUrl(entry, index) {
@@ -53,15 +71,19 @@ function readThumbnailUrl(entry, index) {
     throw new TypeError(`Malformed yt-dlp entry at index ${index}: expected non-empty thumbnail`)
   }
 
+  let url
   try {
-    const url = new URL(thumbnailUrl)
-    if (url.hostname === 'i.ytimg.com' && url.pathname.endsWith('.jpg')) {
-      return `${url.origin}${url.pathname}`
-    }
+    url = new URL(thumbnailUrl)
   }
-  catch {}
+  catch {
+    throw new TypeError(`Malformed yt-dlp entry at index ${index}: thumbnail is not a valid URL`)
+  }
 
-  return thumbnailUrl
+  if (url.protocol !== 'https:' || !THUMBNAIL_HOSTS.has(url.hostname)) {
+    throw new TypeError(`Malformed yt-dlp entry at index ${index}: thumbnail must be an https URL on a YouTube image host`)
+  }
+
+  return `${url.origin}${url.pathname}`
 }
 
 export function normalizePlaylistEntries(entries) {
@@ -74,7 +96,7 @@ export function normalizePlaylistEntries(entries) {
       throw new TypeError(`Malformed yt-dlp entry at index ${index}: expected an object`)
     }
 
-    const id = requireString(entry.id, 'id', index)
+    const id = requireVideoId(entry.id, index)
     const title = requireString(entry.title, 'title', index)
     const uploader = requireString(entry.uploader, 'uploader', index)
     const thumbnail = readThumbnailUrl(entry, index)
