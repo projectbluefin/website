@@ -6,6 +6,7 @@ import {
 } from '@iconify-prerendered/vue-mdi'
 import { computed, onMounted, ref } from 'vue'
 import { getDakotaVersions } from '../../composables'
+import { DAKOTA_ISOS } from '../../data/dakota-isos'
 import DakotaVersionChips from './DakotaVersionChips.vue'
 
 interface DownloadEntry {
@@ -23,20 +24,12 @@ const cardImageStyle = computed(() => ({
   backgroundImage: `url(${import.meta.env.BASE_URL}characters/dakota.webp)`,
 }))
 
-// ponytail: static fallback keeps downloads working if JSON fetch fails
-const FALLBACK_ISOS = [
-  { label: 'Download ISO', filename: 'dakota-live-alpha6.iso' },
-]
-
-const entries = computed<DownloadEntry[]>(() => {
-  const isos = versions.value?.isos ?? FALLBACK_ISOS
-  return isos.map(iso => ({
-    label: iso.label,
-    isoUrl: `${BASE}/${iso.filename}`,
-    isoFilename: iso.filename,
-    checksumUrl: `${BASE}/${iso.filename}-CHECKSUM`,
-  }))
-})
+const entries: DownloadEntry[] = DAKOTA_ISOS.map(iso => ({
+  label: iso.label,
+  isoUrl: `${BASE}/${iso.filename}`,
+  isoFilename: iso.filename,
+  checksumUrl: `${BASE}/${iso.filename}-CHECKSUM`,
+}))
 
 const VERSION_LABELS: Record<string, string> = {
   'kernel': 'Kernel',

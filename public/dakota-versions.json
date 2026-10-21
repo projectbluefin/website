@@ -15,12 +15,6 @@
       "sbomDigest": "sha256:efbf09aa69008159f8bccd1875e07be7eee60b5286a6e2d24ed9d10b23c47792"
     }
   ],
-  "isos": [
-    {
-      "label": "Download ISO",
-      "filename": "dakota-live-alpha6.iso"
-    }
-  ],
   "packages": {
     "kernel": "7.2.6",
     "gnome": "51.0",

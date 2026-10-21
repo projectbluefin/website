@@ -359,10 +359,10 @@ publishing an SBOM. Publication is not a mapping; someone has to review which
 package names map to which website fields.
 
 `public/dakota-versions.json` keeps `packages.baseline` as static hardware
-metadata and `isos` as static download metadata, preserved by `update:image-versions`.
-When a new Dakota Alpha ISO is released, update both `public/dakota-versions.json`
-(`isos`) and `src/components/dakota/DakotaVersionCard.vue` (`FALLBACK_ISOS`) to
-point to the new ISO filename. If gaming-image evidence is unavailable, do not
+metadata, preserved by `update:image-versions`. ISO downloads are not in that
+file: deploys restore it from the live-data cache, which would ship a stale
+filename. When a new Dakota Alpha ISO is released, update `DAKOTA_ISOS` in
+`src/data/dakota-isos.ts` to point to the new ISO filename. If gaming-image evidence is unavailable, do not
 infer OGC Kernel from the NVIDIA driver or a source tree.
 
 Bluefin Server has no version updater or generated version file. Until it
