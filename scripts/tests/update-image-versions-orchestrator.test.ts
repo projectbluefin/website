@@ -143,7 +143,7 @@ describe('updateImageVersions — write mode', () => {
     expect(dakota).not.toHaveProperty('isos')
   })
 
-  it('carries the previous Dakota isos and baseline forward', async () => {
+  it('carries the previous Dakota baseline forward but drops stale cached isos', async () => {
     const isos = [{ label: 'Download ISO', filename: 'dakota-live.iso' }]
     previousFiles[DAKOTA_PATH] = JSON.stringify({
       status: 'verified',
@@ -154,7 +154,7 @@ describe('updateImageVersions — write mode', () => {
     await updateImageVersions()
 
     const dakota = writtenOutputs()['public/dakota-versions.json']
-    expect(dakota.isos).toEqual(isos)
+    expect(dakota).not.toHaveProperty('isos')
     expect(dakota.packages.baseline).toBe('x86-64-v4')
   })
 
@@ -265,7 +265,7 @@ describe('updateImageVersions — field-loss guard', () => {
     expect(writeMock).not.toHaveBeenCalled()
   })
 
-  it('publishes an unavailable Dakota block when the base image fails, keeping isos', async () => {
+  it('publishes an unavailable Dakota block when the base image fails', async () => {
     const isos = [{ label: 'Download ISO', filename: 'dakota-live.iso' }]
     previousFiles[DAKOTA_PATH] = JSON.stringify({ isos, packages: { kernel: '7.2.6' } })
     verifyRegistryMock.mockResolvedValue(audit({
@@ -277,7 +277,7 @@ describe('updateImageVersions — field-loss guard', () => {
     const dakota = writtenOutputs()['public/dakota-versions.json']
     expect(dakota.status).toBe('unavailable')
     expect(dakota.packages).toEqual({})
-    expect(dakota.isos).toEqual(isos)
+    expect(dakota).not.toHaveProperty('isos')
   })
 })
 

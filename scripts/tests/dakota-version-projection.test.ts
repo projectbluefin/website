@@ -35,7 +35,6 @@ const GAMING_VERIFIED = {
 }
 
 const METADATA = {
-  isos: [{ label: 'Download ISO', filename: 'dakota-live-alpha6.iso' }],
   baseline: 'x86-64-v3',
 }
 
@@ -93,12 +92,12 @@ describe('projectDakotaVersions', () => {
     expect(result.packages).toEqual({})
   })
 
-  it('isos and baseline metadata survive projection', () => {
+  it('baseline metadata survives projection and no isos are emitted', () => {
     const result = projectDakotaVersions(
       { checkedAt: '2026-08-26T00:00:00Z', images: [BASE_VERIFIED] },
-      METADATA,
+      { ...METADATA, isos: [{ label: 'Download ISO', filename: 'dakota-live-alpha5.iso' }] },
     )
-    expect(result.isos).toEqual(METADATA.isos)
+    expect(result).not.toHaveProperty('isos')
     expect(result.packages.baseline).toBe('x86-64-v3')
   })
 

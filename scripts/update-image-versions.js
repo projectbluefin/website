@@ -101,9 +101,9 @@ export async function updateImageVersions({ checkOnly = false } = {}) {
     // Project Bluefin streams
     const bluefinStreams = projectBluefinStreams(result)
 
-    // Project Dakota versions, preserving existing ISO/baseline metadata
+    // Project Dakota versions, preserving existing baseline metadata. ISO
+    // downloads live in src/data/dakota-isos.ts, not in this cached file.
     const dakotaVersions = projectDakotaVersions(result, {
-      isos: previousDakota?.isos,
       baseline: previousDakota?.packages?.baseline ?? DAKOTA_BASELINE,
     })
 

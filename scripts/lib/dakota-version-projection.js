@@ -27,9 +27,9 @@ function hasPublishableValues(image) {
 
 /**
  * @param {{ checkedAt: string, images: Array<{ id: string, product?: string, image: string, imageDigest?: string, sbomDigest?: string, status: string, values?: Record<string,string> }> }} auditResult
- * @param {{ isos?: Array<{ label: string, filename: string }>, baseline?: string }} previousMetadata
+ * @param {{ baseline?: string }} previousMetadata
  * @param {string} [checkedAt] - override timestamp (defaults to auditResult.checkedAt)
- * @returns {{ checkedAt: string, status: 'verified'|'unavailable', sources: Array<{ id: string, image: string, imageDigest: string, sbomDigest: string }>, isos?: Array<{ label: string, filename: string }>, packages: Record<string, string> }}
+ * @returns {{ checkedAt: string, status: 'verified'|'unavailable', sources: Array<{ id: string, image: string, imageDigest: string, sbomDigest: string }>, packages: Record<string, string> }}
  */
 export function projectDakotaVersions(auditResult, previousMetadata = {}, checkedAt) {
   const timestamp = checkedAt ?? auditResult.checkedAt
@@ -45,7 +45,6 @@ export function projectDakotaVersions(auditResult, previousMetadata = {}, checke
       checkedAt: timestamp,
       status: 'unavailable',
       sources: [],
-      ...(previousMetadata.isos ? { isos: previousMetadata.isos } : {}),
       packages: {},
     }
   }
@@ -82,7 +81,6 @@ export function projectDakotaVersions(auditResult, previousMetadata = {}, checke
     checkedAt: timestamp,
     status: 'verified',
     sources,
-    ...(previousMetadata.isos ? { isos: previousMetadata.isos } : {}),
     packages,
   }
 }
