@@ -18,11 +18,33 @@ describe('wolves playlist metadata generator', () => {
         thumbnail: null,
         thumbnails: [{ url: 'https://i.ytimg.com/vi/abc123/hqdefault.jpg?sqp=query' }],
       },
-      { id: 'def456', title: 'Instrumental', uploader: 'Bluefin Records', thumbnail: 'https://img.example/2.jpg' },
+      { id: 'def456', title: 'Instrumental', uploader: 'Bluefin Records', thumbnail: 'https://yt3.ggpht.com/def456/2.jpg' },
     ])).toEqual([
       { id: 'abc123', title: '7 Days to the Wolves', artist: 'Nightwish', youtubeVideoId: 'abc123', artwork: 'wolves-artwork/abc123.jpg', thumbnailUrl: 'https://i.ytimg.com/vi/abc123/hqdefault.jpg' },
-      { id: 'def456', title: 'Instrumental', artist: 'Bluefin Records', youtubeVideoId: 'def456', artwork: 'wolves-artwork/def456.jpg', thumbnailUrl: 'https://img.example/2.jpg' },
+      { id: 'def456', title: 'Instrumental', artist: 'Bluefin Records', youtubeVideoId: 'def456', artwork: 'wolves-artwork/def456.jpg', thumbnailUrl: 'https://yt3.ggpht.com/def456/2.jpg' },
     ])
+  })
+
+  it('rejects video ids that could escape the artwork directory', () => {
+    for (const id of ['../../etc/evil', 'a/b', 'abc.123', '', 'x'.repeat(65)]) {
+      expect(() => normalizePlaylistEntries([
+        { id, title: 'Song', uploader: 'Band', thumbnail: 'https://i.ytimg.com/vi/x/hqdefault.jpg' },
+      ])).toThrow(/Malformed yt-dlp entry at index 0/)
+    }
+  })
+
+  it('rejects thumbnails that are not https URLs on a YouTube image host', () => {
+    for (const thumbnail of [
+      'http://i.ytimg.com/vi/abc123/hqdefault.jpg',
+      'https://img.example/2.jpg',
+      'https://i.ytimg.com.evil.example/x.jpg',
+      'file:///etc/passwd',
+      'not a url',
+    ]) {
+      expect(() => normalizePlaylistEntries([
+        { id: 'abc123', title: 'Song', uploader: 'Band', thumbnail },
+      ])).toThrow(/Malformed yt-dlp entry at index 0: thumbnail/)
+    }
   })
 
   it('uses canonical artist overrides instead of YouTube uploader labels', () => {
