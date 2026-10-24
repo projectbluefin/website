@@ -168,15 +168,37 @@ function readPlaylistEntries() {
   return normalizePlaylistEntries(parsed.entries)
 }
 
-async function downloadArtwork(track) {
+// JPEG files begin with the start-of-image marker FF D8 FF. A thumbnail served
+// as WebP or any other format would otherwise land on disk named .jpg, so the
+// downloaded bytes are verified here rather than trusted from the URL or the
+// host allow-list that gates which hosts may be contacted.
+export function isJpegBytes(body) {
+  return body.length >= 3
+    && body[0] === 0xFF
+    && body[1] === 0xD8
+    && body[2] === 0xFF
+}
+
+// Reject a download whose bytes are not a JPEG. Called before the bytes are
+// written so a non-JPEG asset is never stored under a .jpg path.
+export function assertJpegArtwork(body, source) {
+  if (!isJpegBytes(body)) {
+    throw new Error(`Artwork from ${source} is not a JPEG and was not written`)
+  }
+}
+
+export async function downloadArtwork(track) {
   const response = await fetch(track.thumbnailUrl)
   if (!response.ok) {
     throw new Error(`Artwork download failed for ${track.id}: ${response.status}`)
   }
 
+  const body = Buffer.from(await response.arrayBuffer())
+  assertJpegArtwork(body, track.thumbnailUrl)
+
   return {
     path: join(PUBLIC_DIR, track.artwork),
-    body: Buffer.from(await response.arrayBuffer()),
+    body,
   }
 }
 
