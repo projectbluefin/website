@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 
 import { rename, rm, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
-const TARGET_PATH = fileURLToPath(new URL('../public/contributors.json', import.meta.url))
+const MODULE_PATH = import.meta.url.startsWith('file:') ? fileURLToPath(import.meta.url) : null
+const ROOT_DIR = MODULE_PATH ? dirname(dirname(MODULE_PATH)) : process.cwd()
+const TARGET_PATH = join(ROOT_DIR, 'public', 'contributors.json')
 const LOGIN_PATTERN = /^[a-z\d][a-z\d-]{0,38}$/i
 const AUTOMATION_LOGINS = new Set([
   'actions-user',
@@ -50,7 +53,11 @@ async function fetchPages(path, allowEmpty = false) {
 
 function validateContributor(record, repository) {
   const { id, login, html_url, avatar_url } = record
-  if (!Number.isSafeInteger(id) || id <= 0 || typeof login !== 'string' || !LOGIN_PATTERN.test(login)) {
+  if (
+    !Number.isSafeInteger(id) || id <= 0
+    || typeof login !== 'string' || !LOGIN_PATTERN.test(login)
+    || typeof html_url !== 'string' || typeof avatar_url !== 'string'
+  ) {
     throw new Error(`Invalid human contributor identity in ${repository}`)
   }
   let profile
@@ -63,8 +70,7 @@ function validateContributor(record, repository) {
     throw new Error(`Invalid contributor URLs for ${login} in ${repository}`)
   }
   if (
-    typeof html_url !== 'string' || typeof avatar_url !== 'string'
-    || profile.protocol !== 'https:' || profile.hostname !== 'github.com'
+    profile.protocol !== 'https:' || profile.hostname !== 'github.com'
     || profile.port || profile.username || profile.password || profile.search || profile.hash
     || profile.pathname.toLowerCase() !== `/${login.toLowerCase()}`
     || avatar.protocol !== 'https:' || avatar.hostname !== 'avatars.githubusercontent.com'
@@ -76,7 +82,7 @@ function validateContributor(record, repository) {
   return { id, login, html_url, avatar_url }
 }
 
-export async function updateContributors() {
+export async function updateContributors(targetPath = TARGET_PATH) {
   const repositories = await fetchPages('/orgs/projectbluefin/repos?type=public')
   for (const repository of repositories) {
     if (
@@ -115,10 +121,10 @@ export async function updateContributors() {
   const contributors = [...people.values()].sort((a, b) =>
     a.login.toLowerCase().localeCompare(b.login.toLowerCase(), 'en') || a.id - b.id,
   )
-  const temporaryPath = `${TARGET_PATH}.${process.pid}.tmp`
+  const temporaryPath = `${targetPath}.${process.pid}.tmp`
   try {
     await writeFile(temporaryPath, `${JSON.stringify(contributors, null, 2)}\n`, { flag: 'wx' })
-    await rename(temporaryPath, TARGET_PATH)
+    await rename(temporaryPath, targetPath)
   }
   finally {
     await rm(temporaryPath, { force: true })
@@ -129,7 +135,9 @@ export async function updateContributors() {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   updateContributors().catch((error) => {
-    console.error('[contributors] fatal:', error.message)
-    process.exitCode = 1
+    // Keep the previous snapshot (restored from cache / committed in git) so a
+    // GitHub hiccup cannot discard this run's cache save and deployment.
+    console.error('[contributors] update failed, preserving previous public/contributors.json:', error.message)
+    console.warn(`::warning::contributors snapshot not refreshed: ${error.message}`)
   })
 }
