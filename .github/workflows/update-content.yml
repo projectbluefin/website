@@ -39,6 +39,7 @@ jobs:
             public/stream-versions.yml
             public/dakota-versions.json
             public/flickr-photos.json
+            public/contributors.json
             public/experiences
             src/assets/svg/growth_bluefins.svg
             .cache/website-live-data/sbom-audit.json
@@ -81,6 +82,11 @@ jobs:
       - name: Update Flickr photos
         run: node scripts/update-flickr-photos.js
 
+      - name: Update GitHub contributors
+        run: npm run update:contributors
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       # Album prose and cover art only. Track ingestion scrapes YouTube via
       # yt-dlp, which is unreliable from CI, so it stays manual. A missing album
       # is recorded rather than thrown, so a routine upstream publish cannot
@@ -97,6 +103,7 @@ jobs:
             public/stream-versions.yml
             public/dakota-versions.json
             public/flickr-photos.json
+            public/contributors.json
             public/experiences
             src/assets/svg/growth_bluefins.svg
             .cache/website-live-data/sbom-audit.json

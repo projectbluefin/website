@@ -18,6 +18,7 @@
     "typecheck": "vue-tsc --noEmit",
     "update:wolves-playlist": "node scripts/update-wolves-playlist.js",
     "update:back-catalogue": "node scripts/update-back-catalogue.js",
+    "update:contributors": "node scripts/update-contributors.js",
     "record:wolves": "node record-wolves.cjs",
     "generate:wolves-qrs": "node scripts/generate-qrs.js",
     "check:docs": "node scripts/check-docs.mjs",

@@ -34,6 +34,8 @@ Do not run the full application suite for documentation-only changes.
 7. For workflow edits, ensure dependency installation steps in credentialed workflows
    (`deploy.yml`, `preview.yml`, `update-content.yml`) use `npm ci` rather than
    `npm install` to guarantee byte-for-byte fidelity with `package-lock.json`.
+8. For live-data cache updates, keep the cached file path list identical in order and content across `update-content.yml` (restore and save), `deploy.yml` (restore), and `preview.yml` (restore).
+9. When modifying a Vue component under `src/components/`, check `src/tests/` for existing component unit tests and keep test assertions aligned with the runtime contract.
 
 Documentation-only check:
 

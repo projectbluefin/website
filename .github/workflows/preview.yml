@@ -39,6 +39,7 @@ jobs:
             public/stream-versions.yml
             public/dakota-versions.json
             public/flickr-photos.json
+            public/contributors.json
             public/experiences
             src/assets/svg/growth_bluefins.svg
             .cache/website-live-data/sbom-audit.json
