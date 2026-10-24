@@ -1,6 +1,7 @@
+import { Buffer } from 'node:buffer'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 // @ts-expect-error script module is intentionally plain Node ESM
-import { normalizePlaylistEntries } from '../../scripts/update-wolves-playlist.js'
+import { downloadArtwork, isJpegBytes, normalizePlaylistEntries } from '../../scripts/update-wolves-playlist.js'
 import { loadWolvesSoundtrack } from '../data/wolves-soundtrack'
 
 describe('wolves playlist metadata generator', () => {
@@ -95,5 +96,33 @@ describe('wolves playlist metadata generator', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 503 })))
 
     await expect(loadWolvesSoundtrack()).rejects.toThrow('Soundtrack metadata request failed: 503')
+  })
+
+  describe('artwork content validation', () => {
+    const JPEG = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46])
+    const WEBP = Buffer.from('RIFF????WEBPfake-webp-bytes', 'latin1')
+
+    it('treats the FF D8 FF start marker as JPEG and everything else as not', () => {
+      expect(isJpegBytes(JPEG)).toBe(true)
+      expect(isJpegBytes(WEBP)).toBe(false)
+      expect(isJpegBytes(Buffer.from([0xFF, 0xD8]))).toBe(false)
+      expect(isJpegBytes(Buffer.alloc(0))).toBe(false)
+    })
+
+    it('writes only bytes that are actually a JPEG', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JPEG, { status: 200 })))
+
+      const result = await downloadArtwork({ id: 'abc123', thumbnailUrl: 'https://i.ytimg.com/vi/abc123/hqdefault.jpg', artwork: 'wolves-artwork/abc123.jpg' })
+
+      expect(result.body).toEqual(JPEG)
+    })
+
+    it('refuses to download a non-JPEG asset even from an allowed host', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(WEBP, { status: 200 })))
+
+      await expect(
+        downloadArtwork({ id: 'def456', thumbnailUrl: 'https://yt3.ggpht.com/avatar.webp', artwork: 'wolves-artwork/def456.jpg' }),
+      ).rejects.toThrow(/not a JPEG/)
+    })
   })
 })

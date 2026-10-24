@@ -54,6 +54,10 @@ tool answers the second.
 - A generated manifest is hand-edited.
 - Text moves between signal, thesis, lore, and chat layers.
 - A video ordinal or timestamp is answered without `scripts/wolves-cue-at.mjs`.
+- Downloaded artwork is trusted by its URL or host instead of verified as the
+  claimed format: the Wolves playlist generator writes any response to a fixed
+  `.jpg` path, so the downloaded bytes must be checked (JPEG start marker), not
+  the URL extension or the host allow-list that only gates which hosts are hit.
 
 ## Common Rationalizations
 
