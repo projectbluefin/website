@@ -191,7 +191,9 @@ The one carve-out from "no fallback" lives in `src/composables/useLocale.ts`
 as the `LOCALE_ALIASES` map and the `resolveLocale()` function. Aliases are
 allowed only when the alias target is the *only* bundle that fits the source
 region — the current single-bundle entries (`cs-CZ` → `cs` for issue #928,
-`uk-UA` → `uk` for issue #905) and the Simplified-Chinese entries
+`uk-UA` → `uk` for issue #905, `ar-EG` → `ar`, `es-ES` → `es`,
+`hi-IN` → `hi`, `id-ID` → `id`, `it-IT` → `it`, `pl-PL` → `pl`,
+`sv-SE` → `sv`, `tr-TR` → `tr` for issue #926) and the Simplified-Chinese entries
 (`zh-CN` → `zh-Hans`, `zh-SG` → `zh-Hans`, `zh-MY` → `zh-Hans`, plus the
 script-qualified `zh-Hans-CN`, `zh-Hans-SG`, `zh-Hans-MY` for issue #907) close the
 gap where a browser reporting a regional tag would otherwise fall to

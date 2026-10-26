@@ -106,6 +106,22 @@ describe('useLocale', () => {
       expect(resolveLocale('cs')).toBe('cs')
     })
 
+    it.each([
+      ['ar-EG', 'ar'],
+      ['es-ES', 'es'],
+      ['hi-IN', 'hi'],
+      ['id-ID', 'id'],
+      ['it-IT', 'it'],
+      ['pl-PL', 'pl'],
+      ['sv-SE', 'sv'],
+      ['tr-TR', 'tr'],
+    ])('aliases %s to the single %s bundle', (tag, bundle) => {
+      const siblings = i18n.global.availableLocales.filter(locale => locale.split('-')[0] === bundle)
+      expect(siblings).toEqual([bundle])
+      expect(resolveLocale(tag)).toBe(bundle)
+      expect(resolveLocale(bundle)).toBe(bundle)
+    })
+
     it('does not alias Traditional-Chinese region tags', () => {
       // Each Traditional region has its own bundle, so they must keep their
       // own tag. The exact-match path handles the bundled ones; the alias
