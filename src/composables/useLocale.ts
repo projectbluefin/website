@@ -51,7 +51,15 @@ export const DEFAULT_LOCALE = 'en-US'
  * wrong script for a real user.
  */
 export const LOCALE_ALIASES: Readonly<Record<string, string>> = {
+  'ar-EG': 'ar',
   'cs-CZ': 'cs',
+  'es-ES': 'es',
+  'hi-IN': 'hi',
+  'id-ID': 'id',
+  'it-IT': 'it',
+  'pl-PL': 'pl',
+  'sv-SE': 'sv',
+  'tr-TR': 'tr',
   'uk-UA': 'uk',
   'zh-CN': 'zh-Hans',
   'zh-SG': 'zh-Hans',
