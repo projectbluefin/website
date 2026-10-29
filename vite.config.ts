@@ -35,7 +35,12 @@ export default defineConfig({
       provider: 'v8',
       // Count every source file, not only files imported by tests, so that
       // untested components cannot sit at 0% outside the report.
-      include: ['src/**'],
+      // scripts/** holds the CI gates and the jobs that write published data
+      // (version files, growth chart, wallpapers). Measure it too, so a new
+      // untested script pulls down the scripts/** figure checked below
+      // instead of going unseen.
+      include: ['src/**', 'scripts/**/*.{js,mjs}'],
+      exclude: ['scripts/tests/**'],
       reporter: ['text', 'lcov'],
       thresholds: {
         // Ratchet ~3pt below the LOWEST measured figure across supported Node
@@ -55,6 +60,16 @@ export default defineConfig({
           branches: 58,
           functions: 72,
           lines: 68,
+        },
+        // Scripts run as a child process (check-docs, check-git-hygiene,
+        // test-baseline, wolves-cue-at) are tested but count as 0% here, since
+        // v8 does not see into the child. Measured 55.3/53.5/59.9/55.1 on
+        // Node 24 (CI); floored ~5 points under for the Node-version spread.
+        'scripts/**': {
+          statements: 50,
+          branches: 49,
+          functions: 55,
+          lines: 50,
         },
       },
     },
