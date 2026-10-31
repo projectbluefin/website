@@ -33,7 +33,10 @@ tests, coverage, or CI, run the exact CI invocation as well as `test:gate`.
 
 ## Coverage invariants
 
-- `coverage.include: ['src/**']` keeps unimported source files visible at 0%.
+- `coverage.include` lists `src/**` and the `scripts/**` JavaScript files, so
+  unimported source files stay visible at 0%. `scripts/tests/**` is excluded.
+- A script tested only by spawning it as a child process still counts as 0%;
+  v8 does not see into the child. The `scripts/**` floor allows for this.
 - Glob thresholds apply to the aggregate of the matched files.
 - Set thresholds below the lowest measured value on supported Node versions;
   v8 coverage can vary by runtime version.
