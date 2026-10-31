@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { IconGithubCircle } from '@iconify-prerendered/vue-mdi'
+import { SERVER_VERSIONS } from '../../data/server-versions'
 
 const GITHUB_RELEASES_PAGE = 'https://github.com/projectbluefin/server/releases'
 </script>
@@ -16,20 +17,20 @@ const GITHUB_RELEASES_PAGE = 'https://github.com/projectbluefin/server/releases'
 
       <div class="components-section">
         <div class="section-subtitle">
-          Base OS (freedesktop-sdk 26.08)
+          Base OS (freedesktop-sdk {{ SERVER_VERSIONS.fdsdk }})
         </div>
         <div class="components-grid">
           <div class="component-item">
             <span class="component-name">systemd</span>
-            <span class="component-version">261.4</span>
+            <span class="component-version">{{ SERVER_VERSIONS.systemd }}</span>
           </div>
           <div class="component-item">
             <span class="component-name">Linux Kernel</span>
-            <span class="component-version">7.2.11</span>
+            <span class="component-version">{{ SERVER_VERSIONS.kernel }}</span>
           </div>
           <div class="component-item">
             <span class="component-name">Ignition</span>
-            <span class="component-version">2.27.0</span>
+            <span class="component-version">{{ SERVER_VERSIONS.ignition }}</span>
           </div>
         </div>
 
@@ -39,23 +40,23 @@ const GITHUB_RELEASES_PAGE = 'https://github.com/projectbluefin/server/releases'
         <div class="components-grid">
           <div class="component-item">
             <span class="component-name">k0s</span>
-            <span class="component-version">1.36.5</span>
+            <span class="component-version">{{ SERVER_VERSIONS.k0s }}</span>
           </div>
           <div class="component-item">
             <span class="component-name">kubeadm</span>
-            <span class="component-version">1.35.10</span>
+            <span class="component-version">{{ SERVER_VERSIONS.kubeadm }}</span>
           </div>
           <div class="component-item">
             <span class="component-name">containerd (kubeadm)</span>
-            <span class="component-version">2.1.9</span>
+            <span class="component-version">{{ SERVER_VERSIONS.containerd }}</span>
           </div>
           <div class="component-item">
             <span class="component-name">OpenZFS</span>
-            <span class="component-version">2.4.4</span>
+            <span class="component-version">{{ SERVER_VERSIONS.zfs }}</span>
           </div>
           <div class="component-item">
             <span class="component-name">NVIDIA</span>
-            <span class="component-version">595.112.07</span>
+            <span class="component-version">{{ SERVER_VERSIONS.nvidia }}</span>
           </div>
         </div>
       </div>
