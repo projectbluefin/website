@@ -103,7 +103,6 @@ const serverRows = [
   { label: 'Base OS', value: `FDSDK ${SERVER_VERSIONS.fdsdk}` },
   { label: PACKAGE_LABELS.kernel, value: SERVER_VERSIONS.kernel },
   { label: PACKAGE_LABELS.systemd, value: SERVER_VERSIONS.systemd },
-  { label: 'Ignition', value: SERVER_VERSIONS.ignition },
   { label: 'k0s', value: SERVER_VERSIONS.k0s },
   { label: 'kubeadm', value: SERVER_VERSIONS.kubeadm },
   { label: 'OpenZFS', value: SERVER_VERSIONS.zfs },
