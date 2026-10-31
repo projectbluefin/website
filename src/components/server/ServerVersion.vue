@@ -21,11 +21,11 @@ const GITHUB_RELEASES_PAGE = 'https://github.com/projectbluefin/server/releases'
         <div class="components-grid">
           <div class="component-item">
             <span class="component-name">systemd</span>
-            <span class="component-version">261.2</span>
+            <span class="component-version">261.4</span>
           </div>
           <div class="component-item">
             <span class="component-name">Linux Kernel</span>
-            <span class="component-version">7.2.2</span>
+            <span class="component-version">7.2.11</span>
           </div>
           <div class="component-item">
             <span class="component-name">Ignition</span>
@@ -39,15 +39,15 @@ const GITHUB_RELEASES_PAGE = 'https://github.com/projectbluefin/server/releases'
         <div class="components-grid">
           <div class="component-item">
             <span class="component-name">k0s</span>
-            <span class="component-version">1.36.4</span>
+            <span class="component-version">1.36.5</span>
           </div>
           <div class="component-item">
             <span class="component-name">kubeadm</span>
-            <span class="component-version">1.35.9</span>
+            <span class="component-version">1.35.10</span>
           </div>
           <div class="component-item">
             <span class="component-name">containerd (kubeadm)</span>
-            <span class="component-version">2.1.5</span>
+            <span class="component-version">2.1.9</span>
           </div>
           <div class="component-item">
             <span class="component-name">OpenZFS</span>
@@ -55,7 +55,7 @@ const GITHUB_RELEASES_PAGE = 'https://github.com/projectbluefin/server/releases'
           </div>
           <div class="component-item">
             <span class="component-name">NVIDIA</span>
-            <span class="component-version">595.104.02</span>
+            <span class="component-version">595.112.07</span>
           </div>
         </div>
       </div>

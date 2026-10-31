@@ -367,10 +367,23 @@ filename. When a new Dakota Alpha ISO is released, update `DAKOTA_ISOS` in
 `src/data/dakota-isos.ts` to point to the new ISO filename. If gaming-image evidence is unavailable, do not
 infer OGC Kernel from the NVIDIA driver or a source tree.
 
-Bluefin Server has no version updater or generated version file. Until it
-publishes verifiable image SBOM evidence, render no version rows and retain
-only its release destination plus the explicit unavailable status. Never
-substitute Flatcar or another product's data.
+Bluefin Server has no version updater or generated version file. Its
+`/server/` "Releases & Components" values are hand-maintained in
+`src/components/server/ServerVersion.vue`; the front-page Server card keeps
+`versionRows: []`. Refresh them from the SPDX asset on the latest
+`projectbluefin/server` GitHub release, not from `.bst` refs. Read the
+freedesktop-sdk branch label from that release commit's
+`elements/freedesktop-sdk.bst` junction. Never substitute Flatcar or another
+product's data.
+
+```bash
+tag=$(gh release view -R projectbluefin/server --json tagName -q .tagName)
+gh release download "$tag" -R projectbluefin/server -p "bluefin-server_${tag#v}.spdx.json" -D /var/tmp/website-agent --clobber
+jq -r '.packages[] | select(.SPDXID|test("components-linux-0|systemd-base-0|ignition-ignition-0|k0s-bin-0|kubeadm-bin-1|kubeadm-bin-4|openzfs-0|nvidia-open-595-0")) | "\(.SPDXID)\t\(.versionInfo)"' "/var/tmp/website-agent/bluefin-server_${tag#v}.spdx.json"
+```
+
+Name-only `linux` lookup in the Server SPDX is ambiguous: bootstrap headers
+also carry a `linux` package. Use the `components-linux-0` SPDXID.
 
 ### Commands
 

@@ -1,29 +1,29 @@
 {
-  "checkedAt": "2026-09-28T01:57:55.974Z",
+  "checkedAt": "2026-10-31T19:06:38.395Z",
   "status": "verified",
   "sources": [
     {
       "id": "dakota",
       "image": "ghcr.io/projectbluefin/dakota:stable",
-      "imageDigest": "sha256:ddab2e2d816976a8f181603987e76d1c992109f435b2abdf1eae76f40f7139f8",
-      "sbomDigest": "sha256:b70ac4f277f6b0dfbae14545e89975688697d9dcb24ed1517894c7572c30d2e5"
+      "imageDigest": "sha256:e6346ff141f5d8c18340ed71800d312d5f929b67b3043ee71915a98f5043610f",
+      "sbomDigest": "sha256:ff83cbdf0a27cebd48b9f0f6ac849469f29532024d2090f13763e8bc191f9e97"
     },
     {
       "id": "dakota-nvidia",
       "image": "ghcr.io/projectbluefin/dakota-nvidia:stable",
-      "imageDigest": "sha256:0a943c03c8f4b2e17d0fa642d7254658d1e989ad6428099fed919093491ff479",
-      "sbomDigest": "sha256:efbf09aa69008159f8bccd1875e07be7eee60b5286a6e2d24ed9d10b23c47792"
+      "imageDigest": "sha256:6408f934a21d06fad9af170e5154b1d35ff5c1490c8f692ea6f4e50b3469510d",
+      "sbomDigest": "sha256:094c90c1f531e3c935118bb393abe952c5e555c4fe86968e088894b4425bc99c"
     }
   ],
   "packages": {
-    "kernel": "7.2.6",
-    "gnome": "51.0",
-    "mesa": "26.2.2",
-    "systemd": "261.3",
-    "podman": "6.1.0",
+    "kernel": "7.2.11",
+    "gnome": "51.1",
+    "mesa": "26.2.5",
+    "systemd": "262",
+    "podman": "6.1.4",
     "pipewire": "1.6.8",
-    "flatpak": "1.18.2",
-    "bootc": "1.16.13",
+    "flatpak": "1.18.4",
+    "bootc": "1.17.1",
     "nvidia": "615.71.09",
     "baseline": "x86-64-v3"
   }
