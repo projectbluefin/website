@@ -130,7 +130,6 @@ describe('sectionPicker.vue', () => {
       ['Base OS', `FDSDK ${SERVER_VERSIONS.fdsdk}`],
       ['Kernel', SERVER_VERSIONS.kernel],
       ['systemd', SERVER_VERSIONS.systemd],
-      ['Ignition', SERVER_VERSIONS.ignition],
       ['k0s', SERVER_VERSIONS.k0s],
       ['kubeadm', SERVER_VERSIONS.kubeadm],
       ['OpenZFS', SERVER_VERSIONS.zfs],
