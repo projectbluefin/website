@@ -71,11 +71,21 @@ does not replace `validation`, `design-gate`, or the Wolves skills.
    verification happens only after the queue has merged the PR.
 
 8. **Merge through the queue, never directly.** When a ruleset requires a
-   merge queue, `gh pr merge` cannot merge directly; any strategy flag is
-   ignored with a warning (`! The merge strategy for main is set by the merge
-   queue`) and the PR is added to the queue anyway. Prefer `gh pr merge --auto`
-   to make that explicit, then confirm `merged: true` from the pulls API once the
-   queue drains.
+   merge queue, `gh pr merge --merge` prints `! The merge strategy for main is
+   set by the merge queue` and does **not** enqueue the PR. It stays `OPEN`
+   with no `mergeQueueEntry`. Use `gh pr merge --auto` with no strategy flag,
+   then confirm a queue entry exists before waiting:
+   ```bash
+   gh api graphql -f query='{repository(owner:"projectbluefin",name:"website"){pullRequest(number:<N>){mergeQueueEntry{state position}}}}'
+   gh pr view <N> --json reviewDecision,mergeStateStatus
+   ```
+   `mergeStateStatus: BLOCKED` with `reviewDecision: REVIEW_REQUIRED` means
+   auto-merge waits forever for an approval. GitHub refuses self-approval, so a
+   PR authored by the agent's own account (the owner's `gh` login) can never
+   satisfy the 1-approval rule. With the owner's explicit merge grant, an admin
+   identity can merge with `gh pr merge <N> --admin --merge`, bypassing the
+   review rule. Say so in the report. Without that grant, report the blocker.
+   Then confirm `merged: true` from the pulls API.
    The queue's method is `MERGE`, not squash: it lands a merge commit whose
    second parent is the feature-branch head.
    ```bash
