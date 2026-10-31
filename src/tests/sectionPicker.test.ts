@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import SectionPicker from '../components/sections/SectionPicker.vue'
+import { SERVER_VERSIONS } from '../data/server-versions'
 import { i18n } from '../locales/schema'
 
 const wrappers: ReturnType<typeof mount>[] = []
@@ -120,13 +121,23 @@ describe('sectionPicker.vue', () => {
     expect(classic.findAll('.version-row')).toHaveLength(0)
   })
 
-  it('does not show Classic stream metadata on the server product card', async () => {
+  it('renders Bluefin Server rows from its own release data, not Classic stream metadata', async () => {
     const wrapper = mountPicker()
     await flushPromises()
-    const classic = wrapper.find('a.card-box[href="https://docs.projectbluefin.io/downloads/"]')
-    expect(classic.exists()).toBe(true)
-    expect(classic.find('.version-info').exists()).toBe(true)
-    expect(wrapper.get('a.card-box[href="/server/"]').find('.version-info').exists()).toBe(false)
+    const server = wrapper.get('a.card-box[href="/server/"]')
+
+    expect(versionRows(server)).toEqual([
+      ['Base OS', `FDSDK ${SERVER_VERSIONS.fdsdk}`],
+      ['Kernel', SERVER_VERSIONS.kernel],
+      ['systemd', SERVER_VERSIONS.systemd],
+      ['Ignition', SERVER_VERSIONS.ignition],
+      ['k0s', SERVER_VERSIONS.k0s],
+      ['kubeadm', SERVER_VERSIONS.kubeadm],
+      ['OpenZFS', SERVER_VERSIONS.zfs],
+      ['NVidia Driver', SERVER_VERSIONS.nvidia]
+    ])
+    expect(server.text()).not.toContain('Fedora 44')
+    expect(server.text()).not.toContain('9.1.0')
   })
 
   it('renders Classic version rows with labels in CLASSIC_KEYS order', async () => {

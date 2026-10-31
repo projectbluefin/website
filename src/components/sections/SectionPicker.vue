@@ -4,6 +4,7 @@ import { load } from 'js-yaml'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getDakotaVersions } from '../../composables'
+import { SERVER_VERSIONS } from '../../data/server-versions'
 
 import ProductVersionCard from '../common/ProductVersionCard.vue'
 import SceneVisibilityChecker from '../common/SceneVisibilityChecker.vue'
@@ -98,6 +99,17 @@ const dakotaRows = computed(() => {
     .map(key => ({ label: PACKAGE_LABELS[key] ?? key, value: packages[key] }))
 })
 
+const serverRows = [
+  { label: 'Base OS', value: `FDSDK ${SERVER_VERSIONS.fdsdk}` },
+  { label: PACKAGE_LABELS.kernel, value: SERVER_VERSIONS.kernel },
+  { label: PACKAGE_LABELS.systemd, value: SERVER_VERSIONS.systemd },
+  { label: 'Ignition', value: SERVER_VERSIONS.ignition },
+  { label: 'k0s', value: SERVER_VERSIONS.k0s },
+  { label: 'kubeadm', value: SERVER_VERSIONS.kubeadm },
+  { label: 'OpenZFS', value: SERVER_VERSIONS.zfs },
+  { label: PACKAGE_LABELS.nvidia, value: SERVER_VERSIONS.nvidia }
+]
+
 const downloads = computed(() => [
   {
     title: t('TryBluefin.Wolves.Cards.Dakota'),
@@ -115,7 +127,7 @@ const downloads = computed(() => [
     image: 'characters/alamosaurus.webp',
     badgeTitle: t('TryBluefin.Wolves.Cards.AlphaBadge'),
     badgeSub: t('TryBluefin.Wolves.Cards.AlphaBadgeSub'),
-    versionRows: []
+    versionRows: serverRows
   },
   {
     title: t('TryBluefin.Wolves.Cards.Utah'),

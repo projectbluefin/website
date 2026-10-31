@@ -367,12 +367,13 @@ filename. When a new Dakota Alpha ISO is released, update `DAKOTA_ISOS` in
 `src/data/dakota-isos.ts` to point to the new ISO filename. If gaming-image evidence is unavailable, do not
 infer OGC Kernel from the NVIDIA driver or a source tree.
 
-Bluefin Server has no version updater or generated version file. Its
-`/server/` "Releases & Components" values are hand-maintained in
-`src/components/server/ServerVersion.vue`; the front-page Server card keeps
-`versionRows: []`. Refresh them from the SPDX asset on the latest
-`projectbluefin/server` GitHub release, not from `.bst` refs. Read the
-freedesktop-sdk branch label from that release commit's
+Bluefin Server has no version updater or generated version file. Its values
+are hand-maintained in one place, `src/data/server-versions.ts`, which feeds
+both the `/server/` "Releases & Components" box (`ServerVersion.vue`) and the
+front-page Server card rows (`SectionPicker.vue`). Refresh them from the
+attested SPDX asset on the latest `projectbluefin/server` GitHub release
+(`gh attestation verify <spdx> -R projectbluefin/server`), not from `.bst`
+refs. Read the freedesktop-sdk branch from that release commit's
 `elements/freedesktop-sdk.bst` junction. Never substitute Flatcar or another
 product's data.
 
