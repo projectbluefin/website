@@ -110,12 +110,12 @@ describe('dakotaVersionCard.vue', () => {
     expect(entries[0].get('.entry-filename').text()).toBe(DAKOTA_ISOS[0].filename)
   })
 
-  it('renders the alpha badge', () => {
+  it('marks Dakota as Beta with a corner ribbon', () => {
     getDakotaVersionsMock.mockResolvedValue(FULL_VERSIONS)
 
     const wrapper = mountCard()
-    expect(wrapper.get('.alpha-badge-title').text()).toContain('Alpha')
-    expect(wrapper.get('.alpha-badge-sub').text()).toContain('precautions')
+    expect(wrapper.get('.corner-ribbon').text()).toBe('Beta')
+    expect(wrapper.text()).not.toContain('Alpha')
   })
 
   it('filters version rows to known labels only', async () => {

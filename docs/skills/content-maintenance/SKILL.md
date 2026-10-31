@@ -77,7 +77,7 @@ Values that are proper names, brand names, URLs, and Vue interpolation tokens
 stay in the source form even in a complete translation: author attributions
 (`EvolutionQuote.Author`), `WikiLink` URLs, `Video.Url`, `TryBluefin.Title`, and
 card product names such as `TryBluefin.Wolves.Cards.Dakota`. Translate the copy
-around them (`AlphaBadgeSub`, `ServerDescription`), not the names.
+around them (`ComingSoonBadge`, `ServerDescription`), not the names.
 
 ## Locale HTML rendering
 
@@ -153,11 +153,17 @@ ignores the component's own alignment.
 
 ### Product status badges
 
-`ProductVersionCard.vue` renders each card's status from `badgeTitle` and the
-optional `badgeSub`. Dakota and Bluefin Server use the locale-backed Alpha
-warning (`TryBluefin.Wolves.Cards.AlphaBadge` / `AlphaBadgeSub`); LTS and Utah
-use the title-only `TryBluefin.Wolves.Cards.ComingSoonBadge`. Keep those
-statuses explicit per card rather than applying one status to the entire array.
+Dakota and Bluefin Server are **Beta**, shown as a diagonal corner ribbon from
+the shared `corner-ribbon` mixin in `src/style/setup/_mixins.scss`. The ribbon
+is on `ProductVersionCard.vue` via the `ribbon` prop (`TryBluefin.Wolves.Cards.BetaRibbon`),
+on `DakotaVersionCard.vue`, and on the `/server/` Releases & Components box
+(`ServerVersion.vue`). Do not put it on the `/server/` hero: its top-right
+corner holds the "Digital Sovereignty Is Not Just for Nations" tagline. LTS
+and Utah keep the `badgeTitle` pill with `TryBluefin.Wolves.Cards.ComingSoonBadge`.
+Keep those statuses explicit per card rather than applying one status to the
+entire array. Only `en-US` carries `BetaRibbon`; other locales fall back to it.
+The mixin clips itself, so it works inside any positioned container without
+changing that container's `overflow`.
 
 ## Adding a new locale
 

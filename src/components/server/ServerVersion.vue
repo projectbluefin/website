@@ -7,6 +7,9 @@ const GITHUB_RELEASES_PAGE = 'https://github.com/projectbluefin/server/releases'
 
 <template>
   <div class="release-widget">
+    <div class="corner-ribbon">
+      <span>Beta</span>
+    </div>
     <div class="release-action">
       <div class="action-header">
         <div class="action-label">
@@ -70,7 +73,10 @@ const GITHUB_RELEASES_PAGE = 'https://github.com/projectbluefin/server/releases'
 </template>
 
 <style scoped lang="scss">
+@use '../../style/setup/mixins';
+
 .release-widget {
+  position: relative;
   width: 100%;
   display: flex;
   border: 1px solid var(--color-border-light);
@@ -78,6 +84,10 @@ const GITHUB_RELEASES_PAGE = 'https://github.com/projectbluefin/server/releases'
   overflow: hidden;
   background: rgba(var(--color-bg-rgb), 0.55);
   backdrop-filter: blur(8px);
+}
+
+.corner-ribbon {
+  @include mixins.corner-ribbon;
 }
 
 .release-action {

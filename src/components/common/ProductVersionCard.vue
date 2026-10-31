@@ -8,7 +8,7 @@ const props = defineProps<{
   wordmark?: string
   href?: string
   badgeTitle?: string
-  badgeSub?: string
+  ribbon?: string
   versionRows?: { label: string, value: string }[]
 }>()
 
@@ -23,9 +23,11 @@ const rows = computed(() => props.versionRows ?? [])
 
 <template>
   <component :is="href ? 'a' : 'div'" class="card-box" :href="href">
+    <div v-if="ribbon" class="corner-ribbon">
+      <span>{{ ribbon }}</span>
+    </div>
     <div v-if="badgeTitle" class="alpha-badge">
       <span class="alpha-badge-title">{{ badgeTitle }}</span>
-      <span v-if="badgeSub" class="alpha-badge-sub">{{ badgeSub }}</span>
     </div>
     <div class="card-image" :style="cardImageStyle">
       <div class="card-overlay">
@@ -59,6 +61,8 @@ const rows = computed(() => props.versionRows ?? [])
 </template>
 
 <style scoped lang="scss">
+@use '../../style/setup/mixins';
+
 .card-box {
   position: relative;
   display: block;
@@ -180,9 +184,9 @@ const rows = computed(() => props.versionRows ?? [])
   .alpha-badge-title {
     font-weight: 600;
   }
+}
 
-  .alpha-badge-sub {
-    opacity: 0.9;
-  }
+.corner-ribbon {
+  @include mixins.corner-ribbon;
 }
 </style>

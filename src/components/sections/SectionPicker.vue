@@ -115,8 +115,7 @@ const downloads = computed(() => [
     description: t('TryBluefin.Wolves.Cards.DakotaDescription'),
     href: '/dakota/',
     image: 'characters/dakota.webp',
-    badgeTitle: t('TryBluefin.Wolves.Cards.AlphaBadge'),
-    badgeSub: t('TryBluefin.Wolves.Cards.AlphaBadgeSub'),
+    ribbon: t('TryBluefin.Wolves.Cards.BetaRibbon'),
     versionRows: dakotaRows.value
   },
   {
@@ -124,8 +123,7 @@ const downloads = computed(() => [
     description: t('TryBluefin.Wolves.Cards.ServerDescription'),
     href: '/server/',
     image: 'characters/alamosaurus.webp',
-    badgeTitle: t('TryBluefin.Wolves.Cards.AlphaBadge'),
-    badgeSub: t('TryBluefin.Wolves.Cards.AlphaBadgeSub'),
+    ribbon: t('TryBluefin.Wolves.Cards.BetaRibbon'),
     versionRows: serverRows
   },
   {
@@ -181,7 +179,7 @@ onMounted(loadClassicVersions)
             :image="download.image"
             :href="download.href"
             :badge-title="download.badgeTitle"
-            :badge-sub="download.badgeSub"
+            :ribbon="download.ribbon"
             :version-rows="download.versionRows"
           />
         </div>

@@ -85,8 +85,7 @@
     "Title": "Bluefin",
     "Wolves": {
       "Cards": {
-        "AlphaBadge": "⚠️ Alpha.",
-        "AlphaBadgeSub": "Take appropriate precautions.",
+        "BetaRibbon": "Beta",
         "ComingSoonBadge": "Coming Soon",
         "Classic": "Bluefin Classic",
         "ClassicDescription": "For Everyone",
