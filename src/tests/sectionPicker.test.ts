@@ -100,6 +100,19 @@ describe('sectionPicker.vue', () => {
     expect(classic.get('img').attributes('alt')).toBe('Bluefin Classic')
   })
 
+  it('marks only Dakota and Server as Beta; LTS and Utah keep the Coming Soon pill', async () => {
+    const wrapper = mountPicker()
+    await flushPromises()
+    const ribbonOf = (href: string) => wrapper.get(`a.card-box[href="${href}"]`).find('.corner-ribbon')
+
+    expect(ribbonOf('/dakota/').text()).toBe('Beta')
+    expect(ribbonOf('/server/').text()).toBe('Beta')
+    expect(ribbonOf('https://github.com/projectbluefin/utah').exists()).toBe(false)
+    expect(wrapper.get('a.card-box[href="https://github.com/projectbluefin/utah"] .alpha-badge-title').text()).toBe('Coming Soon')
+    expect(wrapper.findAll('.corner-ribbon')).toHaveLength(2)
+    expect(wrapper.text()).not.toContain('Alpha')
+  })
+
   it('keeps LTS Coming Soon and non-downloadable even if a version feed reports it verified', async () => {
     const wrapper = mountPicker()
     await flushPromises()
