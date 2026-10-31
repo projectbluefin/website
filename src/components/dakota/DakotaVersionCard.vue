@@ -68,9 +68,8 @@ onMounted(async () => {
   <div class="dakota-version-card">
     <!-- Raptor card -->
     <div class="card-box">
-      <div class="alpha-badge">
-        <span class="alpha-badge-title">⚠️ Alpha.</span>
-        <span class="alpha-badge-sub">Take appropriate precautions.</span>
+      <div class="corner-ribbon">
+        <span>Beta</span>
       </div>
       <div
         class="card-image"
@@ -132,6 +131,8 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
+@use '../../style/setup/mixins';
+
 .dakota-version-card {
   width: 100%;
   display: flex;
@@ -215,37 +216,8 @@ onMounted(async () => {
   font-size: 1.55rem;
 }
 
-.alpha-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 10;
-  width: max-content;
-  max-width: calc(100% - 24px);
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items: baseline;
-  column-gap: 0.3em;
-  white-space: normal;
-  font-size: 1.2rem;
-  line-height: 1.3;
-  color: var(--color-text-light);
-  background: rgba(0, 0, 0, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  padding: 5px 10px;
-  pointer-events: none;
-  text-align: right;
-
-  .alpha-badge-title {
-    font-weight: 600;
-  }
-
-  .alpha-badge-sub {
-    opacity: 0.9;
-  }
+.corner-ribbon {
+  @include mixins.corner-ribbon;
 }
 
 /* ── Download Section ── */

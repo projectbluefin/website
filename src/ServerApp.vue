@@ -58,11 +58,6 @@ setLocale(currentLocale)
             <ServerDemos />
           </div>
         </div>
-        <div class="alpha-badge-row">
-          <div class="alpha-badge">
-            <strong>⚠️ Alpha.</strong> Take appropriate precautions.
-          </div>
-        </div>
         <div class="action-widgets">
           <ServerVersion />
           <ServerDocs />
@@ -206,7 +201,6 @@ setLocale(currentLocale)
       background: rgba(var(--color-bg-rgb), 0.88);
     }
 
-    .alpha-badge,
     .quote-box,
     :deep(.release-widget),
     :deep(.server-docs-card) {
@@ -410,35 +404,6 @@ setLocale(currentLocale)
   border-radius: 12px;
   padding: 12px 16px;
   box-sizing: border-box;
-}
-
-.alpha-badge-row {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
-
-.alpha-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 1.2rem;
-  color: var(--color-text-light);
-  background: rgba(var(--color-bg-rgb), 0.5);
-  border: 1px solid var(--color-border-light);
-  border-radius: 6px;
-  padding: 7px 10px;
-
-  strong {
-    font-weight: 600;
-  }
-}
-
-@media (max-width: 640px) {
-  .alpha-badge {
-    font-size: 1.1rem;
-    padding: 6px 12px;
-  }
 }
 
 .col-left {

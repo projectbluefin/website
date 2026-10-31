@@ -109,3 +109,36 @@
     grid-template-columns: $columns;
   }
 }
+
+// Diagonal "Beta"-style ribbon across the top-right corner. Apply to an
+// element placed inside a positioned container; it clips itself, so the
+// container needs no overflow change.
+@mixin corner-ribbon($size: 120px) {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 10;
+  width: $size;
+  height: $size;
+  overflow: hidden;
+  border-top-right-radius: inherit;
+  pointer-events: none;
+
+  > span {
+    position: absolute;
+    top: $size * 0.24;
+    right: -$size * 0.32;
+    width: $size * 1.25;
+    transform: rotate(45deg);
+    padding: 6px 0;
+    background: var(--color-blue);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    line-height: 1;
+    text-align: center;
+    text-transform: uppercase;
+  }
+}
