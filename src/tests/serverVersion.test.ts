@@ -11,4 +11,11 @@ describe('serverVersion.vue', () => {
     expect(link.attributes('target')).toBe('_blank')
     expect(link.attributes('rel')).toBe('noopener noreferrer')
   })
+
+  it('carries the Beta ribbon on the release box', () => {
+    const wrapper = mount(ServerVersion)
+
+    expect(wrapper.get('.release-widget > .corner-ribbon').text()).toBe('Beta')
+    expect(wrapper.text()).not.toContain('Alpha')
+  })
 })
