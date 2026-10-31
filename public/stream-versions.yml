@@ -1,14 +1,14 @@
-checkedAt: '2026-09-28T01:57:55.974Z'
+checkedAt: '2026-10-31T19:06:38.395Z'
 stable:
   status: verified
   base: Fedora 44
-  kernel: 7.1.10-200
-  gnome: 50.3-1
-  mesa: 26.1.4-4
-  systemd: 259.9-1
-  podman: 5.8.4-1
-  pipewire: 1.6.8-1
-  flatpak: 1.18.0-1
-  nvidia: 615.71.09-2
+  kernel: 7.2.7-200
+  gnome: 50.6-1
+  mesa: 26.2.5-1
+  systemd: 259.10-1
+  podman: 5.8.9-1
+  pipewire: 1.6.10-1
+  flatpak: 1.18.4-1
+  nvidia: 615.78.08-1
 lts:
   status: unavailable
