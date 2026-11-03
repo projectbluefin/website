@@ -6,6 +6,8 @@ on:
     # pipeline completes at ~04:00–06:00 UTC so we always get fresh data.
     - cron: '0 10 * * *'
   workflow_dispatch:
+  repository_dispatch:
+    types: [dakota-release]
 
 permissions: {}
 
