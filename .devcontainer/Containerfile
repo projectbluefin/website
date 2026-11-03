@@ -7,7 +7,6 @@ RUN apk add --no-cache \
     git \
     nodejs \
     npm \
-    bun \
     just \
     github-cli \
     shadow \
