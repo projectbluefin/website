@@ -176,9 +176,9 @@ const GITHUB_RELEASES_PAGE = 'https://github.com/projectbluefin/server/releases'
   gap: 7px;
   margin-top: auto;
   padding: 10px 12px;
-  border: 1px solid rgba(var(--color-blue-rgb), 0.5);
+  border: 1px solid var(--color-blue);
   border-radius: 7px;
-  background: rgba(var(--color-blue-rgb), 0.9);
+  background: var(--color-blue);
   color: white;
   font-size: 1.4rem;
   font-weight: 700;
@@ -187,7 +187,12 @@ const GITHUB_RELEASES_PAGE = 'https://github.com/projectbluefin/server/releases'
   transition: background 0.15s;
 
   &:hover {
-    background: rgba(var(--color-blue-rgb), 1);
+    background: var(--color-blue-dark, #0056b3);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-blue-light);
+    outline-offset: 2px;
   }
 
   svg {
