@@ -77,6 +77,15 @@ For desktop-only decorative labels adjacent to the fixed media widget, position
 them relative to the widget and hide them at the desktop breakpoint. Measure
 both label bounds and the widget before approving the layout.
 
+When exploring new top-level product identities (such as Bluefin vs.
+Bluefin Server), build throwaway comparative mockups in an isolated workspace
+such as `/var/tmp/website-agent/` rather than modifying production routes before
+a direction is selected. When validating candidate layouts, test both desktop and
+mobile viewports against real brand assets: confirm wordmark SVGs keep their
+intrinsic aspect ratio, transparent artwork (`alamosaurus.webp`, `bluefin.webp`)
+does not produce horizontal viewport overflow (`scrollWidth > innerWidth`), and
+shared navigation surfaces reflect reciprocal links between the product identities.
+
 ## Common Rationalizations
 
 - "The CSS width is larger, so the rendered element must be larger." A grid,

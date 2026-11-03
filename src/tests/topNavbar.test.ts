@@ -20,16 +20,18 @@ describe('topNavbar.vue', () => {
     const wrapper = mountNavbar()
 
     const brand = wrapper.get('a.navbar__brand')
-    expect(brand.attributes('href')).toBe('https://projectbluefin.io')
+    expect(brand.attributes('href')).toBe('/')
     const wordmark = brand.get('img.navbar__wordmark')
     expect(wordmark.attributes('src')).toMatch(/^\/brands\/bluefin-wordmark\.svg|^data:image\/svg\+xml/)
     expect(wordmark.attributes('alt')).toBe('Bluefin')
 
-    const desktopGroups = wrapper.findAll('.navbar__items')
-    expect(desktopGroups[0].findAll('a.navbar__link')).toHaveLength(1)
-    expect(wrapper.get('.navbar__items--right').findAll('a.navbar__link')).toHaveLength(6)
-  })
+    const switchBtns = wrapper.findAll('.product-switch__btn')
+    expect(switchBtns).toHaveLength(2)
+    expect(switchBtns[0].text()).toBe('Bluefin')
+    expect(switchBtns[1].text()).toBe('Bluefin Server')
 
+    expect(wrapper.get('.navbar__items--right').findAll('a.navbar__link')).toHaveLength(5)
+  })
   it('marks external links with target and rel while internal links stay same-tab', () => {
     const wrapper = mountNavbar()
 
@@ -54,7 +56,6 @@ describe('topNavbar.vue', () => {
 
     const mobileLinks = wrapper.findAll('#navbar-mobile-menu a.navbar__mobile-link')
     expect(mobileLinks).toHaveLength(7)
-
     await mobileLinks[0].trigger('click')
     expect(wrapper.find('#navbar-mobile-menu').exists()).toBe(false)
   })
@@ -62,40 +63,34 @@ describe('topNavbar.vue', () => {
   it('renders the full link set in order and mirrors it into the mobile menu', async () => {
     const wrapper = mountNavbar()
 
-    const leftHrefs = wrapper.findAll('.navbar__items')[0]
-      .findAll('a.navbar__link')
+    const switchHrefs = wrapper.findAll('.product-switch__btn')
       .map(link => link.attributes('href'))
-    expect(leftHrefs).toEqual([
-      'https://docs.projectbluefin.io/introduction',
-    ])
+    expect(switchHrefs).toEqual(['/', '/server/'])
 
     const rightHrefs = wrapper.get('.navbar__items--right')
       .findAll('a.navbar__link')
       .map(link => link.attributes('href'))
     expect(rightHrefs).toEqual([
+      'https://docs.projectbluefin.io/introduction',
       'https://docs.projectbluefin.io/blog',
-      'https://docs.projectbluefin.io/changelogs',
       'https://docs.projectbluefin.io/reports',
       'https://github.com/ublue-os/bluefin/discussions',
-      'https://feedback.projectbluefin.io/',
       'https://store.projectbluefin.io',
     ])
 
     await wrapper.get('button.navbar__menu-toggle').trigger('click')
     const mobileHrefs = wrapper.findAll('#navbar-mobile-menu a.navbar__mobile-link')
       .map(link => link.attributes('href'))
-    expect(mobileHrefs).toEqual([...leftHrefs, ...rightHrefs])
+    expect(mobileHrefs).toEqual(['/', '/server/', ...rightHrefs])
   })
-
   it('renders locale-driven labels captured from the active locale at mount', () => {
     setLocale('de-DE')
     const wrapper = mountNavbar()
 
-    const leftLabels = wrapper.findAll('.navbar__items')[0]
+    const rightLabels = wrapper.get('.navbar__items--right')
       .findAll('a.navbar__link')
       .map(link => link.text())
-    expect(leftLabels).toEqual(['Dokumentation'])
-
+    expect(rightLabels[0]).toBe('Dokumentation')
     const docsLink = wrapper.get('a[href="https://docs.projectbluefin.io/introduction"]')
     expect(docsLink.text()).toBe('Dokumentation')
     expect(docsLink.classes()).toContain('navbar__link--active')

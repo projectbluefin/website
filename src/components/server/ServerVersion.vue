@@ -20,7 +20,7 @@ const GITHUB_RELEASES_PAGE = 'https://github.com/projectbluefin/server/releases'
 
       <div class="components-section">
         <div class="section-subtitle">
-          Base OS (freedesktop-sdk {{ SERVER_VERSIONS.fdsdk }})
+          Bluefin Server 26.11.1
         </div>
         <div class="components-grid">
           <div class="component-item">

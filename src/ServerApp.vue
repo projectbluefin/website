@@ -58,15 +58,20 @@ setLocale(currentLocale)
             <ServerDemos />
           </div>
         </div>
+        <div class="alpha-badge-row">
+          <div class="alpha-badge">
+            <strong>⚠️ Beta.</strong> Take appropriate precautions.
+          </div>
+        </div>
         <div class="action-widgets">
           <ServerVersion />
           <ServerDocs />
         </div>
         <section class="field-row">
-          <div class="field-artwork field-artwork--alamo">
+          <div class="field-artwork field-artwork--karl">
             <img
-              class="alamo"
-              :src="`${baseUrl}characters/alamosaurus.webp`"
+              class="karl"
+              :src="`${baseUrl}characters/karl.webp`"
               alt=""
               fetchpriority="high"
               aria-hidden="true"
@@ -101,10 +106,10 @@ setLocale(currentLocale)
               <li><strong>Reproducible</strong> — Node die? Rebuild on the fly. It's a cluster — redundancy is built in.</li>
             </ul>
           </div>
-          <div class="field-artwork field-artwork--karl">
+          <div class="field-artwork field-artwork--alamo">
             <img
-              class="karl"
-              :src="`${baseUrl}characters/karl.webp`"
+              class="alamo"
+              :src="`${baseUrl}characters/alamosaurus.webp`"
               alt=""
               fetchpriority="high"
               aria-hidden="true"
@@ -224,9 +229,10 @@ setLocale(currentLocale)
 
     .github-star-btn {
       background: var(--color-blue);
+      color: white;
 
       &:hover {
-        background: #184985;
+        background: var(--color-blue-dark, #0056b3);
       }
     }
 
@@ -358,6 +364,7 @@ setLocale(currentLocale)
   pointer-events: none;
   user-select: none;
   aspect-ratio: var(--art-visible-width) / var(--art-visible-height);
+  transform: scaleX(-1);
 
   .alamo,
   .karl {
@@ -505,13 +512,13 @@ setLocale(currentLocale)
   border-radius: 7px;
   font-size: 1.25rem;
   font-weight: 700;
-  background: var(--color-bg);
+  background: var(--color-blue);
   color: white;
   text-decoration: none;
   transition: background 0.15s;
 
   &:hover {
-    background: var(--color-blue);
+    background: var(--color-blue-dark, #0056b3);
   }
   svg {
     width: 1.5rem;

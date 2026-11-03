@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import type { MessageSchema } from '../locales/schema'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+const isServerRoute = computed(() => {
+  if (typeof window !== 'undefined') {
+    return window.location.pathname.startsWith('/server')
+  }
+  return false
+})
 
 interface NavLink {
   name: string
@@ -14,28 +21,17 @@ const { t } = useI18n<MessageSchema>({
 })
 
 const menuOpen = ref(false)
-
-// Left side navigation
-const leftNavLinks: NavLink[] = [
+// Right side navigation: Documentation moved to right, Feedback and Changelog dropped
+const rightNavLinks: NavLink[] = [
   {
     name: t('TopBar.Docs'),
     href: 'https://docs.projectbluefin.io/introduction'
-  }
-]
-
-// Right side navigation
-const rightNavLinks: NavLink[] = [
+  },
   { name: t('TopBar.Blog'), href: 'https://docs.projectbluefin.io/blog' },
-  { name: t('TopBar.Changelog'), href: 'https://docs.projectbluefin.io/changelogs' },
   { name: t('TopBar.Reports'), href: 'https://docs.projectbluefin.io/reports' },
   {
     name: t('TopBar.Discussions'),
     href: 'https://github.com/ublue-os/bluefin/discussions',
-    external: true
-  },
-  {
-    name: t('TopBar.Feedback'),
-    href: 'https://feedback.projectbluefin.io/',
     external: true
   },
   {
@@ -45,7 +41,17 @@ const rightNavLinks: NavLink[] = [
   }
 ]
 
-const mobileNavLinks = [...leftNavLinks, ...rightNavLinks]
+const mobileNavLinks = [
+  {
+    name: 'Bluefin',
+    href: '/'
+  },
+  {
+    name: 'Bluefin Server',
+    href: '/server/'
+  },
+  ...rightNavLinks
+]
 
 function closeMenu() {
   menuOpen.value = false
@@ -56,7 +62,7 @@ function closeMenu() {
   <nav class="docusaurus-navbar navbar navbar--fixed-top">
     <div class="navbar__inner">
       <div class="navbar__items">
-        <a href="https://projectbluefin.io" class="navbar__brand">
+        <a href="/" class="navbar__brand">
           <img
             src="/brands/bluefin-wordmark.svg"
             alt="Bluefin"
@@ -64,17 +70,24 @@ function closeMenu() {
             loading="eager"
           >
         </a>
-        <a
-          v-for="link in leftNavLinks"
-          :key="link.name"
-          :href="link.href"
-          class="navbar__item navbar__link"
-          :class="{ 'navbar__link--active': link.name === t('TopBar.Docs') }"
-          :target="link.external ? '_blank' : undefined"
-          :rel="link.external ? 'noopener noreferrer' : undefined"
-        >
-          {{ link.name }}
-        </a>
+        <div class="navbar__product-switch" role="group" aria-label="Product Switcher">
+          <a
+            href="/"
+            class="product-switch__btn"
+            :class="{ 'product-switch__btn--active': !isServerRoute }"
+            :aria-current="!isServerRoute ? 'page' : undefined"
+          >
+            Bluefin
+          </a>
+          <a
+            href="/server/"
+            class="product-switch__btn"
+            :class="{ 'product-switch__btn--active': isServerRoute }"
+            :aria-current="isServerRoute ? 'page' : undefined"
+          >
+            Bluefin Server
+          </a>
+        </div>
       </div>
 
       <div class="navbar__items navbar__items--right">
@@ -83,6 +96,7 @@ function closeMenu() {
           :key="link.name"
           :href="link.href"
           class="navbar__item navbar__link"
+          :class="{ 'navbar__link--active': link.name === t('TopBar.Docs') }"
           :target="link.external ? '_blank' : undefined"
           :rel="link.external ? 'noopener noreferrer' : undefined"
         >
@@ -203,6 +217,53 @@ function closeMenu() {
     outline: 2px solid var(--ifm-navbar-link-hover-color);
     outline-offset: 2px;
     border-radius: 4px;
+  }
+}
+
+.navbar__product-switch {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  padding: 2px;
+  gap: 2px;
+  margin-left: 4px;
+}
+
+.product-switch__btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ifm-navbar-link-color);
+  text-decoration: none;
+  line-height: 1.2;
+  transition:
+    background var(--ifm-transition-fast) var(--ifm-transition-timing-default),
+    color var(--ifm-transition-fast) var(--ifm-transition-timing-default);
+  white-space: nowrap;
+
+  &:hover {
+    color: #ffffff;
+  }
+
+  &--active {
+    background: var(--color-blue, #4285f4);
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ifm-navbar-link-hover-color);
+    outline-offset: 2px;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar__product-switch {
+    display: none;
   }
 }
 
