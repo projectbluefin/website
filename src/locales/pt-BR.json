@@ -85,15 +85,24 @@
     "Title": "Bluefin",
     "Wolves": {
       "Cards": {
+        "BetaRibbon": "Beta",
         "ComingSoonBadge": "Em breve",
+        "Classic": "Bluefin Classic",
+        "ClassicDescription": "Para todos",
+        "Lts": "Bluefin LTS",
+        "LtsDescription": "Uma experiência de suporte de longo prazo (LTS) com base empresarial.",
         "Dakota": "Dakota",
-        "DakotaDescription": "A forma final. Bluefin perfeccionada.",
+        "DakotaDescription": "A forma final. Bluefin perfeito.",
         "Utah": "Utah",
         "UtahDescription": "",
         "Server": "Bluefin Server",
-        "ServerDescription": "O sistema operacional de servidor FSDK mais importante do mundo."
+        "ServerDescription": "O melhor sistema operacional FSDK para servidores do mundo."
       }
     }
+  },
+  "NextGeneration": {
+    "Title": "A próxima geração",
+    "Description": "Cinco anos de expertise, sem concessões"
   },
   "Community": {
     "Tag": "Nossa",
@@ -106,7 +115,7 @@
       "DiscussionsButton": "Discussões"
     },
     "Contribute": {
-      "Tag": "Nossos Colaboradores",
+      "Tag": "Colaboradores",
       "Title": "Contribua",
       "Description": "Ajude a desenvolver a Bluefin contribuindo no código, reportando problemas (bugs) ou sugerindo melhorias e novos recursos. Você também pode apoiar os contribuintes se desejar contribuir financeiramente.",
       "Button": "Visite nosso GitHub",
