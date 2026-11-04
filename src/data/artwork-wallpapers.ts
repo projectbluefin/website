@@ -5,7 +5,7 @@
  * Two sources, both Apache-2.0, both pinned by commit in
  * `public/licenses/ublue-family-artwork-NOTICE.txt`:
  *
- * - **Bluefin monthly day/night set** (`ublue-os/artwork`,
+ * - **Bluefin monthly day/night set** (`projectbluefin/artwork`,
  *   `wallpapers/bluefin/`). The twelve pairs are the monthly rotation that
  *   ships with Bluefin; the upstream GNOME metadata names them
  *   "Bluefin NN - <Month>". The WebP encodes already sit in
@@ -47,7 +47,7 @@ export interface ArtworkWallpaper extends Wallpaper {
 }
 
 const UBLUE_ARTWORK = {
-  sourceRepo: 'https://github.com/ublue-os/artwork',
+  sourceRepo: 'https://github.com/projectbluefin/artwork',
   sourceCommit: '1055b244c9de8d57bfceea97d1888327f3773deb',
   sourceLicense: 'Apache-2.0',
 } as const

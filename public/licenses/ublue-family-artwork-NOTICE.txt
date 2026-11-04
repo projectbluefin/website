@@ -6,7 +6,7 @@ three Universal Blue family source repositories, all licensed under the
 Apache License, Version 2.0 (the full license text follows this notice).
 
 1. Bluefin monthly day/night wallpapers (January - December)
-   Source:  https://github.com/ublue-os/artwork
+   Source:  https://github.com/projectbluefin/artwork
    Path:    wallpapers/bluefin/
    Commit:  1055b244c9de8d57bfceea97d1888327f3773deb
    Served:  public/img/wallpapers/bluefin-{01..10,12}-{day,night}.webp
