@@ -74,7 +74,7 @@ of the rarest category actually lands.
 
 `public/img/wallpapers/bluefin-{01..12}-{day,night}.webp` (registered in
 `src/data/artwork-wallpapers.ts`) are the Bluefin monthly set
-from `ublue-os/artwork` `wallpapers/bluefin/`, but the numbering has traps:
+from `projectbluefin/artwork` `wallpapers/bluefin/`, but the numbering has traps:
 
 - **Local 11 ≡ local 12, byte for byte.** Both are the December mammoth scene;
   pair 11 was mis-encoded as a copy of 12 at import time. Register only
