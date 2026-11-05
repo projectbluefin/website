@@ -199,7 +199,7 @@ describe('artwork-wallpapers registry', () => {
       expect(['artwork', 'bazzite']).toContain(wallpaper.kind)
       expect(classifyCuratedSlide(wallpaper.name, wallpaper.title)).toBe(wallpaper.kind)
       expect(wallpaper.title.trim().length).toBeGreaterThan(0)
-      expect(wallpaper.sourceRepo).toMatch(/^https:\/\/github\.com\/ublue-os\//)
+      expect(wallpaper.sourceRepo).toMatch(/^https:\/\/github\.com\/(?:projectbluefin|ublue-os)\//)
       expect(wallpaper.sourceCommit).toMatch(/^[0-9a-f]{40}$/)
       expect(wallpaper.sourceLicense).toBe('Apache-2.0')
     }
