@@ -12,10 +12,10 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
           cache: 'npm'
@@ -29,15 +29,39 @@ jobs:
       - run: npm run test:run -- --coverage
       - run: npm run build
 
+  # Shared workflow-safety gate (projectbluefin/actions#674): fail a change
+  # that gives a job rights it does not use, pastes an expression into a
+  # shell command, or leaves credentials behind. Same image, threshold and
+  # flags as projectbluefin/server's lint-actions.yml.
+  zizmor:
+    name: Audit GitHub Actions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      # The read-only token enables the online audits (impostor commits,
+      # known-vulnerable actions, ref/version mismatches).
+      - name: zizmor
+        uses: docker://ghcr.io/zizmorcore/zizmor:1.31.1@sha256:42d409dbb851d4c5d35a058cf042b828bea1e3f2884378c526eb0974780e18d9
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          args: --format=github --min-severity=medium --min-confidence=medium .
+
   wolves-movie-flow:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
           cache: 'npm'

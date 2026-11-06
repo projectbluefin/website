@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
@@ -49,7 +49,7 @@ jobs:
           fail-on-cache-miss: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
           cache: 'npm'
@@ -62,18 +62,18 @@ jobs:
 
       - name: Deploy to Cloudflare Pages
         id: deploy
-        uses: cloudflare/pages-action@f0a1cd58cd66095dee69bfa18fa5efd1dde93bca # v1.5.0
+        # cloudflare/pages-action was deleted upstream; wrangler-action is its
+        # supported replacement. The command runs via @actions/exec (no shell).
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: ${{ github.event.repository.name }}
-          directory: dist
-          branch: ${{ github.event.pull_request.head.ref }}
+          command: pages deploy dist --project-name=${{ github.event.repository.name }} --branch=${{ github.event.pull_request.head.ref }}
 
       - name: Comment preview URL on PR
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         env:
-          PREVIEW_URL: ${{ steps.deploy.outputs.alias || steps.deploy.outputs.url }}
+          PREVIEW_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
         with:
           script: |
             const marker = '<!-- cloudflare-pages-preview -->'
