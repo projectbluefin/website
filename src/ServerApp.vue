@@ -194,6 +194,7 @@ setLocale(currentLocale)
     --color-text-light: #132b3a;
     --color-blue: #2059ae;
     --color-blue-light: #184985;
+    --color-blue-dark: #0056b3;
     --color-blue-rgb: 32, 89, 174;
 
     color-scheme: light;
@@ -269,6 +270,7 @@ setLocale(currentLocale)
   --color-text-light: #ffffff;
   --color-blue: #4285f4;
   --color-blue-light: #8a97f7;
+  --color-blue-dark: #1a73e8;
   --color-blue-rgb: 108, 122, 233;
 
   color-scheme: dark;
