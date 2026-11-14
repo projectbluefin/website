@@ -3,8 +3,10 @@
   "extends": [
     "config:recommended"
   ],
-  "dependencyDashboard": true,
-  "dependencyDashboardTitle": "Renovate Dashboard \ud83e\udd16",
+  "dependencyDashboard": {
+    "enabled": true,
+    "title": "Renovate Dashboard 🤖"
+  },
   "rebaseWhen": "behind-base-branch",
   "osvVulnerabilityAlerts": true,
   "minimumReleaseAge": "3 days",
