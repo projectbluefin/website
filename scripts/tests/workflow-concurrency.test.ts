@@ -4,29 +4,20 @@ import { load } from 'js-yaml'
 import { describe, expect, it } from 'vitest'
 
 const workflow = load(readFileSync(resolve(process.cwd(), '.github/workflows/ci.yml'), 'utf8')) as {
-  concurrency: { group: string, 'cancel-in-progress': string }
-}
-
-// The workflow uses the common GitHub expression operators that also have JS equivalents.
-function evaluate(template: string, github: object) {
-  return template.replace(/\$\{\{\s*(.*?)\s*\}\}/g, (_, expression: string) =>
-    String(Function('github', `return (${expression})`)(github)))
+  concurrency: { 'group': string, 'cancel-in-progress': string }
 }
 
 function policy(eventName: string, runId: number, pullRequestNumber?: number) {
-  const github = {
-    workflow: 'CI',
-    event_name: eventName,
-    event: { pull_request: { number: pullRequestNumber } },
-    run_id: runId,
-  }
+  expect(workflow.concurrency.group).toBe(`\${{ github.workflow }}-\${{ github.event_name }}-\${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}`)
+  expect(workflow.concurrency['cancel-in-progress']).toBe(`\${{ github.event_name == 'pull_request' }}`)
+  const identifier = eventName === 'pull_request' ? (pullRequestNumber || runId) : runId
   return {
-    group: evaluate(workflow.concurrency.group, github),
-    cancel: evaluate(workflow.concurrency['cancel-in-progress'], github),
+    group: `CI-${eventName}-${identifier}`,
+    cancel: String(eventName === 'pull_request'),
   }
 }
 
-describe('CI concurrency', () => {
+describe('ci concurrency', () => {
   it('cancels older runs only within the same pull request', () => {
     const first = policy('pull_request', 100, 12)
     const update = policy('pull_request', 101, 12)
