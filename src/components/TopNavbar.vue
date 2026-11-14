@@ -235,6 +235,7 @@ function closeMenu() {
   display: inline-flex;
   align-items: center;
   padding: 4px 12px;
+  border-radius: 9999px;
   font-size: 13px;
   font-weight: 600;
   color: var(--ifm-navbar-link-color);
