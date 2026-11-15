@@ -31,7 +31,7 @@
     "@fontsource/michroma": "^5.2.8",
     "@fontsource/share-tech-mono": "^5.2.7",
     "@iconify-prerendered/vue-mdi": "^0.28.1737398331",
-    "@iframe-resizer/child": "5.5.7",
+    "@iframe-resizer/child": "5.5.9",
     "@iframe-resizer/parent": "5.5.7",
     "@iframe-resizer/vue": "5.5.7",
     "@types/js-yaml": "^4.0.9",
