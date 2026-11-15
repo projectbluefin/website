@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it } from 'vitest'
 import TopNavbar from '../components/TopNavbar.vue'
@@ -109,5 +111,12 @@ describe('topNavbar.vue', () => {
     await toggle.trigger('click')
     expect(toggle.attributes('aria-label')).toBe('Open navigation menu')
     expect(wrapper.find('#navbar-mobile-menu').exists()).toBe(false)
+  })
+
+  it('rounds the product switch buttons to match their pill container', () => {
+    const source = readFileSync(resolve(process.cwd(), 'src/components/TopNavbar.vue'), 'utf8')
+    const buttonRule = source.match(/\.product-switch__btn \{([^{}]*)/)
+
+    expect(buttonRule?.[1]).toContain('border-radius: 9999px')
   })
 })
