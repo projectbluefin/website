@@ -57,7 +57,7 @@
     "@vitest/coverage-v8": "4.1.12",
     "@vue/test-utils": "2.4.11",
     "@xmldom/xmldom": "0.9.12",
-    "eslint": "9.39.3",
+    "eslint": "9.39.5",
     "eslint-plugin-format": "1.5.0",
     "happy-dom": "21.0.4",
     "playwright": "1.61.1",
