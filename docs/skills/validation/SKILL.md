@@ -97,6 +97,7 @@ npm run build
 |---|---|
 | "The build passed, so it works." | A build does not run route initialization. An eager `import.meta.glob()` manifest failure only appears in a browser. |
 | "The suite is red anyway, so this failure is expected." | `test:gate` judges against a recorded baseline. Re-derive the count from `tests/known-failures.txt`; never decide safety from a bare `test:run`. |
+| "A `ref="name"` string in the template counts as a use of `const name = ref()`." | Not from vue-tsc 3.3.14 on: an unread template ref fails `npm run typecheck` with TS6133. Delete both the declaration and the `ref` attribute if no script code reads it. |
 | "The deploy is green, so my change is live." | Match the SHA. A green run for a different commit says nothing about yours. |
 | "My change is missing from the browser, so the code is wrong." | Identify the process on the port first. A stale `vite preview` serves a frozen `dist/` and never hot-reloads. |
 | "Nothing references this file, so it is dead code." | `WolvesComicReader.vue` serves eleven non-Wolves albums. A `/wolves/` smoke test will not notice their loss. |
