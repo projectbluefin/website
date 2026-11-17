@@ -37,6 +37,15 @@ Do not run the full application suite for documentation-only changes.
 8. For live-data cache updates, keep the cached file path list identical in order and content across `update-content.yml` (restore and save), `deploy.yml` (restore), and `preview.yml` (restore).
 9. When modifying a Vue component under `src/components/`, check `src/tests/` for existing component unit tests and keep test assertions aligned with the runtime contract.
 10. For CI concurrency changes, keep pull-request runs grouped by PR and non-PR runs unique; `scripts/tests/workflow-concurrency.test.ts` checks cancellation and group isolation. Assert the parsed YAML expressions directly instead of executing them as JavaScript.
+11. For an ESLint or `@antfu/eslint-config` upgrade, move both packages in one
+    change (each major of the config pins the ESLint major it accepts), and
+    check that `npm run lint:fix` changed only layout: compare each touched
+    file with all whitespace stripped against `HEAD`. Turn off a new rule
+    whose auto-fix rewrites code (for example `e18e/prefer-object-has-own`,
+    which needs a newer `lib` than `tsconfig.json` sets) instead of letting
+    the reformat carry it. Lore bodies render Markdown heading markers as
+    literal text, so a `markdown/heading-increment` fix changes what the
+    audience reads; keep it to the marker itself.
 
 Documentation-only check:
 
