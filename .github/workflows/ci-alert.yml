@@ -8,10 +8,7 @@ on:
       - "Deploy to GitHub Pages"
     types: [completed]
 
-permissions:
-  actions: read
-  contents: read
-  issues: write
+permissions: {}
 
 concurrency:
   # One alert issue per workflow, so runs of different workflows don't queue behind each other.
@@ -30,6 +27,10 @@ jobs:
        github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+      issues: write
     env:
       # Through env, never inline: the run name is data, not code.
       WORKFLOW: ${{ github.event.workflow_run.name }}
@@ -41,15 +42,18 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           WORKFLOW_ID: ${{ github.event.workflow_run.workflow_id }}
-          BRANCH: ${{ github.event.workflow_run.head_branch }}
           RUN_NUMBER: ${{ github.event.workflow_run.run_number }}
+          CREATED: ${{ github.event.workflow_run.created_at }}
         run: |
           set -euo pipefail
+          # Any newer run that isn't a PR or queue run counts: deploy.yml shares one
+          # concurrency group ("pages", cancel-in-progress) across push, release and
+          # workflow_dispatch, so a release or manual deploy can cancel a push run.
           newer=$(gh api --paginate --slurp -G \
             "repos/${REPO}/actions/workflows/${WORKFLOW_ID}/runs" \
-            -f branch="$BRANCH" -f event=push -f per_page=100 |
+            -f created=">=${CREATED}" -f per_page=100 |
             jq -r --argjson number "$RUN_NUMBER" \
-              '[.[].workflow_runs[] | select(.event == "push" and .run_number > $number)] | max_by(.run_number) | .id // empty')
+              '[.[].workflow_runs[] | select(.run_number > $number and (.event | IN("pull_request", "merge_group") | not))] | max_by(.run_number) | .id // empty')
           if [[ -n "$newer" ]]; then
             echo "superseded by run $newer"
             echo "found=true" >> "$GITHUB_OUTPUT"
