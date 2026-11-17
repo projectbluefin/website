@@ -7,6 +7,9 @@
     "enabled": true,
     "title": "Renovate Dashboard 🤖"
   },
+  "constraints": {
+    "npm": "^11.20.0"
+  },
   "rebaseWhen": "behind-base-branch",
   "osvVulnerabilityAlerts": true,
   "minimumReleaseAge": "3 days",

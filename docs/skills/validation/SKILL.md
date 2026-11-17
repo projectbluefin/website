@@ -36,7 +36,11 @@ Do not run the full application suite for documentation-only changes.
    `npm install` to guarantee byte-for-byte fidelity with `package-lock.json`.
 8. For live-data cache updates, keep the cached file path list identical in order and content across `update-content.yml` (restore and save), `deploy.yml` (restore), and `preview.yml` (restore).
 9. When modifying a Vue component under `src/components/`, check `src/tests/` for existing component unit tests and keep test assertions aligned with the runtime contract.
-10. For CI concurrency changes, keep pull-request runs grouped by PR and non-PR runs unique; `scripts/tests/workflow-concurrency.test.ts` checks cancellation and group isolation. Assert the parsed YAML expressions directly instead of executing them as JavaScript.
+10. Keep `constraints.npm` in `renovate.json` on the npm major CI uses (11).
+    Renovate's newer npm refused a dependency tarball (`EALLOWREMOTE`), so its
+    PRs changed only `package.json` and `npm ci` failed on lockfile mismatch.
+    Close any Renovate PR that bumps that npm constraint.
+11. For CI concurrency changes, keep pull-request runs grouped by PR and non-PR runs unique; `scripts/tests/workflow-concurrency.test.ts` checks cancellation and group isolation. Assert the parsed YAML expressions directly instead of executing them as JavaScript.
 
 Documentation-only check:
 
