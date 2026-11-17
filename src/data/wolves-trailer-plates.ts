@@ -255,12 +255,16 @@ export function trailerSegmentAt(timeSeconds: number): TrailerSegment {
   if (!Number.isFinite(timeSeconds) || timeSeconds < TRAILER_PICTURE_END_SECONDS) {
     return 'picture'
   }
-  return timeSeconds < TRAILER_BRIDGE_END_SECONDS ? 'bridge' : 'endcard'
+  return timeSeconds < TRAILER_BRIDGE_END_SECONDS
+    ? 'bridge'
+    : 'endcard'
 }
 
 function ramp(value: number, from: number, to: number): number {
   if (to <= from) {
-    return value >= to ? 1 : 0
+    return value >= to
+      ? 1
+      : 0
   }
   return Math.max(0, Math.min(1, (value - from) / (to - from)))
 }
@@ -294,8 +298,12 @@ export function trailerPlateOpacity(plate: TrailerPlate, timeSeconds: number): n
   if (timeSeconds < plate.start || timeSeconds >= plate.end) {
     return 0
   }
-  const rising = plate.fadeIn ? Math.min(1, (timeSeconds - plate.start) / plate.fadeIn) : 1
-  const falling = plate.fadeOut ? Math.min(1, (plate.end - timeSeconds) / plate.fadeOut) : 1
+  const rising = plate.fadeIn
+    ? Math.min(1, (timeSeconds - plate.start) / plate.fadeIn)
+    : 1
+  const falling = plate.fadeOut
+    ? Math.min(1, (plate.end - timeSeconds) / plate.fadeOut)
+    : 1
   return Math.max(0, Math.min(rising, falling))
 }
 
@@ -348,7 +356,9 @@ export function trailerHeadingOpacity(
   }
   if (timeSeconds >= maintitle.start) {
     // Down for the card itself, and for the rest of a running picture.
-    return timeSeconds < maintitle.end || options.playing ? 0 : 1
+    return timeSeconds < maintitle.end || options.playing
+      ? 0
+      : 1
   }
   return Math.max(0, 1 - (timeSeconds - yieldStart) / TRAILER_HEADING_YIELD_SECONDS)
 }
@@ -388,7 +398,9 @@ interface TokenizeOptions {
 function pushAccented(out: TrailerToken[], text: string, options: TokenizeOptions) {
   const accentable = options.accentDots
     ? '.'
-    : (options.blue === false ? '' : TRAILER_BLUE_LETTERS)
+    : (options.blue === false
+        ? ''
+        : TRAILER_BLUE_LETTERS)
   let run = ''
   for (const ch of text) {
     if (accentable.includes(ch)) {
@@ -421,7 +433,9 @@ export function tokenizeTrailerLine(text: string, options: TokenizeOptions = {})
       out.push({ kind: 'sear' })
     }
     const word = options.markWord
-    const at = word ? part.toLowerCase().lastIndexOf(word.toLowerCase()) : -1
+    const at = word
+      ? part.toLowerCase().lastIndexOf(word.toLowerCase())
+      : -1
     if (word && at !== -1) {
       const within = part.slice(at, at + word.length).toLowerCase().indexOf('o')
       if (within !== -1) {

@@ -73,7 +73,9 @@ const audioMountHost = ref<HTMLDivElement | null>(null)
  * segments' durations are known upfront; a video segment's entry stays 0 until its player
  * reports a real duration (or its `maxDuration` cutoff) in `onReady`.
  */
-const segmentDurations = ref<number[]>(props.videos.map(video => (isTextSegment(video) ? video.duration : 0)))
+const segmentDurations = ref<number[]>(props.videos.map(video => (isTextSegment(video)
+  ? video.duration
+  : 0)))
 
 const currentSegment = computed<IntroVideoSpec | undefined>(() => props.videos[sequenceState.value.index])
 const canGoToPrevious = computed(() => sequenceState.value.index > 0)
@@ -193,7 +195,9 @@ const activeMediaTitle = computed(() => activeBurnedInCaptions.value.find(cue =>
  */
 const activeCues = computed<readonly IntroOverlayTextCue[]>(() => activeOverlayCues(currentSegment.value?.overlays, currentTime.value))
 const activeGuardianCues = computed<readonly IntroOverlayTextCue[]>(() =>
-  activeComicTitleCardCue.value ? [] : activeCues.value.filter(cue => !cue.statusOnly),
+  activeComicTitleCardCue.value
+    ? []
+    : activeCues.value.filter(cue => !cue.statusOnly),
 )
 
 /**
@@ -208,7 +212,11 @@ function parseGuardianCue(text: string): { guardianClass: string, name: string, 
     return undefined
   }
   const [guardianClass, name, ...titleParts] = parts
-  return { guardianClass, name, title: titleParts.join(' — ') }
+  return {
+    guardianClass,
+    name,
+    title: titleParts.join(' — ')
+  }
 }
 
 /**
@@ -218,18 +226,30 @@ function parseGuardianCue(text: string): { guardianClass: string, name: string, 
  */
 function titleSegments(title: string, blingTitle: string | undefined): { text: string, bling: boolean }[] {
   if (!blingTitle) {
-    return [{ text: title, bling: false }]
+    return [
+      { text: title, bling: false }
+    ]
   }
   const index = title.indexOf(blingTitle)
   if (index === -1) {
-    return [{ text: title, bling: false }]
+    return [
+      { text: title, bling: false }
+    ]
   }
   const before = title.slice(0, index)
   const after = title.slice(index + blingTitle.length)
   return [
-    ...(before ? [{ text: before, bling: false }] : []),
+    ...(before
+      ? [
+          { text: before, bling: false }
+        ]
+      : []),
     { text: blingTitle, bling: true },
-    ...(after ? [{ text: after, bling: false }] : []),
+    ...(after
+      ? [
+          { text: after, bling: false }
+        ]
+      : []),
   ]
 }
 
@@ -500,8 +520,12 @@ const sceneCrossfadeDuration = computed(() => (
  * verified in is not, and a value sampled once at mount is wrong for every resize
  * after it.
  */
-const viewportWidth = ref(typeof window === 'undefined' ? 1920 : window.innerWidth)
-const viewportHeight = ref(typeof window === 'undefined' ? 1080 : window.innerHeight)
+const viewportWidth = ref(typeof window === 'undefined'
+  ? 1920
+  : window.innerWidth)
+const viewportHeight = ref(typeof window === 'undefined'
+  ? 1080
+  : window.innerHeight)
 
 function trackViewportSize(): void {
   viewportWidth.value = window.innerWidth
@@ -563,15 +587,26 @@ const slimTitleSegments = computed(() => {
   const wordStart = line.indexOf(word)
 
   if (wordStart < 0) {
-    return [{ text: line, brand: false }]
+    return [
+      { text: line, brand: false }
+    ]
   }
 
   const letterIndex = wordStart + word.indexOf('F')
 
   return [
-    { text: line.slice(0, letterIndex), brand: false },
-    { text: line.slice(letterIndex, letterIndex + 1), brand: true },
-    { text: line.slice(letterIndex + 1), brand: false },
+    {
+      text: line.slice(0, letterIndex),
+      brand: false
+    },
+    {
+      text: line.slice(letterIndex, letterIndex + 1),
+      brand: true
+    },
+    {
+      text: line.slice(letterIndex + 1),
+      brand: false
+    },
   ].filter(part => part.text.length > 0)
 })
 
@@ -612,7 +647,12 @@ const activeCrossfadeStage = computed(() => {
   const elapsed = currentTime.value - cue.start
   const index = Math.min(stages.length - 1, Math.max(0, Math.floor(elapsed / stageDuration)))
   const stageStart = cue.start + index * stageDuration
-  return { crossfade: stages[index], index, start: stageStart, duration: stageDuration }
+  return {
+    crossfade: stages[index],
+    index,
+    start: stageStart,
+    duration: stageDuration
+  }
 })
 
 /**
@@ -657,7 +697,9 @@ function stripIntroPunctuation(text: string): string {
 }
 
 function formatIntroCueText(text: string, preservePunctuation?: boolean): string {
-  return preservePunctuation ? text : stripIntroPunctuation(text)
+  return preservePunctuation
+    ? text
+    : stripIntroPunctuation(text)
 }
 
 function activeVideoId(segment: Extract<IntroVideoSpec, { kind: 'video' }>): string {
@@ -674,14 +716,18 @@ function activeVideoCutoffDuration(segment: Extract<IntroVideoSpec, { kind: 'vid
 
 function clampVideoSourceTime(segment: Extract<IntroVideoSpec, { kind: 'video' }>, time: number): number {
   const cutoff = activeVideoCutoffDuration(segment)
-  return cutoff == null ? time : Math.min(time, cutoff)
+  return cutoff == null
+    ? time
+    : Math.min(time, cutoff)
 }
 
 const overlayTextParts = computed(() => {
   const cue = overlayCueForDisplay.value
   const text = formatIntroCueText(overlayText.value ?? '', cue?.preservePunctuation)
   const explicitHighlights = cue?.highlightSubstrings
-    ?? (cue?.highlightSubstring ? [cue.highlightSubstring] : undefined)
+    ?? (cue?.highlightSubstring
+      ? [cue.highlightSubstring]
+      : undefined)
   return buildOverlayTextParts(
     text,
     explicitHighlights?.map(highlight => formatIntroCueText(highlight, cue?.preservePunctuation)),
@@ -969,7 +1015,11 @@ async function loadAudioTrack(youtubeVideoId: string | undefined, token: number,
     // video segments skip a rating card, using YouTube's own `start` param.
     playerVars: getChromeFreeYoutubePlayerVars({
       autoplay: 1,
-      ...(startSeconds ? { start: Math.round(startSeconds) } : {}),
+      ...(startSeconds
+        ? {
+            start: Math.round(startSeconds)
+          }
+        : {}),
     }),
     events: {
       // The background embed's own end state is the scored card's completion backstop: a real
@@ -1032,7 +1082,9 @@ function startTextSegment(segment: Extract<IntroVideoSpec, { kind: 'text' }>) {
       // Watchdog only, never a cue source: how long the player's own clock has sat on the
       // identical reading. A playing player reports a new value every tick, so any repeat is
       // buffering, an ad, or the end of the track — `isTextSegmentComplete` decides which.
-      audioClockStalledMs = audioClock === lastAudioClockReading ? audioClockStalledMs + TEXT_CLOCK_TICK_MS : 0
+      audioClockStalledMs = audioClock === lastAudioClockReading
+        ? audioClockStalledMs + TEXT_CLOCK_TICK_MS
+        : 0
       lastAudioClockReading = audioClock
       currentTime.value = audioClock
       // Blocked autoplay, which is the one stall that is not an ad and never recovers on its
@@ -1104,7 +1156,10 @@ function beginSegmentPlayback(
     if (!options.isDeepLink) {
       // Reload only for front-door entries: loadVideoById restarts playback from the
       // buffered beginning, which would discard a deep-linked Guardian opening time.
-      player?.loadVideoById?.({ videoId: activeVideoId(segment), startSeconds: openingTime })
+      player?.loadVideoById?.({
+        videoId: activeVideoId(segment),
+        startSeconds: openingTime
+      })
     }
     player?.seekTo?.(openingTime, true)
   }
@@ -1172,7 +1227,11 @@ function buildSegmentPlayer(
     autoplay: options.parked ? 0 : 1,
     // Keep YouTube's own captions off so the burned-in subtitles remain the only overlay.
     cc_load_policy: 0,
-    ...(options.startTime ? { start: Math.round(options.startTime) } : {}),
+    ...(options.startTime
+      ? {
+          start: Math.round(options.startTime)
+        }
+      : {}),
   })
 
   let self: YoutubePlayer | null = null
@@ -1249,7 +1308,10 @@ function buildSegmentPlayer(
  */
 function parkPrewarmedPlayer(warmed: YoutubePlayer, segment: Extract<IntroVideoSpec, { kind: 'video' }>, startTime: number) {
   warmed.mute?.()
-  warmed.cueVideoById?.({ videoId: activeVideoId(segment), startSeconds: startTime })
+  warmed.cueVideoById?.({
+    videoId: activeVideoId(segment),
+    startSeconds: startTime
+  })
   warmed.seekTo?.(startTime, true)
   warmed.pauseVideo?.()
   // Adopt on readiness rather than on construction: readiness is what makes a warmed player
@@ -1298,7 +1360,9 @@ async function prewarmNextSegment() {
     return
   }
 
-  const deepLinkTime = deepLinkStartConsumed ? null : (props.startAtNativeTime ?? null)
+  const deepLinkTime = deepLinkStartConsumed
+    ? null
+    : (props.startAtNativeTime ?? null)
   deepLinkStartConsumed = true
   prewarmedStartSeconds = Math.max(next.startOffset ?? 0, deepLinkTime ?? 0)
   prewarmedIsDeepLink = deepLinkTime != null
@@ -1401,7 +1465,9 @@ async function loadVideoSegment(segment: Extract<IntroVideoSpec, { kind: 'video'
   }
 
   // A gallery deep link overrides the authored opening frame, once, for the first player.
-  const deepLinkTime = deepLinkStartConsumed ? null : (props.startAtNativeTime ?? null)
+  const deepLinkTime = deepLinkStartConsumed
+    ? null
+    : (props.startAtNativeTime ?? null)
   deepLinkStartConsumed = true
   const startTime = Math.max(segment.startOffset ?? 0, deepLinkTime ?? 0)
 
@@ -1611,7 +1677,9 @@ watchEffect(() => {
     mediaTitle: activeMediaTitle.value,
     showVoiceOverToggle: canToggleDestinyVoiceOver.value,
     voiceOverEnabled: canToggleDestinyVoiceOver.value ? destinyVoiceOverEnabled.value : false,
-    moods: isDirectorsCutPrologue.value ? PROLOGUE_MOODS.map(mood => ({ id: mood.id, label: mood.label })) : [],
+    moods: isDirectorsCutPrologue.value
+      ? PROLOGUE_MOODS.map(mood => ({ id: mood.id, label: mood.label }))
+      : [],
     activeMoodId: activeMoodId.value,
     showCaptionToggle: canToggleDestinyCaptions.value,
     captionsEnabled: canToggleDestinyCaptions.value ? destinyCaptionsEnabled.value : false,
@@ -1628,7 +1696,9 @@ watchEffect(() => {
     getCurrentTime: () => currentTime.value,
     getDuration: () => activeSegmentDuration.value,
     getPlayerDuration: () => player?.getDuration?.() ?? 0,
-    getVideoId: () => (currentSegment.value && isVideoSegment(currentSegment.value) ? activeVideoId(currentSegment.value) : ''),
+    getVideoId: () => (currentSegment.value && isVideoSegment(currentSegment.value)
+      ? activeVideoId(currentSegment.value)
+      : ''),
     isPaused: () => isPaused.value,
     setVoiceOverEnabled,
     setCaptionsEnabled,

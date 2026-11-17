@@ -118,16 +118,44 @@ export type TrackZeroPlanEntry = (typeof TRACK_ZERO_LORE_PLAN)[number]['entries'
 
 /** Measured pacing for the whole Track 0 presentation. Consumers read this table. */
 export const TRACK_ZERO_PRESENTATION_SECTIONS = {
-  ambientIntro: { startTime: 0, endTime: TRACK_ZERO_SECTIONS.verseStart, beatGroups: [32, 24] as const },
-  drivingVerse: { startTime: TRACK_ZERO_SECTIONS.verseStart, endTime: TRACK_ZERO_SECTIONS.chorusStart, beatGroups: [16, 8] as const },
-  contributorChorus: { startTime: TRACK_ZERO_SECTIONS.chorusStart, endTime: TRACK_ZERO_SECTIONS.bridgeStart, beatGroups: [8, 4] as const },
-  chantingBridge: { startTime: TRACK_ZERO_SECTIONS.bridgeStart, pickupTime: 244, endTime: TRACK_ZERO_SECTIONS.buildStart, beatGroups: [6, 4] as const },
-  heavyBuild: { startTime: TRACK_ZERO_SECTIONS.buildStart, endTime: TRACK_ZERO_SECTIONS.pivotalStart, beatGroups: [8, 4] as const },
+  ambientIntro: {
+    startTime: 0,
+    endTime: TRACK_ZERO_SECTIONS.verseStart,
+    beatGroups: [32, 24] as const
+  },
+  drivingVerse: {
+    startTime: TRACK_ZERO_SECTIONS.verseStart,
+    endTime: TRACK_ZERO_SECTIONS.chorusStart,
+    beatGroups: [16, 8] as const
+  },
+  contributorChorus: {
+    startTime: TRACK_ZERO_SECTIONS.chorusStart,
+    endTime: TRACK_ZERO_SECTIONS.bridgeStart,
+    beatGroups: [8, 4] as const
+  },
+  chantingBridge: {
+    startTime: TRACK_ZERO_SECTIONS.bridgeStart,
+    pickupTime: 244,
+    endTime: TRACK_ZERO_SECTIONS.buildStart,
+    beatGroups: [6, 4] as const
+  },
+  heavyBuild: {
+    startTime: TRACK_ZERO_SECTIONS.buildStart,
+    endTime: TRACK_ZERO_SECTIONS.pivotalStart,
+    beatGroups: [8, 4] as const
+  },
   finaleBarrage: { startTime: TRACK_ZERO_SECTIONS.bkEnd, endTime: TRACK_ZERO_SECTIONS.finaleStart },
 } as const
 
 const DEFAULT_HUD_LABEL = 'Celebrating Five Years of Universal Blue'
-const status = (text: string, startTime: number, endTime?: number) => ({ text, startTime, endTime, locked: true as const })
+function status(text: string, startTime: number, endTime?: number) {
+  return {
+    text,
+    startTime,
+    endTime,
+    locked: true as const
+  }
+}
 
 const STATUS_DELIMITER = /^-{3,}$/
 
@@ -145,7 +173,9 @@ const CONTROL_TEXTS = new Set([
 ])
 
 function uniqueMessages(messages: readonly string[]): string[] {
-  return [...new Set(messages)]
+  return [
+    ...new Set(messages)
+  ]
 }
 
 const planTextMessages = uniqueMessages(TRACK_ZERO_LORE_PLAN.flatMap(section => section.entries)
@@ -163,7 +193,9 @@ export function parseTrackZeroSignalMessages(source: string): readonly string[] 
 export function parseTrackZeroEarlySignalMessages(source: string): readonly string[] {
   const lines = source.split(/\r?\n/).map(line => line.trim()).filter(Boolean)
   const delimiterIndex = lines.findIndex(line => STATUS_DELIMITER.test(line))
-  return Object.freeze(delimiterIndex === -1 ? lines : lines.slice(0, delimiterIndex))
+  return Object.freeze(delimiterIndex === -1
+    ? lines
+    : lines.slice(0, delimiterIndex))
 }
 
 function planTextAt(sectionIndex: number, entryIndex: number): string {
@@ -212,7 +244,9 @@ export function getTrackZeroSectionMessages(sectionIndex: number): readonly stri
 export function getTrackZeroRotatingStatusMessages(): readonly string[] {
   return Object.freeze(TRACK_ZERO_LORE_PLAN.flatMap(section =>
     section.entries.flatMap(entry =>
-      'text' in entry && !entry.locked ? [entry.text] : [],
+      'text' in entry && !entry.locked
+        ? [entry.text]
+        : [],
     ),
   ))
 }
@@ -220,7 +254,9 @@ export function getTrackZeroRotatingStatusMessages(): readonly string[] {
 export function getTrackZeroFrontStatusMessages(): readonly string[] {
   return Object.freeze(TRACK_ZERO_LORE_PLAN.slice(0, 4).flatMap(section =>
     section.entries.flatMap(entry =>
-      'text' in entry && !entry.locked ? [entry.text] : [],
+      'text' in entry && !entry.locked
+        ? [entry.text]
+        : [],
     ),
   ))
 }
@@ -242,7 +278,9 @@ function planMessages(sectionIndex: number): readonly string[] {
 
 function pacedPlanMessage(sectionIndex: number, time: number, startTime: number, endTime: number, messageRange?: readonly [number, number]): string {
   const allMessages = planMessages(sectionIndex)
-  const messages = messageRange ? allMessages.slice(messageRange[0], messageRange[1]) : allMessages
+  const messages = messageRange
+    ? allMessages.slice(messageRange[0], messageRange[1])
+    : allMessages
   if (messages.length === 0) {
     return DEFAULT_HUD_LABEL
   }

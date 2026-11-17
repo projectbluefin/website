@@ -29,8 +29,23 @@ const PACKAGE_LABELS: Record<string, string> = {
 
 // Kernel/init first, then graphics, then desktop. Every key here must be
 // resolvable from the image SBOM — see scripts/lib/image-sbom-registry.js.
-const DAKOTA_KEYS = ['kernel', 'systemd', 'bootc', 'mesa', 'nvidia', 'gnome', 'pipewire']
-const CLASSIC_KEYS = ['base', 'kernel', 'systemd', 'mesa', 'gnome', 'pipewire']
+const DAKOTA_KEYS = [
+  'kernel',
+  'systemd',
+  'bootc',
+  'mesa',
+  'nvidia',
+  'gnome',
+  'pipewire'
+]
+const CLASSIC_KEYS = [
+  'base',
+  'kernel',
+  'systemd',
+  'mesa',
+  'gnome',
+  'pipewire'
+]
 
 async function loadVersions() {
   try {
@@ -66,7 +81,12 @@ const classicRows = computed(() => {
   }
   return CLASSIC_KEYS
     .filter(key => stream[key])
-    .map(key => ({ label: key === 'base' ? 'Base OS' : PACKAGE_LABELS[key] ?? key, value: stream[key] }))
+    .map(key => ({
+      label: key === 'base'
+        ? 'Base OS'
+        : PACKAGE_LABELS[key] ?? key,
+      value: stream[key]
+    }))
 })
 
 const classicDownloads = computed(() => [

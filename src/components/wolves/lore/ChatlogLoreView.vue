@@ -55,8 +55,16 @@ const activeBeatIndex = computed(() => pickPageIndexForElapsed(
 const activeBeat = computed(() => chatlogBeats.value[activeBeatIndex.value] ?? null)
 
 const headerSpec = computed(() => [
-  ...conversation.value.channel ? [{ key: 'channel', value: conversation.value.channel }] : [],
-  ...conversation.value.date ? [{ key: 'date', value: conversation.value.date }] : [],
+  ...conversation.value.channel
+    ? [
+        { key: 'channel', value: conversation.value.channel }
+      ]
+    : [],
+  ...conversation.value.date
+    ? [
+        { key: 'date', value: conversation.value.date }
+      ]
+    : [],
 ])
 </script>
 

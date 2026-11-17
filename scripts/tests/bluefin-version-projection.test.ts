@@ -72,7 +72,10 @@ const LTS_NVIDIA = {
 describe('projectBluefinStreams', () => {
   it('stable values come from bluefin-stable with normalized versions', () => {
     const result = projectBluefinStreams(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [STABLE_BASE] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [STABLE_BASE]
+      },
     )
     expect(result.stable.status).toBe('verified')
     expect(result.stable.kernel).toBe('7.0.12-201')
@@ -82,19 +85,28 @@ describe('projectBluefinStreams', () => {
 
   it('stable nvidia comes only from bluefin-stable-nvidia, epoch stripped', () => {
     const withNvidia = projectBluefinStreams(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [STABLE_BASE, STABLE_NVIDIA] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [STABLE_BASE, STABLE_NVIDIA]
+      },
     )
     expect(withNvidia.stable.nvidia).toBe('610.57.04-1')
 
     const withoutNvidia = projectBluefinStreams(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [STABLE_BASE] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [STABLE_BASE]
+      },
     )
     expect(withoutNvidia.stable.nvidia).toBeUndefined()
   })
 
   it('missing optional nvidia/hwe images omit those fields', () => {
     const result = projectBluefinStreams(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [STABLE_BASE] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [STABLE_BASE]
+      },
     )
     expect(result.stable.nvidia).toBeUndefined()
     expect(result.stable.hwe).toBeUndefined()
@@ -103,7 +115,10 @@ describe('projectBluefinStreams', () => {
   it('currently pending LTS SBOM returns status unavailable with no versions', () => {
     // When LTS images are not in the audit (pendingSbom skips them)
     const result = projectBluefinStreams(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [STABLE_BASE] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [STABLE_BASE]
+      },
     )
     expect(result.lts.status).toBe('unavailable')
     expect(result.lts.kernel).toBeUndefined()
@@ -114,7 +129,10 @@ describe('projectBluefinStreams', () => {
   it('no literal "unknown" appears in serialized YAML', () => {
     // Full result with some missing images
     const result = projectBluefinStreams(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [STABLE_BASE, STABLE_NVIDIA] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [STABLE_BASE, STABLE_NVIDIA]
+      },
     )
     const yaml = dumpYaml(result)
     expect(yaml).not.toContain('unknown')
@@ -122,7 +140,15 @@ describe('projectBluefinStreams', () => {
 
   it('lTS fields come from their respective images when verified', () => {
     const result = projectBluefinStreams(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [STABLE_BASE, LTS_BASE, LTS_HWE, LTS_NVIDIA] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [
+          STABLE_BASE,
+          LTS_BASE,
+          LTS_HWE,
+          LTS_NVIDIA
+        ]
+      },
     )
     expect(result.lts.status).toBe('verified')
     expect(result.lts.kernel).toBe('6.12.0-233')
@@ -140,9 +166,12 @@ describe('projectBluefinStreams', () => {
 
   it('unavailable stable when bluefin-stable fails verification', () => {
     const result = projectBluefinStreams(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [
-        { ...STABLE_BASE, status: 'unavailable', values: undefined },
-      ] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [
+          { ...STABLE_BASE, status: 'unavailable', values: undefined },
+        ]
+      },
     )
     expect(result.stable.status).toBe('unavailable')
     expect(result.stable.kernel).toBeUndefined()
@@ -174,7 +203,10 @@ describe('yAML serialization', () => {
   it('full serialization with partial optional data contains no literal unknown', () => {
     // Stable verified with NVIDIA, LTS unavailable (partial data)
     const result = projectBluefinStreams(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [STABLE_BASE, STABLE_NVIDIA] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [STABLE_BASE, STABLE_NVIDIA]
+      },
     )
     const yaml = dumpYaml(result)
     expect(yaml).not.toContain('unknown')
@@ -196,7 +228,10 @@ describe('projectBluefinStreams — degraded evidence', () => {
     }
     delete degradedStable.values.mesa
 
-    const result = projectBluefinStreams({ checkedAt: '2026-08-26T00:00:00Z', images: [degradedStable] })
+    const result = projectBluefinStreams({
+      checkedAt: '2026-08-26T00:00:00Z',
+      images: [degradedStable]
+    })
 
     expect(result.stable.status).toBe('verified')
     expect(result.stable.kernel).toBe('7.0.12-201')
@@ -261,7 +296,10 @@ describe('projectBluefinStreams — degraded evidence', () => {
       values: { ...STABLE_BASE.values, podman: '5:5.8.4-1.fc44' },
     }
 
-    const result = projectBluefinStreams({ checkedAt: '2026-08-26T00:00:00Z', images: [withPodman] })
+    const result = projectBluefinStreams({
+      checkedAt: '2026-08-26T00:00:00Z',
+      images: [withPodman]
+    })
 
     expect(result.stable.podman).toBe('5.8.4-1')
   })

@@ -17,7 +17,11 @@ function mockFetch(handler: (url: string) => Promise<{ ok: boolean, status: numb
 }
 
 function mountContributors() {
-  return mount(SectionContributors, { global: { plugins: [i18n] } })
+  return mount(SectionContributors, {
+    global: {
+      plugins: [i18n]
+    }
+  })
 }
 
 describe('sectionContributors.vue', () => {
@@ -63,8 +67,18 @@ describe('sectionContributors.vue', () => {
 
   it('renders circular avatar images and profile links for all contributors', async () => {
     const fixture: Contributor[] = [
-      { id: 1, login: 'alice', html_url: 'https://github.com/alice', avatar_url: 'https://avatars.githubusercontent.com/u/1?v=4' },
-      { id: 2, login: 'bob', html_url: 'https://github.com/bob', avatar_url: 'https://avatars.githubusercontent.com/u/2?v=4' },
+      {
+        id: 1,
+        login: 'alice',
+        html_url: 'https://github.com/alice',
+        avatar_url: 'https://avatars.githubusercontent.com/u/1?v=4'
+      },
+      {
+        id: 2,
+        login: 'bob',
+        html_url: 'https://github.com/bob',
+        avatar_url: 'https://avatars.githubusercontent.com/u/2?v=4'
+      },
     ]
     mockFetch(async () => ({
       ok: true,
@@ -138,7 +152,12 @@ describe('sectionContributors.vue', () => {
       ok: true,
       status: 200,
       json: async () => [
-        { id: 10, login: 'dev', html_url: 'https://github.com/dev', avatar_url: 'https://avatars.githubusercontent.com/u/10' },
+        {
+          id: 10,
+          login: 'dev',
+          html_url: 'https://github.com/dev',
+          avatar_url: 'https://avatars.githubusercontent.com/u/10'
+        },
       ],
     }))
     const wrapper = mountContributors()

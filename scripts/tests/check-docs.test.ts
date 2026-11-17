@@ -79,7 +79,9 @@ function makeRepo(): string {
 
 function run(root: string): RunResult {
   try {
-    const stdout = execFileSync(process.execPath, [join(root, 'scripts', 'check-docs.mjs')], {
+    const stdout = execFileSync(process.execPath, [
+      join(root, 'scripts', 'check-docs.mjs')
+    ], {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
     })
@@ -137,7 +139,15 @@ describe('check-docs gate: required and banned paths', () => {
     expect(result.stderr).toContain('missing required file: docs/README.md')
   })
 
-  it.each(['IMPROVEMENTS.md', 'CHANGELOG.md', 'CHANGES.md', 'SESSION.md', 'NOTES.md', 'PLAN.md', 'TODO.md'])(
+  it.each([
+    'IMPROVEMENTS.md',
+    'CHANGELOG.md',
+    'CHANGES.md',
+    'SESSION.md',
+    'NOTES.md',
+    'PLAN.md',
+    'TODO.md'
+  ])(
     'rejects the banned agent changelog %s',
     (banned) => {
       const root = makeRepo()
@@ -273,7 +283,12 @@ describe('check-docs gate: link checking', () => {
     expect(result.status).toBe(0)
   })
 
-  it.each(['https://example.com/x.md', 'http://example.com/x.md', 'mailto:hi@example.com', '#anchor'])(
+  it.each([
+    'https://example.com/x.md',
+    'http://example.com/x.md',
+    'mailto:hi@example.com',
+    '#anchor'
+  ])(
     'skips the non-local link %s',
     (link) => {
       const root = makeRepo()

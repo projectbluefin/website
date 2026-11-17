@@ -31,7 +31,9 @@ function parseTimestamp(value) {
     return Number(spelled[1]) * 60 + Number(spelled[2])
   }
   const plain = Number(value)
-  return Number.isFinite(plain) ? plain : Number.NaN
+  return Number.isFinite(plain)
+    ? plain
+    : Number.NaN
 }
 
 function formatTimestamp(seconds) {
@@ -42,9 +44,15 @@ function formatTimestamp(seconds) {
 }
 
 function describeCue(cue, at) {
-  const words = cue.text ? cue.text.trim().split(/\s+/).filter(Boolean).length : 0
-  const lines = cue.text ? cue.text.split('\n').length : 0
-  const holdEnd = cue.textHoldSeconds != null ? cue.start + cue.textHoldSeconds : cue.end
+  const words = cue.text
+    ? cue.text.trim().split(/\s+/).filter(Boolean).length
+    : 0
+  const lines = cue.text
+    ? cue.text.split('\n').length
+    : 0
+  const holdEnd = cue.textHoldSeconds != null
+    ? cue.start + cue.textHoldSeconds
+    : cue.end
   return {
     window: `${formatTimestamp(cue.start)} - ${formatTimestamp(cue.end)}`,
     text: cue.text || '(wordless shot)',
@@ -56,8 +64,12 @@ function describeCue(cue, at) {
     emphasis: cue.emphasis ?? 'normal',
     position: cue.textPosition ?? 'default',
     image: cue.backgroundImage ?? (cue.backgroundCrossfade ? '(crossfade)' : '(none)'),
-    textUp: at == null || !cue.text ? null : at < holdEnd,
-    holdEnds: cue.textHoldSeconds != null ? formatTimestamp(holdEnd) : '(holds the shot)',
+    textUp: at == null || !cue.text
+      ? null
+      : at < holdEnd,
+    holdEnds: cue.textHoldSeconds != null
+      ? formatTimestamp(holdEnd)
+      : '(holds the shot)',
   }
 }
 
@@ -80,7 +92,9 @@ async function main() {
   if (args.length === 0 || args.includes('--help')) {
     console.info('usage: node scripts/wolves-cue-at.mjs [video] <m:ss | seconds | --all>')
     console.info(`videos: ${knownVideoNames()} (default: prologue)`)
-    process.exit(args.length === 0 ? 1 : 0)
+    process.exit(args.length === 0
+      ? 1
+      : 0)
   }
 
   const positional = args.filter(arg => !arg.startsWith('-'))
@@ -103,7 +117,12 @@ async function main() {
     process.exit(1)
   }
 
-  const server = await createServer({ root: ROOT, server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' })
+  const server = await createServer({
+    root: ROOT,
+    server: { middlewareMode: true },
+    appType: 'custom',
+    logLevel: 'error'
+  })
   try {
     const segment = await video.load(specifier => server.ssrLoadModule(specifier))
     const cues = segment.overlays

@@ -10,7 +10,9 @@ import {
 const CONTEXT = {
   repo: { owner: 'projectbluefin', repo: 'website' },
   runId: 1234567890,
-  payload: { repository: { html_url: 'https://github.com/projectbluefin/website' } },
+  payload: {
+    repository: { html_url: 'https://github.com/projectbluefin/website' }
+  },
 }
 
 const AUDIT = {
@@ -63,14 +65,18 @@ function makeGithub(openIssues: Array<{ number: number, title: string, state: st
     rest: {
       issues: {
         listForRepo,
-        create: vi.fn(async () => ({ data: { number: 999 } })),
+        create: vi.fn(async () => ({
+          data: { number: 999 }
+        })),
         update: vi.fn(async () => ({ data: {} })),
       },
     },
   }
 }
 
-const fsStub = { readFileSync: () => JSON.stringify(AUDIT) }
+const fsStub = {
+  readFileSync: () => JSON.stringify(AUDIT)
+}
 
 describe('workflowRunUrl', () => {
   it('builds the run URL from the repository payload', () => {
@@ -78,7 +84,11 @@ describe('workflowRunUrl', () => {
   })
 
   it('falls back to owner/repo when the payload has no repository', () => {
-    expect(workflowRunUrl({ repo: { owner: 'a', repo: 'b' }, runId: 7, payload: {} }))
+    expect(workflowRunUrl({
+      repo: { owner: 'a', repo: 'b' },
+      runId: 7,
+      payload: {}
+    }))
       .toBe('https://github.com/a/b/actions/runs/7')
   })
 })
@@ -155,7 +165,12 @@ describe('syncSbomIssues', () => {
     const github = makeGithub([])
     const readFileSync = vi.fn(() => JSON.stringify({ checkedAt: 'x', images: [] }))
 
-    await syncSbomIssues({ github, context: CONTEXT, auditPath: '/somewhere/sbom-audit.json', fs: { readFileSync } })
+    await syncSbomIssues({
+      github,
+      context: CONTEXT,
+      auditPath: '/somewhere/sbom-audit.json',
+      fs: { readFileSync }
+    })
 
     expect(readFileSync).toHaveBeenCalledWith('/somewhere/sbom-audit.json', 'utf8')
   })
@@ -175,7 +190,9 @@ describe('syncWorkflowFailureIssue', () => {
   })
 
   it('updates the existing failure issue instead of opening a duplicate', async () => {
-    const github = makeGithub([{ number: 77, title: FAILURE_ISSUE_TITLE, state: 'open' }])
+    const github = makeGithub([
+      { number: 77, title: FAILURE_ISSUE_TITLE, state: 'open' }
+    ])
     const result = await syncWorkflowFailureIssue({ github, context: CONTEXT })
 
     expect(result).toMatchObject({ action: 'updated', number: 77 })
@@ -186,7 +203,10 @@ describe('syncWorkflowFailureIssue', () => {
 
   it('finds the existing failure issue past the first page', async () => {
     const filler = Array.from({ length: 100 }, (_, i) => ({ number: i + 1, title: `noise ${i + 1}`, state: 'open' }))
-    const github = makeGithub([...filler, { number: 300, title: FAILURE_ISSUE_TITLE, state: 'open' }])
+    const github = makeGithub([
+      ...filler,
+      { number: 300, title: FAILURE_ISSUE_TITLE, state: 'open' }
+    ])
 
     const result = await syncWorkflowFailureIssue({ github, context: CONTEXT })
 

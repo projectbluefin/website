@@ -18,7 +18,9 @@ const loreSources = import.meta.glob('../data/lore/*.md', {
 }) as Record<string, string>
 
 function authoredBody(raw: string): string {
-  const newline = raw.includes('\r\n') ? '\r\n' : '\n'
+  const newline = raw.includes('\r\n')
+    ? '\r\n'
+    : '\n'
   const openingDelimiter = `---${newline}`
   const closingDelimiter = `${newline}---${newline}`
   const closingOffset = raw.indexOf(closingDelimiter, openingDelimiter.length)
@@ -150,15 +152,60 @@ describe('wolves lore records', () => {
   })
 
   it.each([
-    ['quote-sagan-extinction-forever', 'Carl Sagan', 'Extinction is forever.', 'The Varieties of Scientific Experience: A Personal View of the Search for God, p. 204'],
-    ['quote-sagan-pale-blue-dot', 'Carl Sagan', 'Look again at that dot. That\'s here. That\'s home. That\'s us.', 'Pale Blue Dot: A Vision of the Human Future in Space, chapter "You Are Here," p. 6'],
-    ['quote-clarke-dinosaurs-adapt', 'Arthur C. Clarke', 'The dinosaurs disappeared because they could not adapt to their changing environment.', 'Foreword, The Collected Stories of Arthur C. Clarke, p. x'],
-    ['quote-clarke-unstable-combination', 'Arthur C. Clarke', 'The combination is unstable and self-destroying.', 'Voices from the Sky, p. 183'],
-    ['quote-asimov-knowledge-wisdom', 'Isaac Asimov', 'Science gathers knowledge faster than society gathers wisdom.', 'Isaac Asimov\'s Book of Science and Nature Quotations, p. 281'],
-    ['quote-gould-stewards-of-nothing', 'Stephen Jay Gould', 'We are one among millions of species, stewards of nothing.', '"The Golden Rule," Eight Little Piggies, p. 48'],
-    ['quote-gould-fight-to-save', 'Stephen Jay Gould', 'We will not fight to save what we do not love.', '"The Golden Rule," Eight Little Piggies, p. 40'],
-    ['quote-goodall-every-individual-matters', 'Jane Goodall', 'Every individual matters.', 'With Love; first Scholastic printing preview PP47'],
-    ['quote-goodall-nature-resilient', 'Jane Goodall', 'Fortunately nature is amazingly resilient.', '"Protecting the Tapestry of Life," May 2019'],
+    [
+      'quote-sagan-extinction-forever',
+      'Carl Sagan',
+      'Extinction is forever.',
+      'The Varieties of Scientific Experience: A Personal View of the Search for God, p. 204'
+    ],
+    [
+      'quote-sagan-pale-blue-dot',
+      'Carl Sagan',
+      'Look again at that dot. That\'s here. That\'s home. That\'s us.',
+      'Pale Blue Dot: A Vision of the Human Future in Space, chapter "You Are Here," p. 6'
+    ],
+    [
+      'quote-clarke-dinosaurs-adapt',
+      'Arthur C. Clarke',
+      'The dinosaurs disappeared because they could not adapt to their changing environment.',
+      'Foreword, The Collected Stories of Arthur C. Clarke, p. x'
+    ],
+    [
+      'quote-clarke-unstable-combination',
+      'Arthur C. Clarke',
+      'The combination is unstable and self-destroying.',
+      'Voices from the Sky, p. 183'
+    ],
+    [
+      'quote-asimov-knowledge-wisdom',
+      'Isaac Asimov',
+      'Science gathers knowledge faster than society gathers wisdom.',
+      'Isaac Asimov\'s Book of Science and Nature Quotations, p. 281'
+    ],
+    [
+      'quote-gould-stewards-of-nothing',
+      'Stephen Jay Gould',
+      'We are one among millions of species, stewards of nothing.',
+      '"The Golden Rule," Eight Little Piggies, p. 48'
+    ],
+    [
+      'quote-gould-fight-to-save',
+      'Stephen Jay Gould',
+      'We will not fight to save what we do not love.',
+      '"The Golden Rule," Eight Little Piggies, p. 40'
+    ],
+    [
+      'quote-goodall-every-individual-matters',
+      'Jane Goodall',
+      'Every individual matters.',
+      'With Love; first Scholastic printing preview PP47'
+    ],
+    [
+      'quote-goodall-nature-resilient',
+      'Jane Goodall',
+      'Fortunately nature is amazingly resilient.',
+      '"Protecting the Tapestry of Life," May 2019'
+    ],
   ])('parses the Director\'s Cut science-quote panel record for %s with exact wording and provenance', (id, attribution, body, context) => {
     const record = loadAllLoreRecords().find(item => item.id === id)
 

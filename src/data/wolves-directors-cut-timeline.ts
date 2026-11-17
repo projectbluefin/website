@@ -158,7 +158,9 @@ function timingInput(id: string): LoreTimingInput & { id: string } {
   }
   return {
     id,
-    kind: record.kind === 'quote' ? 'quote' : 'prose',
+    kind: record.kind === 'quote'
+      ? 'quote'
+      : 'prose',
     body: record.body,
     attribution: record.metadata.attribution,
   }
@@ -173,7 +175,9 @@ function timingInput(id: string): LoreTimingInput & { id: string } {
  */
 function proportionalCounts(total: number, weights: readonly number[]): number[] {
   const weightSum = weights.reduce((sum, weight) => sum + weight, 0)
-  const raw = weights.map(weight => (weightSum > 0 ? (weight / weightSum) * total : 0))
+  const raw = weights.map(weight => (weightSum > 0
+    ? (weight / weightSum) * total
+    : 0))
   const base = raw.map(Math.floor)
   const remainder = total - base.reduce((sum, count) => sum + count, 0)
   const byRemainingFraction = raw
@@ -203,7 +207,9 @@ function scheduleQuoteWindow(ids: readonly string[], windowStart: number, window
     const idealStart = windowStart + index * share
     // Window 0 opens at the song's origin, which is 0.139s before the first
     // measured beat: the panel is up as the track starts, not after it.
-    const startTime = index === 0 ? windowStart : trackZeroBeatAtOrAfter(idealStart)
+    const startTime = index === 0
+      ? windowStart
+      : trackZeroBeatAtOrAfter(idealStart)
     const readCost = estimateLoreReadDuration(timingInput(id))
     const latestEnd = Math.min(startTime + readCost * DIRECTORS_CUT_QUOTE_MAX_HOLD_RATIO, windowEnd)
     const endTime = trackZeroBeatAtOrBefore(latestEnd)

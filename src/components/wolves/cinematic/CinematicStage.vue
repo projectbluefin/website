@@ -35,7 +35,9 @@ const layerFadeMs = computed(() =>
 // segment the time-varying incoming signal is the large label and the track title
 // sits in the detail line; elsewhere it shows chapter + title.
 const plateLabel = computed(() =>
-  isTrackZero.value ? getWolvesHudLabel(store.nativeTime) : store.segment.title,
+  isTrackZero.value
+    ? getWolvesHudLabel(store.nativeTime)
+    : store.segment.title,
 )
 const plateDetail = computed(() =>
   isTrackZero.value ? 'Seven Days to the Wolves' : store.segment.chapter,

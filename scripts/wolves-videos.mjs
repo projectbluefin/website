@@ -28,7 +28,12 @@ export const VIDEOS = {
   },
 }
 
-export const ALIASES = { 1: 'prologue', first: 'prologue', gardener: 'prologue', winnower: 'prologue' }
+export const ALIASES = {
+  1: 'prologue',
+  first: 'prologue',
+  gardener: 'prologue',
+  winnower: 'prologue'
+}
 
 /**
  * Resolve a caller's name for a video to its registry entry.

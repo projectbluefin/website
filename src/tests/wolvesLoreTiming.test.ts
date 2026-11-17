@@ -18,14 +18,20 @@ function timingInputFor(id: string) {
   const record = recordsById.get(id)
   const kind = record?.kind === 'chatlog'
     ? 'chatlog' as const
-    : record?.kind === 'quote' ? 'quote' as const : 'prose' as const
+    : record?.kind === 'quote'
+      ? 'quote' as const
+      : 'prose' as const
   return { id, kind, body: record?.body ?? id }
 }
 
 describe('wolves lore timing', () => {
   it('gives longer conversations more time than short quotes', () => {
     const short = estimateLoreReadDuration({ kind: 'quote', body: 'A short quote.', attribution: 'Author' })
-    const long = estimateLoreReadDuration({ kind: 'chatlog', body: 'A word. '.repeat(200), attribution: 'ARCHIVE' })
+    const long = estimateLoreReadDuration({
+      kind: 'chatlog',
+      body: 'A word. '.repeat(200),
+      attribution: 'ARCHIVE'
+    })
 
     expect(short).toBeGreaterThanOrEqual(PAGE_MINIMUM_SECONDS)
     expect(long).toBeGreaterThan(short)
@@ -53,12 +59,24 @@ describe('wolves lore timing', () => {
   it('allocates every slot enough time without moving locked anchors', () => {
     const slots = allocateLoreSlots(
       [
-        { id: 'short', kind: 'quote', body: 'Short.', attribution: 'A' },
-        { id: 'long', kind: 'chatlog', body: 'B word. '.repeat(80), attribution: 'B' },
+        {
+          id: 'short',
+          kind: 'quote',
+          body: 'Short.',
+          attribution: 'A'
+        },
+        {
+          id: 'long',
+          kind: 'chatlog',
+          body: 'B word. '.repeat(80),
+          attribution: 'B'
+        },
       ],
       220,
       398,
-      new Map([['locked', 100]]),
+      new Map([
+        ['locked', 100]
+      ]),
     )
 
     expect(slots[0].startTime).toBe(220)
@@ -71,8 +89,18 @@ describe('wolves lore timing', () => {
   it('gives every record one complete, fully held page before extending any other', () => {
     const slots = allocateLoreSlots(
       [
-        { id: 'quote', kind: 'quote', body: 'A short quote.', attribution: 'ARCHIVE' },
-        { id: 'chat', kind: 'chatlog', body: 'B word. '.repeat(80), attribution: 'ARCHIVE' },
+        {
+          id: 'quote',
+          kind: 'quote',
+          body: 'A short quote.',
+          attribution: 'ARCHIVE'
+        },
+        {
+          id: 'chat',
+          kind: 'chatlog',
+          body: 'B word. '.repeat(80),
+          attribution: 'ARCHIVE'
+        },
       ],
       0,
       30,
@@ -86,8 +114,16 @@ describe('wolves lore timing', () => {
 
   it('reflows remaining chats contiguously after a record is removed', () => {
     const records = [
-      { id: 'first', kind: 'chatlog' as const, body: 'A'.repeat(90) },
-      { id: 'third', kind: 'chatlog' as const, body: 'B'.repeat(90) },
+      {
+        id: 'first',
+        kind: 'chatlog' as const,
+        body: 'A'.repeat(90)
+      },
+      {
+        id: 'third',
+        kind: 'chatlog' as const,
+        body: 'B'.repeat(90)
+      },
     ]
     const slots = allocateLoreSlots(records, 0, 40)
 

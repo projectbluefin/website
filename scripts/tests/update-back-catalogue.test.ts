@@ -12,7 +12,12 @@ import {
 const album = { id: 'PLtest', title: 'Test Album', description: 'A test album' }
 
 function entry(overrides = {}) {
-  return { id: 'vid00000001', title: 'Artist - Song', duration: 200, ...overrides }
+  return {
+    id: 'vid00000001',
+    title: 'Artist - Song',
+    duration: 200,
+    ...overrides
+  }
 }
 
 describe('buildExperience', () => {
@@ -27,12 +32,16 @@ describe('buildExperience', () => {
 
 describe('auditExperience', () => {
   it('accepts a well-formed experience', () => {
-    const entries = [entry()]
+    const entries = [
+      entry()
+    ]
     expect(() => auditExperience(album, entries, buildExperience(album, entries))).not.toThrow()
   })
 
   it('rejects an empty artist', () => {
-    const entries = [entry()]
+    const entries = [
+      entry()
+    ]
     const experience = buildExperience(album, entries)
     experience.segments[0].artist = '   '
 
@@ -40,7 +49,9 @@ describe('auditExperience', () => {
   })
 
   it('rejects an empty title', () => {
-    const entries = [entry()]
+    const entries = [
+      entry()
+    ]
     const experience = buildExperience(album, entries)
     experience.segments[0].title = ''
 
@@ -48,7 +59,9 @@ describe('auditExperience', () => {
   })
 
   it('rejects an implausible duration', () => {
-    const entries = [entry()]
+    const entries = [
+      entry()
+    ]
     const experience = buildExperience(album, entries)
     experience.segments[0].durationSeconds = 60 * 60 * 5
 
@@ -56,7 +69,9 @@ describe('auditExperience', () => {
   })
 
   it('rejects a non-finite duration', () => {
-    const entries = [entry()]
+    const entries = [
+      entry()
+    ]
     const experience = buildExperience(album, entries)
     experience.segments[0].durationSeconds = Number.POSITIVE_INFINITY
 
@@ -64,7 +79,9 @@ describe('auditExperience', () => {
   })
 
   it('still rejects a zero duration', () => {
-    const entries = [entry()]
+    const entries = [
+      entry()
+    ]
     const experience = buildExperience(album, entries)
     experience.segments[0].durationSeconds = 0
 
@@ -83,7 +100,16 @@ describe('shouldIncludeAlbum', () => {
   })
 
   it('rejects ids that could escape the experiences directory or carry URL syntax', () => {
-    for (const id of ['../../.github/x', 'a/b', 'a\\b', 'PL.test', 'PL test', 'PL?x=1', '', 42]) {
+    for (const id of [
+      '../../.github/x',
+      'a/b',
+      'a\\b',
+      'PL.test',
+      'PL test',
+      'PL?x=1',
+      '',
+      42
+    ]) {
       expect(shouldIncludeAlbum({ id, title: 'Album' }), String(id)).toBe(false)
     }
   })
@@ -96,7 +122,14 @@ describe('isPlaylistUrl', () => {
   })
 
   it('rejects option-like, non-https and non-YouTube values', () => {
-    for (const value of ['--exec=id', '-a', 'http://www.youtube.com/playlist?list=PL', 'https://evil.example/playlist', 'not a url', undefined]) {
+    for (const value of [
+      '--exec=id',
+      '-a',
+      'http://www.youtube.com/playlist?list=PL',
+      'https://evil.example/playlist',
+      'not a url',
+      undefined
+    ]) {
       expect(isPlaylistUrl(value), String(value)).toBe(false)
     }
   })
@@ -112,13 +145,31 @@ describe('refreshMetadata', () => {
   it('recovers an album from git HEAD when the cached catalogue on disk is missing it', async () => {
     const onDiskCatalogue = {
       experiences: [
-        { id: 'PL1', title: 'Album 1', subtitle: 'Old Sub', artwork: 'experiences/PL1.jpg', segments: [] },
+        {
+          id: 'PL1',
+          title: 'Album 1',
+          subtitle: 'Old Sub',
+          artwork: 'experiences/PL1.jpg',
+          segments: []
+        },
       ],
     }
     const gitTrackedCatalogue = {
       experiences: [
-        { id: 'PL1', title: 'Album 1', subtitle: 'Old Sub', artwork: 'experiences/PL1.jpg', segments: [] },
-        { id: 'PL2', title: 'Album 2', subtitle: 'Sub 2', artwork: 'experiences/PL2.jpg', segments: [] },
+        {
+          id: 'PL1',
+          title: 'Album 1',
+          subtitle: 'Old Sub',
+          artwork: 'experiences/PL1.jpg',
+          segments: []
+        },
+        {
+          id: 'PL2',
+          title: 'Album 2',
+          subtitle: 'Sub 2',
+          artwork: 'experiences/PL2.jpg',
+          segments: []
+        },
       ],
     }
     const upstreamMetadata = [
@@ -136,7 +187,9 @@ describe('refreshMetadata', () => {
       }),
       readFile: async () => JSON.stringify(onDiskCatalogue),
       writeFile: async (path: string, content: string | Buffer) => {
-        writtenFiles.set(path, typeof content === 'string' ? content : 'binary')
+        writtenFiles.set(path, typeof content === 'string'
+          ? content
+          : 'binary')
       },
       gitShow: () => JSON.stringify(gitTrackedCatalogue),
       cataloguePath: '/fake/catalogue.json',
@@ -154,12 +207,22 @@ describe('refreshMetadata', () => {
   it('prefers git HEAD entries over stale cached disk entries for existing albums in CI', async () => {
     const onDiskCatalogue = {
       experiences: [
-        { id: 'PL1', title: 'Album 1 Stale', subtitle: 'Stale Sub', segments: ['old-seg'] },
+        {
+          id: 'PL1',
+          title: 'Album 1 Stale',
+          subtitle: 'Stale Sub',
+          segments: ['old-seg']
+        },
       ],
     }
     const gitTrackedCatalogue = {
       experiences: [
-        { id: 'PL1', title: 'Album 1 Committed', subtitle: 'Committed Sub', segments: ['fixed-seg-1', 'fixed-seg-2'] },
+        {
+          id: 'PL1',
+          title: 'Album 1 Committed',
+          subtitle: 'Committed Sub',
+          segments: ['fixed-seg-1', 'fixed-seg-2']
+        },
       ],
     }
     const upstreamMetadata = [
@@ -175,7 +238,9 @@ describe('refreshMetadata', () => {
       }),
       readFile: async () => JSON.stringify(onDiskCatalogue),
       writeFile: async (path: string, content: string | Buffer) => {
-        writtenFiles.set(path, typeof content === 'string' ? content : 'binary')
+        writtenFiles.set(path, typeof content === 'string'
+          ? content
+          : 'binary')
       },
       gitShow: () => JSON.stringify(gitTrackedCatalogue),
       cataloguePath: '/fake/catalogue.json',
@@ -190,13 +255,28 @@ describe('refreshMetadata', () => {
   it('keeps uncommitted local edits outside CI while still recovering missing albums', async () => {
     const onDiskCatalogue = {
       experiences: [
-        { id: 'PL1', title: 'Album 1', subtitle: 'Sub', segments: ['fresh-ingest-1', 'fresh-ingest-2'] },
+        {
+          id: 'PL1',
+          title: 'Album 1',
+          subtitle: 'Sub',
+          segments: ['fresh-ingest-1', 'fresh-ingest-2']
+        },
       ],
     }
     const gitTrackedCatalogue = {
       experiences: [
-        { id: 'PL1', title: 'Album 1', subtitle: 'Sub', segments: [] },
-        { id: 'PL2', title: 'Album 2', subtitle: 'Sub 2', segments: ['committed-seg'] },
+        {
+          id: 'PL1',
+          title: 'Album 1',
+          subtitle: 'Sub',
+          segments: []
+        },
+        {
+          id: 'PL2',
+          title: 'Album 2',
+          subtitle: 'Sub 2',
+          segments: ['committed-seg']
+        },
       ],
     }
     const upstreamMetadata = [
@@ -213,7 +293,9 @@ describe('refreshMetadata', () => {
       }),
       readFile: async () => JSON.stringify(onDiskCatalogue),
       writeFile: async (path: string, content: string | Buffer) => {
-        writtenFiles.set(path, typeof content === 'string' ? content : 'binary')
+        writtenFiles.set(path, typeof content === 'string'
+          ? content
+          : 'binary')
       },
       gitShow: () => JSON.stringify(gitTrackedCatalogue),
       cataloguePath: '/fake/catalogue.json',
@@ -244,7 +326,9 @@ describe('refreshMetadata', () => {
       }),
       readFile: async () => JSON.stringify(onDiskCatalogue),
       writeFile: async (path: string, content: string | Buffer) => {
-        writtenFiles.set(path, typeof content === 'string' ? content : 'binary')
+        writtenFiles.set(path, typeof content === 'string'
+          ? content
+          : 'binary')
       },
       gitShow: () => JSON.stringify({ experiences: [] }),
       cataloguePath: '/fake/catalogue.json',

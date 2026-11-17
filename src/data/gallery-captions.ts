@@ -246,7 +246,12 @@ export function formatGalleryCaption(title: string | undefined): string {
   const leadingDate = formatEightDigitDate(tokens[0])
   if (leadingDate && tokens.length > 1) {
     const rest = tokens.slice(1).filter(token => !/^\d+$/.test(token))
-    return [...rest.map(token => token.toUpperCase() === token ? token : token), leadingDate]
+    return [
+      ...rest.map(token => token.toUpperCase() === token
+        ? token
+        : token),
+      leadingDate
+    ]
       .filter(Boolean)
       .join(' · ')
   }

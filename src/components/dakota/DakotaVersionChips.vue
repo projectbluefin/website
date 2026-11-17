@@ -43,7 +43,11 @@ const chips = computed(() => {
   return Object.entries(versions.value.packages)
     .filter(([key]) => !props.keys || props.keys.includes(key))
     .filter(([, v]) => v)
-    .map(([key, value]) => ({ label: LABELS[key] ?? key, value, isFeature: FEATURE_KEYS.has(key) }))
+    .map(([key, value]) => ({
+      label: LABELS[key] ?? key,
+      value,
+      isFeature: FEATURE_KEYS.has(key)
+    }))
 })
 </script>
 

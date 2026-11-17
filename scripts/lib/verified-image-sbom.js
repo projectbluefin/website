@@ -37,7 +37,9 @@ export class ToolingError extends Error {
 /** Every text surface a child-process failure can hide its cause in. */
 function failureText(err) {
   return [err?.message, err?.stderr, err?.stdout]
-    .map(part => (typeof part === 'string' ? part : (part?.toString?.() ?? '')))
+    .map(part => (typeof part === 'string'
+      ? part
+      : (part?.toString?.() ?? '')))
     .join('\n')
 }
 
@@ -69,7 +71,13 @@ export function classifyToolFailure(err, tool) {
   if (TRANSPORT_PATTERN.test(text)) {
     return new ToolingError('transport', tool, `${tool} could not reach the registry: ${text}`)
   }
-  if (typeof err?.code === 'string' && ['EACCES', 'EIO', 'ENOSPC', 'EMFILE', 'ENOENT'].includes(err.code)) {
+  if (typeof err?.code === 'string' && [
+    'EACCES',
+    'EIO',
+    'ENOSPC',
+    'EMFILE',
+    'ENOENT'
+  ].includes(err.code)) {
     return new ToolingError('tool-io', tool, `${tool} failed with a local I/O error (${err.code}): ${text}`)
   }
   return null
@@ -93,7 +101,12 @@ function describesAbsence(err) {
  */
 export function resolveImageDigest(image, run = execFileSync) {
   try {
-    const result = JSON.parse(run('oras', ['manifest', 'fetch', '--descriptor', image], { encoding: 'utf8' }))
+    const result = JSON.parse(run('oras', [
+      'manifest',
+      'fetch',
+      '--descriptor',
+      image
+    ], { encoding: 'utf8' }))
     const repository = image.replace(/[:@].*$/, '')
     return `${repository}@${result.digest}`
   }
@@ -118,7 +131,12 @@ export function resolveImageDigest(image, run = execFileSync) {
 export function discoverReferrers(imageAtDigest, run = execFileSync) {
   let raw
   try {
-    raw = run('oras', ['discover', '--format', 'json', imageAtDigest], { encoding: 'utf8' })
+    raw = run('oras', [
+      'discover',
+      '--format',
+      'json',
+      imageAtDigest
+    ], { encoding: 'utf8' })
   }
   catch (err) {
     const tooling = classifyToolFailure(err, 'oras')
@@ -226,7 +244,12 @@ export function verifySbomSignature(repository, digest, policy, run = execFileSy
 export function pullSpdxReferrer(repository, digest, run = execFileSync, fsImpl = fs) {
   const outputDir = fsImpl.mkdtempSync(path.join(os.tmpdir(), 'website-sbom-'))
   try {
-    run('oras', ['pull', `${repository}@${digest}`, '--output', outputDir], { encoding: 'utf8' })
+    run('oras', [
+      'pull',
+      `${repository}@${digest}`,
+      '--output',
+      outputDir
+    ], { encoding: 'utf8' })
     const files = fsImpl.readdirSync(outputDir)
     const jsonFile = files.find(name => name.endsWith('.json'))
     if (!jsonFile) {

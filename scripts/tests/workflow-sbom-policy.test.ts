@@ -170,7 +170,12 @@ function runScriptBody(body: string, openIssues: unknown[], env: Record<string, 
   const stdout = execFileSync(process.execPath, [RUNNER], {
     cwd: process.cwd(),
     encoding: 'utf8',
-    env: { ...process.env, ...env, GH_SCRIPT_BODY: body, GH_OPEN_ISSUES: JSON.stringify(openIssues) },
+    env: {
+      ...process.env,
+      ...env,
+      GH_SCRIPT_BODY: body,
+      GH_OPEN_ISSUES: JSON.stringify(openIssues)
+    },
   })
   return JSON.parse(stdout) as RecordedCalls
 }
@@ -193,7 +198,9 @@ describe('github-script bodies resolve their imports from the checkout', () => {
   it('runs the failure-issue script end to end and deduplicates by exact title', () => {
     const { created, updated } = runScriptBody(
       scriptBodyFor('Create issue on failure'),
-      [{ number: 314, title: 'Failed to update live data from SBOM sources', state: 'open' }],
+      [
+        { number: 314, title: 'Failed to update live data from SBOM sources', state: 'open' }
+      ],
     )
 
     expect(created).toHaveLength(0)

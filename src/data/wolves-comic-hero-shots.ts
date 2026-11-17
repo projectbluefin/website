@@ -181,5 +181,7 @@ export function getActiveComicHeroShot(
   shots: readonly WolvesComicHeroShot[] = wolvesComicHeroShots,
 ): WolvesComicHeroShot | undefined {
   const index = getComicHeroShotIndex(currentTime, cue.start, cue.end, shots.length)
-  return index === -1 ? undefined : shots[index]
+  return index === -1
+    ? undefined
+    : shots[index]
 }

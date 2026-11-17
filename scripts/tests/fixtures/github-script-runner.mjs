@@ -28,7 +28,9 @@ const github = {
       listForRepo: async () => ({ data: openIssues }),
       create: async (params) => {
         created.push(params)
-        return { data: { number: 1 } }
+        return {
+          data: { number: 1 }
+        }
       },
       update: async (params) => {
         updated.push(params)
@@ -41,10 +43,16 @@ const github = {
 const context = {
   repo: { owner: 'projectbluefin', repo: 'website' },
   runId: 987654321,
-  payload: { repository: { html_url: 'https://github.com/projectbluefin/website' } },
+  payload: {
+    repository: { html_url: 'https://github.com/projectbluefin/website' }
+  },
 }
 
-const core = { info: () => {}, warning: () => {}, setFailed: () => {} }
+const core = {
+  info: () => {},
+  warning: () => {},
+  setFailed: () => {}
+}
 
 const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor
 const run = new AsyncFunction('github', 'context', 'core', 'require', process.env.GH_SCRIPT_BODY)

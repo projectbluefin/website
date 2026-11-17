@@ -11,7 +11,15 @@ const BASE_VERIFIED = {
   imageDigest: IMAGE_DIGEST,
   sbomDigest: SBOM_DIGEST,
   status: 'verified',
-  values: { kernel: '7.0.7', gnome: '50.2', mesa: '26.1.0', systemd: '260.2', pipewire: '1.6.1', flatpak: '1.16.6', bootc: '1.15.2' },
+  values: {
+    kernel: '7.0.7',
+    gnome: '50.2',
+    mesa: '26.1.0',
+    systemd: '260.2',
+    pipewire: '1.6.1',
+    flatpak: '1.16.6',
+    bootc: '1.15.2'
+  },
 }
 
 const NVIDIA_VERIFIED = {
@@ -41,7 +49,10 @@ const METADATA = {
 describe('projectDakotaVersions', () => {
   it('base fields come only from dakota', () => {
     const result = projectDakotaVersions(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [BASE_VERIFIED] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [BASE_VERIFIED]
+      },
       METADATA,
     )
     expect(result.status).toBe('verified')
@@ -51,13 +62,19 @@ describe('projectDakotaVersions', () => {
 
   it('nVIDIA comes only from dakota-nvidia', () => {
     const result = projectDakotaVersions(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [BASE_VERIFIED, NVIDIA_VERIFIED] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [BASE_VERIFIED, NVIDIA_VERIFIED]
+      },
       METADATA,
     )
     expect(result.packages.nvidia).toBe('595.71.05')
     // nvidia does NOT appear from base
     const baseOnly = projectDakotaVersions(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [BASE_VERIFIED] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [BASE_VERIFIED]
+      },
       METADATA,
     )
     expect(baseOnly.packages.nvidia).toBeUndefined()
@@ -65,7 +82,10 @@ describe('projectDakotaVersions', () => {
 
   it('oGC appears only from verified dakota-gaming', () => {
     const result = projectDakotaVersions(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [BASE_VERIFIED, GAMING_VERIFIED] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [BASE_VERIFIED, GAMING_VERIFIED]
+      },
       METADATA,
     )
     expect(result.packages['ogc-kernel']).toBe('7.1.8-ogc1')
@@ -73,7 +93,10 @@ describe('projectDakotaVersions', () => {
 
   it('missing gaming SBOM omits OGC without affecting base Dakota', () => {
     const result = projectDakotaVersions(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [BASE_VERIFIED, NVIDIA_VERIFIED] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [BASE_VERIFIED, NVIDIA_VERIFIED]
+      },
       METADATA,
     )
     expect(result.status).toBe('verified')
@@ -85,7 +108,10 @@ describe('projectDakotaVersions', () => {
   it('required base failure returns status unavailable and packages {}', () => {
     const failedBase = { ...BASE_VERIFIED, status: 'unavailable', values: undefined }
     const result = projectDakotaVersions(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [failedBase, NVIDIA_VERIFIED] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [failedBase, NVIDIA_VERIFIED]
+      },
       METADATA,
     )
     expect(result.status).toBe('unavailable')
@@ -94,8 +120,16 @@ describe('projectDakotaVersions', () => {
 
   it('baseline metadata survives projection and no isos are emitted', () => {
     const result = projectDakotaVersions(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [BASE_VERIFIED] },
-      { ...METADATA, isos: [{ label: 'Download ISO', filename: 'dakota-live-alpha5.iso' }] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [BASE_VERIFIED]
+      },
+      {
+        ...METADATA,
+        isos: [
+          { label: 'Download ISO', filename: 'dakota-live-alpha5.iso' }
+        ]
+      },
     )
     expect(result).not.toHaveProperty('isos')
     expect(result.packages.baseline).toBe('x86-64-v3')
@@ -104,7 +138,10 @@ describe('projectDakotaVersions', () => {
   it('stale freedesktop-sdk, Homebrew, and OGC values do not survive', () => {
     // These are NOT in any verified image values, so they must not appear
     const result = projectDakotaVersions(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [BASE_VERIFIED, NVIDIA_VERIFIED] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [BASE_VERIFIED, NVIDIA_VERIFIED]
+      },
       METADATA,
     )
     expect(result.packages['freedesktop-sdk']).toBeUndefined()
@@ -114,7 +151,10 @@ describe('projectDakotaVersions', () => {
 
   it('collects sources from all verified dakota images', () => {
     const result = projectDakotaVersions(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [BASE_VERIFIED, NVIDIA_VERIFIED] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [BASE_VERIFIED, NVIDIA_VERIFIED]
+      },
       METADATA,
     )
     expect(result.sources).toHaveLength(2)
@@ -124,7 +164,10 @@ describe('projectDakotaVersions', () => {
 
   it('uses provided checkedAt override', () => {
     const result = projectDakotaVersions(
-      { checkedAt: '2026-08-26T00:00:00Z', images: [BASE_VERIFIED] },
+      {
+        checkedAt: '2026-08-26T00:00:00Z',
+        images: [BASE_VERIFIED]
+      },
       METADATA,
       '2026-08-27T12:00:00Z',
     )
@@ -144,10 +187,18 @@ describe('projectDakotaVersions — degraded evidence', () => {
       status: 'degraded',
       errorCode: 'missing-optional',
       missingOptional: ['bootc'],
-      values: { kernel: '7.0.7', gnome: '50.2', mesa: '26.0.6', systemd: '260.2' },
+      values: {
+        kernel: '7.0.7',
+        gnome: '50.2',
+        mesa: '26.0.6',
+        systemd: '260.2'
+      },
     }
 
-    const result = projectDakotaVersions({ checkedAt: '2026-08-26T00:00:00Z', images: [degraded] })
+    const result = projectDakotaVersions({
+      checkedAt: '2026-08-26T00:00:00Z',
+      images: [degraded]
+    })
 
     expect(result.status).toBe('verified')
     expect(result.packages.mesa).toBe('26.0.6')
@@ -179,7 +230,10 @@ describe('projectDakotaVersions — degraded evidence', () => {
       values: { nvidia: '595.71.05' },
     }
 
-    const result = projectDakotaVersions({ checkedAt: '2026-08-26T00:00:00Z', images: [base, unavailableNvidia] })
+    const result = projectDakotaVersions({
+      checkedAt: '2026-08-26T00:00:00Z',
+      images: [base, unavailableNvidia]
+    })
 
     expect(result.packages).not.toHaveProperty('nvidia')
     expect(result.sources.map(s => s.id)).toEqual(['dakota'])

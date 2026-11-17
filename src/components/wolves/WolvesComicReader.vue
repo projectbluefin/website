@@ -140,7 +140,9 @@ let duskTimer: ReturnType<typeof setInterval> | null = null
 const trackZeroFlickrPhotoIds = new Set(
   wallpapers.flatMap((wallpaper) => {
     const photoId = wallpaper.name?.startsWith('wolves/people/') && wallpaper.name.match(/\d{8,}/)?.[0]
-    return photoId ? [photoId] : []
+    return photoId
+      ? [photoId]
+      : []
   }),
 )
 // CNCF feed photos whose Track 0 copy lives under a curated caption filename
@@ -176,7 +178,9 @@ let crossfadeTimer: ReturnType<typeof setTimeout> | null = null
 const trackChangeSerial = ref(0)
 
 const activePhoto = computed(() => {
-  return activeBuffer.value === 'A' ? photoA.value : photoB.value
+  return activeBuffer.value === 'A'
+    ? photoA.value
+    : photoB.value
 })
 
 /**
@@ -429,7 +433,11 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
   // The slice must cover every hero index or a locked portrait is silently
   // dropped and every following locked window starts early.
   const peoplePool1 = andyAdvisorPhoto
-    ? [...shuffledPeople.slice(0, 7), andyAdvisorPhoto, ...shuffledPeople.slice(7, 15)]
+    ? [
+        ...shuffledPeople.slice(0, 7),
+        andyAdvisorPhoto,
+        ...shuffledPeople.slice(7, 15)
+      ]
     : shuffledPeople.slice(0, 16)
   const jonoPhoto = peoplePool1.find(item => item.id === jonoBaconSlideId)
   const marinaPhoto = peoplePool1.find(item => item.id === marinaMooreSlideId)
@@ -445,17 +453,28 @@ const timelineSlides = computed<TimelineSlide[]>(() => {
     && bluefinGroupPhotos.every(entry => entry.photo !== undefined)
   const lockedHeroSlideIds = new Set([
     jonoBaconSlideId,
-    ...(marinaPhoto ? [marinaMooreSlideId] : []),
-    ...(hasBluefinGroupLock ? bluefinGroupSlides.map(slide => slide.id) : []),
-    ...(lauraPhoto ? [lauraSlideId] : []),
-    ...(topheePhoto ? [topheeSlideId] : []),
+    ...(marinaPhoto
+      ? [marinaMooreSlideId]
+      : []),
+    ...(hasBluefinGroupLock
+      ? bluefinGroupSlides.map(slide => slide.id)
+      : []),
+    ...(lauraPhoto
+      ? [lauraSlideId]
+      : []),
+    ...(topheePhoto
+      ? [topheeSlideId]
+      : []),
   ])
   const remainingPeoplePool1 = peoplePool1.filter(item =>
     !lockedHeroSlideIds.has(item.id),
   )
 
   if (!jonoPhoto) {
-    const sec3Items = [...normalPool2, ...peoplePool1]
+    const sec3Items = [
+      ...normalPool2,
+      ...peoplePool1
+    ]
     const sec3Cuts = trackZeroBeatCuts(currentTime, TRACK_ZERO_PRESENTATION_SECTIONS.contributorChorus.endTime, sec3Items.length, TRACK_ZERO_PRESENTATION_SECTIONS.contributorChorus.beatGroups)
     sec3Items.forEach((item, index) => {
       const endTime = sec3Cuts[index]
@@ -839,7 +858,10 @@ const backCatalogueCuratedPhotos = computed(() => {
   // the `wolves/` subtree, so they are registered explicitly in
   // `artwork-wallpapers.ts` — which is also what keeps the import an
   // allowlist. Aurora artwork is excluded there and pinned by a test.
-  const familyArtwork = [...ublueArtworkWallpapers, ...bazziteArtworkWallpapers].map(wallpaper => ({
+  const familyArtwork = [
+    ...ublueArtworkWallpapers,
+    ...bazziteArtworkWallpapers
+  ].map(wallpaper => ({
     id: wallpaper.name,
     isLocal: true,
     path: wallpaper.name,
@@ -851,7 +873,12 @@ const backCatalogueCuratedPhotos = computed(() => {
     kind: wallpaper.kind,
   }))
 
-  return [...showcaseAndArt, ...heroShots, ...extraCharacters, ...familyArtwork]
+  return [
+    ...showcaseAndArt,
+    ...heroShots,
+    ...extraCharacters,
+    ...familyArtwork
+  ]
 })
 
 const activeTimelineSlide = computed(() => {
@@ -916,7 +943,9 @@ const currentSlideTransitionDuration = computed(() => {
     return 1000
   }
   // Long ambient holds get long dissolves; beat-length slides get near-cuts.
-  const crossfadeCap = slide.duration >= 8 ? 1600 : 800
+  const crossfadeCap = slide.duration >= 8
+    ? 1600
+    : 800
   return Math.min(crossfadeCap, slide.duration * 300)
 })
 
@@ -943,7 +972,9 @@ function daynightNightOpacity(slide: any, slideIndex: number): number {
   }
   const elapsed = (props.playlistCurrentTime ?? 0) - startTime
   const ratio = elapsed / duration
-  return Number.isFinite(ratio) ? Math.min(1.0, Math.max(0.0, ratio)) : 0
+  return Number.isFinite(ratio)
+    ? Math.min(1.0, Math.max(0.0, ratio))
+    : 0
 }
 
 const daynightNightOpacityA = computed(() => daynightNightOpacity(photoA.value, slideAIndex.value))
@@ -1082,7 +1113,9 @@ function preloadUrl(url: string, priority: 'high' | 'low'): Promise<number | nul
 function preloadPhoto(photo: any, priority: 'high' | 'low' = 'low'): Promise<void> {
   const urls = photo?.type === 'daynight'
     ? [`${baseUrl}img/wallpapers/${photo.dayName}`, `${baseUrl}img/wallpapers/${photo.nightName}`]
-    : [getFlickrPhotoUrl(photo)]
+    : [
+        getFlickrPhotoUrl(photo)
+      ]
   return Promise.all(urls.map(url => preloadUrl(url, priority))).then((aspects) => {
     // Day/night halves share an aspect; take whichever half measured.
     const aspect = aspects.find(candidate => candidate !== null)
@@ -1139,7 +1172,9 @@ watch([activeDisplayIndex, mixedPhotosToUse, trackChangeSerial], ([newVal]) => {
   if (!activePhotoObj) {
     return
   }
-  const displayedIndex = activeBuffer.value === 'A' ? slideAIndex.value : slideBIndex.value
+  const displayedIndex = activeBuffer.value === 'A'
+    ? slideAIndex.value
+    : slideBIndex.value
   if (activePhoto.value === activePhotoObj && displayedIndex === newVal) {
     // Already on stage (a boundary bump that resolved to the same slide object).
     return
@@ -1289,11 +1324,15 @@ function getFlickrPhotoUrl(photo: any) {
 // unusually panoramic assets (see wideAspectStems in generate-wallpapers.js)
 // letterbox badly under contain, so they opt into cover instead.
 function photoObjectFit(photo: any) {
-  return photo?.fit === 'cover' ? 'cover' : 'contain'
+  return photo?.fit === 'cover'
+    ? 'cover'
+    : 'contain'
 }
 
 function photoObjectPosition(photo: any) {
-  return isWolvesExperience.value && photo?.id === ghostsInTheMistOpeningSlide.photoId ? 'center top' : 'center'
+  return isWolvesExperience.value && photo?.id === ghostsInTheMistOpeningSlide.photoId
+    ? 'center top'
+    : 'center'
 }
 
 /**
@@ -1341,7 +1380,9 @@ function snapshotLaterTrackPhotos() {
         isLocal: false,
         path: `https://live.staticflickr.com/${photo.server}/${photo.id}_${photo.secret}_${isFeaturedOpening ? ghostsInTheMistOpeningSlide.imageSizeSuffix : 'b'}.jpg`,
         title: isFeaturedOpening ? ghostsInTheMistOpeningSlide.title : photo.title,
-        description: isFeaturedOpening ? ghostsInTheMistOpeningSlide.descriptionParts.join('\n\n') : undefined,
+        description: isFeaturedOpening
+          ? ghostsInTheMistOpeningSlide.descriptionParts.join('\n\n')
+          : undefined,
         type: 'single' as const,
         dayName: undefined,
         nightName: undefined,
@@ -1446,7 +1487,9 @@ function shuffleWallpapers(array: any[]): any[] {
     const r = Math.random()
     // if people, score is in [0.45, 1.05] (tends toward end)
     // if showcase or story illustration, score is in [0.0, 0.6] (tends toward start)
-    const score = isPeople ? 0.45 + r * 0.6 : r * 0.6
+    const score = isPeople
+      ? 0.45 + r * 0.6
+      : r * 0.6
     return { item, score }
   })
 
@@ -1479,7 +1522,9 @@ onMounted(async () => {
     const response = await fetch(`${import.meta.env.BASE_URL}flickr-photos.json`)
     if (response.ok) {
       const rawPhotos = await response.json()
-      flickrPhotos.value = Array.isArray(rawPhotos) ? rawPhotos : []
+      flickrPhotos.value = Array.isArray(rawPhotos)
+        ? rawPhotos
+        : []
     }
   }
   catch (err) {

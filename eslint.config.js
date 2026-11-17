@@ -21,9 +21,19 @@ export default antfu({
   yaml: false,
   markdown: true,
   rules: {
-    'no-console': ['error', {
-      allow: ['info', 'warn', 'trace', 'error', 'group', 'groupEnd'],
-    }],
+    'no-console': [
+      'error',
+      {
+        allow: [
+          'info',
+          'warn',
+          'trace',
+          'error',
+          'group',
+          'groupEnd'
+        ],
+      }
+    ],
     'style/comma-dangle': 'off',
     'curly': ['error', 'all'],
     'node/prefer-global/process': ['error', 'always'],

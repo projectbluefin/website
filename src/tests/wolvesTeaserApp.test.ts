@@ -120,7 +120,14 @@ describe('wolves teaser bridge', () => {
 
     // The render carries every plate itself: at no beat — title, book lines,
     // day cards, or the baked end card — may the browser draw its own copy.
-    for (const t of [TRAILER_PICTURE_REVEAL_SECONDS + 1, 30, TRAILER_PICTURE_END_SECONDS, 95, 104, 108]) {
+    for (const t of [
+      TRAILER_PICTURE_REVEAL_SECONDS + 1,
+      30,
+      TRAILER_PICTURE_END_SECONDS,
+      95,
+      104,
+      108
+    ]) {
       harness.seekTo(t)
       await nextTick()
       expect(wrapper.find('.wt-lockup').exists()).toBe(false)

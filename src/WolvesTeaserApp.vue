@@ -52,7 +52,9 @@ function plate(id: string): TrailerPlate | undefined {
 /** A plate's authored fade, so nothing hard-cuts that should not. */
 function opacityOf(id: string): number {
   const found = plate(id)
-  return found ? trailerPlateOpacity(found, visualTime.value) : 0
+  return found
+    ? trailerPlateOpacity(found, visualTime.value)
+    : 0
 }
 
 // The page heading steps aside before the cut's own main title arrives, so the

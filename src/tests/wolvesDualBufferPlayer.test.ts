@@ -134,9 +134,13 @@ class FakePlayer {
   }
 
   loadVideoById(video: string | { videoId: string, startSeconds?: number }) {
-    const id = typeof video === 'string' ? video : video.videoId
+    const id = typeof video === 'string'
+      ? video
+      : video.videoId
     this.loadedId = id
-    this.currentTime = typeof video === 'string' ? 0 : video.startSeconds ?? 0
+    this.currentTime = typeof video === 'string'
+      ? 0
+      : video.startSeconds ?? 0
     if (FakePlayer.failingVideoIds.has(id)) {
       // Restricted media: the request is accepted, the media never attaches.
       this.videoId = ''
@@ -148,7 +152,9 @@ class FakePlayer {
   }
 
   cueVideoById(video: string | { videoId: string, startSeconds?: number }) {
-    const id = typeof video === 'string' ? video : video.videoId
+    const id = typeof video === 'string'
+      ? video
+      : video.videoId
     this.calls.push('cueVideoById')
     this.cuedId = id
     if (FakePlayer.failingVideoIds.has(id)) {
@@ -208,7 +214,13 @@ class FakePlayer {
 function installFakeYoutubeApi() {
   ;(window as any).YT = {
     Player: FakePlayer,
-    PlayerState: { ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 },
+    PlayerState: {
+      ENDED: 0,
+      PLAYING: 1,
+      PAUSED: 2,
+      BUFFERING: 3,
+      CUED: 5
+    },
   }
 }
 
@@ -281,7 +293,15 @@ describe('useDualBufferPlayer', () => {
     FakePlayer.failingVideoIds = new Set()
     installFakeYoutubeApi()
     vi.useFakeTimers({
-      toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+      toFake: [
+        'setTimeout',
+        'clearTimeout',
+        'setInterval',
+        'clearInterval',
+        'requestAnimationFrame',
+        'cancelAnimationFrame',
+        'performance'
+      ],
     })
   })
 
@@ -979,7 +999,9 @@ describe('useDualBufferPlayer', () => {
     const store = useCinematicStore()
     // Walk every boundary to the end of the seven-segment show.
     for (let i = 0; i < CINEMATIC_SEGMENTS.length - 1; i++) {
-      const active = player.activeSide.value === 'a' ? FakePlayer.instances[0] : FakePlayer.instances[1]
+      const active = player.activeSide.value === 'a'
+        ? FakePlayer.instances[0]
+        : FakePlayer.instances[1]
       // Past both the natural duration and any authored endSeconds cutoff.
       active.duration = 1000
       active.currentTime = 1000
@@ -988,7 +1010,9 @@ describe('useDualBufferPlayer', () => {
     }
     expect(store.segmentIndex).toBe(CINEMATIC_SEGMENTS.length - 1)
 
-    const active = player.activeSide.value === 'a' ? FakePlayer.instances[0] : FakePlayer.instances[1]
+    const active = player.activeSide.value === 'a'
+      ? FakePlayer.instances[0]
+      : FakePlayer.instances[1]
     active.duration = 1000
     active.currentTime = 1000
     vi.advanceTimersByTime(TIME_POLL_MS)
@@ -1005,13 +1029,17 @@ describe('useDualBufferPlayer', () => {
     const player = await startPlayer()
     const store = useCinematicStore()
     for (let i = 0; i < CINEMATIC_SEGMENTS.length - 1; i++) {
-      const active = player.activeSide.value === 'a' ? FakePlayer.instances[0] : FakePlayer.instances[1]
+      const active = player.activeSide.value === 'a'
+        ? FakePlayer.instances[0]
+        : FakePlayer.instances[1]
       active.duration = 1000
       active.currentTime = 1000
       vi.advanceTimersByTime(TIME_POLL_MS)
       vi.advanceTimersByTime(3000)
     }
-    const active = player.activeSide.value === 'a' ? FakePlayer.instances[0] : FakePlayer.instances[1]
+    const active = player.activeSide.value === 'a'
+      ? FakePlayer.instances[0]
+      : FakePlayer.instances[1]
     active.duration = 1000
     active.currentTime = 1000
     vi.advanceTimersByTime(TIME_POLL_MS)
@@ -1273,7 +1301,9 @@ describe('useDualBufferPlayer', () => {
       // The show cannot invent media it does not have, so silence under Part II's
       // titles is the honest outcome. What must never happen is Part II's titles and
       // slides over a DIFFERENT song — that is the reported defect.
-      const activePlayer = player.activeSide.value === 'a' ? playerA : playerB
+      const activePlayer = player.activeSide.value === 'a'
+        ? playerA
+        : playerB
       const onAir = activePlayer.getVideoData().video_id
       if (store.segmentIndex === 1 && onAir !== '') {
         expect(onAir).toBe(CINEMATIC_SEGMENTS[1].youtubeId)

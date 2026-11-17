@@ -37,10 +37,14 @@ const validationState = computed(() => {
 
 const spec = computed<LoreSpecEntry[]>(() => [
   ...props.record.metadata.relations?.guardian
-    ? [{ key: 'guardian', value: props.record.metadata.relations.guardian }]
+    ? [
+        { key: 'guardian', value: props.record.metadata.relations.guardian }
+      ]
     : [],
   ...props.record.metadata.relations?.dinosaur
-    ? [{ key: 'dinosaur', value: props.record.metadata.relations.dinosaur }]
+    ? [
+        { key: 'dinosaur', value: props.record.metadata.relations.dinosaur }
+      ]
     : [],
   { key: 'validation', value: validationState.value },
 ])

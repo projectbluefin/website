@@ -30,7 +30,12 @@ describe('update-flickr-photos helpers', () => {
   })
 
   it('shuffles arrays without losing items', () => {
-    const input = [{ id: '1' }, { id: '2' }, { id: '3' }, { id: '4' }]
+    const input = [
+      { id: '1' },
+      { id: '2' },
+      { id: '3' },
+      { id: '4' }
+    ]
     const shuffled = shuffleArray(input)
     expect(shuffled).toHaveLength(input.length)
     expect(shuffled.every(item => input.includes(item))).toBe(true)
@@ -44,7 +49,12 @@ describe('update-flickr-photos helpers', () => {
   })
 
   it('normalizes Flickr photo objects', () => {
-    expect(normalizePhoto({ id: '123', server: '456', secret: 'abc', title: 'Photo' })).toEqual({
+    expect(normalizePhoto({
+      id: '123',
+      server: '456',
+      secret: 'abc',
+      title: 'Photo'
+    })).toEqual({
       id: '123',
       server: '456',
       secret: 'abc',
@@ -55,9 +65,24 @@ describe('update-flickr-photos helpers', () => {
   it('builds a fresh, deduplicated cache without retaining stale entries', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0)
     const photos = selectFreshPhotos([
-      { id: 'current-japan', server: '1', secret: 'a', title: 'Japan contributor summit' },
-      { id: 'current-japan', server: '1', secret: 'a', title: 'Duplicate' },
-      { id: 'current-europe', server: '2', secret: 'b', title: 'Europe maintainer summit' },
+      {
+        id: 'current-japan',
+        server: '1',
+        secret: 'a',
+        title: 'Japan contributor summit'
+      },
+      {
+        id: 'current-japan',
+        server: '1',
+        secret: 'a',
+        title: 'Duplicate'
+      },
+      {
+        id: 'current-europe',
+        server: '2',
+        secret: 'b',
+        title: 'Europe maintainer summit'
+      },
     ], 2)
 
     expect(photos.map(photo => photo.id).sort()).toEqual(['current-europe', 'current-japan'])
@@ -68,7 +93,10 @@ describe('update-flickr-photos helpers', () => {
     vi.stubGlobal('fetch', fetchMock)
 
     fetchMock
-      .mockResolvedValueOnce(new Response('{}', { status: 429, headers: { 'retry-after': '1' } }))
+      .mockResolvedValueOnce(new Response('{}', {
+        status: 429,
+        headers: { 'retry-after': '1' }
+      }))
       .mockResolvedValueOnce(new Response('{"ok": true}', { status: 200 }))
 
     const res = await fetchWithRateLimit('https://example.com/test')
@@ -112,7 +140,9 @@ describe('update-flickr-photos helpers', () => {
     writeFileSync(tmpPath, '[{"id":"cached-1"}]')
     try {
       const photos = await loadExistingPhotos(tmpPath)
-      expect(photos).toEqual([{ id: 'cached-1' }])
+      expect(photos).toEqual([
+        { id: 'cached-1' }
+      ])
     }
     finally {
       try {
@@ -166,11 +196,36 @@ describe('album HTML parsing', () => {
     const photos = extractPhotosFromAlbumHtml(html)
 
     expect(photos).toEqual([
-      { id: '11111111111', server: '65535', secret: 'abc123def0', title: 'Maintainer Summit group photo' },
-      { id: '22222222222', server: '65535', secret: 'bcd234efa1', title: 'Keynote speaker' },
-      { id: '33333333333', server: '65535', secret: 'cde345fab2', title: 'Contributor signing the wall' },
-      { id: '44444444444', server: '65535', secret: 'def456abc3', title: 'Hallway track crowd' },
-      { id: '55555555555', server: '65535', secret: 'efg567bcd4', title: 'Sponsor booth signage' },
+      {
+        id: '11111111111',
+        server: '65535',
+        secret: 'abc123def0',
+        title: 'Maintainer Summit group photo'
+      },
+      {
+        id: '22222222222',
+        server: '65535',
+        secret: 'bcd234efa1',
+        title: 'Keynote speaker'
+      },
+      {
+        id: '33333333333',
+        server: '65535',
+        secret: 'cde345fab2',
+        title: 'Contributor signing the wall'
+      },
+      {
+        id: '44444444444',
+        server: '65535',
+        secret: 'def456abc3',
+        title: 'Hallway track crowd'
+      },
+      {
+        id: '55555555555',
+        server: '65535',
+        secret: 'efg567bcd4',
+        title: 'Sponsor booth signage'
+      },
     ])
   })
 
@@ -215,7 +270,13 @@ describe('people-first filtering', () => {
     targetTotalPhotos: 10,
     albums: [],
     peopleFirst: {
-      allowPatterns: ['maintainer', 'contributor', 'people', 'group', 'crowd'],
+      allowPatterns: [
+        'maintainer',
+        'contributor',
+        'people',
+        'group',
+        'crowd'
+      ],
       blockPatterns: ['sponsor', 'banner', 'stage', 'booth'],
     },
   }
@@ -240,7 +301,10 @@ describe('people-first filtering', () => {
   })
 
   it('returns false for empty allow patterns', () => {
-    const emptyConfig = { ...config, peopleFirst: { allowPatterns: [], blockPatterns: [] } }
+    const emptyConfig = {
+      ...config,
+      peopleFirst: { allowPatterns: [], blockPatterns: [] }
+    }
     expect(isPeopleFirstPhoto({ id: '8', title: 'Maintainer group photo' }, emptyConfig)).toBe(false)
   })
 })
@@ -277,7 +341,10 @@ describe('title-family diversification', () => {
   })
 
   it('returns the input unchanged when maxPerFamily is zero or negative', () => {
-    const photos = [{ id: '1', title: 'Photo' }, { id: '2', title: 'Photo' }]
+    const photos = [
+      { id: '1', title: 'Photo' },
+      { id: '2', title: 'Photo' }
+    ]
     expect(diversifyByTitleFamily(photos, 0)).toEqual(photos)
     expect(diversifyByTitleFamily(photos, -1)).toEqual(photos)
   })
@@ -360,8 +427,14 @@ describe('updateFlickrPhotos', () => {
     writeFileSync(configPath, JSON.stringify({
       requestDelayMs: 0,
       maxPagesPerAlbum: 1,
-      albums: [{ id: '1', title: 'One' }, { id: '2', title: 'Two' }],
-      peopleFirst: { allowPatterns: ['summit'], blockPatterns: [] },
+      albums: [
+        { id: '1', title: 'One' },
+        { id: '2', title: 'Two' }
+      ],
+      peopleFirst: {
+        allowPatterns: ['summit'],
+        blockPatterns: []
+      },
     }))
     if (existing) {
       writeFileSync(targetPath, `${JSON.stringify(existing)}\n`)
@@ -369,7 +442,14 @@ describe('updateFlickrPhotos', () => {
     return { configPath, targetPath }
   }
 
-  const previous = [{ id: '9', server: '1', secret: 's', title: 'Old summit photo' }]
+  const previous = [
+    {
+      id: '9',
+      server: '1',
+      secret: 's',
+      title: 'Old summit photo'
+    }
+  ]
 
   it('keeps the previous cache when every album fails', async () => {
     const { configPath, targetPath } = setup(previous)

@@ -63,7 +63,10 @@ function audit(overrides: Record<string, Partial<Image>> = {}) {
   return {
     checkedAt: CHECKED_AT,
     images: IMAGE_SBOM_REGISTRY.map((record) => {
-      const image = { ...verifiedImage(record), ...overrides[record.id] }
+      const image = {
+        ...verifiedImage(record),
+        ...overrides[record.id]
+      }
       if (image.status === 'unavailable') {
         delete image.values
       }
@@ -144,7 +147,9 @@ describe('updateImageVersions — write mode', () => {
   })
 
   it('carries the previous Dakota baseline forward but drops stale cached isos', async () => {
-    const isos = [{ label: 'Download ISO', filename: 'dakota-live.iso' }]
+    const isos = [
+      { label: 'Download ISO', filename: 'dakota-live.iso' }
+    ]
     previousFiles[DAKOTA_PATH] = JSON.stringify({
       status: 'verified',
       isos,
@@ -171,7 +176,9 @@ describe('updateImageVersions — write mode', () => {
   it('stamps lastSuccessfulAt from the previous audit onto a newly failed image', async () => {
     previousFiles[AUDIT_PATH] = JSON.stringify({
       checkedAt: '2026-10-04T00:00:00.000Z',
-      images: [{ id: 'dakota-gaming', status: 'verified' }],
+      images: [
+        { id: 'dakota-gaming', status: 'verified' }
+      ],
     })
     verifyRegistryMock.mockResolvedValue(audit({
       'dakota-gaming': { status: 'unavailable', errorCode: 'missing-sbom', error: 'no referrer' },
@@ -211,7 +218,9 @@ describe('updateImageVersions — write mode', () => {
   })
 
   it('warns "unknown" when an unavailable image carries no error code', async () => {
-    verifyRegistryMock.mockResolvedValue(audit({ 'dakota-gaming': { status: 'unavailable' } }))
+    verifyRegistryMock.mockResolvedValue(audit({
+      'dakota-gaming': { status: 'unavailable' }
+    }))
 
     await updateImageVersions()
 
@@ -230,7 +239,9 @@ describe('updateImageVersions — field-loss guard', () => {
   })
 
   it('refuses to write when a published Dakota package vanishes without audit evidence', async () => {
-    previousFiles[DAKOTA_PATH] = JSON.stringify({ packages: { retired: '1.0' } })
+    previousFiles[DAKOTA_PATH] = JSON.stringify({
+      packages: { retired: '1.0' }
+    })
 
     await expect(updateImageVersions()).rejects.toThrow(
       'unexplained field loss in public/dakota-versions.json packages: retired',
@@ -243,8 +254,15 @@ describe('updateImageVersions — field-loss guard', () => {
   it('accepts losing lts.hwe when the hwe image is unavailable (hwe aliases kernel)', async () => {
     previousFiles[STREAMS_PATH] = 'lts:\n  status: verified\n  hwe: "6.17.0"\n'
     verifyRegistryMock.mockResolvedValue(audit({
-      'bluefin-lts': { values: { kernel: '6.12.0-1.el10' } },
-      'bluefin-lts-hwe': { fields: ['kernel'], status: 'unavailable', errorCode: 'missing-sbom', error: 'gone' },
+      'bluefin-lts': {
+        values: { kernel: '6.12.0-1.el10' }
+      },
+      'bluefin-lts-hwe': {
+        fields: ['kernel'],
+        status: 'unavailable',
+        errorCode: 'missing-sbom',
+        error: 'gone'
+      },
     }))
 
     await updateImageVersions()
@@ -257,8 +275,13 @@ describe('updateImageVersions — field-loss guard', () => {
   it('refuses to drop lts.hwe when the hwe image verified without a kernel value', async () => {
     previousFiles[STREAMS_PATH] = 'lts:\n  status: verified\n  hwe: "6.17.0"\n'
     verifyRegistryMock.mockResolvedValue(audit({
-      'bluefin-lts': { values: { kernel: '6.12.0-1.el10' } },
-      'bluefin-lts-hwe': { fields: ['kernel'], values: {} },
+      'bluefin-lts': {
+        values: { kernel: '6.12.0-1.el10' }
+      },
+      'bluefin-lts-hwe': {
+        fields: ['kernel'],
+        values: {}
+      },
     }))
 
     await expect(updateImageVersions()).rejects.toThrow('unexplained field loss in public/stream-versions.yml lts: hwe')
@@ -266,8 +289,13 @@ describe('updateImageVersions — field-loss guard', () => {
   })
 
   it('publishes an unavailable Dakota block when the base image fails', async () => {
-    const isos = [{ label: 'Download ISO', filename: 'dakota-live.iso' }]
-    previousFiles[DAKOTA_PATH] = JSON.stringify({ isos, packages: { kernel: '7.2.6' } })
+    const isos = [
+      { label: 'Download ISO', filename: 'dakota-live.iso' }
+    ]
+    previousFiles[DAKOTA_PATH] = JSON.stringify({
+      isos,
+      packages: { kernel: '7.2.6' }
+    })
     verifyRegistryMock.mockResolvedValue(audit({
       dakota: { status: 'unavailable', errorCode: 'missing-sbom', error: 'gone' },
     }))
@@ -303,7 +331,10 @@ describe('updateImageVersions — --check-only', () => {
   it('exits 1 for the registry\'s own pending-mapping records, even though they are optional', async () => {
     const pending = Object.fromEntries(IMAGE_SBOM_REGISTRY
       .filter(record => record.pendingSbom === true)
-      .map(record => [record.id, { status: 'unavailable', errorCode: 'pending-mapping', error: 'pending' }]))
+      .map(record => [
+        record.id,
+        { status: 'unavailable', errorCode: 'pending-mapping', error: 'pending' }
+      ]))
     expect(Object.keys(pending).length).toBeGreaterThan(0)
     verifyRegistryMock.mockResolvedValue(audit(pending))
 
@@ -351,7 +382,12 @@ describe('update-image-versions CLI', () => {
 
   // With oras absent the real collector raises ToolingError('tool-missing')
   // before touching the network, which exercises the CLI's exit-2 contract.
-  it.each([[[]], [['--check-only']]])('exits 2 and reports the block when oras is missing (args %j)', (args) => {
+  it.each([
+    [[]],
+    [
+      ['--check-only']
+    ]
+  ])('exits 2 and reports the block when oras is missing (args %j)', (args) => {
     const before = [STREAMS_PATH, DAKOTA_PATH].map(file => fs.statSync(file).mtimeMs)
 
     const result = spawnSync(process.execPath, [scriptPath, ...args], {

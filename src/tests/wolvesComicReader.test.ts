@@ -63,9 +63,24 @@ const coverTrack: SoundtrackTrack = {
 }
 
 const galleryPhotos = [
-  { id: 'photo-a', server: '1', secret: 'a', title: 'Photo A' },
-  { id: 'photo-b', server: '2', secret: 'b', title: 'Photo B' },
-  { id: 'photo-c', server: '3', secret: 'c', title: 'Photo C' },
+  {
+    id: 'photo-a',
+    server: '1',
+    secret: 'a',
+    title: 'Photo A'
+  },
+  {
+    id: 'photo-b',
+    server: '2',
+    secret: 'b',
+    title: 'Photo B'
+  },
+  {
+    id: 'photo-c',
+    server: '3',
+    secret: 'c',
+    title: 'Photo C'
+  },
 ]
 
 function mockGalleryData(tracks = [coverTrack], flickrResponse = new Response(JSON.stringify(galleryPhotos))) {
@@ -94,7 +109,9 @@ function activeTimelineImage(wrapper: ReturnType<typeof mount>) {
   const activeLayer = wrapper.findAll('.flickr-photo-layer')
     .find(layer => (layer.attributes('style') ?? '').includes('z-index: 2'))
   const img = activeLayer?.find('.flickr-img')
-  return img?.exists() ? img.attributes('src') : undefined
+  return img?.exists()
+    ? img.attributes('src')
+    : undefined
 }
 
 /**
@@ -187,7 +204,9 @@ describe('wolvesComicReader', () => {
     const slides = (wrapper.vm as any).timelineSlides as Array<{ startTime: number, endTime: number }>
     for (const pickup of Object.values(TRACK_ZERO_TEMPO_PICKUPS)) {
       const measuredCut = TRACK_ZERO_BEAT_TIMES.reduce((nearest, beat) =>
-        Math.abs(beat - pickup) < Math.abs(nearest - pickup) ? beat : nearest)
+        Math.abs(beat - pickup) < Math.abs(nearest - pickup)
+          ? beat
+          : nearest)
       const cutIndex = slides.findIndex(slide => Math.abs(slide.endTime - measuredCut) < 0.001)
 
       expect(cutIndex, `missing measured cut at ${pickup}s`).toBeGreaterThanOrEqual(0)
@@ -382,12 +401,14 @@ describe('wolvesComicReader', () => {
   })
 
   it('ignores Track 0 BPM metadata and keeps authored Hikari windows', async () => {
-    mockGalleryData([{
-      ...coverTrack,
-      bpm: 300,
-      phraseBeats: 1,
-      fadeDuration: 100,
-    }])
+    mockGalleryData([
+      {
+        ...coverTrack,
+        bpm: 300,
+        phraseBeats: 1,
+        fadeDuration: 100,
+      }
+    ])
     const wrapper = mount(WolvesComicReader, {
       props: {
         trackIndex: 0,
@@ -478,7 +499,9 @@ describe('wolvesComicReader', () => {
     expect(new Set(shownImages).size).toBe(shownImages.length)
     expect(new Set(shownImages).size).toBeLessThan(wallpapers.length + missingReservedPaths.length)
     expect(shownImages.some(image => image.includes('wolves/showcase/claw.gif'))).toBe(false)
-    expect([...reservedFirstSeenAt.values()].every(time => time >= 359 && time < 408.2)).toBe(true)
+    expect([
+      ...reservedFirstSeenAt.values()
+    ].every(time => time >= 359 && time < 408.2)).toBe(true)
   }, 15000)
 
   it('keeps every photo in a later-track shuffle available only once', async () => {
@@ -581,9 +604,24 @@ describe('wolvesComicReader', () => {
 
   it('keeps later-track contributor candidates unique', async () => {
     const photos = [
-      { id: 'photo-a', server: '1', secret: 'a', title: 'Photo A' },
-      { id: 'photo-b', server: '1', secret: 'b', title: 'Photo B' },
-      { id: 'photo-c', server: '1', secret: 'c', title: 'Photo C' },
+      {
+        id: 'photo-a',
+        server: '1',
+        secret: 'a',
+        title: 'Photo A'
+      },
+      {
+        id: 'photo-b',
+        server: '1',
+        secret: 'b',
+        title: 'Photo B'
+      },
+      {
+        id: 'photo-c',
+        server: '1',
+        secret: 'c',
+        title: 'Photo C'
+      },
     ]
     mockGalleryData([
       coverTrack,
@@ -691,7 +729,13 @@ describe('wolvesComicReader', () => {
     function crossfadeClass(trackIndex: number, wolvesExperience: boolean, presentationProfile?: PresentationProfile) {
       mockGalleryData()
       const wrapper = mount(WolvesComicReader, {
-        props: { trackIndex, trackId: '1', playlistCurrentTime: 1, wolvesExperience, presentationProfile },
+        props: {
+          trackIndex,
+          trackId: '1',
+          playlistCurrentTime: 1,
+          wolvesExperience,
+          presentationProfile
+        },
       })
       return wrapper.get('#comic-reader').classes()
     }
@@ -740,16 +784,29 @@ describe('wolvesComicReader', () => {
   // them, so the derivation belongs to the back catalogue only.
   it('keeps raw photo titles and the CNCF credit in the frozen Wolves show', async () => {
     const cameraRollPhotos = [
-      { id: 'photo-a', server: '1', secret: 'a', title: 'A7V06139' },
-      { id: 'photo-b', server: '2', secret: 'b', title: 'CRJ07242' },
+      {
+        id: 'photo-a',
+        server: '1',
+        secret: 'a',
+        title: 'A7V06139'
+      },
+      {
+        id: 'photo-b',
+        server: '2',
+        secret: 'b',
+        title: 'CRJ07242'
+      },
     ]
-    mockGalleryData([coverTrack, {
-      id: 'later-track-one',
-      title: 'Later Track One',
-      artist: 'Artist 1',
-      artwork: 'wolves-artwork/later-track-one.jpg',
-      youtubeVideoId: '1',
-    }], new Response(JSON.stringify(cameraRollPhotos)))
+    mockGalleryData([
+      coverTrack,
+      {
+        id: 'later-track-one',
+        title: 'Later Track One',
+        artist: 'Artist 1',
+        artwork: 'wolves-artwork/later-track-one.jpg',
+        youtubeVideoId: '1',
+      }
+    ], new Response(JSON.stringify(cameraRollPhotos)))
 
     const wrapper = mount(WolvesComicReader, {
       props: { trackIndex: 1, trackId: '1', playlistCurrentTime: 1 },
@@ -961,10 +1018,30 @@ describe('wolvesComicReader', () => {
         youtubeVideoId: '1',
       },
     ], new Response(JSON.stringify([
-      { id: 'photo-a', server: '1', secret: 'a', title: 'Photo A' },
-      { id: 'photo-b', server: '1', secret: 'b', title: 'Photo B' },
-      { id: 'photo-c', server: '1', secret: 'c', title: 'Photo C' },
-      { id: 'photo-d', server: '1', secret: 'd', title: 'Photo D' },
+      {
+        id: 'photo-a',
+        server: '1',
+        secret: 'a',
+        title: 'Photo A'
+      },
+      {
+        id: 'photo-b',
+        server: '1',
+        secret: 'b',
+        title: 'Photo B'
+      },
+      {
+        id: 'photo-c',
+        server: '1',
+        secret: 'c',
+        title: 'Photo C'
+      },
+      {
+        id: 'photo-d',
+        server: '1',
+        secret: 'd',
+        title: 'Photo D'
+      },
     ])))
     const firstRun = mount(WolvesComicReader, {
       props: { trackIndex: 1, playlistCurrentTime: 0 },
@@ -1267,9 +1344,30 @@ describe('wolves segment-to-playlist track identity', () => {
   })
 
   it.each([
-    { segmentIndex: 4, title: 'End of You', bpm: 95, phraseBeats: 16, hold: 16 * 60 / 95, crossfadeMs: 800 },
-    { segmentIndex: 5, title: 'Soulbound', bpm: 124, phraseBeats: 32, hold: 16 * 60 / 124, crossfadeMs: 1200 },
-    { segmentIndex: 6, title: 'Last Ride of the Day', bpm: 174, phraseBeats: 64, hold: 32 * 60 / 174, crossfadeMs: 2500 },
+    {
+      segmentIndex: 4,
+      title: 'End of You',
+      bpm: 95,
+      phraseBeats: 16,
+      hold: 16 * 60 / 95,
+      crossfadeMs: 800
+    },
+    {
+      segmentIndex: 5,
+      title: 'Soulbound',
+      bpm: 124,
+      phraseBeats: 32,
+      hold: 16 * 60 / 124,
+      crossfadeMs: 1200
+    },
+    {
+      segmentIndex: 6,
+      title: 'Last Ride of the Day',
+      bpm: 174,
+      phraseBeats: 64,
+      hold: 32 * 60 / 174,
+      crossfadeMs: 2500
+    },
   ])(
     'paces segment $segmentIndex with $title, the song actually playing',
     async ({ segmentIndex, title, bpm, phraseBeats, hold, crossfadeMs }) => {
@@ -1514,7 +1612,10 @@ describe('wolves segment-to-playlist track identity', () => {
 
     const vm = wrapper.vm as any
     const pool = vm.mixedPhotos as Array<{ id: string, kind?: string, dayName?: string, nightName?: string }>
-    const artwork = [...ublueArtworkWallpapers, ...bazziteArtworkWallpapers]
+    const artwork = [
+      ...ublueArtworkWallpapers,
+      ...bazziteArtworkWallpapers
+    ]
 
     expect(ublueArtworkWallpapers).toHaveLength(11)
     expect(bazziteArtworkWallpapers).toHaveLength(2)
@@ -1673,14 +1774,18 @@ describe('segment boundary slide continuity', () => {
 
     const vm = wrapper.vm as any
     const onStageId = (vm.activePhoto as { id: string }).id
-    const offStageId = (vm.activeBuffer === 'A' ? vm.photoB : vm.photoA)?.id
+    const offStageId = (vm.activeBuffer === 'A'
+      ? vm.photoB
+      : vm.photoA)?.id
 
     await wrapper.setProps({ trackIndex: 2, playlistCurrentTime: 0 })
 
     // The visible frame survives the boundary; the off-stage buffer is cleared
     // so the outgoing song's slide can never be swapped back in.
     expect((vm.activePhoto as { id: string }).id).toBe(onStageId)
-    expect(vm.activeBuffer === 'A' ? vm.photoB : vm.photoA).toBeNull()
+    expect(vm.activeBuffer === 'A'
+      ? vm.photoB
+      : vm.photoA).toBeNull()
     expect(offStageId).toBeDefined()
 
     await flushImageLoads()
@@ -1987,7 +2092,11 @@ describe('pending segment preload of the authored opening slide', () => {
 
       expect(firstImage).toBeDefined()
 
-      const checkpoints = [1, Math.floor(slides.length / 3), Math.floor((slides.length * 2) / 3)]
+      const checkpoints = [
+        1,
+        Math.floor(slides.length / 3),
+        Math.floor((slides.length * 2) / 3)
+      ]
       const seenImages = new Set([firstImage])
       for (const index of checkpoints) {
         await advanceTo(director, slides[index]!.startTime + 0.01)
@@ -2002,7 +2111,12 @@ describe('pending segment preload of the authored opening slide', () => {
       const director = await mountCut(WOLVES_DIRECTORS_CUT_PROFILE_ID)
       const slides = scheduleOf(director, 'trackZeroSlides')
 
-      for (const time of [DIRECTORS_CUT_FINALE_START, 380, TRACK_ZERO_SECTIONS.finaleStart, 422]) {
+      for (const time of [
+        DIRECTORS_CUT_FINALE_START,
+        380,
+        TRACK_ZERO_SECTIONS.finaleStart,
+        422
+      ]) {
         expect(slides.some(slide => slide.startTime <= time && slide.endTime > time)).toBe(false)
       }
       // The standard show is still scheduled across that same stretch.

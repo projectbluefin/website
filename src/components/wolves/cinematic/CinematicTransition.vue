@@ -42,7 +42,9 @@ const renderedLines = computed<readonly (CinematicTransitionLine | { kind: 'term
   TERMINAL_LINES.map(text => ({ kind: 'terminal' as const, text })))
 const transitionStyle = computed(() => ({
   '--wc-transition-enter-ms': prefersReducedMotion.value ? '0ms' : '400ms',
-  '--wc-transition-leave-ms': prefersReducedMotion.value ? '0ms' : `${TRANSITION_LEAVE_MS}ms`,
+  '--wc-transition-leave-ms': prefersReducedMotion.value
+    ? '0ms'
+    : `${TRANSITION_LEAVE_MS}ms`,
 }))
 
 function syncReducedMotion() {

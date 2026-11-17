@@ -2,7 +2,13 @@ import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ServerDemos from '../components/server/ServerDemos.vue'
 
-const PHASES = ['cluster', 'cpu', 'storage', 'highlights', 'features'] as const
+const PHASES = [
+  'cluster',
+  'cpu',
+  'storage',
+  'highlights',
+  'features'
+] as const
 const DURATIONS = [5000, 5000, 5000, 10000, 15000]
 
 function mountDemos() {
@@ -48,14 +54,22 @@ describe('serverDemos.vue', () => {
     const wrapper = mountDemos()
 
     const labels = wrapper.findAll('.tabs-container button').map(b => b.text())
-    expect(labels).toEqual(['Cluster', 'Nodes', 'Storage', 'Highlights', 'Features'])
+    expect(labels).toEqual([
+      'Cluster',
+      'Nodes',
+      'Storage',
+      'Highlights',
+      'Features'
+    ])
     wrapper.unmount()
   })
 
   it('advances through every phase on the scripted durations and wraps around', async () => {
     const wrapper = mountDemos()
 
-    const seen: string[] = [urlText(wrapper)]
+    const seen: string[] = [
+      urlText(wrapper)
+    ]
     for (let step = 0; step < PHASES.length; step += 1) {
       vi.advanceTimersByTime(DURATIONS[step])
       await wrapper.vm.$nextTick()

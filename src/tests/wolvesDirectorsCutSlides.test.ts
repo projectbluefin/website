@@ -130,7 +130,9 @@ function sectionHolds(
 function standardHolds(startTime: number, endTime: number, beatGroups: readonly number[]): number[] {
   const count = directorsCutSectionSlideCount(startTime, endTime, beatGroups)
   const cuts = trackZeroBeatCuts(startTime, endTime, count, beatGroups)
-  return cuts.map((cut, index) => cut - (index === 0 ? startTime : cuts[index - 1]!))
+  return cuts.map((cut, index) => cut - (index === 0
+    ? startTime
+    : cuts[index - 1]!))
 }
 
 describe('director\'s cut finale boundary', () => {
@@ -197,7 +199,9 @@ describe('director\'s cut track zero slide schedule', () => {
     // 300.0s is not a measured beat. Handing it straight to trackZeroBeatCuts
     // would clamp the last cut to exactly 300 and put an off-grid cut on stage.
     const offGrid = buildSchedule({
-      reservedIntervals: [{ startTime: 300, endTime: Number.POSITIVE_INFINITY }],
+      reservedIntervals: [
+        { startTime: 300, endTime: Number.POSITIVE_INFINITY }
+      ],
     })
     const finalCut = offGrid[offGrid.length - 1].endTime
 
@@ -211,7 +215,9 @@ describe('director\'s cut track zero slide schedule', () => {
     // A bounded interval is documented as a hand-off, not a gap: nothing
     // ordinary may come back after whatever owns the interval takes the frame.
     const handedOff = buildSchedule({
-      reservedIntervals: [{ startTime: TRACK_ZERO_SECTIONS.bridgeStart, endTime: TRACK_ZERO_SECTIONS.buildStart }],
+      reservedIntervals: [
+        { startTime: TRACK_ZERO_SECTIONS.bridgeStart, endTime: TRACK_ZERO_SECTIONS.buildStart }
+      ],
     })
 
     expect(handedOff[handedOff.length - 1].endTime).toBe(TRACK_ZERO_SECTIONS.bridgeStart)
@@ -354,7 +360,12 @@ describe('director\'s cut track zero slide schedule', () => {
   })
 
   it('preserves source and credit metadata verbatim', () => {
-    const sources = new Map([...peopleSlides, ...showcaseSlides, ...dayNightSlides, ...cncfSlides]
+    const sources = new Map([
+      ...peopleSlides,
+      ...showcaseSlides,
+      ...dayNightSlides,
+      ...cncfSlides
+    ]
       .map(slide => [slide.id, slide] as const))
     // The credit line is derived from `kind`/`isLocal` by getGalleryCaptionLabel,
     // so a dropped field silently retitles a photographer's frame on screen.
@@ -364,7 +375,10 @@ describe('director\'s cut track zero slide schedule', () => {
       peopleSlides: peopleSlides.slice(0, 3),
     })
 
-    for (const slide of [...schedule, ...thin]) {
+    for (const slide of [
+      ...schedule,
+      ...thin
+    ]) {
       const source = sources.get(slide.id)
       expect(source, `unknown slide ${slide.id}`).toBeDefined()
       const { startTime, duration, endTime, ...rest } = slide
@@ -391,7 +405,11 @@ describe('director\'s cut track zero slide schedule', () => {
   })
 
   it('never draws a CNCF feed photo that duplicates a local curated copy', () => {
-    const duplicated = { ...cncfSlides[0], id: '55168684055', rawPhoto: { ...cncfSlides[0].rawPhoto!, id: '55168684055' } }
+    const duplicated = {
+      ...cncfSlides[0],
+      id: '55168684055',
+      rawPhoto: { ...cncfSlides[0].rawPhoto!, id: '55168684055' }
+    }
     const curatedByName = { ...cncfSlides[1], id: '55164385253' }
     const withDuplicates = buildSchedule({
       peopleSlides: peopleSlides.slice(0, 3),
@@ -428,7 +446,9 @@ describe('director\'s cut track zero slide schedule', () => {
   })
 
   it('produces a different order for a different seed without breaking the grid', () => {
-    const reseeded = buildSchedule({ random: createDirectorsCutSlideRandom(9001) })
+    const reseeded = buildSchedule({
+      random: createDirectorsCutSlideRandom(9001)
+    })
 
     expect(reseeded.map(slide => slide.id)).not.toEqual(schedule.map(slide => slide.id))
     expect(reseeded.map(slide => slide.endTime)).toEqual(schedule.map(slide => slide.endTime))

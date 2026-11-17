@@ -65,7 +65,9 @@ describe('track zero measured beat grid', () => {
 
   it('front-loads longer holds so pacing tightens toward the section end', () => {
     const cuts = trackZeroBeatCuts(0, TRACK_ZERO_SECTIONS.verseStart, 4, [32, 24])
-    const durations = cuts.map((cut, index) => cut - (index === 0 ? 0 : cuts[index - 1]))
+    const durations = cuts.map((cut, index) => cut - (index === 0
+      ? 0
+      : cuts[index - 1]))
     expect(durations[0]).toBeGreaterThanOrEqual(durations[durations.length - 1])
     // First hold covers the 8.4s prey anchor; second covers 14.99-19.99s.
     expect(cuts[0]).toBeGreaterThan(8.4)
@@ -75,7 +77,10 @@ describe('track zero measured beat grid', () => {
 
   it('picks up from eight-beat to four-beat cuts at 2:35', () => {
     const cuts = trackZeroBeatCutsWithPickup(126.851, TRACK_ZERO_TEMPO_PICKUPS.chorus, 167.8, 17, 8, 4)
-    const starts = [126.851, ...cuts.slice(0, -1)]
+    const starts = [
+      126.851,
+      ...cuts.slice(0, -1)
+    ]
     const durations = cuts.map((cut, index) => cut - starts[index])
 
     expect(cuts.some(cut => Math.abs(cut - TRACK_ZERO_TEMPO_PICKUPS.chorus) < 0.5)).toBe(true)
@@ -84,7 +89,10 @@ describe('track zero measured beat grid', () => {
 
   it('picks up from six-beat to four-beat cuts at 4:04', () => {
     const cuts = trackZeroBeatCutsWithPickup(229.204, TRACK_ZERO_TEMPO_PICKUPS.bridge, 276.944, 24, 6, 4)
-    const starts = [229.204, ...cuts.slice(0, -1)]
+    const starts = [
+      229.204,
+      ...cuts.slice(0, -1)
+    ]
     const durations = cuts.map((cut, index) => cut - starts[index])
 
     expect(cuts.some(cut => Math.abs(cut - TRACK_ZERO_TEMPO_PICKUPS.bridge) < 0.5)).toBe(true)
@@ -93,7 +101,10 @@ describe('track zero measured beat grid', () => {
 
   it('starts the sustained fast barrage on the measured 5:55 pickup', () => {
     const cuts = trackZeroEvenBeatCuts(TRACK_ZERO_TEMPO_PICKUPS.finale, 408.137, 30)
-    const starts = [TRACK_ZERO_TEMPO_PICKUPS.finale, ...cuts.slice(0, -1)]
+    const starts = [
+      TRACK_ZERO_TEMPO_PICKUPS.finale,
+      ...cuts.slice(0, -1)
+    ]
     const durations = cuts.map((cut, index) => cut - starts[index])
 
     expect(cuts.every(cut => TRACK_ZERO_BEAT_TIMES.includes(cut))).toBe(true)
@@ -110,7 +121,9 @@ describe('track zero measured beat grid', () => {
     const cutIndices = cuts.map(cut => TRACK_ZERO_BEAT_TIMES.indexOf(cut))
     const startIndex = TRACK_ZERO_BEAT_TIMES.indexOf(TRACK_ZERO_SECTIONS.bkEnd)
     const beatDurations = cutIndices.map((cut, index) =>
-      cut - (index === 0 ? startIndex : cutIndices[index - 1]))
+      cut - (index === 0
+        ? startIndex
+        : cutIndices[index - 1]))
     expect(beatDurations.every(duration => duration >= 4 && duration <= 5)).toBe(true)
     expect(cuts[cuts.length - 1]).toBe(TRACK_ZERO_SECTIONS.finaleStart)
   })

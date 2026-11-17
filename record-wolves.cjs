@@ -37,7 +37,9 @@ function parseArgs(argv) {
       continue
     }
     const [key, inlineValue] = raw.slice(2).split('=', 2)
-    const value = inlineValue === undefined ? argv[i + 1] : inlineValue
+    const value = inlineValue === undefined
+      ? argv[i + 1]
+      : inlineValue
     if (inlineValue === undefined) {
       i++
     }
@@ -402,7 +404,9 @@ async function main() {
   for (let i = 0; i < frameCount; i++) {
     const framePath = `frame-${String(i + 1).padStart(6, '0')}.jpg`
     const durSeconds
-      = i + 1 < frameCount ? (frameTimestamps[i + 1] - frameTimestamps[i]) / 1000 : 1 / effectiveFps
+      = i + 1 < frameCount
+        ? (frameTimestamps[i + 1] - frameTimestamps[i]) / 1000
+        : 1 / effectiveFps
     concatLines.push(`file '${framePath}'`)
     concatLines.push(`duration ${Math.max(durSeconds, 0.001).toFixed(6)}`)
   }

@@ -124,10 +124,18 @@ describe('generateSocialCard render path', () => {
     const wallpaper = BLUEFIN_MONTHLY_WALLPAPERS[0]
     const outputPath = path.join(workDir, 'nested/dir/card.webp')
 
-    const result = await generateSocialCard({ wallpaper, outputPath, deviceScaleFactor: 3, browser })
+    const result = await generateSocialCard({
+      wallpaper,
+      outputPath,
+      deviceScaleFactor: 3,
+      browser
+    })
 
     expect(result).toBe(outputPath)
-    expect(browser.newPage).toHaveBeenCalledWith({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 3 })
+    expect(browser.newPage).toHaveBeenCalledWith({
+      viewport: { width: 1200, height: 630 },
+      deviceScaleFactor: 3
+    })
 
     const [html, opts] = page.setContent.mock.calls[0]
     expect(opts).toEqual({ waitUntil: 'networkidle' })

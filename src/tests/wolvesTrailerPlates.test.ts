@@ -211,12 +211,16 @@ describe('trailer plate fades', () => {
 describe('trailer line treatments', () => {
   /** The characters actually on screen, so a treatment can be proved lossless. */
   function plain(tokens: TrailerToken[]): string {
-    return tokens.map(token => (token.kind === 'sear' ? '' : token.value)).join('')
+    return tokens.map(token => (token.kind === 'sear'
+      ? ''
+      : token.value)).join('')
   }
 
   function valuesOf(tokens: TrailerToken[], kind: TrailerToken['kind']): string[] {
     return tokens.flatMap(token => (
-      token.kind === kind && token.kind !== 'sear' ? [token.value] : []
+      token.kind === kind && token.kind !== 'sear'
+        ? [token.value]
+        : []
     ))
   }
 

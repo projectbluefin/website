@@ -57,25 +57,28 @@ describe('wolves cinematic stage status plate', () => {
       id: 'album-test',
       title: 'Album Test',
       artwork: 'album.jpg',
-      segments: [{
-        id: 'album-track-1',
-        kind: 'youtube',
-        youtubeId: 'album-track-1',
-        chapter: 'ALBUM',
-        title: 'Track One',
-        artist: 'Artist',
-        artwork: 'track.jpg',
-        durationSeconds: 120,
-      }, {
-        id: 'album-track-2',
-        kind: 'youtube',
-        youtubeId: 'album-track-2',
-        chapter: 'ALBUM',
-        title: 'Track Two',
-        artist: 'Artist',
-        artwork: 'track-2.jpg',
-        durationSeconds: 120,
-      }],
+      segments: [
+        {
+          id: 'album-track-1',
+          kind: 'youtube',
+          youtubeId: 'album-track-1',
+          chapter: 'ALBUM',
+          title: 'Track One',
+          artist: 'Artist',
+          artwork: 'track.jpg',
+          durationSeconds: 120,
+        },
+        {
+          id: 'album-track-2',
+          kind: 'youtube',
+          youtubeId: 'album-track-2',
+          chapter: 'ALBUM',
+          title: 'Track Two',
+          artist: 'Artist',
+          artwork: 'track-2.jpg',
+          durationSeconds: 120,
+        }
+      ],
     })
     store.enterCinematic()
     store.segmentIndex = 1

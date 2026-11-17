@@ -9,7 +9,9 @@ const store = useCinematicStore()
 // source video's native timeline, so cues stay aligned with authored trims.
 const cues = computed(() => {
   const text = store.segment.captionsText
-  return text ? parseCaptionCues(text) : []
+  return text
+    ? parseCaptionCues(text)
+    : []
 })
 
 const currentCue = computed(() => activeCaptionCue(cues.value, store.nativeTime))

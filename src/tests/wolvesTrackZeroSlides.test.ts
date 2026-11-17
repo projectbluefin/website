@@ -34,7 +34,12 @@ import {
 describe('wolves Track 0 slide locks', () => {
   it('moves Jono Bacon to the first People slot without reordering the other slides', () => {
     const jono = { id: 'wolves/people/interview-jono-bacon-cult-psychology-kubernetes.webp' }
-    const before = [{ id: 'people-a' }, { id: 'people-b' }, jono, { id: 'people-c' }]
+    const before = [
+      { id: 'people-a' },
+      { id: 'people-b' },
+      jono,
+      { id: 'people-c' }
+    ]
 
     expect(pinJonoBaconAtTrackZeroWindow(before)).toEqual([
       jono,
@@ -52,7 +57,18 @@ describe('wolves Track 0 slide locks', () => {
     const hikari = { id: 'wolves/people/hikari.JPG' }
     const hikari2 = { id: 'wolves/people/hikari2.JPG' }
     const jorge = { id: 'wolves/people/jorge-bluefin.webp' }
-    const before = [{ id: 'people-a' }, marina, hikari, { id: 'people-b' }, jorge, jono, kyle, shermanM2, hikari2, { id: 'people-c' }]
+    const before = [
+      { id: 'people-a' },
+      marina,
+      hikari,
+      { id: 'people-b' },
+      jorge,
+      jono,
+      kyle,
+      shermanM2,
+      hikari2,
+      { id: 'people-c' }
+    ]
 
     expect(pinTrackZeroHeroSlides(before)).toEqual([
       jono,
@@ -73,8 +89,18 @@ describe('wolves Track 0 slide locks', () => {
     const tophee = { id: topheeSlideId }
     const jorge = { id: jorgeBluefinSlideId }
 
-    expect(pinTrackZeroHeroSlides([{ id: 'people-a' }, laura, tophee, jorge]))
-      .toEqual([jorge, laura, tophee, { id: 'people-a' }])
+    expect(pinTrackZeroHeroSlides([
+      { id: 'people-a' },
+      laura,
+      tophee,
+      jorge
+    ]))
+      .toEqual([
+        jorge,
+        laura,
+        tophee,
+        { id: 'people-a' }
+      ])
     expect(lauraTrackZeroWindow.startTime).toBe(jorgeBluefinTrackZeroWindow.endTime)
     expect(topheeTrackZeroWindow.startTime).toBe(lauraTrackZeroWindow.endTime)
   })
@@ -144,14 +170,35 @@ describe('wolves Track 0 slide locks', () => {
     const jorge = { id: 'wolves/people/jorge-bluefin.webp' }
     const regular = { id: 'people-a' }
 
-    expect(pinTrackZeroHeroSlides([jono, marina, shermanM2, kyle, hikari, hikari2, jorge, regular]))
-      .toEqual([jono, marina, shermanM2, kyle, hikari, hikari2, jorge, regular])
+    expect(pinTrackZeroHeroSlides([
+      jono,
+      marina,
+      shermanM2,
+      kyle,
+      hikari,
+      hikari2,
+      jorge,
+      regular
+    ]))
+      .toEqual([
+        jono,
+        marina,
+        shermanM2,
+        kyle,
+        hikari,
+        hikari2,
+        jorge,
+        regular
+      ])
     expect(pinTrackZeroHeroSlides([marina, regular])).toEqual([marina, regular])
   })
 
   it('reserves the new people photos for the fast finale without reordering regular slides', () => {
     const newPhoto = { id: 'wolves/people/liz.webp' }
-    const regular = [{ id: 'people-a' }, { id: 'people-b' }]
+    const regular = [
+      { id: 'people-a' },
+      { id: 'people-b' }
+    ]
     const { regularSlides, finaleSlides } = splitTrackZeroFastFinaleSlides([
       regular[0],
       newPhoto,
@@ -216,10 +263,18 @@ describe('wolves Track 0 slide locks', () => {
 
   it('clamps the Microraptor lock into small pools and skips it when the slide is missing', () => {
     const microraptor = { id: bluefinMicroraptorSlideId }
-    const small = [{ id: 'showcase-a' }, microraptor, { id: 'showcase-b' }]
+    const small = [
+      { id: 'showcase-a' },
+      microraptor,
+      { id: 'showcase-b' }
+    ]
 
     const pinnedSmall = pinBluefinMicroraptorSlide(small)
     expect(pinnedSmall[pinnedSmall.length - 1]).toEqual(microraptor)
-    expect(pinBluefinMicroraptorSlide([{ id: 'showcase-a' }])).toEqual([{ id: 'showcase-a' }])
+    expect(pinBluefinMicroraptorSlide([
+      { id: 'showcase-a' }
+    ])).toEqual([
+      { id: 'showcase-a' }
+    ])
   })
 })

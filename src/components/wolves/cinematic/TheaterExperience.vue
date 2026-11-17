@@ -43,7 +43,9 @@ const slotElapsed = computed(() => Math.min(
 ))
 const isTrackZero = computed(() => store.segment.trackZeroExperience === true)
 const isWolvesPresentation = computed(() => store.isWolvesPresentation)
-const thesis = computed(() => (isTrackZero.value ? getWolvesThesisState(time.value) : getWolvesThesisState(0)))
+const thesis = computed(() => (isTrackZero.value
+  ? getWolvesThesisState(time.value)
+  : getWolvesThesisState(0)))
 
 // Static ordered video-loop sidecar for Track 0's desktop right column, below
 // the scheduled lore panel. This is a plain native <iframe> embed (no IFrame

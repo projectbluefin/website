@@ -10,8 +10,16 @@ const props = defineProps<LoreViewProps>()
 
 const provenance = computed(() => getSourceProvenance(props.record))
 const spec = computed<LoreSpecEntry[]>(() => [
-  ...provenance.value ? [{ key: 'provenance', value: provenance.value }] : [],
-  ...props.record.metadata.channel ? [{ key: 'collection', value: props.record.metadata.channel }] : [],
+  ...provenance.value
+    ? [
+        { key: 'provenance', value: provenance.value }
+      ]
+    : [],
+  ...props.record.metadata.channel
+    ? [
+        { key: 'collection', value: props.record.metadata.channel }
+      ]
+    : [],
 ])
 
 const paragraphs = computed(() => parseLoreSpeakerParagraphs(props.record.body))

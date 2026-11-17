@@ -28,7 +28,9 @@ export const CHAT_COMPLETION_PAUSE_SECONDS = 5
 
 /** The pages a record shows, in order, using the shared page model. */
 export function loreRecordPages(input: LoreTimingInput): string[] {
-  return input.kind === 'chatlog' ? loreChatPages(input.body) : loreProsePages(input.body)
+  return input.kind === 'chatlog'
+    ? loreChatPages(input.body)
+    : loreProsePages(input.body)
 }
 
 /**
@@ -38,7 +40,9 @@ export function loreRecordPages(input: LoreTimingInput): string[] {
  */
 export function estimateLoreReadDuration(input: LoreTimingInput): number {
   const pages = loreRecordPages(input)
-  const pauseSeconds = input.kind === 'chatlog' ? CHAT_COMPLETION_PAUSE_SECONDS : 0
+  const pauseSeconds = input.kind === 'chatlog'
+    ? CHAT_COMPLETION_PAUSE_SECONDS
+    : 0
   return estimatePagesSeconds(pages) + pauseSeconds
 }
 
@@ -57,7 +61,9 @@ interface LoreTimingPlan {
 
 function planLoreRecord(entry: LoreTimingInput & { id: string }): LoreTimingPlan {
   const pages = loreRecordPages(entry)
-  const pauseSeconds = entry.kind === 'chatlog' ? CHAT_COMPLETION_PAUSE_SECONDS : 0
+  const pauseSeconds = entry.kind === 'chatlog'
+    ? CHAT_COMPLETION_PAUSE_SECONDS
+    : 0
   return {
     id: entry.id,
     pageCount: Math.max(1, pages.length),
@@ -94,11 +100,15 @@ export function allocateLoreSlots(
   }
   else if (minimumTotal > 0 && available >= minimumTotal) {
     const growth = idealTotal - minimumTotal
-    const scale = growth > 0 ? (available - minimumTotal) / growth : 0
+    const scale = growth > 0
+      ? (available - minimumTotal) / growth
+      : 0
     durations = plans.map(plan => plan.minimum + (plan.ideal - plan.minimum) * scale)
   }
   else {
-    const scale = minimumTotal > 0 ? available / minimumTotal : 0
+    const scale = minimumTotal > 0
+      ? available / minimumTotal
+      : 0
     durations = plans.map(plan => plan.minimum * scale)
   }
 
@@ -116,5 +126,7 @@ export function allocateLoreSlots(
     }
     cursor += duration
     return slot
-  }).map((slot, index, slots) => index === slots.length - 1 ? { ...slot, endTime } : slot)
+  }).map((slot, index, slots) => index === slots.length - 1
+    ? { ...slot, endTime }
+    : slot)
 }

@@ -1139,7 +1139,9 @@ export function trackZeroNearestBeatIndex(time: number): number {
 export function trackZeroBeatAtOrBefore(time: number): number {
   const index = trackZeroNearestBeatIndex(time)
   const beat = TRACK_ZERO_BEAT_TIMES[index]!
-  return beat <= time ? beat : (TRACK_ZERO_BEAT_TIMES[index - 1] ?? TRACK_ZERO_BEAT_TIMES[0]!)
+  return beat <= time
+    ? beat
+    : (TRACK_ZERO_BEAT_TIMES[index - 1] ?? TRACK_ZERO_BEAT_TIMES[0]!)
 }
 
 /**
@@ -1201,7 +1203,9 @@ export function trackZeroBeatCuts(
   if (totalBeats < base * count) {
     const uniform = (endTime - startTime) / count
     return Array.from({ length: count }, (_, i) =>
-      i === count - 1 ? endTime : startTime + uniform * (i + 1))
+      i === count - 1
+        ? endTime
+        : startTime + uniform * (i + 1))
   }
   const perSlide = Array.from({ length: count }, () => base)
   let remaining = totalBeats - base * count
@@ -1240,7 +1244,9 @@ export function trackZeroEvenBeatCuts(
   const totalBeats = endIndex - startIndex
   if (totalBeats < count) {
     return Array.from({ length: count }, (_, index) =>
-      index === count - 1 ? endTime : startTime + ((endTime - startTime) * (index + 1)) / count)
+      index === count - 1
+        ? endTime
+        : startTime + ((endTime - startTime) * (index + 1)) / count)
   }
 
   return Array.from({ length: count }, (_, index) => {
@@ -1275,14 +1281,18 @@ export function trackZeroBeatCutsWithPickup(
   const totalBeats = endIndex - startIndex
   if (totalBeats < afterBeats * count) {
     return Array.from({ length: count }, (_, index) =>
-      index === count - 1 ? endTime : startTime + ((endTime - startTime) * (index + 1)) / count)
+      index === count - 1
+        ? endTime
+        : startTime + ((endTime - startTime) * (index + 1)) / count)
   }
 
   const cuts: number[] = []
   let index = startIndex
   for (let slide = 0; slide < count; slide++) {
     const remainingSlides = count - slide - 1
-    const targetBeats = index < pickupIndex ? beforeBeats : afterBeats
+    const targetBeats = index < pickupIndex
+      ? beforeBeats
+      : afterBeats
     const maxStep = endIndex - index - (afterBeats * remainingSlides)
     let step = Math.min(targetBeats, maxStep)
     if (index < pickupIndex && index + step > pickupIndex) {

@@ -28,11 +28,21 @@ const artworkSource = computed(() =>
 )
 
 const spec = computed<LoreSpecEntry[]>(() => [
-  ...species.value ? [{ key: 'species', value: species.value.scientificName }] : [],
-  ...guardian.value
-    ? [{ key: 'rider', value: guardian.value.metadata.title || guardian.value.metadata.subject || '' }]
+  ...species.value
+    ? [
+        { key: 'species', value: species.value.scientificName }
+      ]
     : [],
-  ...bond.value ? [{ key: 'bond', value: bond.value.id }] : [],
+  ...guardian.value
+    ? [
+        { key: 'rider', value: guardian.value.metadata.title || guardian.value.metadata.subject || '' }
+      ]
+    : [],
+  ...bond.value
+    ? [
+        { key: 'bond', value: bond.value.id }
+      ]
+    : [],
 ])
 
 const paragraphs = computed(() => props.record.body.split(/\n{2,}/).map(para => para.trim()).filter(Boolean))

@@ -53,7 +53,12 @@ function scheduleStatic(context: BrowserAudioContext, startAt: number) {
   gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.18)
 
   source.buffer = buildNoiseBuffer(context, 0.2)
-  connectNodes([source, bandpass, gain, context.destination])
+  connectNodes([
+    source,
+    bandpass,
+    gain,
+    context.destination
+  ])
   source.start(startAt)
   source.stop(startAt + 0.2)
 }
@@ -76,7 +81,12 @@ function scheduleKnock(context: BrowserAudioContext, startAt: number, frequency 
 
   const toneBus = context.createGain()
   toneBus.gain.setValueAtTime(1, startAt)
-  connectNodes([body, toneBus, gain, context.destination])
+  connectNodes([
+    body,
+    toneBus,
+    gain,
+    context.destination
+  ])
   connectNodes([overtone, toneBus])
 
   body.start(startAt)
@@ -104,7 +114,12 @@ function scheduleExplosion(context: BrowserAudioContext, startAt: number) {
   gain.gain.linearRampToValueAtTime(0.34, startAt + 0.04)
   gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.95)
 
-  connectNodes([noise, lowpass, gain, context.destination])
+  connectNodes([
+    noise,
+    lowpass,
+    gain,
+    context.destination
+  ])
   connectNodes([rumble, gain])
 
   noise.start(startAt)
@@ -146,10 +161,14 @@ function scheduleCue(context: BrowserAudioContext, cue: TransitionSfxCue, startA
 export function transitionSfxCues(lines: readonly CinematicTransitionLine[]): readonly TransitionSfxCue[] {
   return lines.flatMap<TransitionSfxCue>((line) => {
     if (line.kind === 'static') {
-      return [{ effect: line.effect }]
+      return [
+        { effect: line.effect }
+      ]
     }
     if (line.kind === 'sfx') {
-      return [{ effect: line.effect }]
+      return [
+        { effect: line.effect }
+      ]
     }
     return []
   })

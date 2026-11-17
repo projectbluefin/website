@@ -155,7 +155,10 @@ vi.mock('@/composables/useYoutubeIframeApi', async (importOriginal) => {
 
       seekTo = (seconds: number, allow: boolean) => {
         this.currentTime = seconds
-        companionCalls.push({ method: 'seekTo', args: [seconds, allow] })
+        companionCalls.push({
+          method: 'seekTo',
+          args: [seconds, allow]
+        })
       }
 
       getCurrentTime = () => this.currentTime
@@ -188,7 +191,9 @@ function companionState(wrapper: any): 'absent' | 'hidden' | 'revealed' {
   // A rendered-but-hidden corner must never fall back to `display: none`: that
   // is exactly the composite the play lead is too short to pay for.
   expect(corner.attributes('style') ?? '').not.toContain('display: none')
-  return corner.classes().includes('wc-dcf-companion--hidden') ? 'hidden' : 'revealed'
+  return corner.classes().includes('wc-dcf-companion--hidden')
+    ? 'hidden'
+    : 'revealed'
 }
 
 const STAGE_STUBS = {
@@ -209,8 +214,15 @@ async function mountFinaleAt(time: number) {
   store.updateTime(time, 424, time)
   const wrapper = mount(WolvesDirectorFinale, {
     global: {
-      config: { errorHandler: (error: unknown) => { handledErrors.push(error) } },
-      stubs: { WolvesLoreColumn: { props: ['artifactId', 'duration', 'elapsed'], template: '<div class="lore-stub" :data-artifact="artifactId" :data-duration="duration" :data-elapsed="elapsed" />' } },
+      config: {
+        errorHandler: (error: unknown) => { handledErrors.push(error) }
+      },
+      stubs: {
+        WolvesLoreColumn: {
+          props: ['artifactId', 'duration', 'elapsed'],
+          template: '<div class="lore-stub" :data-artifact="artifactId" :data-duration="duration" :data-elapsed="elapsed" />'
+        }
+      },
     },
   })
   await nextTick()
@@ -777,7 +789,12 @@ describe('director\'s cut finale composition', () => {
     // A rejected memoised build re-thrown on every 100ms clock tick is how a
     // dead script load takes the closing quote down with it. Drive the clock
     // through the rest of the finale and require the quote to still arrive.
-    for (const time of [400, 405, DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart, DIRECTORS_CUT_FINALE_ANCHORS.survivalStart]) {
+    for (const time of [
+      400,
+      405,
+      DIRECTORS_CUT_FINALE_ANCHORS.extinctionStart,
+      DIRECTORS_CUT_FINALE_ANCHORS.survivalStart
+    ]) {
       store.updateTime(time, 424, time)
       await nextTick()
       await Promise.resolve()
@@ -1030,7 +1047,9 @@ describe('director\'s cut finale chrome suppression', () => {
   })
 
   function mountStage() {
-    return mount(CinematicStage, { global: { stubs: STAGE_STUBS } })
+    return mount(CinematicStage, {
+      global: { stubs: STAGE_STUBS }
+    })
   }
 
   it('keeps the surviving chrome up right until the finale beat', async () => {

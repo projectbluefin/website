@@ -93,7 +93,9 @@ async function fetchFeed() {
     }
   }
   catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to load feed'
+    error.value = err instanceof Error
+      ? err.message
+      : 'Failed to load feed'
     console.error('RSS Feed Error:', err)
   }
   finally {

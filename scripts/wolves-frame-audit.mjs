@@ -50,18 +50,27 @@ const SETTLE_ATTEMPTS = 3
 
 function parseViewport(value) {
   const match = /^(\d+)x(\d+)$/.exec(value ?? '')
-  return match ? { width: Number(match[1]), height: Number(match[2]) } : null
+  return match
+    ? {
+        width: Number(match[1]),
+        height: Number(match[2])
+      }
+    : null
 }
 
 function flagValue(args, name) {
   const index = args.indexOf(name)
-  return index === -1 ? null : args[index + 1] ?? null
+  return index === -1
+    ? null
+    : args[index + 1] ?? null
 }
 
 /** The plate a cue puts on screen. A crossfade shot settles on its night plate. */
 function plateFor(cue) {
   const image = cue.backgroundImage ?? cue.backgroundCrossfade?.[0]?.night ?? null
-  return image ? image.split('/').pop() : null
+  return image
+    ? image.split('/').pop()
+    : null
 }
 
 function normalise(text) {
@@ -99,16 +108,42 @@ export function paintedBox({ elementBox, naturalWidth, naturalHeight, objectFit,
   const [x = '50%', y = '50%'] = position.split(/\s+/)
   const left = elementBox.left + objectPosition(x, elementBox.width - width)
   const top = elementBox.top + objectPosition(y, elementBox.height - height)
-  return { left, top, right: left + width, bottom: top + height, width, height }
+  return {
+    left,
+    top,
+    right: left + width,
+    bottom: top + height,
+    width,
+    height
+  }
 }
 
 function selfTest() {
-  const elementBox = { left: 0, top: 0, right: 1280, bottom: 720, width: 1280, height: 720 }
-  const contained = paintedBox({ elementBox, naturalWidth: 1024, naturalHeight: 768, objectFit: 'contain', objectPosition: '50% 50%' })
+  const elementBox = {
+    left: 0,
+    top: 0,
+    right: 1280,
+    bottom: 720,
+    width: 1280,
+    height: 720
+  }
+  const contained = paintedBox({
+    elementBox,
+    naturalWidth: 1024,
+    naturalHeight: 768,
+    objectFit: 'contain',
+    objectPosition: '50% 50%'
+  })
   if (contained.left !== 160 || contained.width !== 960 || contained.height !== 720) {
     throw new Error(`contain self-test failed: ${JSON.stringify(contained)}`)
   }
-  const covered = paintedBox({ elementBox, naturalWidth: 1024, naturalHeight: 768, objectFit: 'cover', objectPosition: '50% 50%' })
+  const covered = paintedBox({
+    elementBox,
+    naturalWidth: 1024,
+    naturalHeight: 768,
+    objectFit: 'cover',
+    objectPosition: '50% 50%'
+  })
   if (covered.left !== 0 || covered.top !== -120 || covered.width !== 1280 || covered.height !== 960) {
     throw new Error(`cover self-test failed: ${JSON.stringify(covered)}`)
   }
@@ -126,7 +161,9 @@ async function loadCues(videoKey) {
     const { video } = resolveVideo(videoKey)
     const loadModule = specifier => server.ssrLoadModule(specifier)
     const segment = await video.load(loadModule)
-    const geometry = video.loadGeometry ? await video.loadGeometry(loadModule) : []
+    const geometry = video.loadGeometry
+      ? await video.loadGeometry(loadModule)
+      : []
     return { segment, cues: segment.overlays, geometry }
   }
   finally {
@@ -220,7 +257,9 @@ async function main() {
               if (!root) {
                 return false
               }
-              const image = [...root.querySelectorAll('img.wolves-intro-overlay-background')]
+              const image = [
+                ...root.querySelectorAll('img.wolves-intro-overlay-background')
+              ]
                 .find(candidate => candidate.naturalWidth > 0 && Number(getComputedStyle(candidate).opacity) > 0.99)
               if (!image) {
                 return false
@@ -230,7 +269,9 @@ async function main() {
               }
               const caption = root.querySelector('.wolves-intro-overlay-text')
               const captionText = strip(caption?.innerText)
-              const captionOpacity = caption ? Number(getComputedStyle(caption).opacity) : 0
+              const captionOpacity = caption
+                ? Number(getComputedStyle(caption).opacity)
+                : 0
               if (text) {
                 if (captionText !== text) {
                   return false
@@ -252,7 +293,14 @@ async function main() {
               // satisfied it — which is how a probe reports the shot it did not check.
               const box = (element) => {
                 const rect = element.getBoundingClientRect()
-                return { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height }
+                return {
+                  left: rect.left,
+                  top: rect.top,
+                  right: rect.right,
+                  bottom: rect.bottom,
+                  width: rect.width,
+                  height: rect.height
+                }
               }
               return {
                 image: {
@@ -268,7 +316,10 @@ async function main() {
                 // The opacity tolerance belongs only to a wordless shot, where any text is
                 // the previous shot's line on its way out.
                 caption: caption && captionText && (text || captionOpacity > 0.5)
-                  ? { text: caption.innerText.replace(/\s+/g, ' ').trim(), box: box(caption) }
+                  ? {
+                      text: caption.innerText.replace(/\s+/g, ' ').trim(),
+                      box: box(caption)
+                    }
                   : null,
                 frame: { width: window.innerWidth, height: window.innerHeight },
               }
@@ -284,13 +335,20 @@ async function main() {
         // Report what was actually on screen, so a failure names the frame it found.
         const found = await page.evaluate(() => {
           const root = document.querySelector('.wolves-intro-overlay')
-          const image = [...root?.querySelectorAll('img.wolves-intro-overlay-background') ?? []]
-            .map(candidate => ({ element: candidate, opacity: Number(getComputedStyle(candidate).opacity) }))
+          const image = [
+            ...root?.querySelectorAll('img.wolves-intro-overlay-background') ?? []
+          ]
+            .map(candidate => ({
+              element: candidate,
+              opacity: Number(getComputedStyle(candidate).opacity)
+            }))
             .sort((a, b) => b.opacity - a.opacity)[0]
             ?.element ?? null
           const caption = root?.querySelector('.wolves-intro-overlay-text')
           return {
-            plate: image ? decodeURIComponent(image.currentSrc).split('/').pop() : 'none',
+            plate: image
+              ? decodeURIComponent(image.currentSrc).split('/').pop()
+              : 'none',
             text: caption?.innerText.replace(/\s+/g, ' ').trim() || '(wordless)',
           }
         })
@@ -350,14 +408,25 @@ async function main() {
     await browser.close()
   }
 
-  const unique = list => [...new Set(list)]
+  const unique = list => [
+    ...new Set(list)
+  ]
   console.info(`\nduration ${segment.duration}s, ${cues.length} shots checked`)
-  for (const [heading, list] of [['console errors', consoleErrors], ['page errors', pageErrors], ['bad requests', badRequests], ['problems', problems]]) {
+  for (const [heading, list] of [
+    ['console errors', consoleErrors],
+    ['page errors', pageErrors],
+    ['bad requests', badRequests],
+    ['problems', problems]
+  ]) {
     console.info(`\n${heading}:`)
-    console.info(unique(list).length ? unique(list).map(entry => `  ${entry}`).join('\n') : '  (none)')
+    console.info(unique(list).length
+      ? unique(list).map(entry => `  ${entry}`).join('\n')
+      : '  (none)')
   }
 
-  process.exit(problems.length || consoleErrors.length || pageErrors.length || badRequests.length ? 1 : 0)
+  process.exit(problems.length || consoleErrors.length || pageErrors.length || badRequests.length
+    ? 1
+    : 0)
 }
 
 main().catch((error) => {

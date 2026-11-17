@@ -94,7 +94,9 @@ async function launchExperience(manifest: ExperienceManifest) {
 
 const isDirectorsCut = ref(false)
 const introVideos = computed(() =>
-  isDirectorsCut.value ? buildDirectorsCutVideoSequence() : buildIntroVideoSequence()
+  isDirectorsCut.value
+    ? buildDirectorsCutVideoSequence()
+    : buildIntroVideoSequence()
 )
 const INTRO_HANDOFF_FADE_MS = 400
 const intro = ref<InstanceType<typeof WolvesIntroOverlay> | null>(null)

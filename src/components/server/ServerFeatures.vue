@@ -29,20 +29,82 @@ interface SysextCard {
 
 const cards: SysextCard[] = [
   // CNCF Graduated
-  { name: 'Falco', href: 'https://falco.org', icon: IconShieldCheck, desc: 'Runtime security & threat detection', cncf: 'graduated' },
+  {
+    name: 'Falco',
+    href: 'https://falco.org',
+    icon: IconShieldCheck,
+    desc: 'Runtime security & threat detection',
+    cncf: 'graduated'
+  },
   // CNCF Incubating
-  { name: 'KubeVirt', href: 'https://kubevirt.io', icon: IconMonitorMultiple, desc: 'Virtual Machine Management', cncf: 'incubating' },
-  { name: 'KubeStellar', href: 'https://kubestellar.io', icon: IconKubernetes, desc: 'Multi-cluster management and dashboard', cncf: 'incubating' },
+  {
+    name: 'KubeVirt',
+    href: 'https://kubevirt.io',
+    icon: IconMonitorMultiple,
+    desc: 'Virtual Machine Management',
+    cncf: 'incubating'
+  },
+  {
+    name: 'KubeStellar',
+    href: 'https://kubestellar.io',
+    icon: IconKubernetes,
+    desc: 'Multi-cluster management and dashboard',
+    cncf: 'incubating'
+  },
   // CNCF Sandbox
-  { name: 'k3s', href: 'https://k3s.io', icon: IconKubernetes, desc: 'Lightweight Kubernetes cluster', cncf: 'sandbox' },
-  { name: 'Inspektor Gadget', href: 'https://www.inspektor-gadget.io', icon: IconMagnifyScan, desc: 'eBPF-based debugging & tracing', cncf: 'sandbox' },
-  { name: 'kured', href: 'https://kured.dev', icon: IconPowerCycle, desc: 'Safe automatic node reboots for Kubernetes', cncf: 'sandbox' },
-  { name: 'Podman', href: 'https://podman.io', icon: IconDocker, desc: 'Daemonless container engine', cncf: 'sandbox' },
+  {
+    name: 'k3s',
+    href: 'https://k3s.io',
+    icon: IconKubernetes,
+    desc: 'Lightweight Kubernetes cluster',
+    cncf: 'sandbox'
+  },
+  {
+    name: 'Inspektor Gadget',
+    href: 'https://www.inspektor-gadget.io',
+    icon: IconMagnifyScan,
+    desc: 'eBPF-based debugging & tracing',
+    cncf: 'sandbox'
+  },
+  {
+    name: 'kured',
+    href: 'https://kured.dev',
+    icon: IconPowerCycle,
+    desc: 'Safe automatic node reboots for Kubernetes',
+    cncf: 'sandbox'
+  },
+  {
+    name: 'Podman',
+    href: 'https://podman.io',
+    icon: IconDocker,
+    desc: 'Daemonless container engine',
+    cncf: 'sandbox'
+  },
   // Community
-  { name: 'Docker', href: 'https://docker.com', icon: IconDocker, desc: 'You probably have a bunch of these' },
-  { name: 'Tailscale', href: 'https://tailscale.com', icon: IconVpn, desc: 'Zero-config WireGuard mesh VPN' },
-  { name: 'Incus', href: 'https://linuxcontainers.org/incus/', icon: IconServerNetwork, desc: 'Container & VM manager' },
-  { name: 'ZFS', href: 'https://openzfs.org', icon: IconDatabase, desc: 'Advanced filesystem & volume manager' },
+  {
+    name: 'Docker',
+    href: 'https://docker.com',
+    icon: IconDocker,
+    desc: 'You probably have a bunch of these'
+  },
+  {
+    name: 'Tailscale',
+    href: 'https://tailscale.com',
+    icon: IconVpn,
+    desc: 'Zero-config WireGuard mesh VPN'
+  },
+  {
+    name: 'Incus',
+    href: 'https://linuxcontainers.org/incus/',
+    icon: IconServerNetwork,
+    desc: 'Container & VM manager'
+  },
+  {
+    name: 'ZFS',
+    href: 'https://openzfs.org',
+    icon: IconDatabase,
+    desc: 'Advanced filesystem & volume manager'
+  },
 ]
 
 const tierLabel: Record<CncfTier, string> = {

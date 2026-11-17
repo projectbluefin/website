@@ -47,7 +47,9 @@ const PLAYLIST_HOSTS = new Set(['www.youtube.com', 'youtube.com', 'music.youtube
 const MODULE_PATH = import.meta.url.startsWith('file:')
   ? fileURLToPath(import.meta.url)
   : null
-const ROOT_DIR = MODULE_PATH ? resolve(dirname(MODULE_PATH), '..') : process.cwd()
+const ROOT_DIR = MODULE_PATH
+  ? resolve(dirname(MODULE_PATH), '..')
+  : process.cwd()
 const EXPERIENCES_DIR = join(ROOT_DIR, 'public', 'experiences')
 
 /**
@@ -83,7 +85,9 @@ export function cleanTitle(raw) {
     do {
       previous = title
       title = title.replace(pattern, (match, inner) =>
-        TITLE_JUNK.test(inner) && !/\b(?:feat|from|live|cover|instrumental|intro|part)\b/i.test(inner) ? '' : match)
+        TITLE_JUNK.test(inner) && !/\b(?:feat|from|live|cover|instrumental|intro|part)\b/i.test(inner)
+          ? ''
+          : match)
     } while (title !== previous)
   }
   for (const separator of [' - ', ' | ']) {
@@ -132,7 +136,9 @@ export function stripArtistPrefix(title, artist) {
   }
   let rest = title.slice(artist.length).replace(/^\s*[-/:—·]\s*/, '').trim()
   rest = rest.replace(/^["“]([^"”]+)["”]/, '$1').replace(/\s{2,}/g, ' ').trim()
-  return rest.length > 0 ? rest : title
+  return rest.length > 0
+    ? rest
+    : title
 }
 
 function normalizeIdentity(value) {
@@ -164,9 +170,15 @@ export function buildSegments(entries, chapter) {
     const override = TRACK_METADATA_OVERRIDES[entry.id] ?? {}
     const artist = override.artist ?? (reversed
       ? uploader
-      : cleanArtist(hasArtistPrefix ? artistPrefix.trim() : uploader))
+      : cleanArtist(hasArtistPrefix
+          ? artistPrefix.trim()
+          : uploader))
     const title = override.title ?? stripArtistPrefix(
-      reversed ? artistPrefix.trim() : (hasArtistPrefix ? titleParts.join(' - ').trim() : cleanedRawTitle),
+      reversed
+        ? artistPrefix.trim()
+        : (hasArtistPrefix
+            ? titleParts.join(' - ').trim()
+            : cleanedRawTitle),
       artist,
     )
     const songKey = `${normalizeIdentity(artist)}::${normalizeIdentity(title)}`
@@ -203,8 +215,12 @@ export function shouldIncludeAlbum(album) {
   if (!album || typeof album !== 'object') {
     return false
   }
-  const id = typeof album.id === 'string' ? album.id : ''
-  const title = typeof album.title === 'string' ? album.title : ''
+  const id = typeof album.id === 'string'
+    ? album.id
+    : ''
+  const title = typeof album.title === 'string'
+    ? album.title
+    : ''
   return PLAYLIST_ID_PATTERN.test(id) && !FEATURED_ALBUM_IDS.has(id) && !FEATURED_ALBUM_TITLES.has(title)
 }
 
@@ -230,7 +246,12 @@ export function readPlaylistEntries(playlistUrl) {
   if (!isPlaylistUrl(playlistUrl)) {
     throw new TypeError(`Refusing to pass non-YouTube playlist URL to yt-dlp: ${String(playlistUrl)}`)
   }
-  const output = execFileSync('yt-dlp', ['--flat-playlist', '--dump-single-json', '--', playlistUrl], {
+  const output = execFileSync('yt-dlp', [
+    '--flat-playlist',
+    '--dump-single-json',
+    '--',
+    playlistUrl
+  ], {
     encoding: 'utf8',
     maxBuffer: 64 * 1024 * 1024,
   })
@@ -238,8 +259,12 @@ export function readPlaylistEntries(playlistUrl) {
 }
 
 export function auditExperience(album, entries, experience) {
-  const playableEntries = (Array.isArray(entries) ? entries : []).filter(isPlayableEntry)
-  const generatedSegments = Array.isArray(experience?.segments) ? experience.segments : []
+  const playableEntries = (Array.isArray(entries)
+    ? entries
+    : []).filter(isPlayableEntry)
+  const generatedSegments = Array.isArray(experience?.segments)
+    ? experience.segments
+    : []
 
   if (playableEntries.length === 0) {
     throw new Error(`Back catalogue audit failed for ${album.title}: no playable entries found`)
@@ -441,9 +466,13 @@ export async function refreshMetadata(options = {}) {
 }
 
 if (MODULE_PATH && process.argv[1] && MODULE_PATH === resolve(process.argv[1])) {
-  const run = process.argv.includes('--metadata-only') ? refreshMetadata : main
+  const run = process.argv.includes('--metadata-only')
+    ? refreshMetadata
+    : main
   run().catch((error) => {
-    console.error(error instanceof Error ? error.message : String(error))
+    console.error(error instanceof Error
+      ? error.message
+      : String(error))
     process.exitCode = 1
   })
 }

@@ -79,7 +79,10 @@ function report(root: string, files: Array<{ name: string, assertions: Array<[st
 function run(root: string, options: { report?: string, args?: string[], vitestRc?: number } = {}): RunResult {
   const result = execFileSync(
     process.execPath,
-    [join(root, 'scripts', 'test-baseline.mjs'), ...(options.args ?? [])],
+    [
+      join(root, 'scripts', 'test-baseline.mjs'),
+      ...(options.args ?? [])
+    ],
     {
       cwd: root,
       encoding: 'utf8',
@@ -133,7 +136,14 @@ describe('scripts/test-baseline.mjs (npm run test:gate)', () => {
     const root = makeRepo()
 
     const { status, stderr } = runGate(root, {
-      report: report(root, [{ name: 'src/tests/a.test.ts', assertions: [['failed', 'a fails']] }]),
+      report: report(root, [
+        {
+          name: 'src/tests/a.test.ts',
+          assertions: [
+            ['failed', 'a fails']
+          ]
+        }
+      ]),
     })
 
     expect(status).toBe(2)
@@ -146,8 +156,19 @@ describe('scripts/test-baseline.mjs (npm run test:gate)', () => {
     const { status, stdout } = runGate(root, {
       args: ['--update'],
       report: report(root, [
-        { name: 'src/tests/z.test.ts', assertions: [['failed', 'z fails']] },
-        { name: 'src/tests/a.test.ts', assertions: [['failed', 'a fails'], ['passed', 'a passes']] },
+        {
+          name: 'src/tests/z.test.ts',
+          assertions: [
+            ['failed', 'z fails']
+          ]
+        },
+        {
+          name: 'src/tests/a.test.ts',
+          assertions: [
+            ['failed', 'a fails'],
+            ['passed', 'a passes']
+          ]
+        },
       ]),
     })
 
@@ -164,7 +185,14 @@ describe('scripts/test-baseline.mjs (npm run test:gate)', () => {
     const { status, stdout } = runGate(root, {
       args: ['--update'],
       vitestRc: 0,
-      report: report(root, [{ name: 'src/tests/a.test.ts', assertions: [['passed', 'a passes']] }]),
+      report: report(root, [
+        {
+          name: 'src/tests/a.test.ts',
+          assertions: [
+            ['passed', 'a passes']
+          ]
+        }
+      ]),
     })
 
     expect(status).toBe(0)
@@ -178,7 +206,14 @@ describe('scripts/test-baseline.mjs (npm run test:gate)', () => {
 
     const { status } = runGate(root, {
       args: ['--update'],
-      report: report(root, [{ name: 'src/tests/a.test.ts', assertions: [['failed', 'a fails']] }]),
+      report: report(root, [
+        {
+          name: 'src/tests/a.test.ts',
+          assertions: [
+            ['failed', 'a fails']
+          ]
+        }
+      ]),
     })
 
     expect(status).toBe(0)
@@ -190,7 +225,14 @@ describe('scripts/test-baseline.mjs (npm run test:gate)', () => {
     writeBaseline(root, 'src/tests/a.test.ts :: a fails\n')
 
     const { status, stdout } = runGate(root, {
-      report: report(root, [{ name: 'src/tests/a.test.ts', assertions: [['failed', 'a fails']] }]),
+      report: report(root, [
+        {
+          name: 'src/tests/a.test.ts',
+          assertions: [
+            ['failed', 'a fails']
+          ]
+        }
+      ]),
     })
 
     expect(status).toBe(0)
@@ -203,8 +245,18 @@ describe('scripts/test-baseline.mjs (npm run test:gate)', () => {
 
     const { status, stderr } = runGate(root, {
       report: report(root, [
-        { name: 'src/tests/a.test.ts', assertions: [['failed', 'a fails']] },
-        { name: 'src/tests/b.test.ts', assertions: [['failed', 'b fails']] },
+        {
+          name: 'src/tests/a.test.ts',
+          assertions: [
+            ['failed', 'a fails']
+          ]
+        },
+        {
+          name: 'src/tests/b.test.ts',
+          assertions: [
+            ['failed', 'b fails']
+          ]
+        },
       ]),
     })
 
@@ -220,7 +272,14 @@ describe('scripts/test-baseline.mjs (npm run test:gate)', () => {
     writeBaseline(root, 'src/tests/a.test.ts :: a fails\nsrc/tests/b.test.ts :: b fails\n')
 
     const { status, stdout } = runGate(root, {
-      report: report(root, [{ name: 'src/tests/a.test.ts', assertions: [['failed', 'a fails']] }]),
+      report: report(root, [
+        {
+          name: 'src/tests/a.test.ts',
+          assertions: [
+            ['failed', 'a fails']
+          ]
+        }
+      ]),
     })
 
     expect(status).toBe(0)
@@ -233,7 +292,14 @@ describe('scripts/test-baseline.mjs (npm run test:gate)', () => {
     writeBaseline(root, 'src/tests/a.test.ts :: a fails\n')
 
     const { status, stdout, stderr } = runGate(root, {
-      report: report(root, [{ name: 'src/tests/b.test.ts', assertions: [['failed', 'b fails']] }]),
+      report: report(root, [
+        {
+          name: 'src/tests/b.test.ts',
+          assertions: [
+            ['failed', 'b fails']
+          ]
+        }
+      ]),
     })
 
     expect(status).toBe(1)
@@ -247,10 +313,16 @@ describe('scripts/test-baseline.mjs (npm run test:gate)', () => {
 
     const { status, stdout } = runGate(root, {
       vitestRc: 0,
-      report: report(root, [{
-        name: 'src/tests/a.test.ts',
-        assertions: [['passed', 'a passes'], ['skipped', 'a is skipped'], ['pending', 'a is pending']],
-      }]),
+      report: report(root, [
+        {
+          name: 'src/tests/a.test.ts',
+          assertions: [
+            ['passed', 'a passes'],
+            ['skipped', 'a is skipped'],
+            ['pending', 'a is pending']
+          ],
+        }
+      ]),
     })
 
     expect(status).toBe(0)
@@ -264,7 +336,13 @@ describe('scripts/test-baseline.mjs (npm run test:gate)', () => {
     expect(runGate(root, { vitestRc: 0, report: '{}' }).status).toBe(0)
     expect(runGate(root, {
       vitestRc: 0,
-      report: JSON.stringify({ testResults: [{ name: join(root, 'src/tests/a.test.ts') }] }),
+      report: JSON.stringify({
+        testResults: [
+          {
+            name: join(root, 'src/tests/a.test.ts')
+          }
+        ]
+      }),
     }).status).toBe(0)
   })
 
@@ -273,7 +351,14 @@ describe('scripts/test-baseline.mjs (npm run test:gate)', () => {
     writeBaseline(root, '\n   src/tests/a.test.ts :: a fails   \n\n')
 
     const { status, stdout } = runGate(root, {
-      report: report(root, [{ name: 'src/tests/a.test.ts', assertions: [['failed', 'a fails']] }]),
+      report: report(root, [
+        {
+          name: 'src/tests/a.test.ts',
+          assertions: [
+            ['failed', 'a fails']
+          ]
+        }
+      ]),
     })
 
     expect(status).toBe(0)
@@ -286,7 +371,14 @@ describe('scripts/test-baseline.mjs (npm run test:gate)', () => {
 
     const { status, stdout } = runGate(root, {
       vitestRc: 0,
-      report: report(root, [{ name: 'src/tests/a.test.ts', assertions: [['passed', 'a passes']] }]),
+      report: report(root, [
+        {
+          name: 'src/tests/a.test.ts',
+          assertions: [
+            ['passed', 'a passes']
+          ]
+        }
+      ]),
     })
 
     expect(status).toBe(0)
@@ -299,8 +391,18 @@ describe('scripts/test-baseline.mjs (npm run test:gate)', () => {
     runGate(root, {
       args: ['--update'],
       report: report(root, [
-        { name: 'src/tests/a.test.ts', assertions: [['failed', 'a fails']] },
-        { name: 'src/tests/a.test.ts', assertions: [['failed', 'a fails']] },
+        {
+          name: 'src/tests/a.test.ts',
+          assertions: [
+            ['failed', 'a fails']
+          ]
+        },
+        {
+          name: 'src/tests/a.test.ts',
+          assertions: [
+            ['failed', 'a fails']
+          ]
+        },
       ]),
     })
 

@@ -23,7 +23,9 @@ const loreRecordsById = new Map(loadAllLoreRecords().map(record => [record.id, r
 function readCost(artifactId: string): number {
   const record = loreRecordsById.get(artifactId)!
   return estimateLoreReadDuration({
-    kind: record.kind === 'quote' ? 'quote' : 'prose',
+    kind: record.kind === 'quote'
+      ? 'quote'
+      : 'prose',
     body: record.body,
     attribution: record.metadata.attribution,
   })
@@ -239,7 +241,10 @@ describe('wolves director\'s cut narrative timeline', () => {
   // either the song's own origin, an authored section mark, or an exact entry
   // of the measured beat grid.
   it('lands every quote boundary on a named musical mark or a measured beat', () => {
-    const namedMarks = new Set<number>([0, ...Object.values(TRACK_ZERO_SECTIONS)])
+    const namedMarks = new Set<number>([
+      0,
+      ...Object.values(TRACK_ZERO_SECTIONS)
+    ])
     const onGrid = (time: number) => TRACK_ZERO_BEAT_TIMES.some(beat => Math.abs(beat - time) < 5e-4)
 
     for (const slot of wolvesDirectorsCutNarrativeTimeline) {
@@ -251,7 +256,13 @@ describe('wolves director\'s cut narrative timeline', () => {
   it('opens each authored quote window on its own named musical mark', () => {
     const openings = new Set(wolvesDirectorsCutNarrativeTimeline.map(slot => slot.startTime))
 
-    for (const mark of [0, TRACK_ZERO_SECTIONS.verseStart, TRACK_ZERO_SECTIONS.chorusStart, TRACK_ZERO_SECTIONS.bridgeStart, TRACK_ZERO_SECTIONS.buildStart]) {
+    for (const mark of [
+      0,
+      TRACK_ZERO_SECTIONS.verseStart,
+      TRACK_ZERO_SECTIONS.chorusStart,
+      TRACK_ZERO_SECTIONS.bridgeStart,
+      TRACK_ZERO_SECTIONS.buildStart
+    ]) {
       expect(openings.has(mark), `no quote opens the window at ${mark}`).toBe(true)
     }
   })
@@ -266,7 +277,11 @@ describe('wolves director\'s cut narrative timeline', () => {
 
     expect(quotes).toHaveLength(DIRECTORS_CUT_QUOTE_IDS.length)
     expect(gaps.every(gap => gap > 0), 'the quote panel is still wall-to-wall').toBe(true)
-    for (const time of [DIRECTORS_CUT_QUOTE_IDS.length > 0 ? quotes[0]!.endTime + 0.5 : 0]) {
+    for (const time of [
+      DIRECTORS_CUT_QUOTE_IDS.length > 0
+        ? quotes[0]!.endTime + 0.5
+        : 0
+    ]) {
       expect(getDirectorsCutNarrativeSlotForTime(time), `${time}s should be image-only`).toBeNull()
     }
   })

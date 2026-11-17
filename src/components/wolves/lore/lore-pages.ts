@@ -86,7 +86,9 @@ export function groupBlockPages(
     pages.push(page)
   }
 
-  return pages.length > 0 ? pages : [[]]
+  return pages.length > 0
+    ? pages
+    : [[]]
 }
 
 /**
@@ -173,7 +175,9 @@ export function pickBlockPage<T>(
   elapsed: number | undefined,
   duration?: number,
   rebuild: (block: T, part: string) => T = (block, part) =>
-    (typeof block === 'string' ? part as T : { ...block, text: part }),
+    (typeof block === 'string'
+      ? part as T
+      : { ...block, text: part }),
 ): { index: number, pageCount: number, blocks: T[] } {
   const expanded = blocks.flatMap((block) => {
     const text = toText(block)

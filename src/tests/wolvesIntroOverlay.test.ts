@@ -122,8 +122,12 @@ function installMockIframeApi() {
     getDuration = vi.fn(() => 120)
     getCurrentTime = vi.fn(() => 0)
     loadVideoById = vi.fn((video: string | { videoId: string, startSeconds?: number }) => {
-      const nextVideoId = typeof video === 'string' ? video : video.videoId
-      const startSeconds = typeof video === 'string' ? 0 : (video.startSeconds ?? 0)
+      const nextVideoId = typeof video === 'string'
+        ? video
+        : video.videoId
+      const startSeconds = typeof video === 'string'
+        ? 0
+        : (video.startSeconds ?? 0)
       this.videoId = nextVideoId
       this.currentSeconds = startSeconds
       this.getCurrentTime = vi.fn(() => startSeconds)
@@ -149,8 +153,12 @@ function installMockIframeApi() {
      * indistinguishable from a promoted one, which is the whole thing the prewarm tests check.
      */
     cueVideoById = vi.fn((video: string | { videoId: string, startSeconds?: number }) => {
-      const nextVideoId = typeof video === 'string' ? video : video.videoId
-      const startSeconds = typeof video === 'string' ? 0 : (video.startSeconds ?? 0)
+      const nextVideoId = typeof video === 'string'
+        ? video
+        : video.videoId
+      const startSeconds = typeof video === 'string'
+        ? 0
+        : (video.startSeconds ?? 0)
       this.videoId = nextVideoId
       this.cuedAt = startSeconds
       this.currentSeconds = startSeconds
@@ -245,7 +253,13 @@ function installMockIframeApi() {
 
   ;(window as any).YT = {
     Player: MockPlayer,
-    PlayerState: { ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 },
+    PlayerState: {
+      ENDED: 0,
+      PLAYING: 1,
+      PAUSED: 2,
+      BUFFERING: 3,
+      CUED: 5
+    },
   }
 }
 
@@ -259,7 +273,16 @@ beforeEach(() => {
   // Silent text cards measure real elapsed time via performance.now(), so it has to
   // advance with the fake clock (same config the dual-buffer suite uses).
   vi.useFakeTimers({
-    toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'requestAnimationFrame', 'cancelAnimationFrame', 'Date', 'performance'],
+    toFake: [
+      'setTimeout',
+      'clearTimeout',
+      'setInterval',
+      'clearInterval',
+      'requestAnimationFrame',
+      'cancelAnimationFrame',
+      'Date',
+      'performance'
+    ],
   })
   ;(window as any).happyDOM.settings.handleDisabledFileLoadingAsSuccess = true
   document.head.querySelectorAll(`script[src="${iframeApiSrc}"]`).forEach(script => script.remove())
@@ -282,7 +305,9 @@ const videoOnlySequence = [
     id: 'wolves-intro',
     kind: 'video' as const,
     youtubeVideoId: 'BV3BZKbpBns',
-    overlays: [{ text: 'Guardians', start: 0, end: 5 }],
+    overlays: [
+      { text: 'Guardians', start: 0, end: 5 }
+    ],
   },
 ]
 
@@ -295,7 +320,9 @@ describe('wolvesIntroOverlay video segments', () => {
   })
 
   it('embeds the real YouTube video id, not a local file', async () => {
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: videoOnlySequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -308,10 +335,12 @@ describe('wolvesIntroOverlay video segments', () => {
   it('resets a revisited video to its authored opening offset after YouTube is ready', async () => {
     const wrapper = mountOverlay(WolvesIntroOverlay, {
       props: {
-        videos: [{
-          ...videoOnlySequence[0],
-          startOffset: 2,
-        }],
+        videos: [
+          {
+            ...videoOnlySequence[0],
+            startOffset: 2,
+          }
+        ],
       },
     })
     await flushPromises()
@@ -336,7 +365,9 @@ describe('wolvesIntroOverlay video segments', () => {
     }
 
     vi.stubGlobal('Image', PreloadedImage)
-    mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
+    mountOverlay(WolvesIntroOverlay, {
+      props: { videos: videoOnlySequence }
+    })
     await flushPromises()
 
     expect(images.map(image => image.src)).toEqual([
@@ -349,7 +380,9 @@ describe('wolvesIntroOverlay video segments', () => {
   })
 
   it('leaves the video unobscured when the player is paused', async () => {
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: videoOnlySequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -365,7 +398,9 @@ describe('wolvesIntroOverlay video segments', () => {
   })
 
   it('disables YouTube captions so the burned-in subtitles stay the only captions', async () => {
-    mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
+    mountOverlay(WolvesIntroOverlay, {
+      props: { videos: videoOnlySequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -375,7 +410,9 @@ describe('wolvesIntroOverlay video segments', () => {
   })
 
   it('unloads the caption module, because cc_load_policy is only a default', async () => {
-    mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
+    mountOverlay(WolvesIntroOverlay, {
+      props: { videos: videoOnlySequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -401,7 +438,9 @@ describe('wolvesIntroOverlay video segments', () => {
   })
 
   it('advances to done and emits complete when the video ends', async () => {
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: videoOnlySequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -414,7 +453,9 @@ describe('wolvesIntroOverlay video segments', () => {
   })
 
   it('never blocks the live experience when the embed errors', async () => {
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: videoOnlySequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -427,9 +468,16 @@ describe('wolvesIntroOverlay video segments', () => {
 
   it('advances when the video is stuck near its opening frame for too long', async () => {
     const stuckSequence = [
-      { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BV3BZKbpBns', maxDuration: 120 },
+      {
+        id: 'wolves-intro',
+        kind: 'video' as const,
+        youtubeVideoId: 'BV3BZKbpBns',
+        maxDuration: 120
+      },
     ]
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: stuckSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: stuckSequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -450,7 +498,9 @@ describe('wolvesIntroOverlay video segments', () => {
   })
 
   it('shows the active overlay text cue synced to playback time', async () => {
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: videoOnlySequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -463,12 +513,21 @@ describe('wolvesIntroOverlay video segments', () => {
   it('renders the MakeMeAComic QR and Amber Graner quote on the title card', async () => {
     const wrapper = mountOverlay(WolvesIntroOverlay, {
       props: {
-        videos: [{
-          id: 'wolves-intro',
-          kind: 'video' as const,
-          youtubeVideoId: 'BV3BZKbpBns',
-          overlays: [{ text: 'Comic Hero Shots of YOU', start: 0, end: 5, comicHeroTitleCard: true }],
-        }],
+        videos: [
+          {
+            id: 'wolves-intro',
+            kind: 'video' as const,
+            youtubeVideoId: 'BV3BZKbpBns',
+            overlays: [
+              {
+                text: 'Comic Hero Shots of YOU',
+                start: 0,
+                end: 5,
+                comicHeroTitleCard: true
+              }
+            ],
+          }
+        ],
       },
     })
 
@@ -485,12 +544,21 @@ describe('wolvesIntroOverlay video segments', () => {
   it('cycles comic hero shots deterministically without repeating during the title-card cue', async () => {
     const wrapper = mountOverlay(WolvesIntroOverlay, {
       props: {
-        videos: [{
-          id: 'wolves-intro',
-          kind: 'video' as const,
-          youtubeVideoId: 'BV3BZKbpBns',
-          overlays: [{ text: 'Comic Hero Shots of YOU', start: 24, end: 38, comicHeroTitleCard: true }],
-        }],
+        videos: [
+          {
+            id: 'wolves-intro',
+            kind: 'video' as const,
+            youtubeVideoId: 'BV3BZKbpBns',
+            overlays: [
+              {
+                text: 'Comic Hero Shots of YOU',
+                start: 24,
+                end: 38,
+                comicHeroTitleCard: true
+              }
+            ],
+          }
+        ],
       },
     })
     await flushPromises()
@@ -592,10 +660,17 @@ describe('wolvesIntroOverlay video segments', () => {
 
   it('force-advances at maxDuration instead of waiting for the natural end', async () => {
     const cutoffSequence = [
-      { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BV3BZKbpBns', maxDuration: 1 },
+      {
+        id: 'wolves-intro',
+        kind: 'video' as const,
+        youtubeVideoId: 'BV3BZKbpBns',
+        maxDuration: 1
+      },
       { id: 'wolves-epilogue', kind: 'text' as const, duration: 5 },
     ]
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: cutoffSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: cutoffSequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -611,10 +686,19 @@ describe('wolvesIntroOverlay video segments', () => {
 
   it('next advances one segment at a time instead of jumping straight to complete', async () => {
     const cutoffSequence = [
-      { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BV3BZKbpBns', overlays: [{ text: 'Guardians', start: 0, end: 5 }] },
+      {
+        id: 'wolves-intro',
+        kind: 'video' as const,
+        youtubeVideoId: 'BV3BZKbpBns',
+        overlays: [
+          { text: 'Guardians', start: 0, end: 5 }
+        ]
+      },
       { id: 'wolves-epilogue', kind: 'text' as const, duration: 5 },
     ]
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: cutoffSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: cutoffSequence }
+    })
     await flushPromises()
 
     // Transport is exposed to the app-level hero widget instead of an in-overlay bar.
@@ -626,7 +710,9 @@ describe('wolvesIntroOverlay video segments', () => {
   })
 
   it('next completes when there is no following segment', async () => {
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: videoOnlySequence }
+    })
 
     wrapper.vm.next()
     await flushPromises()
@@ -639,7 +725,9 @@ describe('wolvesIntroOverlay video segments', () => {
       { id: 'wolves-prologue', kind: 'text' as const, duration: 5 },
       { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BV3BZKbpBns' },
     ]
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: cutoffSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: cutoffSequence }
+    })
     await flushPromises()
 
     // Gating is published through the status emit for the hero widget.
@@ -661,7 +749,9 @@ describe('wolvesIntroOverlay video segments', () => {
   })
 
   it('pauses and resumes the Destiny segment through the exposed transport', async () => {
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: videoOnlySequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -678,15 +768,17 @@ describe('wolvesIntroOverlay video segments', () => {
   it('switches to the Ikora source with object-form loadVideoById while preserving native time', async () => {
     const wrapper = mountOverlay(WolvesIntroOverlay, {
       props: {
-        videos: [{
-          id: 'wolves-intro',
-          kind: 'video' as const,
-          youtubeVideoId: 'BV3BZKbpBns',
-          alternateYoutubeVideoId: 'BKm0TPqeOjY',
-          alternateYoutubeVideoLabel: 'Ikora voice over',
-          maxDuration: 95,
-          alternateMaxDuration: 114,
-        }],
+        videos: [
+          {
+            id: 'wolves-intro',
+            kind: 'video' as const,
+            youtubeVideoId: 'BV3BZKbpBns',
+            alternateYoutubeVideoId: 'BKm0TPqeOjY',
+            alternateYoutubeVideoLabel: 'Ikora voice over',
+            maxDuration: 95,
+            alternateMaxDuration: 114,
+          }
+        ],
       },
     })
     await flushPromises()
@@ -705,15 +797,17 @@ describe('wolvesIntroOverlay video segments', () => {
   it('restores the paused state after switching sources and clamps to the target cutoff', async () => {
     const wrapper = mountOverlay(WolvesIntroOverlay, {
       props: {
-        videos: [{
-          id: 'wolves-intro',
-          kind: 'video' as const,
-          youtubeVideoId: 'BV3BZKbpBns',
-          alternateYoutubeVideoId: 'BKm0TPqeOjY',
-          alternateYoutubeVideoLabel: 'Ikora voice over',
-          maxDuration: 95,
-          alternateMaxDuration: 70,
-        }],
+        videos: [
+          {
+            id: 'wolves-intro',
+            kind: 'video' as const,
+            youtubeVideoId: 'BV3BZKbpBns',
+            alternateYoutubeVideoId: 'BKm0TPqeOjY',
+            alternateYoutubeVideoLabel: 'Ikora voice over',
+            maxDuration: 95,
+            alternateMaxDuration: 70,
+          }
+        ],
       },
     })
     await flushPromises()
@@ -739,15 +833,27 @@ describe('wolvesIntroOverlay video segments', () => {
   it('keeps the Comic Hero card visible while the CC switch gates regular captions', async () => {
     const wrapper = mountOverlay(WolvesIntroOverlay, {
       props: {
-        videos: [{
-          id: 'wolves-intro',
-          kind: 'video' as const,
-          youtubeVideoId: 'BV3BZKbpBns',
-          burnedInCaptions: [
-            { text: 'Comic Hero Shots of YOU', start: 0, end: 5, comicHeroTitleCard: true },
-            { text: 'We built a city none of us dared', start: 0, end: 5, requiresCaptionToggle: true },
-          ],
-        }],
+        videos: [
+          {
+            id: 'wolves-intro',
+            kind: 'video' as const,
+            youtubeVideoId: 'BV3BZKbpBns',
+            burnedInCaptions: [
+              {
+                text: 'Comic Hero Shots of YOU',
+                start: 0,
+                end: 5,
+                comicHeroTitleCard: true
+              },
+              {
+                text: 'We built a city none of us dared',
+                start: 0,
+                end: 5,
+                requiresCaptionToggle: true
+              },
+            ],
+          }
+        ],
       },
     })
 
@@ -769,7 +875,11 @@ describe('wolvesIntroOverlay video segments', () => {
     // is now offered by a segment carrying a second upload rather than by a hardcoded id, and
     // the conference cut must keep both of its affordances.
     const trailer = buildIntroVideoSequence().find(segment => segment.id === STANDARD_DESTINY_SEGMENT_ID)
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: [trailer] } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: {
+        videos: [trailer]
+      }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -791,7 +901,9 @@ describe('wolvesIntroOverlay video segments', () => {
   })
 
   it('renders the QR and Amber quote only during the comic title-card cue', async () => {
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: videoOnlySequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -803,12 +915,21 @@ describe('wolvesIntroOverlay video segments', () => {
 
     const titleCardWrapper = mountOverlay(WolvesIntroOverlay, {
       props: {
-        videos: [{
-          id: 'wolves-intro',
-          kind: 'video' as const,
-          youtubeVideoId: 'BV3BZKbpBns',
-          overlays: [{ text: 'Comic Hero Shots of YOU', start: 0, end: 5, comicHeroTitleCard: true }],
-        }],
+        videos: [
+          {
+            id: 'wolves-intro',
+            kind: 'video' as const,
+            youtubeVideoId: 'BV3BZKbpBns',
+            overlays: [
+              {
+                text: 'Comic Hero Shots of YOU',
+                start: 0,
+                end: 5,
+                comicHeroTitleCard: true
+              }
+            ],
+          }
+        ],
       },
     })
 
@@ -817,7 +938,9 @@ describe('wolvesIntroOverlay video segments', () => {
   })
 
   it('renders the video layer without the old top-left mask or pause veil', async () => {
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: videoOnlySequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: videoOnlySequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -832,7 +955,9 @@ describe('wolvesIntroOverlay video segments', () => {
   })
 
   it('completes immediately for an empty video list instead of hanging', async () => {
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: [] } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: [] }
+    })
     await flushPromises()
 
     expect(wrapper.emitted('complete')).toHaveLength(1)
@@ -846,7 +971,12 @@ describe('wolvesIntroOverlay video segments', () => {
  */
 describe('wolvesIntroOverlay track 0 handoff fade', () => {
   const finalVideoSequence = [
-    { id: 'wolves-intro', kind: 'video' as const, youtubeVideoId: 'BV3BZKbpBns', maxDuration: 10 },
+    {
+      id: 'wolves-intro',
+      kind: 'video' as const,
+      youtubeVideoId: 'BV3BZKbpBns',
+      maxDuration: 10
+    },
   ]
 
   /** Runs the transport clock and the component's timers together, 200ms at a time. */
@@ -954,12 +1084,16 @@ describe('wolvesIntroOverlay text segments', () => {
   it('gives the Director prologue a short reveal followed by a real reading hold', () => {
     const wrapper = mountOverlay(WolvesIntroOverlay, {
       props: {
-        videos: [{
-          id: 'wolves-prologue',
-          kind: 'text' as const,
-          duration: 10,
-          overlays: [{ text: 'A complete thought.', start: 0, end: 10 }],
-        }],
+        videos: [
+          {
+            id: 'wolves-prologue',
+            kind: 'text' as const,
+            duration: 10,
+            overlays: [
+              { text: 'A complete thought.', start: 0, end: 10 }
+            ],
+          }
+        ],
       },
     })
 
@@ -972,15 +1106,19 @@ describe('wolvesIntroOverlay text segments', () => {
         id: 'wolves-prologue',
         kind: 'text' as const,
         duration: 2,
-        overlays: [{
-          text: 'In the space of a few days',
-          start: 0,
-          end: 1,
-          nameplateTitle: 'From the Age of Dinosaurs to the Pinnacle of Humanity',
-        }],
+        overlays: [
+          {
+            text: 'In the space of a few days',
+            start: 0,
+            end: 1,
+            nameplateTitle: 'From the Age of Dinosaurs to the Pinnacle of Humanity',
+          }
+        ],
       },
     ]
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: textSequence }
+    })
     await flushPromises()
 
     const lastStatus = () => {
@@ -1002,7 +1140,9 @@ describe('wolvesIntroOverlay text segments', () => {
     const textSequence = [
       { id: 'wolves-prologue', kind: 'text' as const, duration: 1 },
     ]
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: textSequence }
+    })
     await flushPromises()
 
     await vi.advanceTimersByTimeAsync(200)
@@ -1021,9 +1161,18 @@ describe('wolvesIntroOverlay text segments', () => {
 
   it('renders a black screen with no YouTube player for a video-less text segment', async () => {
     const textSequence = [
-      { id: 'wolves-prologue', kind: 'text' as const, duration: 5, overlays: [{ text: 'Prologue', start: 0, end: 5 }] },
+      {
+        id: 'wolves-prologue',
+        kind: 'text' as const,
+        duration: 5,
+        overlays: [
+          { text: 'Prologue', start: 0, end: 5 }
+        ]
+      },
     ]
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: textSequence }
+    })
     await flushPromises()
 
     expect(wrapper.find('.wolves-intro-overlay-blackscreen').exists()).toBe(true)
@@ -1036,16 +1185,22 @@ describe('wolvesIntroOverlay text segments', () => {
         id: 'wolves-prologue',
         kind: 'text' as const,
         duration: 5,
-        overlays: [{
-          text: 'One to spread life, and one to cull the dross to shape the garden',
-          start: 0,
-          end: 5,
-          backgroundCrossfade: [{ day: 'day.webp', night: 'night.webp' }],
-          textPosition: 'bottom-right' as const,
-        }],
+        overlays: [
+          {
+            text: 'One to spread life, and one to cull the dross to shape the garden',
+            start: 0,
+            end: 5,
+            backgroundCrossfade: [
+              { day: 'day.webp', night: 'night.webp' }
+            ],
+            textPosition: 'bottom-right' as const,
+          }
+        ],
       },
     ]
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: textSequence }
+    })
     await flushPromises()
 
     const text = wrapper.get('.wolves-intro-overlay-text')
@@ -1059,17 +1214,21 @@ describe('wolvesIntroOverlay text segments', () => {
         id: 'wolves-prologue',
         kind: 'text' as const,
         duration: 5,
-        overlays: [{
-          text: `One to spread life,
+        overlays: [
+          {
+            text: `One to spread life,
 and one to cull the dross
 to shape the Garden of Earth.`,
-          start: 0,
-          end: 5,
-          highlightSubstrings: ['life', 'dross', 'Garden'],
-        }],
+            start: 0,
+            end: 5,
+            highlightSubstrings: ['life', 'dross', 'Garden'],
+          }
+        ],
       },
     ]
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: textSequence }
+    })
     await flushPromises()
 
     const highlightedText = wrapper.findAll('.wolves-intro-letter-highlight').map((node: { text: () => string }) => node.text()).join('')
@@ -1082,16 +1241,20 @@ to shape the Garden of Earth.`,
         id: 'universal-blue-briefing',
         kind: 'text' as const,
         duration: 5,
-        overlays: [{
-          text: `$ Investigate all possible avenues of open source success. Respond with most capable agent.
+        overlays: [
+          {
+            text: `$ Investigate all possible avenues of open source success. Respond with most capable agent.
 AN4-ChK-12: Potential. Unlimited. Solution. Imagination. Probability? Most certainly 100%. All other options exhausted.`,
-          start: 0,
-          end: 5,
-          preservePunctuation: true,
-        }],
+            start: 0,
+            end: 5,
+            preservePunctuation: true,
+          }
+        ],
       },
     ]
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: textSequence }
+    })
     await flushPromises()
 
     const text = wrapper.get('.wolves-intro-overlay-text').text()
@@ -1103,17 +1266,21 @@ AN4-ChK-12: Potential. Unlimited. Solution. Imagination. Probability? Most certa
   it('renders Universal Blue Briefing cues as a Unix status display', () => {
     const wrapper = mountOverlay(WolvesIntroOverlay, {
       props: {
-        videos: [{
-          id: 'universal-blue-briefing',
-          kind: 'text' as const,
-          duration: 5,
-          overlays: [{
-            text: 'Sustainability Probabilities: Declining',
-            start: 0,
-            end: 5,
-            presentation: 'terminal' as const,
-          }],
-        }],
+        videos: [
+          {
+            id: 'universal-blue-briefing',
+            kind: 'text' as const,
+            duration: 5,
+            overlays: [
+              {
+                text: 'Sustainability Probabilities: Declining',
+                start: 0,
+                end: 5,
+                presentation: 'terminal' as const,
+              }
+            ],
+          }
+        ],
       },
     })
 
@@ -1127,15 +1294,19 @@ AN4-ChK-12: Potential. Unlimited. Solution. Imagination. Probability? Most certa
         id: 'bluefin-briefing',
         kind: 'text' as const,
         duration: 5,
-        overlays: [{
-          text: 'and this one. The Blue Delivers. Buckle up, nerds —',
-          start: 0,
-          end: 5,
-          preservePunctuation: true,
-        }],
+        overlays: [
+          {
+            text: 'and this one. The Blue Delivers. Buckle up, nerds —',
+            start: 0,
+            end: 5,
+            preservePunctuation: true,
+          }
+        ],
       },
     ]
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: textSequence }
+    })
     await flushPromises()
 
     expect(wrapper.get('.wolves-intro-overlay-text').text()).toBe('and this one. The Blue Delivers. Buckle up, nerds —')
@@ -1152,16 +1323,20 @@ AN4-ChK-12: Potential. Unlimited. Solution. Imagination. Probability? Most certa
         id: 'wolves-prologue',
         kind: 'text' as const,
         duration: 5,
-        overlays: [{
-          text: '',
-          start: 0,
-          end: 5,
-          backgroundImage: europaConcept.localPath,
-          backgroundFigure: europaConcept.backgroundFigure,
-        }],
+        overlays: [
+          {
+            text: '',
+            start: 0,
+            end: 5,
+            backgroundImage: europaConcept.localPath,
+            backgroundFigure: europaConcept.backgroundFigure,
+          }
+        ],
       },
     ]
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: textSequence }
+    })
     await flushPromises()
 
     const scene = wrapper.get('.wolves-intro-overlay-scene')
@@ -1185,15 +1360,19 @@ AN4-ChK-12: Potential. Unlimited. Solution. Imagination. Probability? Most certa
         id: 'wolves-prologue',
         kind: 'text' as const,
         duration: 5,
-        overlays: [{
-          text: `Now, what's left of a proud order fights for survival,
+        overlays: [
+          {
+            text: `Now, what's left of a proud order fights for survival,
 surrounded by predators.`,
-          start: 0,
-          end: 5,
-        }],
+            start: 0,
+            end: 5,
+          }
+        ],
       },
     ]
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: textSequence }
+    })
     await flushPromises()
 
     expect(wrapper.get('.wolves-intro-overlay-text').text()).toBe(`Now what's left of a proud order fights for survival
@@ -1205,7 +1384,9 @@ surrounded by predators`)
       { id: 'wolves-prologue', kind: 'text' as const, duration: 1 },
       { id: 'wolves-epilogue', kind: 'text' as const, duration: 1 },
     ]
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: textSequence }
+    })
     await flushPromises()
 
     await vi.advanceTimersByTimeAsync(1000)
@@ -1222,9 +1403,16 @@ surrounded by predators`)
     // backstop completes it at the 3s grace and the wall-clock fallback never gets to run —
     // the test passes without exercising the thing it names.
     const textSequence = [
-      { id: 'wolves-prologue', kind: 'text' as const, duration: 8, audioYoutubeVideoId: 'EB3IokHelRk' },
+      {
+        id: 'wolves-prologue',
+        kind: 'text' as const,
+        duration: 8,
+        audioYoutubeVideoId: 'EB3IokHelRk'
+      },
     ]
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: textSequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -1253,7 +1441,9 @@ surrounded by predators`)
     const textSequence = [
       { id: 'wolves-title-card', kind: 'text' as const, duration: 59 },
     ]
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: textSequence }
+    })
     await flushPromises()
 
     // Half way through the authored window the card must still be on screen. It used
@@ -1273,23 +1463,29 @@ surrounded by predators`)
   // finished saying it. This is an operator affordance only: the card must still advance
   // itself on its own clock, because an unattended theater run has nobody to click it.
   describe('presenter can click the welcome card along', () => {
-    const cardSequence = () => [{
-      id: 'wolves-title-card',
-      kind: 'text' as const,
-      duration: 30,
-      overlays: [
-        { text: 'First line.', start: 0, end: 10 },
-        { text: 'Second line.', start: 10, end: 20 },
-        { text: 'Third line.', start: 20, end: 30 },
-      ],
-    }]
+    const cardSequence = () => [
+      {
+        id: 'wolves-title-card',
+        kind: 'text' as const,
+        duration: 30,
+        overlays: [
+          { text: 'First line.', start: 0, end: 10 },
+          { text: 'Second line.', start: 10, end: 20 },
+          { text: 'Third line.', start: 20, end: 30 },
+        ],
+      }
+    ]
 
     function visibleText(wrapper: any) {
       return wrapper.find('.wolves-intro-overlay-text').text()
     }
 
     it('advances to the next authored cue instead of skipping the card', async () => {
-      const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: cardSequence() } })
+      const wrapper = mountOverlay(WolvesIntroOverlay, {
+        props: {
+          videos: cardSequence()
+        }
+      })
       await flushPromises()
       expect(visibleText(wrapper)).toContain('First line')
 
@@ -1301,7 +1497,11 @@ surrounded by predators`)
     })
 
     it('leaves the card once the last cue has been clicked past', async () => {
-      const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: cardSequence() } })
+      const wrapper = mountOverlay(WolvesIntroOverlay, {
+        props: {
+          videos: cardSequence()
+        }
+      })
       await flushPromises()
 
       for (let click = 0; click < 3; click++) {
@@ -1317,7 +1517,9 @@ surrounded by predators`)
       // text by hand without moving the track would desync the segment for the rest of its
       // run, so a card with a music bed is left entirely to its own clock.
       const scored = cardSequence().map(segment => ({ ...segment, audioYoutubeVideoId: 'EB3IokHelRk' }))
-      const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: scored } })
+      const wrapper = mountOverlay(WolvesIntroOverlay, {
+        props: { videos: scored }
+      })
       await flushPromises()
       resolveIframeApi()
       await flushPromises()
@@ -1331,7 +1533,11 @@ surrounded by predators`)
     })
 
     it('still advances itself with no click at all', async () => {
-      const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: cardSequence() } })
+      const wrapper = mountOverlay(WolvesIntroOverlay, {
+        props: {
+          videos: cardSequence()
+        }
+      })
       await flushPromises()
 
       await vi.advanceTimersByTimeAsync(29_000)
@@ -1346,9 +1552,16 @@ surrounded by predators`)
 
   it('mounts a background-only audio embed when audioYoutubeVideoId is set', async () => {
     const textSequence = [
-      { id: 'wolves-prologue', kind: 'text' as const, duration: 45, audioYoutubeVideoId: 'EB3IokHelRk' },
+      {
+        id: 'wolves-prologue',
+        kind: 'text' as const,
+        duration: 45,
+        audioYoutubeVideoId: 'EB3IokHelRk'
+      },
     ]
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: textSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: textSequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -1370,13 +1583,21 @@ describe('wolvesIntroOverlay guardian plate', () => {
         { text: 'Void Warlock — Cortney Nickerson — Reconciler of the Arcane', start: 5, end: 10 },
         { text: 'Arc Warlock — Kaslin Fields — Rage of the Paradox', start: 10, end: 15 },
         { text: 'Solar Hunter — Laura Santamaria — Paragon to the Order of 7', start: 15, end: 20 },
-        { text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 20, end: 25, position: 'right' as const, raised: true },
+        {
+          text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes',
+          start: 20,
+          end: 25,
+          position: 'right' as const,
+          raised: true
+        },
       ],
     },
   ]
 
   it('reads MAINTAINER // GUARDIAN, matching the lore-column dossier label', async () => {
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: guardianPlateSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: guardianPlateSequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -1388,7 +1609,9 @@ describe('wolvesIntroOverlay guardian plate', () => {
   })
 
   it('renders Cortney Nickerson with the documented dinosaur companion plate', async () => {
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: guardianPlateSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: guardianPlateSequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -1412,7 +1635,9 @@ describe('wolvesIntroOverlay guardian plate', () => {
   })
 
   it('renders Alamo as an independently anchored companion card', async () => {
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: guardianPlateSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: guardianPlateSequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -1430,7 +1655,9 @@ describe('wolvesIntroOverlay guardian plate', () => {
 
   it('anchors every companion card independently to the lower-right screen edge', () => {
     const overlay = readFileSync(resolve(process.cwd(), 'src/components/wolves/WolvesIntroOverlay.vue'), 'utf8')
-    const companionRules = [...overlay.matchAll(/\.wolves-companion-plate \{([\s\S]*?)\n\}/g)].map(match => match[1])
+    const companionRules = [
+      ...overlay.matchAll(/\.wolves-companion-plate \{([\s\S]*?)\n\}/g)
+    ].map(match => match[1])
 
     expect(companionRules.some(rule =>
       rule.includes('position: fixed')
@@ -1480,15 +1707,21 @@ describe('wolvesIntroOverlay guardian plate', () => {
     expect(overlay).toContain('wolves-companion-plate-art')
     // The artwork breaks out of the chamfered card: the card carries the
     // clip-path while the art rides above it with a negative overlap.
-    const artRules = [...overlay.matchAll(/\.wolves-companion-plate-art \{([^}]*)\}/g)].map(m => m[1])
-    const cardRules = [...overlay.matchAll(/\.wolves-companion-plate-card \{([^}]*)\}/g)].map(m => m[1])
+    const artRules = [
+      ...overlay.matchAll(/\.wolves-companion-plate-art \{([^}]*)\}/g)
+    ].map(m => m[1])
+    const cardRules = [
+      ...overlay.matchAll(/\.wolves-companion-plate-card \{([^}]*)\}/g)
+    ].map(m => m[1])
     expect(artRules.some(rule => rule.includes('z-index: 1'))).toBe(true)
     expect(artRules.some(rule => rule.includes('-3.4rem'))).toBe(true)
     expect(cardRules.some(rule => rule.includes('clip-path'))).toBe(true)
   })
 
   it('names Kat Cosgrove\'s companion Karl with its authored species', async () => {
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: guardianPlateSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: guardianPlateSequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -1504,7 +1737,9 @@ describe('wolvesIntroOverlay guardian plate', () => {
   })
 
   it('switches to Kaslin\'s bonded companion during her authored window', async () => {
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: guardianPlateSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: guardianPlateSequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -1520,7 +1755,9 @@ describe('wolvesIntroOverlay guardian plate', () => {
   })
 
   it('renders no companion plate for a guardian with no documented dinosaur bond', async () => {
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: guardianPlateSequence } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: guardianPlateSequence }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -1538,7 +1775,9 @@ describe('wolvesIntroOverlay director\'s cut', () => {
   const directorsCut = buildDirectorsCutVideoSequence()
 
   async function mountDirectorsCut() {
-    const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: directorsCut } })
+    const wrapper = mountOverlay(WolvesIntroOverlay, {
+      props: { videos: directorsCut }
+    })
     await flushPromises()
     resolveIframeApi()
     await flushPromises()
@@ -2014,7 +2253,9 @@ describe('wolvesIntroOverlay director\'s cut', () => {
       ;(window as any).Image = RecordingImage
       ;(globalThis as any).Image = RecordingImage
       try {
-        mountOverlay(WolvesIntroOverlay, { props: { videos } })
+        mountOverlay(WolvesIntroOverlay, {
+          props: { videos }
+        })
         await flushPromises()
       }
       finally {
@@ -2049,7 +2290,10 @@ describe('wolvesIntroOverlay director\'s cut', () => {
       return class GatedImage extends RecordingImage {
         override decode() {
           return new Promise<void>((resolve) => {
-            pending.push({ url: this.src, resolve: () => resolve() })
+            pending.push({
+              url: this.src,
+              resolve: () => resolve()
+            })
           })
         }
       }
@@ -2084,7 +2328,9 @@ describe('wolvesIntroOverlay director\'s cut', () => {
 
     it('warms them one at a time, in montage order', async () => {
       await withGatedImages(async (pending) => {
-        mountOverlay(WolvesIntroOverlay, { props: { videos: directorsCut } })
+        mountOverlay(WolvesIntroOverlay, {
+          props: { videos: directorsCut }
+        })
         await flushPromises()
 
         // Only the first painting may be in flight: the other nine are still
@@ -2103,7 +2349,9 @@ describe('wolvesIntroOverlay director\'s cut', () => {
 
     it('abandons the warm chain when the intro is left', async () => {
       await withGatedImages(async (pending) => {
-        const wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: directorsCut } })
+        const wrapper = mountOverlay(WolvesIntroOverlay, {
+          props: { videos: directorsCut }
+        })
         await flushPromises()
         expect(conceptsSoFar()).toHaveLength(1)
 
@@ -2143,7 +2391,9 @@ describe('wolvesIntroOverlay director\'s cut', () => {
       ;(globalThis as any).Image = FailingImage
       let wrapper: any
       try {
-        wrapper = mountOverlay(WolvesIntroOverlay, { props: { videos: directorsCut } })
+        wrapper = mountOverlay(WolvesIntroOverlay, {
+          props: { videos: directorsCut }
+        })
         await flushPromises()
         resolveIframeApi()
         await flushPromises()

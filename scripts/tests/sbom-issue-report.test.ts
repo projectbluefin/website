@@ -124,7 +124,11 @@ describe('buildSbomIssuePlan', () => {
   it('updates an existing issue when the same failure recurs', () => {
     const audit = makeAudit([MISSING_SBOM_IMAGE])
     const openIssues = [
-      { number: 42, title: plan_title_for(MISSING_SBOM_IMAGE), state: 'open' },
+      {
+        number: 42,
+        title: plan_title_for(MISSING_SBOM_IMAGE),
+        state: 'open'
+      },
     ]
     const plan = buildSbomIssuePlan(audit, openIssues)
 
@@ -138,7 +142,11 @@ describe('buildSbomIssuePlan', () => {
   it('closes an issue when the failure has recovered', () => {
     const audit = makeAudit([VERIFIED_IMAGE])
     const openIssues = [
-      { number: 42, title: plan_title_for(MISSING_SBOM_IMAGE), state: 'open' },
+      {
+        number: 42,
+        title: plan_title_for(MISSING_SBOM_IMAGE),
+        state: 'open'
+      },
     ]
     const plan = buildSbomIssuePlan(audit, openIssues)
 
@@ -224,7 +232,11 @@ describe('buildSbomIssuePlan', () => {
   it('creates for new failures while closing recovered ones', () => {
     const audit = makeAudit([EVIDENCE_ERROR_IMAGE])
     const openIssues = [
-      { number: 42, title: plan_title_for(MISSING_SBOM_IMAGE), state: 'open' },
+      {
+        number: 42,
+        title: plan_title_for(MISSING_SBOM_IMAGE),
+        state: 'open'
+      },
     ]
     const plan = buildSbomIssuePlan(audit, openIssues)
 
@@ -268,13 +280,16 @@ describe('buildSbomIssuePlan — exact error codes, degraded entries, and eviden
   })
 
   it('separates two failure codes for the same product into two issues', () => {
-    const plan = buildSbomIssuePlan(makeAudit([MISSING_SBOM_IMAGE, {
-      ...MISSING_SBOM_IMAGE,
-      id: 'bluefin-lts',
-      errorCode: 'missing-sbom',
-      missingRequired: undefined,
-      error: 'no sbom',
-    }]), [])
+    const plan = buildSbomIssuePlan(makeAudit([
+      MISSING_SBOM_IMAGE,
+      {
+        ...MISSING_SBOM_IMAGE,
+        id: 'bluefin-lts',
+        errorCode: 'missing-sbom',
+        missingRequired: undefined,
+        error: 'no sbom',
+      }
+    ]), [])
     expect(plan.create.map(i => i.title).sort()).toEqual([
       '[SBOM verification] bluefin: missing-required',
       '[SBOM verification] bluefin: missing-sbom',
@@ -290,14 +305,18 @@ describe('buildSbomIssuePlan — exact error codes, degraded entries, and eviden
   })
 
   it('does not close a degraded image issue', () => {
-    const openIssues = [{ number: 7, title: '[SBOM verification] bluefin: ambiguous-optional', state: 'open' }]
+    const openIssues = [
+      { number: 7, title: '[SBOM verification] bluefin: ambiguous-optional', state: 'open' }
+    ]
     const plan = buildSbomIssuePlan(makeAudit([DEGRADED_IMAGE]), openIssues)
     expect(plan.close).toHaveLength(0)
     expect(plan.update.map(u => u.number)).toEqual([7])
   })
 
   it('keeps a pending-mapping issue open rather than closing it', () => {
-    const openIssues = [{ number: 8, title: '[SBOM verification] dakota: pending-mapping', state: 'open' }]
+    const openIssues = [
+      { number: 8, title: '[SBOM verification] dakota: pending-mapping', state: 'open' }
+    ]
     const plan = buildSbomIssuePlan(makeAudit([PENDING_IMAGE]), openIssues)
     expect(plan.close).toHaveLength(0)
     expect(plan.update.map(u => u.number)).toEqual([8])
@@ -342,7 +361,9 @@ describe('buildSbomIssuePlan — exact error codes, degraded entries, and eviden
   })
 
   it('still alerts on a genuine missing-sbom for a mapped (non-pending) image', () => {
-    const plan = buildSbomIssuePlan(makeAudit([{ ...PENDING_MISSING_SBOM_BLUEFIN, pending: false }]), [])
+    const plan = buildSbomIssuePlan(makeAudit([
+      { ...PENDING_MISSING_SBOM_BLUEFIN, pending: false }
+    ]), [])
     expect(plan.create).toHaveLength(1)
     expect(plan.create[0].title).toBe('[SBOM verification] bluefin: missing-sbom')
   })

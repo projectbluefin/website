@@ -102,11 +102,25 @@ describe('extractMappedVersions', () => {
   it('skips duplicate evidence entries (same version, different elements)', () => {
     const sbom = {
       packages: [
-        { name: 'foo', versionInfo: '1.2.3', externalRefs: [{ referenceType: 'bst-element', referenceLocator: 'a/foo.bst' }] },
-        { name: 'foo', versionInfo: '1.2.3', externalRefs: [{ referenceType: 'bst-element', referenceLocator: 'b/foo.bst' }] },
+        {
+          name: 'foo',
+          versionInfo: '1.2.3',
+          externalRefs: [
+            { referenceType: 'bst-element', referenceLocator: 'a/foo.bst' }
+          ]
+        },
+        {
+          name: 'foo',
+          versionInfo: '1.2.3',
+          externalRefs: [
+            { referenceType: 'bst-element', referenceLocator: 'b/foo.bst' }
+          ]
+        },
       ],
     }
-    const result = extractMappedVersions(sbom, { foo: { name: 'foo' } })
+    const result = extractMappedVersions(sbom, {
+      foo: { name: 'foo' }
+    })
     expect(result.values.foo).toBe('1.2.3')
     expect(result.ambiguous).toHaveLength(0)
   })
@@ -117,7 +131,9 @@ describe('extractMappedVersions', () => {
         { name: 'linux', versionInfo: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' },
       ],
     }
-    const result = extractMappedVersions(sbom, { kernel: { name: 'linux', required: true } })
+    const result = extractMappedVersions(sbom, {
+      kernel: { name: 'linux', required: true }
+    })
     expect(result.missingRequired).toContain('kernel')
     expect(result.rejected.some(r => r.field === 'kernel')).toBe(true)
   })
@@ -128,7 +144,9 @@ describe('extractMappedVersions', () => {
         { name: 'kernel-core', versionInfo: '7.1.6-201.fc44', version: '7.1.6' },
       ],
     }
-    const result = extractMappedVersions(sbom, { kernel: { name: 'kernel-core' } })
+    const result = extractMappedVersions(sbom, {
+      kernel: { name: 'kernel-core' }
+    })
     expect(result.values.kernel).toBe('7.1.6-201.fc44')
   })
 
@@ -138,7 +156,9 @@ describe('extractMappedVersions', () => {
         { name: 'kernel-core', version: '7.1.6-201.fc44' },
       ],
     }
-    const result = extractMappedVersions(sbom, { kernel: { name: 'kernel-core' } })
+    const result = extractMappedVersions(sbom, {
+      kernel: { name: 'kernel-core' }
+    })
     expect(result.values.kernel).toBe('7.1.6-201.fc44')
   })
 

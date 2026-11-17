@@ -41,7 +41,9 @@ export function sanitizeFeedLink(href: string): string {
   }
   try {
     const url = new URL(trimmed)
-    return url.protocol === 'https:' || url.protocol === 'http:' ? trimmed : '#'
+    return url.protocol === 'https:' || url.protocol === 'http:'
+      ? trimmed
+      : '#'
   }
   catch {
     return '#'
