@@ -1425,9 +1425,6 @@ function handleImageError(event: Event, photo: any) {
   img.src = `${baseUrl}img/wallpapers/wolves/showcase/bluespeed-cluster.png`
 }
 
-// Template refs ────────────────────────────────────────────────────────────
-const flipViewport = ref<HTMLElement | null>(null)
-
 // Utilities ────────────────────────────────────────────────────────────────
 
 function shuffleWallpapers(array: any[]): any[] {
@@ -1495,7 +1492,6 @@ onBeforeUnmount(() => {
   >
     <div class="page-flip-comic-layout">
       <div
-        ref="flipViewport"
         class="comic-viewport"
         :class="{ 'comic-viewport--showcase': showcaseSlideActive }"
       >
