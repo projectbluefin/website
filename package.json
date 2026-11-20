@@ -48,7 +48,7 @@
     "vue-i18n": "^11.0.1"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "6.7.3",
+    "@antfu/eslint-config": "10.0.0",
     "@tailwindcss/vite": "4.3.2",
     "@types/node": "26.6.6",
     "@types/qrcode": "1.5.6",
