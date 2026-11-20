@@ -329,21 +329,149 @@ describe('scripts/test-baseline.mjs (npm run test:gate)', () => {
     expect(stdout).toContain('test-baseline: no new failures (0 known, baseline 0).')
   })
 
-  it('tolerates a report with no testResults and a file with no assertionResults', () => {
+  it('rejects an incomplete report with no testResults, even on a clean exit', () => {
+    // An empty report means nothing ran to completion. It must fail the gate
+    // (exit 2) regardless of the child exit code, and never read as "no new
+    // failures".
     const root = makeRepo()
     writeBaseline(root, '')
 
-    expect(runGate(root, { vitestRc: 0, report: '{}' }).status).toBe(0)
-    expect(runGate(root, {
+    const { status, stderr } = runGate(root, { vitestRc: 0, report: '{}' })
+    expect(status).toBe(2)
+    expect(stderr).toContain('test-baseline: vitest report is incomplete or malformed')
+
+    // The same report with a non-zero child exit is rejected the same way.
+    expect(runGate(root, { vitestRc: 1, report: '{}' }).status).toBe(2)
+  })
+
+  it('tolerates a file with no assertionResults on a clean exit', () => {
+    // A completed run that simply reports a file with no assertions still has
+    // no failures to report; only an unexplained non-zero exit is a problem.
+    const root = makeRepo()
+    writeBaseline(root, '')
+
+    expect(
+      runGate(root, {
+        vitestRc: 0,
+        report: JSON.stringify({
+          testResults: [
+            {
+              name: join(root, 'src/tests/a.test.ts')
+            }
+          ],
+        }),
+      }).status,
+    ).toBe(0)
+  })
+
+  it('rejects a failed suite with no completed assertions', () => {
+    // Import / suite-load failure: vitest exits non-zero, the suite contributes
+    // no completed failed assertions, and success is false.
+    const root = makeRepo()
+    writeBaseline(root, '')
+
+    const report = JSON.stringify({
+      success: false,
+      testResults: [
+        {
+          name: join(root, 'src/tests/broken.test.ts'),
+          assertionResults: []
+        }
+      ],
+    })
+
+    const { status, stderr } = runGate(root, { vitestRc: 1, report })
+    expect(status).toBe(2)
+    expect(stderr).toContain('test-baseline: vitest failed to run to completion')
+  })
+
+  it('rejects a runner error even when one assertion passed', () => {
+    // A passing assertion plus a runner error still means the run did not
+    // complete; the single pass does not explain the non-zero exit.
+    const root = makeRepo()
+    writeBaseline(root, '')
+
+    const report = JSON.stringify({
+      success: false,
+      testResults: [
+        {
+          name: join(root, 'src/tests/a.test.ts'),
+          assertionResults: [
+            { status: 'passed', fullName: 'a passes' }
+          ],
+        },
+      ],
+    })
+
+    expect(runGate(root, { vitestRc: 1, report }).status).toBe(2)
+  })
+
+  it('rejects a suite-load failure reported with a nameless failed assertion', () => {
+    // Real vitest emits a failed entry with an empty fullName for a suite that
+    // failed to import. That is not a completed assertion and must not be
+    // counted, so the non-zero exit stays unexplained and the gate rejects it.
+    const root = makeRepo()
+    writeBaseline(root, '')
+
+    const report = JSON.stringify({
+      success: false,
+      testResults: [
+        {
+          name: join(root, 'src/tests/broken.test.ts'),
+          assertionResults: [
+            { status: 'failed', fullName: '' }
+          ],
+        },
+      ],
+    })
+
+    expect(runGate(root, { vitestRc: 1, report }).status).toBe(2)
+  })
+
+  it('refuses to overwrite the baseline under --update on a runner error', () => {
+    // The update mode must not record an empty baseline from an incomplete run.
+    const root = makeRepo()
+    writeBaseline(root, 'src/tests/a.test.ts :: a fails\n')
+
+    const report = JSON.stringify({
+      success: false,
+      testResults: [
+        {
+          name: join(root, 'src/tests/broken.test.ts'),
+          assertionResults: []
+        }
+      ],
+    })
+
+    const { status } = runGate(root, {
+      args: ['--update'],
+      vitestRc: 1,
+      report
+    })
+    expect(status).toBe(2)
+    // The recorded baseline is left untouched.
+    expect(readFileSync(baselinePath(root), 'utf8')).toBe('src/tests/a.test.ts :: a fails\n')
+  })
+
+  it('still passes a healthy run with a passing assertion', () => {
+    // Passing control: a clean, complete run is unaffected by the new checks.
+    const root = makeRepo()
+    writeBaseline(root, '')
+
+    const { status, stdout } = runGate(root, {
       vitestRc: 0,
-      report: JSON.stringify({
-        testResults: [
-          {
-            name: join(root, 'src/tests/a.test.ts')
-          }
-        ]
-      }),
-    }).status).toBe(0)
+      report: report(root, [
+        {
+          name: 'src/tests/a.test.ts',
+          assertions: [
+            ['passed', 'a passes']
+          ]
+        }
+      ]),
+    })
+
+    expect(status).toBe(0)
+    expect(stdout).toContain('no new failures')
   })
 
   it('ignores blank and whitespace-padded baseline lines', () => {

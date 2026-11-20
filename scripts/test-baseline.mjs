@@ -30,6 +30,11 @@ const shouldUpdate = process.argv.includes('--update')
 
 const reportPath = join(mkdtempSync(join(tmpdir(), 'wolves-baseline-')), 'vitest.json')
 
+// Captured instead of swallowed: a non-zero exit is only acceptable when
+// completed failed assertions account for it. A runner that failed to finish
+// (suite-load error, setup error, import error) also exits non-zero, and that
+// is exactly the case the gate used to report as passing.
+let childExit = 0
 try {
   execFileSync(
     'npx',
@@ -44,8 +49,10 @@ try {
     },
   )
 }
-catch {
-  // vitest exits non-zero whenever tests fail, which is the normal case here.
+catch (error) {
+  childExit = Number.isInteger(error.status)
+    ? error.status
+    : 1
 }
 
 if (!existsSync(reportPath)) {
@@ -54,18 +61,41 @@ if (!existsSync(reportPath)) {
 }
 
 const report = JSON.parse(readFileSync(reportPath, 'utf8'))
+
+// Validate the report before interpreting it or writing an updated baseline.
+// An incomplete report (no `testResults`) means nothing ran to completion, so
+// it must never be read as "no new failures" nor recorded as a baseline.
+if (!report || typeof report !== 'object' || !Array.isArray(report.testResults)) {
+  console.error('test-baseline: vitest report is incomplete or malformed')
+  process.exit(2)
+}
+
 const cwd = `${process.cwd()}/`
 
 const current = new Set()
-for (const file of report.testResults ?? []) {
+for (const file of report.testResults) {
   for (const assertion of file.assertionResults ?? []) {
-    if (assertion.status === 'failed') {
+    // A suite that failed to load reports a failed assertion with no name;
+    // it is not a completed assertion and must not enter the failure set.
+    if (assertion.status === 'failed' && assertion.fullName) {
       current.add(`${file.name.replace(cwd, '')} :: ${assertion.fullName}`)
     }
   }
 }
 
 const sorted = [...current].sort()
+
+// A non-zero child exit with no completed failed assertions is a run that did
+// not finish: a suite failed to load, setup threw, or the runner errored. The
+// normal red suite always has completed failed assertions to explain its exit
+// code, so the absence of any is itself a failure. Reject it before the
+// comparison and before any `--update` could record an empty baseline.
+if (childExit !== 0 && current.size === 0) {
+  console.error(
+    'test-baseline: vitest failed to run to completion and reported no completed failures',
+  )
+  process.exit(2)
+}
 
 if (shouldUpdate) {
   writeFileSync(BASELINE, `${sorted.join('\n')}\n`)
