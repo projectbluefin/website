@@ -440,7 +440,9 @@ describe('scripts/test-baseline.mjs (npm run test:gate)', () => {
         {
           name: join(root, 'src/tests/a.test.ts'),
           status: 'failed',
-          assertionResults: [{ status: 'failed', fullName: 'a fails' }],
+          assertionResults: [
+            { status: 'failed', fullName: 'a fails' }
+          ],
         },
         {
           name: join(root, 'src/tests/broken.test.ts'),
@@ -453,8 +455,35 @@ describe('scripts/test-baseline.mjs (npm run test:gate)', () => {
     const { status, stderr } = runGate(root, { vitestRc: 1, report })
     expect(status).toBe(2)
     expect(stderr).toContain('src/tests/broken.test.ts')
-    expect(runGate(root, { vitestRc: 1, report, args: ['--update'] }).status).toBe(2)
+    expect(runGate(root, {
+      vitestRc: 1,
+      report,
+      args: ['--update']
+    }).status).toBe(2)
     expect(readFileSync(baselinePath(root), 'utf8')).toBe('src/tests/a.test.ts :: a fails\n')
+  })
+
+  it('rejects a file with a named failure plus a file-level hook error', () => {
+    const root = makeRepo()
+    writeBaseline(root, 'src/tests/a.test.ts :: a fails\n')
+
+    const report = JSON.stringify({
+      success: false,
+      testResults: [
+        {
+          name: join(root, 'src/tests/a.test.ts'),
+          status: 'failed',
+          message: 'afterAll hook threw',
+          assertionResults: [
+            { status: 'failed', fullName: 'a fails' }
+          ],
+        },
+      ],
+    })
+
+    const { status, stderr } = runGate(root, { vitestRc: 1, report })
+    expect(status).toBe(2)
+    expect(stderr).toContain('src/tests/a.test.ts')
   })
 
   it('refuses to overwrite the baseline under --update on a runner error', () => {

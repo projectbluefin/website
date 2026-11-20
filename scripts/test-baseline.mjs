@@ -92,7 +92,11 @@ for (const file of report.testResults) {
       }
     }
   }
-  if ((file.status === 'failed' || nameless > 0) && named === 0) {
+  // A file-level error message (hook throw, import failure) is reported on the
+  // file itself, never on an assertion, so it flags the file even when other
+  // named failures in it are baseline-known.
+  const fileError = typeof file.message === 'string' && file.message.trim() !== ''
+  if (fileError || ((file.status === 'failed' || nameless > 0) && named === 0)) {
     unexplained.push(String(file.name).replace(cwd, ''))
   }
 }
