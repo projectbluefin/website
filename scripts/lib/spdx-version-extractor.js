@@ -99,7 +99,9 @@ export function extractMappedVersions(sbom, mappings) {
     }
 
     // De-duplicate (identical versions from different build elements are safe)
-    const distinct = [...new Set(accepted)]
+    const distinct = [
+      ...new Set(accepted)
+    ]
 
     if (distinct.length === 0) {
       if (mapping.required) {
@@ -117,5 +119,11 @@ export function extractMappedVersions(sbom, mappings) {
     }
   }
 
-  return { values, missingRequired, missingOptional, ambiguous, rejected }
+  return {
+    values,
+    missingRequired,
+    missingOptional,
+    ambiguous,
+    rejected
+  }
 }

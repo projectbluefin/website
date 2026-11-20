@@ -146,7 +146,9 @@ describe('wolvesApp intro status handling', () => {
   it('preloads the cinematic stage during the intro and dissolves the overlay at the handoff', async () => {
     vi.useFakeTimers()
     const wrapper = shallowMount(WolvesApp, {
-      global: { stubs: stubs() },
+      global: {
+        stubs: stubs()
+      },
     })
 
     await wrapper.get('.cinematic-lobby-stub').trigger('click')
@@ -169,7 +171,9 @@ describe('wolvesApp intro status handling', () => {
 
   it('routes the Seven Days catalogue card through the authored Wolves experience', async () => {
     const wrapper = shallowMount(WolvesApp, {
-      global: { stubs: stubs() },
+      global: {
+        stubs: stubs()
+      },
     })
     const sourcePlaylistId = (WOLVES_EXPERIENCE as typeof WOLVES_EXPERIENCE & {
       sourcePlaylistId?: string
@@ -179,16 +183,18 @@ describe('wolvesApp intro status handling', () => {
       id: sourcePlaylistId!,
       title: 'Seven Days to the Wolves',
       artwork: 'experiences/PLA78oiE-RGAE.jpg',
-      segments: [{
-        id: 'generated-track',
-        kind: 'youtube' as const,
-        youtubeId: 'generated-track',
-        chapter: 'TRACK 1',
-        title: 'Generated Track',
-        artist: 'Artist',
-        artwork: 'track.jpg',
-        durationSeconds: 100,
-      }],
+      segments: [
+        {
+          id: 'generated-track',
+          kind: 'youtube' as const,
+          youtubeId: 'generated-track',
+          chapter: 'TRACK 1',
+          title: 'Generated Track',
+          artist: 'Artist',
+          artwork: 'track.jpg',
+          durationSeconds: 100,
+        }
+      ],
     }
 
     wrapper.getComponent(CinematicLobbyStub).vm.$emit('launchExperience', generatedPlaylistManifest)
@@ -204,22 +210,26 @@ describe('wolvesApp intro status handling', () => {
 
   it('launches other catalogue albums directly in the shared cinematic', async () => {
     const wrapper = shallowMount(WolvesApp, {
-      global: { stubs: stubs() },
+      global: {
+        stubs: stubs()
+      },
     })
     const albumManifest = {
       id: 'another-album',
       title: 'Another Album',
       artwork: 'experiences/another.jpg',
-      segments: [{
-        id: 'track',
-        kind: 'youtube' as const,
-        youtubeId: 'track',
-        chapter: 'TRACK 1',
-        title: 'Track',
-        artist: 'Artist',
-        artwork: 'track.jpg',
-        durationSeconds: 100,
-      }],
+      segments: [
+        {
+          id: 'track',
+          kind: 'youtube' as const,
+          youtubeId: 'track',
+          chapter: 'TRACK 1',
+          title: 'Track',
+          artist: 'Artist',
+          artwork: 'track.jpg',
+          durationSeconds: 100,
+        }
+      ],
     }
 
     wrapper.getComponent(CinematicLobbyStub).vm.$emit('launchExperience', albumManifest)
@@ -237,7 +247,9 @@ describe('wolvesApp intro status handling', () => {
     const store = useCinematicStore()
     store.enterIntro()
     const wrapper = shallowMount(WolvesApp, {
-      global: { stubs: stubs() },
+      global: {
+        stubs: stubs()
+      },
     })
 
     wrapper.getComponent(WolvesIntroOverlayStub).vm.$emit('complete')
@@ -261,7 +273,9 @@ describe('wolvesApp intro status handling', () => {
     const store = useCinematicStore()
     store.enterCinematic()
     const wrapper = shallowMount(WolvesApp, {
-      global: { stubs: stubs() },
+      global: {
+        stubs: stubs()
+      },
     })
 
     wrapper.getComponent(MediaWidgetStub).vm.$emit('seek', 0)
@@ -284,7 +298,9 @@ describe('wolvesApp intro status handling', () => {
     const store = useCinematicStore()
     store.enterIntro()
     const wrapper = shallowMount(WolvesApp, {
-      global: { stubs: stubs() },
+      global: {
+        stubs: stubs()
+      },
     })
 
     wrapper.getComponent(WolvesIntroOverlayStub).vm.$emit('complete')
@@ -317,7 +333,9 @@ describe('wolvesApp intro status handling', () => {
     const store = useCinematicStore()
     store.enterIntro()
     const wrapper = shallowMount(WolvesApp, {
-      global: { stubs: stubs() },
+      global: {
+        stubs: stubs()
+      },
     })
 
     wrapper.getComponent(WolvesIntroOverlayStub).vm.$emit('complete')
@@ -425,7 +443,9 @@ describe('wolvesApp intro status handling', () => {
     const store = useCinematicStore()
     store.enterIntro()
     const wrapper = shallowMount(WolvesApp, {
-      global: { stubs: stubs() },
+      global: {
+        stubs: stubs()
+      },
     })
 
     wrapper.getComponent(WolvesIntroOverlayStub).vm.$emit('status', {
@@ -499,7 +519,9 @@ describe('wolvesApp intro status handling', () => {
     const standardDuration = INTRO_SEQUENCE_DURATION
 
     const wrapper = shallowMount(WolvesApp, {
-      global: { stubs: stubs() },
+      global: {
+        stubs: stubs()
+      },
     })
 
     wrapper.getComponent(CinematicLobbyStub).vm.$emit('enter-directors-cut')
@@ -542,7 +564,9 @@ describe('wolvesApp intro status handling', () => {
     const [prologue, destiny] = buildDirectorsCutVideoSequence()
 
     const wrapper = shallowMount(WolvesApp, {
-      global: { stubs: stubs() },
+      global: {
+        stubs: stubs()
+      },
     })
 
     wrapper.getComponent(CinematicLobbyStub).vm.$emit('enter-directors-cut')
@@ -555,7 +579,9 @@ describe('wolvesApp intro status handling', () => {
     const intro = wrapper.getComponent(WolvesIntroOverlayStub)
     intro.vm.$emit('status', {
       currentTime: 10,
-      duration: prologue.kind === 'text' ? prologue.duration : 0,
+      duration: prologue.kind === 'text'
+        ? prologue.duration
+        : 0,
       paused: false,
       segmentId: prologue.id,
       canGoPrevious: false,
@@ -584,7 +610,9 @@ describe('wolvesApp intro status handling', () => {
     const store = useCinematicStore()
 
     const wrapper = shallowMount(WolvesApp, {
-      global: { stubs: stubs() },
+      global: {
+        stubs: stubs()
+      },
     })
 
     wrapper.getComponent(CinematicLobbyStub).vm.$emit('enter-directors-cut')
@@ -615,7 +643,9 @@ describe('wolvesApp intro status handling', () => {
     vi.stubGlobal('location', { ...window.location, search: '?directors-cut' })
 
     shallowMount(WolvesApp, {
-      global: { stubs: stubs() },
+      global: {
+        stubs: stubs()
+      },
     })
     await flushPromises()
 

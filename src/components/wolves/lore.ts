@@ -93,7 +93,9 @@ export function getChatlogLore(record: LoreRecord): InterceptedConversation {
         text: '',
       }
     }
-    return { text: trimmedBlock.replace(/<br>/g, '\n') }
+    return {
+      text: trimmedBlock.replace(/<br>/g, '\n')
+    }
   })
   const projects = record.metadata.projects?.map((projectId) => {
     const project = loreProjectIndex[projectId]
@@ -203,8 +205,12 @@ export function parseLoreSpeakerParagraphs(body: string): LoreSpeakerParagraph[]
     const match = para.match(LORE_SPEAKER_PATTERN)
     return {
       isSpeaker: Boolean(match),
-      speaker: match ? (match[1] || match[2]).trim() : '',
-      text: renderLoreInline(match ? match[3].trim() : para),
+      speaker: match
+        ? (match[1] || match[2]).trim()
+        : '',
+      text: renderLoreInline(match
+        ? match[3].trim()
+        : para),
       source: para,
     }
   })
@@ -222,5 +228,11 @@ export function rebuildLoreSpeakerParagraph(
   part: string,
 ): LoreSpeakerParagraph {
   const match = part.match(LORE_SPEAKER_PATTERN)
-  return { ...block, text: renderLoreInline(match ? match[3].trim() : part), source: part }
+  return {
+    ...block,
+    text: renderLoreInline(match
+      ? match[3].trim()
+      : part),
+    source: part
+  }
 }

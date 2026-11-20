@@ -118,7 +118,9 @@ onMounted(async () => {
       return
     }
     const payload = await response.json() as { characters?: CharacterCard[] }
-    characters.value = Array.isArray(payload.characters) ? payload.characters : []
+    characters.value = Array.isArray(payload.characters)
+      ? payload.characters
+      : []
   }
   catch {
     // The gallery is additive; the lobby renders without it on failure.

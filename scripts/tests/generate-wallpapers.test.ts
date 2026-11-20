@@ -48,7 +48,9 @@ function scratchRoot(tree: Tree) {
 
 function run(tree: Tree) {
   const root = scratchRoot(tree)
-  const output = execFileSync(process.execPath, [join(root, 'scripts/generate-wallpapers.js')], {
+  const output = execFileSync(process.execPath, [
+    join(root, 'scripts/generate-wallpapers.js')
+  ], {
     cwd: root,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -146,7 +148,9 @@ describe('generate-wallpapers.js', () => {
 
     expect(wallpapers).toEqual([
       expect.objectContaining({ type: 'daynight', name: 'bluefin-duality', fit: 'cover' }),
-      expect.not.objectContaining({ fit: expect.anything() }),
+      expect.not.objectContaining({
+        fit: expect.anything()
+      }),
       expect.objectContaining({ type: 'single', name: 'wolves/wolves/bluefin-huntress.webp', fit: 'cover' }),
     ])
     expect(wallpapers[1].name).toBe('wolves/wolves/bluefin-dusk.webp')
@@ -287,7 +291,9 @@ describe('generate-wallpapers.js', () => {
   })
 
   it('groups whichever of the three exist, and leaves a lone one where it sorted', () => {
-    const pair = run({ wolves: images('a.webp', 'bluefin-huntress.webp', 'bluefin-k.webp', 'bluefin-lazy-days.webp') })
+    const pair = run({
+      wolves: images('a.webp', 'bluefin-huntress.webp', 'bluefin-k.webp', 'bluefin-lazy-days.webp')
+    })
     expect(pair.wallpapers.map(w => w.name)).toEqual([
       'wolves/wolves/a.webp',
       'wolves/wolves/bluefin-huntress.webp',
@@ -295,7 +301,9 @@ describe('generate-wallpapers.js', () => {
       'wolves/wolves/bluefin-k.webp',
     ])
 
-    const lone = run({ wolves: images('a.webp', 'bluefin-huntress.webp', 'm.webp', 'z-bluefin-lazy-days.webp') })
+    const lone = run({
+      wolves: images('a.webp', 'bluefin-huntress.webp', 'm.webp', 'z-bluefin-lazy-days.webp')
+    })
     expect(lone.wallpapers.map(w => w.name)).toEqual([
       'wolves/wolves/a.webp',
       'wolves/wolves/bluefin-huntress.webp',
@@ -305,7 +313,9 @@ describe('generate-wallpapers.js', () => {
   })
 
   it('escapes quotes and backslashes in titles so the module still parses', () => {
-    const { wallpapers, source } = run({ showcase: images(`o'brien\\desk.webp`) })
+    const { wallpapers, source } = run({
+      showcase: images(`o'brien\\desk.webp`)
+    })
 
     expect(wallpapers).toEqual([
       { type: 'single', name: `wolves/showcase/o'brien\\desk.webp`, title: `O'brien\\desk` },
@@ -324,13 +334,17 @@ describe('generate-wallpapers.js', () => {
   })
 
   it('exits 1 when the output file cannot be written', () => {
-    const root = scratchRoot({ showcase: images('a.webp') })
+    const root = scratchRoot({
+      showcase: images('a.webp')
+    })
     rmSync(join(root, 'src'), { recursive: true })
 
     let status: number | null = 0
     let stderr = ''
     try {
-      execFileSync(process.execPath, [join(root, 'scripts/generate-wallpapers.js')], { cwd: root, stdio: 'pipe' })
+      execFileSync(process.execPath, [
+        join(root, 'scripts/generate-wallpapers.js')
+      ], { cwd: root, stdio: 'pipe' })
     }
     catch (error) {
       const failure = error as { status: number | null, stderr: string }

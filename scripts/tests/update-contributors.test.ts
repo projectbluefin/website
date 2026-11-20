@@ -18,23 +18,77 @@ describe('update-contributors script', () => {
       const urlStr = String(url)
       if (urlStr.includes('/orgs/projectbluefin/repos')) {
         return new Response(JSON.stringify([
-          { full_name: 'projectbluefin/repo-a', fork: false, private: false, archived: false },
-          { full_name: 'projectbluefin/repo-fork', fork: true, private: false, archived: false },
-          { full_name: 'projectbluefin/repo-archived', fork: false, private: false, archived: true },
-        ]), { status: 200, headers: { 'Content-Type': 'application/json' } })
+          {
+            full_name: 'projectbluefin/repo-a',
+            fork: false,
+            private: false,
+            archived: false
+          },
+          {
+            full_name: 'projectbluefin/repo-fork',
+            fork: true,
+            private: false,
+            archived: false
+          },
+          {
+            full_name: 'projectbluefin/repo-archived',
+            fork: false,
+            private: false,
+            archived: true
+          },
+        ]), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        })
       }
       if (urlStr.includes('/repos/projectbluefin/repo-a/contributors')) {
         return new Response(JSON.stringify([
-          { id: 2, login: 'bob', type: 'User', html_url: 'https://github.com/bob', avatar_url: 'https://avatars.githubusercontent.com/u/2' },
-          { id: 99, login: 'actions-user', type: 'User', html_url: 'https://github.com/actions-user', avatar_url: 'https://avatars.githubusercontent.com/u/99' },
-          { id: 98, login: 'renovate[bot]', type: 'Bot', html_url: 'https://github.com/renovate[bot]', avatar_url: 'https://avatars.githubusercontent.com/u/98' },
-        ]), { status: 200, headers: { 'Content-Type': 'application/json' } })
+          {
+            id: 2,
+            login: 'bob',
+            type: 'User',
+            html_url: 'https://github.com/bob',
+            avatar_url: 'https://avatars.githubusercontent.com/u/2'
+          },
+          {
+            id: 99,
+            login: 'actions-user',
+            type: 'User',
+            html_url: 'https://github.com/actions-user',
+            avatar_url: 'https://avatars.githubusercontent.com/u/99'
+          },
+          {
+            id: 98,
+            login: 'renovate[bot]',
+            type: 'Bot',
+            html_url: 'https://github.com/renovate[bot]',
+            avatar_url: 'https://avatars.githubusercontent.com/u/98'
+          },
+        ]), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        })
       }
       if (urlStr.includes('/repos/projectbluefin/repo-archived/contributors')) {
         return new Response(JSON.stringify([
-          { id: 1, login: 'Alice', type: 'User', html_url: 'https://github.com/Alice', avatar_url: 'https://avatars.githubusercontent.com/u/1' },
-          { id: 2, login: 'bob', type: 'User', html_url: 'https://github.com/bob', avatar_url: 'https://avatars.githubusercontent.com/u/2' },
-        ]), { status: 200, headers: { 'Content-Type': 'application/json' } })
+          {
+            id: 1,
+            login: 'Alice',
+            type: 'User',
+            html_url: 'https://github.com/Alice',
+            avatar_url: 'https://avatars.githubusercontent.com/u/1'
+          },
+          {
+            id: 2,
+            login: 'bob',
+            type: 'User',
+            html_url: 'https://github.com/bob',
+            avatar_url: 'https://avatars.githubusercontent.com/u/2'
+          },
+        ]), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        })
       }
       return new Response('[]', { status: 200 })
     })
@@ -45,8 +99,18 @@ describe('update-contributors script', () => {
       await updateContributors(targetFile)
       const content = JSON.parse(readFileSync(targetFile, 'utf8'))
       expect(content).toEqual([
-        { id: 1, login: 'Alice', html_url: 'https://github.com/Alice', avatar_url: 'https://avatars.githubusercontent.com/u/1' },
-        { id: 2, login: 'bob', html_url: 'https://github.com/bob', avatar_url: 'https://avatars.githubusercontent.com/u/2' },
+        {
+          id: 1,
+          login: 'Alice',
+          html_url: 'https://github.com/Alice',
+          avatar_url: 'https://avatars.githubusercontent.com/u/1'
+        },
+        {
+          id: 2,
+          login: 'bob',
+          html_url: 'https://github.com/bob',
+          avatar_url: 'https://avatars.githubusercontent.com/u/2'
+        },
       ])
     }
     finally {
@@ -62,17 +126,39 @@ describe('update-contributors script', () => {
       const urlStr = String(url)
       if (urlStr.includes('/orgs/projectbluefin/repos')) {
         return new Response(JSON.stringify([
-          { full_name: 'projectbluefin/empty-repo', fork: false, private: false, archived: false },
-          { full_name: 'projectbluefin/has-contributor', fork: false, private: false, archived: false },
-        ]), { status: 200, headers: { 'Content-Type': 'application/json' } })
+          {
+            full_name: 'projectbluefin/empty-repo',
+            fork: false,
+            private: false,
+            archived: false
+          },
+          {
+            full_name: 'projectbluefin/has-contributor',
+            fork: false,
+            private: false,
+            archived: false
+          },
+        ]), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        })
       }
       if (urlStr.includes('/repos/projectbluefin/empty-repo/contributors')) {
         return new Response(null, { status: 204 })
       }
       if (urlStr.includes('/repos/projectbluefin/has-contributor/contributors')) {
         return new Response(JSON.stringify([
-          { id: 10, login: 'dev', type: 'User', html_url: 'https://github.com/dev', avatar_url: 'https://avatars.githubusercontent.com/u/10' },
-        ]), { status: 200, headers: { 'Content-Type': 'application/json' } })
+          {
+            id: 10,
+            login: 'dev',
+            type: 'User',
+            html_url: 'https://github.com/dev',
+            avatar_url: 'https://avatars.githubusercontent.com/u/10'
+          },
+        ]), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        })
       }
       return new Response('[]', { status: 200 })
     })
@@ -83,7 +169,12 @@ describe('update-contributors script', () => {
       await updateContributors(targetFile)
       const content = JSON.parse(readFileSync(targetFile, 'utf8'))
       expect(content).toEqual([
-        { id: 10, login: 'dev', html_url: 'https://github.com/dev', avatar_url: 'https://avatars.githubusercontent.com/u/10' },
+        {
+          id: 10,
+          login: 'dev',
+          html_url: 'https://github.com/dev',
+          avatar_url: 'https://avatars.githubusercontent.com/u/10'
+        },
       ])
     }
     finally {
@@ -97,8 +188,16 @@ describe('update-contributors script', () => {
 
     const fetchMock = vi.fn(async () => {
       return new Response(JSON.stringify([
-        { full_name: 'projectbluefin/only-fork', fork: true, private: false, archived: false },
-      ]), { status: 200, headers: { 'Content-Type': 'application/json' } })
+        {
+          full_name: 'projectbluefin/only-fork',
+          fork: true,
+          private: false,
+          archived: false
+        },
+      ]), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
     })
 
     vi.stubGlobal('fetch', fetchMock)

@@ -96,7 +96,12 @@ export default defineConfig({
           if (id.includes('/node_modules/@iconify-prerendered/vue-mdi')) {
             return 'ui-icons'
           }
-          if (['marked', 'js-yaml', '@vueuse/core', '@vueuse/components'].some(mod => id.includes(`/node_modules/${mod}`))) {
+          if ([
+            'marked',
+            'js-yaml',
+            '@vueuse/core',
+            '@vueuse/components'
+          ].some(mod => id.includes(`/node_modules/${mod}`))) {
             return 'utils'
           }
           return undefined

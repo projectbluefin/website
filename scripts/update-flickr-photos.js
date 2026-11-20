@@ -5,7 +5,9 @@ import { fileURLToPath } from 'node:url'
 const MODULE_PATH = import.meta.url.startsWith('file:')
   ? fileURLToPath(import.meta.url)
   : null
-const ROOT_DIR = MODULE_PATH ? dirname(dirname(MODULE_PATH)) : process.cwd()
+const ROOT_DIR = MODULE_PATH
+  ? dirname(dirname(MODULE_PATH))
+  : process.cwd()
 const TARGET_PATH = join(ROOT_DIR, 'public', 'flickr-photos.json')
 const CONFIG_PATH = join(ROOT_DIR, 'scripts', 'flickr-curation.json')
 
@@ -50,7 +52,9 @@ export async function fetchWithRateLimit(url, { retries = DEFAULT_CONFIG.maxRetr
 
     if (res.status === 429) {
       const retryAfter = res.headers.get('retry-after')
-      const waitSeconds = retryAfter ? Number(retryAfter) : Math.min(2 ** attempt * 2, 60)
+      const waitSeconds = retryAfter
+        ? Number(retryAfter)
+        : Math.min(2 ** attempt * 2, 60)
       if (attempt < retries) {
         console.warn(`Rate limited (429) for ${url}. Waiting ${waitSeconds}s before retry ${attempt + 1}/${retries}...`)
         await sleep(waitSeconds * 1000)
@@ -157,7 +161,9 @@ export function selectFreshPhotos(candidates, targetTotalPhotos) {
 
 export function buildAlbumPageUrl(albumId, userId, page = 1) {
   const base = `https://www.flickr.com/photos/${userId}/albums/${albumId}`
-  return page > 1 ? `${base}/page${page}` : base
+  return page > 1
+    ? `${base}/page${page}`
+    : base
 }
 
 export function extractPhotosFromAlbumHtml(html) {
@@ -191,7 +197,9 @@ export function extractPhotosFromAlbumHtml(html) {
       const server = srcMatch[1]
       const id = srcMatch[2]
       const secret = srcMatch[3]
-      const title = titleMatch ? titleMatch[1].trim() : ''
+      const title = titleMatch
+        ? titleMatch[1].trim()
+        : ''
 
       if (!seen.has(id)) {
         seen.add(id)
@@ -288,7 +296,9 @@ export async function scrapeAlbum(album, config, fetcher = fetchWithRateLimit) {
   const firstHtml = await firstRes.text()
   const totalPages = countAlbumPages(firstHtml)
   const targetPages = selectSpreadPages(totalPages, config.maxPagesPerAlbum)
-  const pageHtmlCache = new Map([[1, firstHtml]])
+  const pageHtmlCache = new Map([
+    [1, firstHtml]
+  ])
 
   for (const page of targetPages) {
     let html = pageHtmlCache.get(page)

@@ -19,12 +19,17 @@ const repo = path.resolve(here, '..', '..')
 const outDir = path.join(repo, 'public', 'wolves', 'characters')
 const { characters } = JSON.parse(fs.readFileSync(path.join(here, 'characters.json'), 'utf8'))
 const only = process.argv.slice(2)
-const selected = only.length ? characters.filter(character => only.includes(character.slug)) : characters
+const selected = only.length
+  ? characters.filter(character => only.includes(character.slug))
+  : characters
 
 fs.mkdirSync(outDir, { recursive: true })
 
 const browser = await chromium.launch()
-const page = await browser.newPage({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1 })
+const page = await browser.newPage({
+  viewport: { width: 1200, height: 630 },
+  deviceScaleFactor: 1
+})
 
 for (const character of selected) {
   const scene = path.join(here, 'scenes', `${character.slug}.png`)
@@ -56,7 +61,9 @@ for (const character of selected) {
   }
   await page.goto(`file://${here}/card.html?${params}`)
   await page.waitForLoadState('networkidle')
-  await page.screenshot({ path: path.join(outDir, `${character.slug}.png`) })
+  await page.screenshot({
+    path: path.join(outDir, `${character.slug}.png`)
+  })
 
   const target = `https://youtu.be/${character.videoId}?t=${character.linkTime}`
   const heading = `${character.class} — ${character.name}`

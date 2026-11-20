@@ -62,7 +62,9 @@ function stubGh(root: string, { stdout = '[]', status = 0, stderr = '' } = {}) {
     `cat <<'GH_STUB_EOF'`,
     stdout,
     'GH_STUB_EOF',
-    stderr ? `printf '%s\\n' ${JSON.stringify(stderr)} >&2` : '',
+    stderr
+      ? `printf '%s\\n' ${JSON.stringify(stderr)} >&2`
+      : '',
     `exit ${status}`,
     '',
   ].join('\n'))
@@ -79,7 +81,9 @@ function runChecker(repository: string, { bin, args = [] as string[] } = {} as {
       // `main` is both the base ref and the branch the checker treats as the
       // base branch, so the fixture needs no second remote-tracking ref.
       GIT_HYGIENE_BASE: 'main',
-      PATH: bin ? `${bin}:${process.env.PATH}` : process.env.PATH,
+      PATH: bin
+        ? `${bin}:${process.env.PATH}`
+        : process.env.PATH,
     },
   })
   return { ...result, output: `${result.stdout}${result.stderr}` }
@@ -102,7 +106,9 @@ function pullRequest(overrides: Record<string, unknown> = {}) {
 describe('check-git-hygiene --self-test', () => {
   it('passes without touching git or gh', () => {
     const { repository } = createRepository()
-    const result = runChecker(repository, { args: ['--self-test'] })
+    const result = runChecker(repository, {
+      args: ['--self-test']
+    })
 
     expect(result.status).toBe(0)
     expect(result.output).toContain('git-hygiene self-test: pass')
@@ -112,7 +118,9 @@ describe('check-git-hygiene --self-test', () => {
 describe('check-git-hygiene', () => {
   it('passes on a checkout holding only the base branch', () => {
     const { root, repository } = createRepository()
-    const result = runChecker(repository, { bin: stubGh(root) })
+    const result = runChecker(repository, {
+      bin: stubGh(root)
+    })
 
     expect(result.output).toContain('Git hygiene: pass')
     expect(result.status).toBe(0)
@@ -121,7 +129,9 @@ describe('check-git-hygiene', () => {
   it('reports local edits on the base branch as active work, not a failure', () => {
     const { root, repository } = createRepository()
     writeFileSync(join(repository, 'dirty.txt'), 'uncommitted\n')
-    const result = runChecker(repository, { bin: stubGh(root) })
+    const result = runChecker(repository, {
+      bin: stubGh(root)
+    })
 
     expect(result.output).toContain('base branch has local edits')
     expect(result.status).toBe(0)
@@ -132,7 +142,9 @@ describe('check-git-hygiene', () => {
     git(repository, 'checkout', '--quiet', '-b', 'feat/x')
     commit(repository, 'work')
     git(repository, 'checkout', '--quiet', 'main')
-    const result = runChecker(repository, { bin: stubGh(root) })
+    const result = runChecker(repository, {
+      bin: stubGh(root)
+    })
 
     expect(result.output).toContain('local branch [feat/x]')
     expect(result.output).toContain('is 1 commit(s) ahead of main but has no open PR')
@@ -142,7 +154,9 @@ describe('check-git-hygiene', () => {
   it('fails an unmounted clean branch with no commits and no PR', () => {
     const { root, repository } = createRepository()
     git(repository, 'branch', 'feat/x')
-    const result = runChecker(repository, { bin: stubGh(root) })
+    const result = runChecker(repository, {
+      bin: stubGh(root)
+    })
 
     expect(result.output).toContain('has no commits beyond main and no open PR')
     expect(result.status).toBe(1)
@@ -153,7 +167,11 @@ describe('check-git-hygiene', () => {
     git(repository, 'checkout', '--quiet', '-b', 'feat/x')
     commit(repository, 'work')
     git(repository, 'checkout', '--quiet', 'main')
-    const bin = stubGh(root, { stdout: JSON.stringify([pullRequest()]) })
+    const bin = stubGh(root, {
+      stdout: JSON.stringify([
+        pullRequest()
+      ])
+    })
     const result = runChecker(repository, { bin })
 
     expect(result.output).toContain('active PR #7 (https://github.com/projectbluefin/website/pull/7)')
@@ -165,7 +183,11 @@ describe('check-git-hygiene', () => {
     git(repository, 'checkout', '--quiet', '-b', 'feat/x')
     commit(repository, 'work')
     git(repository, 'checkout', '--quiet', 'main')
-    const bin = stubGh(root, { stdout: JSON.stringify([pullRequest({ state })]) })
+    const bin = stubGh(root, {
+      stdout: JSON.stringify([
+        pullRequest({ state })
+      ])
+    })
     const result = runChecker(repository, { bin })
 
     expect(result.output).toContain(`PR #7 is ${state.toLowerCase()}`)
@@ -179,7 +201,11 @@ describe('check-git-hygiene', () => {
     commit(repository, 'work')
     git(repository, 'checkout', '--quiet', 'main')
     const bin = stubGh(root, {
-      stdout: JSON.stringify([pullRequest({ headRepositoryOwner: { login: 'a-fork-owner' } })]),
+      stdout: JSON.stringify([
+        pullRequest({
+          headRepositoryOwner: { login: 'a-fork-owner' }
+        })
+      ]),
     })
     const result = runChecker(repository, { bin })
 
@@ -213,7 +239,9 @@ describe('check-git-hygiene', () => {
     git(repository, 'worktree', 'add', '--quiet', '-b', 'feat/dirty', dirty)
     writeFileSync(join(dirty, 'wip.txt'), 'in progress\n')
     git(repository, 'worktree', 'add', '--quiet', '--detach', detached)
-    const result = runChecker(repository, { bin: stubGh(root) })
+    const result = runChecker(repository, {
+      bin: stubGh(root)
+    })
 
     expect(result.output).toContain('dirty work in progress on a fresh branch')
     expect(result.output).toContain('clean detached worktree with no open PR')
@@ -225,7 +253,9 @@ describe('check-git-hygiene', () => {
     const abandoned = join(root, 'abandoned-worktree')
     git(repository, 'worktree', 'add', '--quiet', '-b', 'feat/abandoned', abandoned)
     rmSync(abandoned, { force: true, recursive: true })
-    const result = runChecker(repository, { bin: stubGh(root) })
+    const result = runChecker(repository, {
+      bin: stubGh(root)
+    })
 
     expect(result.output).toContain(`${abandoned}: marked prunable by git`)
     // The prunable record still claims the branch, so the local-branch sweep
@@ -264,7 +294,9 @@ describe('check-git-hygiene', () => {
 
   it('rejects an upstream remote that is not a GitHub repository', () => {
     const { root, repository } = createRepository('https://git.example.invalid/projectbluefin/website.git')
-    const result = runChecker(repository, { bin: stubGh(root) })
+    const result = runChecker(repository, {
+      bin: stubGh(root)
+    })
 
     expect(result.output).toContain('cannot derive GitHub repository from upstream URL')
     expect(result.status).not.toBe(0)
@@ -275,7 +307,9 @@ describe('check-git-hygiene', () => {
     ['https://github.com/projectbluefin/website'],
   ])('derives the repository slug from upstream URL %s', (url) => {
     const { root, repository } = createRepository(url)
-    const result = runChecker(repository, { bin: stubGh(root) })
+    const result = runChecker(repository, {
+      bin: stubGh(root)
+    })
 
     expect(result.output).not.toContain('cannot derive GitHub repository')
     expect(result.status).toBe(0)
@@ -302,7 +336,9 @@ describe('check-git-hygiene', () => {
   it('names the missing remote when the base ref remote is not configured', () => {
     const { root, repository } = createRepository()
     git(repository, 'remote', 'remove', 'upstream')
-    const result = runChecker(repository, { bin: stubGh(root) })
+    const result = runChecker(repository, {
+      bin: stubGh(root)
+    })
 
     expect(result.status).toBe(2)
     expect(result.output).toContain('no git remote named "upstream"')

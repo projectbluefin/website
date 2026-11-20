@@ -17,19 +17,51 @@ describe('wolves playlist metadata generator', () => {
         title: 'Nightwish - 7 Days to the Wolves',
         uploader: 'Nightwish',
         thumbnail: null,
-        thumbnails: [{ url: 'https://i.ytimg.com/vi/abc123/hqdefault.jpg?sqp=query' }],
+        thumbnails: [
+          { url: 'https://i.ytimg.com/vi/abc123/hqdefault.jpg?sqp=query' }
+        ],
       },
-      { id: 'def456', title: 'Instrumental', uploader: 'Bluefin Records', thumbnail: 'https://yt3.ggpht.com/def456/2.jpg' },
+      {
+        id: 'def456',
+        title: 'Instrumental',
+        uploader: 'Bluefin Records',
+        thumbnail: 'https://yt3.ggpht.com/def456/2.jpg'
+      },
     ])).toEqual([
-      { id: 'abc123', title: '7 Days to the Wolves', artist: 'Nightwish', youtubeVideoId: 'abc123', artwork: 'wolves-artwork/abc123.jpg', thumbnailUrl: 'https://i.ytimg.com/vi/abc123/hqdefault.jpg' },
-      { id: 'def456', title: 'Instrumental', artist: 'Bluefin Records', youtubeVideoId: 'def456', artwork: 'wolves-artwork/def456.jpg', thumbnailUrl: 'https://yt3.ggpht.com/def456/2.jpg' },
+      {
+        id: 'abc123',
+        title: '7 Days to the Wolves',
+        artist: 'Nightwish',
+        youtubeVideoId: 'abc123',
+        artwork: 'wolves-artwork/abc123.jpg',
+        thumbnailUrl: 'https://i.ytimg.com/vi/abc123/hqdefault.jpg'
+      },
+      {
+        id: 'def456',
+        title: 'Instrumental',
+        artist: 'Bluefin Records',
+        youtubeVideoId: 'def456',
+        artwork: 'wolves-artwork/def456.jpg',
+        thumbnailUrl: 'https://yt3.ggpht.com/def456/2.jpg'
+      },
     ])
   })
 
   it('rejects video ids that could escape the artwork directory', () => {
-    for (const id of ['../../etc/evil', 'a/b', 'abc.123', '', 'x'.repeat(65)]) {
+    for (const id of [
+      '../../etc/evil',
+      'a/b',
+      'abc.123',
+      '',
+      'x'.repeat(65)
+    ]) {
       expect(() => normalizePlaylistEntries([
-        { id, title: 'Song', uploader: 'Band', thumbnail: 'https://i.ytimg.com/vi/x/hqdefault.jpg' },
+        {
+          id,
+          title: 'Song',
+          uploader: 'Band',
+          thumbnail: 'https://i.ytimg.com/vi/x/hqdefault.jpg'
+        },
       ])).toThrow(/Malformed yt-dlp entry at index 0/)
     }
   })
@@ -43,7 +75,12 @@ describe('wolves playlist metadata generator', () => {
       'not a url',
     ]) {
       expect(() => normalizePlaylistEntries([
-        { id: 'abc123', title: 'Song', uploader: 'Band', thumbnail },
+        {
+          id: 'abc123',
+          title: 'Song',
+          uploader: 'Band',
+          thumbnail
+        },
       ])).toThrow(/Malformed yt-dlp entry at index 0: thumbnail/)
     }
   })
@@ -99,7 +136,16 @@ describe('wolves playlist metadata generator', () => {
   })
 
   describe('artwork content validation', () => {
-    const JPEG = Buffer.from([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46])
+    const JPEG = Buffer.from([
+      0xFF,
+      0xD8,
+      0xFF,
+      0xE0,
+      0x00,
+      0x10,
+      0x4A,
+      0x46
+    ])
     const WEBP = Buffer.from('RIFF????WEBPfake-webp-bytes', 'latin1')
 
     it('treats the FF D8 FF start marker as JPEG and everything else as not', () => {

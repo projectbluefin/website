@@ -83,7 +83,12 @@ describe('wolves intro overlay sequence', () => {
   })
 
   it('reaches a video cutoff only once maxDuration elapses', () => {
-    const withCutoff = { id: 'v', kind: 'video' as const, youtubeVideoId: 'abc', maxDuration: 10 }
+    const withCutoff = {
+      id: 'v',
+      kind: 'video' as const,
+      youtubeVideoId: 'abc',
+      maxDuration: 10
+    }
     const withoutCutoff = { id: 'v2', kind: 'video' as const, youtubeVideoId: 'def' }
     expect(isVideoCutoffReached(withCutoff, 9.9)).toBe(false)
     expect(isVideoCutoffReached(withCutoff, 10)).toBe(true)
@@ -97,7 +102,12 @@ describe('wolves intro overlay sequence', () => {
   })
 
   it('completes a scored card on the real player\'s ENDED state when its clock plateaus short', () => {
-    const segment = { id: 'wolves-prologue', kind: 'text' as const, duration: 325.6, audioYoutubeVideoId: 'EB3IokHelRk' }
+    const segment = {
+      id: 'wolves-prologue',
+      kind: 'text' as const,
+      duration: 325.6,
+      audioYoutubeVideoId: 'EB3IokHelRk'
+    }
 
     // The hang this exists to prevent: a real player whose clock stops below the authored end.
     expect(isTextSegmentComplete(segment, 325.58)).toBe(false)
@@ -106,7 +116,12 @@ describe('wolves intro overlay sequence', () => {
   })
 
   it('refuses an ENDED from outside the silent tail, so an ad break cannot cut the act short', () => {
-    const segment = { id: 'wolves-prologue', kind: 'text' as const, duration: 325.6, audioYoutubeVideoId: 'EB3IokHelRk' }
+    const segment = {
+      id: 'wolves-prologue',
+      kind: 'text' as const,
+      duration: 325.6,
+      audioYoutubeVideoId: 'EB3IokHelRk'
+    }
 
     // A YouTube embed publishes state around ad breaks, and a mid-roll ad freezes the main
     // video's clock at a nonzero time. Believing an ENDED there would end a 325.6s scored act
@@ -120,7 +135,12 @@ describe('wolves intro overlay sequence', () => {
   })
 
   it('completes a scored card whose clock freezes inside the track\'s silent tail', () => {
-    const segment = { id: 'wolves-prologue', kind: 'text' as const, duration: 325.6, audioYoutubeVideoId: 'EB3IokHelRk' }
+    const segment = {
+      id: 'wolves-prologue',
+      kind: 'text' as const,
+      duration: 325.6,
+      audioYoutubeVideoId: 'EB3IokHelRk'
+    }
     const frozen = { stalledSeconds: TEXT_SEGMENT_STALL_GRACE_SECONDS }
 
     expect(isTextSegmentComplete(segment, segment.duration - TEXT_SEGMENT_END_SLACK_SECONDS, frozen)).toBe(true)
@@ -334,8 +354,20 @@ describe('wolves intro overlay sequence', () => {
     expect(destiny.overlays).toEqual(expect.arrayContaining([
       expect.objectContaining({ text: 'Sentinel Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 }),
       expect.objectContaining({ text: 'Gunslinger Hunter — Laura Santamaria — The Order of Seven', start: 70.5, end: 77 }),
-      expect.objectContaining({ text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 85, end: 95, position: 'left', trustee: true, leader: true }),
-      expect.objectContaining({ text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 89.5, end: 96, position: 'right' }),
+      expect.objectContaining({
+        text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star',
+        start: 85,
+        end: 95,
+        position: 'left',
+        trustee: true,
+        leader: true
+      }),
+      expect.objectContaining({
+        text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes',
+        start: 89.5,
+        end: 96,
+        position: 'right'
+      }),
     ]))
     expect(destiny.overlays?.find(cue => cue.text.includes('Christoph Blecker'))).toHaveProperty('leader', true)
   })
@@ -402,7 +434,12 @@ describe('wolves intro overlay sequence', () => {
     // blanked in 6edf7f7d ("remove duplicate Destiny title") — the cue only
     // carries the timing window and the comicHeroTitleCard flag.
     expect(destiny.burnedInCaptions).toEqual([
-      { text: '', start: 24, end: 38, comicHeroTitleCard: true },
+      {
+        text: '',
+        start: 24,
+        end: 38,
+        comicHeroTitleCard: true
+      },
     ])
   })
 })

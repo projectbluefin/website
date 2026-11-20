@@ -38,8 +38,26 @@ const ALBUM = {
   title: 'Test Album',
   artwork: 'experiences/test-album.jpg',
   segments: [
-    { id: 'v1', kind: 'youtube' as const, youtubeId: 'v1', chapter: 'TRACK 1', title: 'One', artist: 'A', artwork: 'x.jpg', durationSeconds: 100 },
-    { id: 'v2', kind: 'youtube' as const, youtubeId: 'v2', chapter: 'TRACK 2', title: 'Two', artist: 'B', artwork: 'y.jpg', durationSeconds: 200 },
+    {
+      id: 'v1',
+      kind: 'youtube' as const,
+      youtubeId: 'v1',
+      chapter: 'TRACK 1',
+      title: 'One',
+      artist: 'A',
+      artwork: 'x.jpg',
+      durationSeconds: 100
+    },
+    {
+      id: 'v2',
+      kind: 'youtube' as const,
+      youtubeId: 'v2',
+      chapter: 'TRACK 2',
+      title: 'Two',
+      artist: 'B',
+      artwork: 'y.jpg',
+      durationSeconds: 200
+    },
   ],
 }
 
@@ -91,8 +109,14 @@ describe('back catalogue experiences', () => {
 
   it('validates catalogue JSON at the fetch boundary', () => {
     expect(() => parseBackCatalogue({})).toThrow('experiences array')
-    expect(() => parseBackCatalogue({ experiences: [{ id: 'x' }] })).toThrow('bad experience entry')
-    expect(parseBackCatalogue({ experiences: [ALBUM] }).experiences).toHaveLength(1)
+    expect(() => parseBackCatalogue({
+      experiences: [
+        { id: 'x' }
+      ]
+    })).toThrow('bad experience entry')
+    expect(parseBackCatalogue({
+      experiences: [ALBUM]
+    }).experiences).toHaveLength(1)
   })
 
   // `loadBackCatalogue` is the single owner of the read path. Two call sites
@@ -100,7 +124,12 @@ describe('back catalogue experiences', () => {
   // resolving the generator's URL and refusing anything that does not parse,
   // so the runtime can never be handed an unvalidated manifest.
   it('loads the catalogue from the generated URL and validates it', async () => {
-    const fetchMock = vi.fn(async (_url: string) => ({ ok: true, json: async () => ({ experiences: [ALBUM] }) }))
+    const fetchMock = vi.fn(async (_url: string) => ({
+      ok: true,
+      json: async () => ({
+        experiences: [ALBUM]
+      })
+    }))
     vi.stubGlobal('fetch', fetchMock)
 
     const catalogue = await loadBackCatalogue()
@@ -112,7 +141,11 @@ describe('back catalogue experiences', () => {
 
   it('returns null for every unusable catalogue outcome', async () => {
     // Non-OK response: the file is missing or the CDN errored.
-    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 404, json: async () => ({}) })))
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: false,
+      status: 404,
+      json: async () => ({})
+    })))
     expect(await loadBackCatalogue()).toBeNull()
 
     // Transport failure: offline, DNS, aborted request.
@@ -122,13 +155,20 @@ describe('back catalogue experiences', () => {
     expect(await loadBackCatalogue()).toBeNull()
 
     // Structurally malformed body: rejected rather than passed through.
-    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => ({}) })))
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      json: async () => ({})
+    })))
     expect(await loadBackCatalogue()).toBeNull()
 
     // Tampered authority: a back-catalogue card claiming the authored show.
     vi.stubGlobal('fetch', vi.fn(async () => ({
       ok: true,
-      json: async () => ({ experiences: [{ ...ALBUM, presentationProfile: 'wolves-directors-cut' }] }),
+      json: async () => ({
+        experiences: [
+          { ...ALBUM, presentationProfile: 'wolves-directors-cut' }
+        ]
+      }),
     })))
     expect(await loadBackCatalogue()).toBeNull()
   })
@@ -140,14 +180,20 @@ describe('back catalogue experiences', () => {
   it('refuses a catalogue entry that declares a Wolves presentation profile', () => {
     for (const presentationProfile of ['wolves-standard', 'wolves-directors-cut', 'anything-else']) {
       expect(() => parseBackCatalogue({
-        experiences: [{ ...ALBUM, presentationProfile }],
+        experiences: [
+          { ...ALBUM, presentationProfile }
+        ],
       })).toThrow('non-generic presentation profile')
     }
 
     // Absent and explicit `generic` are the two shapes the generator can emit.
-    expect(parseBackCatalogue({ experiences: [ALBUM] }).experiences[0].presentationProfile).toBeUndefined()
     expect(parseBackCatalogue({
-      experiences: [{ ...ALBUM, presentationProfile: 'generic' }],
+      experiences: [ALBUM]
+    }).experiences[0].presentationProfile).toBeUndefined()
+    expect(parseBackCatalogue({
+      experiences: [
+        { ...ALBUM, presentationProfile: 'generic' }
+      ],
     }).experiences).toHaveLength(1)
   })
 
@@ -164,8 +210,20 @@ describe('back catalogue experiences', () => {
 
   it('maps yt-dlp entries to manifest segments', () => {
     const segments = buildSegments([
-      { id: 'abc', title: 'Nightwish - Storytime', duration: 323.4, thumbnails: [{ url: 'https://i.ytimg.com/vi/abc/maxresdefault.jpg?sqp=1' }] },
-      { id: 'def', title: 'Untitled', uploader: 'Channel', duration: null },
+      {
+        id: 'abc',
+        title: 'Nightwish - Storytime',
+        duration: 323.4,
+        thumbnails: [
+          { url: 'https://i.ytimg.com/vi/abc/maxresdefault.jpg?sqp=1' }
+        ]
+      },
+      {
+        id: 'def',
+        title: 'Untitled',
+        uploader: 'Channel',
+        duration: null
+      },
     ], 'Playlist Title')
     expect(segments[0]).toEqual(expect.objectContaining({
       youtubeId: 'abc',
@@ -179,8 +237,15 @@ describe('back catalogue experiences', () => {
     expect(segments.map((segment: { chapter: string }) => segment.chapter)).toEqual(['Playlist Title', 'Playlist Title'])
 
     const experience = buildExperience(
-      { id: 'PL123', title: 'Album', description: 'Sub', playlistUrl: 'u' },
-      [{ id: 'abc', title: 'A - B', duration: 10 }],
+      {
+        id: 'PL123',
+        title: 'Album',
+        description: 'Sub',
+        playlistUrl: 'u'
+      },
+      [
+        { id: 'abc', title: 'A - B', duration: 10 }
+      ],
     )
     expect(experience.artwork).toBe('experiences/PL123.jpg')
     expect(experience.segments).toHaveLength(1)
@@ -208,15 +273,37 @@ describe('back catalogue experiences', () => {
   })
 
   it('audits generated experiences against the source playlist entries', () => {
-    const album = { id: 'PL123', title: 'Album', description: 'Sub', playlistUrl: 'u' }
+    const album = {
+      id: 'PL123',
+      title: 'Album',
+      description: 'Sub',
+      playlistUrl: 'u'
+    }
     const entries = [
-      { id: 'v1', title: 'A - B', duration: 10, thumbnails: [{ url: 'https://example.com/a.jpg' }] },
-      { id: 'v2', title: 'C - D', duration: 20, thumbnails: [{ url: 'https://example.com/c.jpg' }] },
+      {
+        id: 'v1',
+        title: 'A - B',
+        duration: 10,
+        thumbnails: [
+          { url: 'https://example.com/a.jpg' }
+        ]
+      },
+      {
+        id: 'v2',
+        title: 'C - D',
+        duration: 20,
+        thumbnails: [
+          { url: 'https://example.com/c.jpg' }
+        ]
+      },
     ]
     const experience = buildExperience(album, entries)
 
     expect(() => auditExperience(album, entries, experience)).not.toThrow()
-    expect(() => auditExperience(album, entries, { ...experience, segments: [experience.segments[0]] })).toThrow('Back catalogue audit failed')
+    expect(() => auditExperience(album, entries, {
+      ...experience,
+      segments: [experience.segments[0]]
+    })).toThrow('Back catalogue audit failed')
   })
 
   // This test exercises live YouTube and documentation data. Keep it manual;
@@ -280,9 +367,24 @@ describe('back catalogue experiences', () => {
 
   it('fixes known source metadata anomalies without broad guesses', () => {
     const segments = buildSegments([
-      { id: 'SRXH9AbT280', title: 'The Emptiness Machine (Official Music Video) - Linkin Park', uploader: 'Linkin Park', duration: 190 },
-      { id: 'Ma440BTErHw', title: 'Tori Amos I Don\'t Like Mondays', uploader: 'levani vanishvili', duration: 240 },
-      { id: 'Z6VpX-feA2M', title: 'Quake 2- Sonic Mayhem - Quad Machine', uploader: 'Ishykawa', duration: 220 },
+      {
+        id: 'SRXH9AbT280',
+        title: 'The Emptiness Machine (Official Music Video) - Linkin Park',
+        uploader: 'Linkin Park',
+        duration: 190
+      },
+      {
+        id: 'Ma440BTErHw',
+        title: 'Tori Amos I Don\'t Like Mondays',
+        uploader: 'levani vanishvili',
+        duration: 240
+      },
+      {
+        id: 'Z6VpX-feA2M',
+        title: 'Quake 2- Sonic Mayhem - Quad Machine',
+        uploader: 'Ishykawa',
+        duration: 220
+      },
     ], 'Playlist Title')
     expect(segments.map(({ title, artist }: { title: string, artist: string }) => ({ title, artist }))).toEqual([
       { title: 'The Emptiness Machine', artist: 'Linkin Park' },
@@ -294,7 +396,9 @@ describe('back catalogue experiences', () => {
   it('renders the grid from the catalogue and emits launch', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => ({
       ok: true,
-      json: async () => ({ experiences: [ALBUM] }),
+      json: async () => ({
+        experiences: [ALBUM]
+      }),
     })))
 
     const wrapper = mount(WolvesBackCatalogue)

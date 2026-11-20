@@ -51,7 +51,9 @@ describe('rssFeed.vue', () => {
 
     const wrapper = mount(RssFeed, {
       props: { feedUrl: FEED_URL, perPage: 2 },
-      global: { plugins: [i18n] },
+      global: {
+        plugins: [i18n]
+      },
     })
     await flushPromises()
 

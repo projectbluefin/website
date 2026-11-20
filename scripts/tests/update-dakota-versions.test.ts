@@ -53,10 +53,12 @@ describe('oci-sbom helpers', () => {
   })
 
   it('ignores commit hashes and null versions', () => {
-    const hashOnly = { packages: [
-      { name: 'gnome-shell', versionInfo: 'c9372e733d75cf3c5197a0dd29f8a4a422e2dddb9020cab3c179a6f3df03d4be' },
-      { name: 'gnome-shell', versionInfo: null },
-    ] }
+    const hashOnly = {
+      packages: [
+        { name: 'gnome-shell', versionInfo: 'c9372e733d75cf3c5197a0dd29f8a4a422e2dddb9020cab3c179a6f3df03d4be' },
+        { name: 'gnome-shell', versionInfo: null },
+      ]
+    }
     expect(spdxPackageVersion(hashOnly, 'gnome-shell')).toBeUndefined()
   })
 

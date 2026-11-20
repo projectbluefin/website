@@ -33,12 +33,16 @@ describe('discoverSbomDigest', () => {
   })
 
   it('returns the digest of the SPDX referrer', () => {
-    mockedExec.mockReturnValue(discovery([{ artifactType: SBOM_ARTIFACT_TYPE, digest: DIGEST }]) as never)
+    mockedExec.mockReturnValue(discovery([
+      { artifactType: SBOM_ARTIFACT_TYPE, digest: DIGEST }
+    ]) as never)
     expect(discoverSbomDigest('ghcr.io/projectbluefin/bluefin:stable')).toBe(DIGEST)
   })
 
   it('queries oras discover with the SPDX artifact type and JSON format', () => {
-    mockedExec.mockReturnValue(discovery([{ artifactType: SBOM_ARTIFACT_TYPE, digest: DIGEST }]) as never)
+    mockedExec.mockReturnValue(discovery([
+      { artifactType: SBOM_ARTIFACT_TYPE, digest: DIGEST }
+    ]) as never)
     discoverSbomDigest('ghcr.io/projectbluefin/bluefin:stable')
 
     const [bin, args] = mockedExec.mock.calls[0] as unknown as [string, string[]]
@@ -75,7 +79,9 @@ describe('discoverSbomDigest', () => {
   })
 
   it('throws when the SPDX referrer carries no digest', () => {
-    mockedExec.mockReturnValue(discovery([{ artifactType: SBOM_ARTIFACT_TYPE }]) as never)
+    mockedExec.mockReturnValue(discovery([
+      { artifactType: SBOM_ARTIFACT_TYPE }
+    ]) as never)
     expect(() => discoverSbomDigest('img')).toThrow(/no attached SPDX SBOM/)
   })
 })
@@ -93,7 +99,9 @@ describe('pullImageSbom', () => {
     const seen: string[] = []
     mockedExec.mockImplementation(((_bin: string, args: string[]) => {
       if (args[0] === 'discover') {
-        return discovery([{ artifactType: SBOM_ARTIFACT_TYPE, digest: DIGEST }])
+        return discovery([
+          { artifactType: SBOM_ARTIFACT_TYPE, digest: DIGEST }
+        ])
       }
       const dir = outputDirOf(args)
       seen.push(dir)
@@ -106,7 +114,9 @@ describe('pullImageSbom', () => {
   }
 
   it('returns the parsed SPDX document from the pulled referrer', () => {
-    stubOras({ 'sbom.spdx.json': JSON.stringify({ spdxVersion: 'SPDX-2.3', packages: [] }) })
+    stubOras({
+      'sbom.spdx.json': JSON.stringify({ spdxVersion: 'SPDX-2.3', packages: [] })
+    })
     expect(pullImageSbom('ghcr.io/projectbluefin/bluefin:stable'))
       .toEqual({ spdxVersion: 'SPDX-2.3', packages: [] })
   })
@@ -154,7 +164,9 @@ describe('pullImageSbom', () => {
     const seen: string[] = []
     mockedExec.mockImplementation(((_bin: string, args: string[]) => {
       if (args[0] === 'discover') {
-        return discovery([{ artifactType: SBOM_ARTIFACT_TYPE, digest: DIGEST }])
+        return discovery([
+          { artifactType: SBOM_ARTIFACT_TYPE, digest: DIGEST }
+        ])
       }
       seen.push(outputDirOf(args))
       throw new Error('oras pull failed')

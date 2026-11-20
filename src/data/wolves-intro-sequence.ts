@@ -294,7 +294,10 @@ export function skipIntroSequence(state: IntroSequenceState): IntroSequenceState
  * since Previous is only reachable while the overlay is still visible.
  */
 export function previousIntroSequence(state: IntroSequenceState): IntroSequenceState {
-  return { index: Math.max(0, state.index - 1), done: false }
+  return {
+    index: Math.max(0, state.index - 1),
+    done: false
+  }
 }
 
 export function activeOverlayCue(
@@ -382,7 +385,9 @@ export function parseDestinyCaptionFile(source: string): readonly IntroOverlayTe
       continue
     }
     const timestamp = Number.parseFloat(parts[0])
-    const explicitEnd = parts.length >= 3 ? Number.parseFloat(parts[parts.length - 1]) : Number.NaN
+    const explicitEnd = parts.length >= 3
+      ? Number.parseFloat(parts[parts.length - 1])
+      : Number.NaN
     const text = parts.length >= 3
       ? parts.slice(1, -1).join('|').trim()
       : parts.slice(1).join('|').trim()
@@ -391,9 +396,13 @@ export function parseDestinyCaptionFile(source: string): readonly IntroOverlayTe
     }
     const start = timestamp
     const nextLine = lines[index + 1]
-    const nextTimestamp = nextLine ? Number.parseFloat(nextLine.slice(0, nextLine.indexOf('|'))) : Number.NaN
+    const nextTimestamp = nextLine
+      ? Number.parseFloat(nextLine.slice(0, nextLine.indexOf('|')))
+      : Number.NaN
     const end = Number.isNaN(explicitEnd)
-      ? (Number.isNaN(nextTimestamp) ? start + 2.5 : nextTimestamp)
+      ? (Number.isNaN(nextTimestamp)
+          ? start + 2.5
+          : nextTimestamp)
       : explicitEnd
     cues.push({ text, start, end })
   }
@@ -404,7 +413,12 @@ export function buildDestinyCaptionCues(): readonly IntroOverlayTextCue[] {
   const cues = parseDestinyCaptionFile(destinyCaptions)
   return [
     ...cues,
-    { text: '', start: 24, end: 38, comicHeroTitleCard: true },
+    {
+      text: '',
+      start: 24,
+      end: 38,
+      comicHeroTitleCard: true
+    },
   ]
 }
 
@@ -691,18 +705,64 @@ function buildDestinyTrailerSegment(): IntroVideoSpec {
     alternateMaxDuration: 118.8,
     burnedInCaptions: buildDestinyCaptionCues(),
     overlays: [
-      { text: 'Voidwalker Warlock — Cortney Nickerson — Reconciler of the Plane', start: 5, end: 14.5, trustee: true },
+      {
+        text: 'Voidwalker Warlock — Cortney Nickerson — Reconciler of the Plane',
+        start: 5,
+        end: 14.5,
+        trustee: true
+      },
       { text: 'Sentinel Titan — Kat Cosgrove — Defender Queen of the Lost', start: 14.5, end: 24.5 },
       { text: 'Stormcaller Warlock — Kaslin Fields — Rage of the Paradox', start: 40, end: 48 },
       // #nova4ever easter egg: the default "fighting for something greater than themselves" status briefly
       // glitches out to the hashtag a few times during the 48-70.5 montage, then snaps back.
-      { text: '#nova4ever', start: 52, end: 52.45, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
-      { text: '#nova4ever', start: 60.6, end: 61.05, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
-      { text: '#nova4ever', start: 68.1, end: 68.55, nameplateTitle: '#nova4ever', statusOnly: true, glitch: true },
+      {
+        text: '#nova4ever',
+        start: 52,
+        end: 52.45,
+        nameplateTitle: '#nova4ever',
+        statusOnly: true,
+        glitch: true
+      },
+      {
+        text: '#nova4ever',
+        start: 60.6,
+        end: 61.05,
+        nameplateTitle: '#nova4ever',
+        statusOnly: true,
+        glitch: true
+      },
+      {
+        text: '#nova4ever',
+        start: 68.1,
+        end: 68.55,
+        nameplateTitle: '#nova4ever',
+        statusOnly: true,
+        glitch: true
+      },
       { text: 'Gunslinger Hunter — Laura Santamaria — The Order of Seven', start: 70.5, end: 77 },
-      { text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star', start: 85, end: 95, position: 'left', trustee: true, leader: true },
-      { text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes', start: 89.5, end: 96, position: 'right', raised: true },
-      { text: 'Follow the path, we\'ve got your back', start: 106.5, end: 118.8, nameplateDetail: 'Legends Sought', nameplateTitle: 'Follow the path, we\'ve got your back', statusOnly: true },
+      {
+        text: 'Broodweaver Warlock — Christoph Blecker — First Among Equals — The North Star',
+        start: 85,
+        end: 95,
+        position: 'left',
+        trustee: true,
+        leader: true
+      },
+      {
+        text: 'Behemoth Titan — Natali Vlatko — Shipwright of Kubernetes',
+        start: 89.5,
+        end: 96,
+        position: 'right',
+        raised: true
+      },
+      {
+        text: 'Follow the path, we\'ve got your back',
+        start: 106.5,
+        end: 118.8,
+        nameplateDetail: 'Legends Sought',
+        nameplateTitle: 'Follow the path, we\'ve got your back',
+        statusOnly: true
+      },
     ],
   }
 }

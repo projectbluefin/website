@@ -9,9 +9,21 @@ import LoreRecordHeader from './LoreRecordHeader.vue'
 const props = defineProps<LoreViewProps>()
 
 const spec = computed<LoreSpecEntry[]>(() => [
-  ...props.record.metadata.sender ? [{ key: 'observer', value: props.record.metadata.sender }] : [],
-  ...props.record.metadata.location ? [{ key: 'location', value: props.record.metadata.location }] : [],
-  ...props.record.metadata.subject ? [{ key: 'subject', value: props.record.metadata.subject }] : [],
+  ...props.record.metadata.sender
+    ? [
+        { key: 'observer', value: props.record.metadata.sender }
+      ]
+    : [],
+  ...props.record.metadata.location
+    ? [
+        { key: 'location', value: props.record.metadata.location }
+      ]
+    : [],
+  ...props.record.metadata.subject
+    ? [
+        { key: 'subject', value: props.record.metadata.subject }
+      ]
+    : [],
 ])
 
 const paragraphs = computed(() => renderLoreParagraphs(props.record.body))

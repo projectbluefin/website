@@ -40,7 +40,9 @@ function collectLiveDataCacheSteps(): CacheStep[] {
         }
         steps.push({
           file,
-          kind: uses.includes('/save@') ? 'save' : 'restore',
+          kind: uses.includes('/save@')
+            ? 'save'
+            : 'restore',
           paths: (step.with?.path ?? '').trim().split('\n').map(line => line.trim()).filter(Boolean),
         })
       }

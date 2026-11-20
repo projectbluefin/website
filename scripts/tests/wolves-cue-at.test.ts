@@ -51,7 +51,15 @@ function cueContaining(seconds: number): IntroOverlayTextCue {
 
 describe('wolves-videos registry', () => {
   it('resolves every alias, and no argument, to the canonical prologue key', () => {
-    for (const alias of [1, '1', 'first', 'gardener', 'winnower', 'prologue', undefined]) {
+    for (const alias of [
+      1,
+      '1',
+      'first',
+      'gardener',
+      'winnower',
+      'prologue',
+      undefined
+    ]) {
       const { key, video } = resolveVideo(alias as string | undefined)
       expect(key).toBe('prologue')
       expect(video).toBe(VIDEOS.prologue)
@@ -149,12 +157,30 @@ describe('wolves-cue-at CLI', () => {
   })
 
   it.each([
-    ['m:ss', ['1:50']],
-    ['seconds', ['110']],
-    ['m and s', ['1m50s']],
-    ['ordinal before the timestamp', ['1', '1:50']],
-    ['ordinal after the timestamp', ['110', '1']],
-    ['alias', ['gardener', '1:50']],
+    [
+      'm:ss',
+      ['1:50']
+    ],
+    [
+      'seconds',
+      ['110']
+    ],
+    [
+      'm and s',
+      ['1m50s']
+    ],
+    [
+      'ordinal before the timestamp',
+      ['1', '1:50']
+    ],
+    [
+      'ordinal after the timestamp',
+      ['110', '1']
+    ],
+    [
+      'alias',
+      ['gardener', '1:50']
+    ],
   ])('answers the cue on screen at 110s given %s', (_label, args) => {
     const cue = cueContaining(110)
     const result = run(...args)

@@ -295,8 +295,18 @@ describe('productStatus', () => {
     const result = {
       checkedAt: '2026-08-26T00:00:00.000Z',
       images: [
-        { id: 'dakota', product: 'dakota', required: true, status: 'verified' },
-        { id: 'dakota-gaming', product: 'dakota', required: true, status: 'unavailable' },
+        {
+          id: 'dakota',
+          product: 'dakota',
+          required: true,
+          status: 'verified'
+        },
+        {
+          id: 'dakota-gaming',
+          product: 'dakota',
+          required: true,
+          status: 'unavailable'
+        },
       ],
     }
     const status = productStatus(result)
@@ -307,8 +317,18 @@ describe('productStatus', () => {
     const result = {
       checkedAt: '2026-08-26T00:00:00.000Z',
       images: [
-        { id: 'dakota', product: 'dakota', required: true, status: 'verified' },
-        { id: 'dakota-gaming', product: 'dakota', required: false, status: 'unavailable' },
+        {
+          id: 'dakota',
+          product: 'dakota',
+          required: true,
+          status: 'verified'
+        },
+        {
+          id: 'dakota-gaming',
+          product: 'dakota',
+          required: false,
+          status: 'unavailable'
+        },
       ],
     }
     const status = productStatus(result)
@@ -318,7 +338,9 @@ describe('productStatus', () => {
   it('throws an explicit error when an image entry has no product field', () => {
     const result = {
       checkedAt: '2026-08-26T00:00:00.000Z',
-      images: [{ id: 'orphan', status: 'verified' }],
+      images: [
+        { id: 'orphan', status: 'verified' }
+      ],
     }
     expect(() => productStatus(result)).toThrow('audit image entry \'orphan\' is missing a product field')
   })
@@ -331,7 +353,9 @@ describe('productStatus', () => {
       image: 'ghcr.io/projectbluefin/bluefin:latest',
       certificateIdentityRegexp: '^https://.*$',
       certificateOidcIssuer: 'https://token.actions.githubusercontent.com',
-      packages: { kernel: { name: 'linux', required: true } },
+      packages: {
+        kernel: { name: 'linux', required: true }
+      },
     })
     const collect = vi.fn().mockResolvedValue({
       id: 'bluefin',
@@ -339,12 +363,20 @@ describe('productStatus', () => {
       imageDigest: IMAGE_DIGEST,
       sbomDigest: SBOM_DIGEST,
       checkedAt: '2026-08-26T00:00:00.000Z',
-      sbom: { packages: [{ name: 'linux', versionInfo: '7.0.7' }, { name: 'gnome-shell', versionInfo: '50.2' }] },
+      sbom: {
+        packages: [
+          { name: 'linux', versionInfo: '7.0.7' },
+          { name: 'gnome-shell', versionInfo: '50.2' }
+        ]
+      },
     })
 
     const auditResult = await verifyRegistry(
       [REQUIRED_RECORD, bluefinRecord],
-      { collectVerifiedImageSbom: collect, now: () => '2026-08-26T00:00:00.000Z' },
+      {
+        collectVerifiedImageSbom: collect,
+        now: () => '2026-08-26T00:00:00.000Z'
+      },
     )
 
     // Must not mutate entries before calling productStatus
@@ -539,7 +571,10 @@ describe('verifyRegistry — ambiguity is fail-closed', () => {
 
   it('carries the mapped field list onto every entry for the field-loss guard', async () => {
     const collect = collectorFor(AMBIGUOUS_RECORD, {
-      packages: [{ name: 'linux', versionInfo: '7.0.7' }, { name: 'mesa', versionInfo: '26.0.6' }],
+      packages: [
+        { name: 'linux', versionInfo: '7.0.7' },
+        { name: 'mesa', versionInfo: '26.0.6' }
+      ],
     })
 
     const result = await verifyRegistry([AMBIGUOUS_RECORD], { collectVerifiedImageSbom: collect })
@@ -590,7 +625,9 @@ describe('verifyRegistry — pending mappings never verify', () => {
 
   it('stays unavailable with pending-mapping once an SPDX referrer appears', async () => {
     const collect = collectorFor(PENDING_RECORD, {
-      packages: [{ name: 'linux', versionInfo: '7.1.8-ogc1' }],
+      packages: [
+        { name: 'linux', versionInfo: '7.1.8-ogc1' }
+      ],
     })
 
     const result = await verifyRegistry([PENDING_RECORD], { collectVerifiedImageSbom: collect })
@@ -606,7 +643,11 @@ describe('verifyRegistry — pending mappings never verify', () => {
 
   it('treats an empty packages map as pending even without the pendingSbom flag', async () => {
     const record = Object.freeze({ ...PENDING_RECORD, pendingSbom: undefined, packages: {} })
-    const collect = collectorFor(record, { packages: [{ name: 'linux', versionInfo: '7.1.8-ogc1' }] })
+    const collect = collectorFor(record, {
+      packages: [
+        { name: 'linux', versionInfo: '7.1.8-ogc1' }
+      ]
+    })
 
     const result = await verifyRegistry([record], { collectVerifiedImageSbom: collect })
 
@@ -634,8 +675,18 @@ describe('productStatus — degraded entries', () => {
     const status = productStatus({
       checkedAt: '2026-08-26T00:00:00.000Z',
       images: [
-        { id: 'bluefin-stable', product: 'bluefin', required: true, status: 'degraded' },
-        { id: 'bluefin-stable-nvidia', product: 'bluefin', required: false, status: 'verified' },
+        {
+          id: 'bluefin-stable',
+          product: 'bluefin',
+          required: true,
+          status: 'degraded'
+        },
+        {
+          id: 'bluefin-stable-nvidia',
+          product: 'bluefin',
+          required: false,
+          status: 'verified'
+        },
       ],
     })
     expect(status.bluefin.status).toBe('degraded')
@@ -645,8 +696,18 @@ describe('productStatus — degraded entries', () => {
     const status = productStatus({
       checkedAt: '2026-08-26T00:00:00.000Z',
       images: [
-        { id: 'bluefin-stable', product: 'bluefin', required: true, status: 'degraded' },
-        { id: 'bluefin-lts', product: 'bluefin', required: true, status: 'unavailable' },
+        {
+          id: 'bluefin-stable',
+          product: 'bluefin',
+          required: true,
+          status: 'degraded'
+        },
+        {
+          id: 'bluefin-lts',
+          product: 'bluefin',
+          required: true,
+          status: 'unavailable'
+        },
       ],
     })
     expect(status.bluefin.status).toBe('unavailable')
@@ -670,7 +731,14 @@ describe('annotateLastSuccessful', () => {
   it('copies the previous run timestamp onto a newly failed image', () => {
     const current = {
       checkedAt: '2026-08-26T10:00:00.000Z',
-      images: [{ id: 'dakota', product: 'dakota', status: 'unavailable', errorCode: 'missing-sbom' }],
+      images: [
+        {
+          id: 'dakota',
+          product: 'dakota',
+          status: 'unavailable',
+          errorCode: 'missing-sbom'
+        }
+      ],
     }
     const annotated = annotateLastSuccessful(current, previous)
     expect(annotated.images[0].lastSuccessfulAt).toBe('2026-08-25T10:00:00.000Z')
@@ -679,7 +747,14 @@ describe('annotateLastSuccessful', () => {
   it('accepts a previously degraded image as a last successful verification', () => {
     const current = {
       checkedAt: '2026-08-26T10:00:00.000Z',
-      images: [{ id: 'bluefin-stable', product: 'bluefin', status: 'unavailable', errorCode: 'missing-sbom' }],
+      images: [
+        {
+          id: 'bluefin-stable',
+          product: 'bluefin',
+          status: 'unavailable',
+          errorCode: 'missing-sbom'
+        }
+      ],
     }
     const annotated = annotateLastSuccessful(current, previous)
     expect(annotated.images[0].lastSuccessfulAt).toBe('2026-08-25T10:00:00.000Z')
@@ -688,17 +763,26 @@ describe('annotateLastSuccessful', () => {
   it('preserves lastSuccessfulAt across consecutive failed runs', () => {
     const previousFailure = {
       checkedAt: '2026-08-26T10:00:00.000Z',
-      images: [{
-        id: 'dakota',
-        product: 'dakota',
-        status: 'unavailable',
-        errorCode: 'missing-sbom',
-        lastSuccessfulAt: '2026-08-25T10:00:00.000Z',
-      }],
+      images: [
+        {
+          id: 'dakota',
+          product: 'dakota',
+          status: 'unavailable',
+          errorCode: 'missing-sbom',
+          lastSuccessfulAt: '2026-08-25T10:00:00.000Z',
+        }
+      ],
     }
     const current = {
       checkedAt: '2026-08-27T10:00:00.000Z',
-      images: [{ id: 'dakota', product: 'dakota', status: 'unavailable', errorCode: 'missing-sbom' }],
+      images: [
+        {
+          id: 'dakota',
+          product: 'dakota',
+          status: 'unavailable',
+          errorCode: 'missing-sbom'
+        }
+      ],
     }
 
     const annotated = annotateLastSuccessful(current, previousFailure)
@@ -709,7 +793,14 @@ describe('annotateLastSuccessful', () => {
   it('records nothing when the previous run never verified that image', () => {
     const current = {
       checkedAt: '2026-08-26T10:00:00.000Z',
-      images: [{ id: 'bluefin-lts', product: 'bluefin', status: 'unavailable', errorCode: 'pending-mapping' }],
+      images: [
+        {
+          id: 'bluefin-lts',
+          product: 'bluefin',
+          status: 'unavailable',
+          errorCode: 'pending-mapping'
+        }
+      ],
     }
     const annotated = annotateLastSuccessful(current, previous)
     expect(annotated.images[0]).not.toHaveProperty('lastSuccessfulAt')
@@ -718,7 +809,14 @@ describe('annotateLastSuccessful', () => {
   it('annotates degraded entries too', () => {
     const current = {
       checkedAt: '2026-08-26T10:00:00.000Z',
-      images: [{ id: 'dakota', product: 'dakota', status: 'degraded', errorCode: 'ambiguous-optional' }],
+      images: [
+        {
+          id: 'dakota',
+          product: 'dakota',
+          status: 'degraded',
+          errorCode: 'ambiguous-optional'
+        }
+      ],
     }
     const annotated = annotateLastSuccessful(current, previous)
     expect(annotated.images[0].lastSuccessfulAt).toBe('2026-08-25T10:00:00.000Z')
@@ -727,7 +825,9 @@ describe('annotateLastSuccessful', () => {
   it('leaves verified entries untouched and does not mutate the input', () => {
     const current = {
       checkedAt: '2026-08-26T10:00:00.000Z',
-      images: [{ id: 'dakota', product: 'dakota', status: 'verified' }],
+      images: [
+        { id: 'dakota', product: 'dakota', status: 'verified' }
+      ],
     }
     const annotated = annotateLastSuccessful(current, previous)
     expect(annotated.images[0]).not.toHaveProperty('lastSuccessfulAt')
@@ -737,7 +837,9 @@ describe('annotateLastSuccessful', () => {
   it('is a no-op without a previous audit', () => {
     const current = {
       checkedAt: '2026-08-26T10:00:00.000Z',
-      images: [{ id: 'dakota', product: 'dakota', status: 'unavailable' }],
+      images: [
+        { id: 'dakota', product: 'dakota', status: 'unavailable' }
+      ],
     }
     expect(annotateLastSuccessful(current, null).images[0]).not.toHaveProperty('lastSuccessfulAt')
   })
@@ -798,14 +900,16 @@ describe('assertExplainedFieldLoss', () => {
   it('accepts loss explained by an unavailable image that mapped the field', () => {
     const unavailableAudit = {
       checkedAt: '2026-08-26T10:00:00.000Z',
-      images: [{
-        id: 'dakota-nvidia',
-        product: 'dakota',
-        required: false,
-        status: 'unavailable',
-        errorCode: 'image-not-found',
-        fields: ['nvidia'],
-      }],
+      images: [
+        {
+          id: 'dakota-nvidia',
+          product: 'dakota',
+          required: false,
+          status: 'unavailable',
+          errorCode: 'image-not-found',
+          fields: ['nvidia'],
+        }
+      ],
     }
     expect(() => assertExplainedFieldLoss({
       label: 'dakota-versions.json packages',
@@ -830,7 +934,16 @@ describe('assertExplainedFieldLoss', () => {
   it('accepts an entire block going unavailable when the product has an unavailable image', () => {
     const unavailableAudit = {
       checkedAt: '2026-08-26T10:00:00.000Z',
-      images: [{ id: 'bluefin-lts', product: 'bluefin', required: true, status: 'unavailable', errorCode: 'pending-mapping', fields: [] }],
+      images: [
+        {
+          id: 'bluefin-lts',
+          product: 'bluefin',
+          required: true,
+          status: 'unavailable',
+          errorCode: 'pending-mapping',
+          fields: []
+        }
+      ],
     }
     expect(() => assertExplainedFieldLoss({
       label: 'stream-versions.yml lts',
@@ -880,7 +993,16 @@ describe('assertExplainedFieldLoss', () => {
   it('resolves the hwe alias to the kernel field of the HWE image', () => {
     const unavailableAudit = {
       checkedAt: '2026-08-26T10:00:00.000Z',
-      images: [{ id: 'bluefin-lts-hwe', product: 'bluefin', required: false, status: 'unavailable', errorCode: 'missing-sbom', fields: ['kernel'] }],
+      images: [
+        {
+          id: 'bluefin-lts-hwe',
+          product: 'bluefin',
+          required: false,
+          status: 'unavailable',
+          errorCode: 'missing-sbom',
+          fields: ['kernel']
+        }
+      ],
     }
     expect(() => assertExplainedFieldLoss({
       label: 'stream-versions.yml lts',

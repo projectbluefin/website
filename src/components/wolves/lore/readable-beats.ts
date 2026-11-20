@@ -116,7 +116,9 @@ function splitLongSentence(sentence: string, maximumCharacters: number): string[
   let beat = ''
 
   for (const word of words) {
-    const candidate = beat ? `${beat} ${word}` : word
+    const candidate = beat
+      ? `${beat} ${word}`
+      : word
     if (beat && candidate.length > maximumCharacters) {
       beats.push(beat)
       beat = word
@@ -136,7 +138,11 @@ function splitLongSentence(sentence: string, maximumCharacters: number): string[
 export function splitReadableBeats(text: string, maximumCharacters: number): string[] {
   const matched = text.match(SENTENCE_PATTERN)?.map(sentence => sentence.trim()).filter(Boolean) ?? []
   const sentences = mergeAbbreviationSplits(matched)
-  const source = sentences.length > 0 ? sentences : [text.trim()]
+  const source = sentences.length > 0
+    ? sentences
+    : [
+        text.trim()
+      ]
   const beats: string[] = []
   let beat = ''
 
@@ -146,7 +152,9 @@ export function splitReadableBeats(text: string, maximumCharacters: number): str
       : [sentence]
 
     for (const unit of units) {
-      const candidate = beat ? `${beat} ${unit}` : unit
+      const candidate = beat
+        ? `${beat} ${unit}`
+        : unit
       if (beat && candidate.length > maximumCharacters) {
         beats.push(beat)
         beat = unit

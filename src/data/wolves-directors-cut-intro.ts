@@ -74,24 +74,42 @@ const TRIBULATION_AUDIO_FADE_SECONDS = 2.5
  * There are no equal slices here and no second clock.
  */
 export const TRIBULATION_PROLOGUE_MARKS = [
-  /*  0 */ 0, //      curtain; the source is audible from 0.05 s
-  /*  1 */ 2.53, //   novelty 0.952 + laplacian (3/7) at 1.14 - the piece establishes
-  /*  2 */ 13.79, //  laplacian (3/7) + novelty 0.416 at 14.40
-  /*  3 */ 23.41, //  novelty 1.000, the strongest event in the piece
-  /*  4 */ 33.02, //  laplacian (7/7) + novelty 0.583 at 33.85
-  /*  5 */ 43.26, //  laplacian (6/7) + novelty 0.315 at 42.61
-  /*  6 */ 52.13, //  novelty 0.469 (novelty-only)
-  /*  7 */ 58.31, //  novelty 0.604 (novelty-only)
-  /*  8 */ 65.16, //  laplacian (4/7) + novelty 0.486 at 65.46
-  /*  9 */ 72.31, //  laplacian (7/7) + novelty 0.547 at 73.10
-  /* 10 */ 81.29, //  laplacian (3/7) + novelty 0.592 at 81.13
-  /* 11 */ 90.53, //  laplacian (7/7) + novelty 0.416 at 89.88
-  /* 12 */ 94.41, //  laplacian (3/7) + novelty 0.489 at 94.30
-  /* 13 */ 103.51, // laplacian (3/7) + novelty 0.423 at 103.86
-  /* 14 */ 109.04, // laplacian (7/7) + novelty 0.766 at 108.74 - the last movement opens
-  /* 15 */ 117.17, // novelty 0.369 (novelty-only)
-  /* 16 */ 126.78, // laplacian (7/7) + novelty 0.662 at 127.15 - the closing
-  /* 17 */ TRIBULATION_TRACK_SECONDS,
+  /*  0 */
+  0, //      curtain; the source is audible from 0.05 s
+  /*  1 */
+  2.53, //   novelty 0.952 + laplacian (3/7) at 1.14 - the piece establishes
+  /*  2 */
+  13.79, //  laplacian (3/7) + novelty 0.416 at 14.40
+  /*  3 */
+  23.41, //  novelty 1.000, the strongest event in the piece
+  /*  4 */
+  33.02, //  laplacian (7/7) + novelty 0.583 at 33.85
+  /*  5 */
+  43.26, //  laplacian (6/7) + novelty 0.315 at 42.61
+  /*  6 */
+  52.13, //  novelty 0.469 (novelty-only)
+  /*  7 */
+  58.31, //  novelty 0.604 (novelty-only)
+  /*  8 */
+  65.16, //  laplacian (4/7) + novelty 0.486 at 65.46
+  /*  9 */
+  72.31, //  laplacian (7/7) + novelty 0.547 at 73.10
+  /* 10 */
+  81.29, //  laplacian (3/7) + novelty 0.592 at 81.13
+  /* 11 */
+  90.53, //  laplacian (7/7) + novelty 0.416 at 89.88
+  /* 12 */
+  94.41, //  laplacian (3/7) + novelty 0.489 at 94.30
+  /* 13 */
+  103.51, // laplacian (3/7) + novelty 0.423 at 103.86
+  /* 14 */
+  109.04, // laplacian (7/7) + novelty 0.766 at 108.74 - the last movement opens
+  /* 15 */
+  117.17, // novelty 0.369 (novelty-only)
+  /* 16 */
+  126.78, // laplacian (7/7) + novelty 0.662 at 127.15 - the closing
+  /* 17 */
+  TRIBULATION_TRACK_SECONDS,
 ] as const
 
 const NARRATION_FIRST_MARK = 1
@@ -394,29 +412,62 @@ const PROLOGUE_SHOTS: readonly PrologueShot[] = [
   // It opens on the world as it was, under banners and a lit sky, and only then
   // begins the descent. A prologue that opens on ruin asks an audience to mourn
   // something it has never seen; this one shows it first.
-  { mark: NARRATION_FIRST_MARK, text: GARDENER_AND_WINNOWER, ...painting(0) },
-  { mark: 2, ...painting(1) },
+  {
+    mark: NARRATION_FIRST_MARK,
+    text: GARDENER_AND_WINNOWER,
+    ...painting(0)
+  },
+  {
+    mark: 2,
+    ...painting(1)
+  },
 
   // The strongest event in the piece (23.41 s, novelty 1.000) takes the
   // creation line, over vegetation visibly filling the pattern. It sat on the
   // drowned city once, where it read as a mismatch rather than as irony and
   // spent the biggest moment in the track on a contradiction the audience had
   // been given no way to decode.
-  { mark: 3, text: NEW_CHILDREN, textPosition: 'bottom', ...painting(2) },
-  { mark: 4, text: FOR_EONS, ...painting(3) },
+  {
+    mark: 3,
+    text: NEW_CHILDREN,
+    textPosition: 'bottom',
+    ...painting(2)
+  },
+  {
+    mark: 4,
+    text: FOR_EONS,
+    ...painting(3)
+  },
 
   // The densest thought in the prologue takes the longer of the two windows
   // available to it: 8.87 s here against 6.18 s at the next mark. Four lines at
   // theater distance need the room, and the shot after it is wordless.
-  { mark: 5, text: A_THREAT, ...painting(4) },
-  { mark: 6, ...painting(5) },
-  { mark: 7, ...painting(6) },
-  { mark: 8, ...painting(7) },
+  {
+    mark: 5,
+    text: A_THREAT,
+    ...painting(4)
+  },
+  {
+    mark: 6,
+    ...painting(5)
+  },
+  {
+    mark: 7,
+    ...painting(6)
+  },
+  {
+    mark: 8,
+    ...painting(7)
+  },
 
   // The invasion line, over the invasion, cutting straight into the calamity.
   // Nine wordless seconds used to separate the two, which left a one-pass
   // audience to infer the link on its own.
-  { mark: 9, text: OTHERS_CAME, ...painting(8) },
+  {
+    mark: 9,
+    text: OTHERS_CAME,
+    ...painting(8)
+  },
 
   // Act II - the Collapse, as the day-to-night fade it is, once, carrying the
   // line that names it. It is the fulcrum of the piece, so it takes the centre
@@ -439,19 +490,39 @@ const PROLOGUE_SHOTS: readonly PrologueShot[] = [
   },
   // One short wordless beat on the night plate: the aftermath, not a pause.
   { mark: 11, backgroundImage: DIRECTORS_CUT_COLLAPSE_NIGHT_IMAGE },
-  { mark: 12, ...painting(9) },
-  { mark: 13, ...painting(10) },
+  {
+    mark: 12,
+    ...painting(9)
+  },
+  {
+    mark: 13,
+    ...painting(10)
+  },
 
   // Act III - the cold arrival. Europa is held to the end on owner
   // instruction, so these are the first ice frames in the whole prologue;
   // after ninety seconds of ruined Earth they read as somewhere else entirely.
-  { mark: ARRIVAL_FIRST_MARK, text: WHAT_IS_LEFT, emphasis: 'dominant', highlightSubstring: 'fights', ...painting(11) },
-  { mark: 15, ...painting(12) },
+  {
+    mark: ARRIVAL_FIRST_MARK,
+    text: WHAT_IS_LEFT,
+    emphasis: 'dominant',
+    highlightSubstring: 'fights',
+    ...painting(11)
+  },
+  {
+    mark: 15,
+    ...painting(12)
+  },
 
   // The title, on the last measured boundary, over Europa - the one Europa
   // exception the owner named for this slide. It holds its full window while
   // the music resolves and the projector hands off to the trailer.
-  { mark: CLOSING_MARK, text: CLOSING_TITLE, slim: true, ...painting(12) },
+  {
+    mark: CLOSING_MARK,
+    text: CLOSING_TITLE,
+    slim: true,
+    ...painting(12)
+  },
 ]
 
 /**
@@ -473,20 +544,30 @@ function textHoldFor(text: string, windowSeconds: number): number {
   const bound = cost * DIRECTORS_CUT_TEXT_HOLD_RATIO
   const hundredths = Math.floor(bound * 100)
   const stretched = hundredths / 100
-  return Math.min(windowSeconds, stretched > bound ? (hundredths - 1) / 100 : stretched)
+  return Math.min(windowSeconds, stretched > bound
+    ? (hundredths - 1) / 100
+    : stretched)
 }
 
 function buildPrologueCues(): IntroOverlayTextCue[] {
   return PROLOGUE_SHOTS.map(({ mark: index, ...shot }) => {
     const start = mark(index)
     const end = mark(index + 1)
-    const cue: IntroOverlayTextCue = { ...shot, text: shot.text ?? '', start, end }
+    const cue: IntroOverlayTextCue = {
+      ...shot,
+      text: shot.text ?? '',
+      start,
+      end
+    }
 
     if (!cue.text || cue.text === CLOSING_TITLE) {
       return cue
     }
 
-    return { ...cue, textHoldSeconds: textHoldFor(cue.text, round(end - start)) }
+    return {
+      ...cue,
+      textHoldSeconds: textHoldFor(cue.text, round(end - start))
+    }
   })
 }
 

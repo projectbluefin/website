@@ -93,7 +93,9 @@ describe('finale reveal', () => {
     const trailing = /\s(?:a|an|the|and|or|of|to|in|on|at|by|for|from|with|is|was|will|that|his|her|their|its)$/i
 
     for (const record of loadAllLoreRecords()) {
-      const pages = record.kind === 'chatlog' ? loreChatPages(record.body) : loreProsePages(record.body)
+      const pages = record.kind === 'chatlog'
+        ? loreChatPages(record.body)
+        : loreProsePages(record.body)
       pages.slice(0, -1).forEach((page, index) => {
         expect(trailing.test(page.trimEnd()), `${record.id} page ${index} ends mid phrase: "${page.slice(-40)}"`).toBe(false)
       })

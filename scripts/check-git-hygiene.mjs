@@ -51,7 +51,9 @@ function abort(message) {
 /** The remote half of `BASE_REF`, or null when the base ref is a local branch. */
 function baseRemote(baseRef) {
   const [remote, ...rest] = baseRef.split('/')
-  return rest.length > 0 ? remote : null
+  return rest.length > 0
+    ? remote
+    : null
 }
 
 export function classifyWorktree({ branch, dirty, ahead, prState, prNumber, prUrl, detached, isBase }) {
@@ -93,7 +95,11 @@ function parseWorktrees(text) {
     const fields = new Map()
     for (const line of record.split('\n')) {
       const space = line.indexOf(' ')
-      fields.set(space === -1 ? line : line.slice(0, space), space === -1 ? true : line.slice(space + 1))
+      fields.set(space === -1
+        ? line
+        : line.slice(0, space), space === -1
+        ? true
+        : line.slice(space + 1))
     }
     return {
       path: fields.get('worktree'),
@@ -159,14 +165,28 @@ function pullRequestsByBranch(slug, cwd) {
 }
 
 function selfTest() {
-  const base = { branch: 'feat/x', dirty: false, ahead: 1, prState: null, prNumber: null, prUrl: null, detached: false, isBase: false }
+  const base = {
+    branch: 'feat/x',
+    dirty: false,
+    ahead: 1,
+    prState: null,
+    prNumber: null,
+    prUrl: null,
+    detached: false,
+    isBase: false
+  }
   assert.equal(classifyWorktree({ ...base, prState: 'OPEN', prNumber: 1 }).ok, true)
   assert.equal(classifyWorktree({ ...base, dirty: true, ahead: 0 }).ok, true)
   assert.equal(classifyWorktree({ ...base, ahead: 0 }).ok, false)
   assert.equal(classifyWorktree(base).ok, false)
   assert.equal(classifyWorktree({ ...base, prState: 'MERGED', prNumber: 1 }).ok, false)
   assert.equal(classifyWorktree({ ...base, detached: true, ahead: 0 }).ok, false)
-  assert.equal(classifyWorktree({ ...base, branch: 'main', ahead: 0, isBase: true }).ok, true)
+  assert.equal(classifyWorktree({
+    ...base,
+    branch: 'main',
+    ahead: 0,
+    isBase: true
+  }).ok, true)
   console.info('git-hygiene self-test: pass')
 }
 
@@ -197,7 +217,12 @@ function main() {
   const failures = []
   const active = []
 
-  const prune = git(['worktree', 'prune', '--dry-run', '--verbose'], cwd)
+  const prune = git([
+    'worktree',
+    'prune',
+    '--dry-run',
+    '--verbose'
+  ], cwd)
   if (prune) {
     failures.push(`stale worktree metadata:\n${prune}`)
   }

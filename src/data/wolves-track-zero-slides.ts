@@ -93,7 +93,13 @@ export function pinJonoBaconAtTrackZeroWindow<T extends { id: string }>(slides: 
 }
 
 export function pinTrackZeroHeroSlides<T extends { id: string }>(slides: readonly T[]): T[] {
-  const heroSlideIds = [jonoBaconSlideId, marinaMooreSlideId, ...bluefinGroupSlideIds, lauraSlideId, topheeSlideId]
+  const heroSlideIds = [
+    jonoBaconSlideId,
+    marinaMooreSlideId,
+    ...bluefinGroupSlideIds,
+    lauraSlideId,
+    topheeSlideId
+  ]
   const heroSlides = heroSlideIds
     .map(id => slides.find(slide => slide.id === id))
     .filter((slide): slide is T => slide !== undefined)

@@ -27,8 +27,14 @@ const rightNavLinks: NavLink[] = [
     name: t('TopBar.Docs'),
     href: 'https://docs.projectbluefin.io/introduction'
   },
-  { name: t('TopBar.Blog'), href: 'https://docs.projectbluefin.io/blog' },
-  { name: t('TopBar.Reports'), href: 'https://docs.projectbluefin.io/reports' },
+  {
+    name: t('TopBar.Blog'),
+    href: 'https://docs.projectbluefin.io/blog'
+  },
+  {
+    name: t('TopBar.Reports'),
+    href: 'https://docs.projectbluefin.io/reports'
+  },
   {
     name: t('TopBar.Discussions'),
     href: 'https://github.com/ublue-os/bluefin/discussions',

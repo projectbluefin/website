@@ -56,7 +56,9 @@ async function playChat(wrapper: VueWrapper, duration: number, steps = 600): Pro
       speaker: message.find('.conversation-speaker').exists()
         ? message.find('.conversation-speaker').text()
         : '',
-      text: message.find('p').exists() ? message.find('p').text() : '',
+      text: message.find('p').exists()
+        ? message.find('p').text()
+        : '',
       continuation: message.attributes('data-chatlog-beat-continuation') ?? 'false',
       isSfx: message.classes('sfx-message'),
     }
@@ -355,7 +357,9 @@ describe('wolvesLoreColumn Logic', () => {
   it('automatically holds complete quote pages without audience controls', async () => {
     const record = loreRecords
       .filter(record => record.kind === 'quote')
-      .reduce((longest, record) => record.body.length > longest.body.length ? record : longest)
+      .reduce((longest, record) => record.body.length > longest.body.length
+        ? record
+        : longest)
     if (record.kind !== 'quote') {
       throw new Error('Expected a quote fixture')
     }

@@ -69,16 +69,18 @@ describe('media widget', () => {
       id: 'album-test',
       title: 'Album Test',
       artwork: 'album.jpg',
-      segments: [{
-        id: 'track-one',
-        kind: 'youtube',
-        youtubeId: 'track-one',
-        chapter: 'Album Test',
-        title: 'Ava of Death',
-        artist: 'Eleine',
-        artwork: 'track.jpg',
-        durationSeconds: 247,
-      }],
+      segments: [
+        {
+          id: 'track-one',
+          kind: 'youtube',
+          youtubeId: 'track-one',
+          chapter: 'Album Test',
+          title: 'Ava of Death',
+          artist: 'Eleine',
+          artwork: 'track.jpg',
+          durationSeconds: 247,
+        }
+      ],
     })
     store.enterCinematic()
 
@@ -137,7 +139,10 @@ describe('media widget', () => {
     await slider.trigger('pointerdown', { clientX: 200, pointerId: 7, button: 0 })
     await slider.trigger('pointerup', { clientX: 400, pointerId: 7 })
 
-    expect(wrapper.emitted('seek')).toEqual([[0.25], [0.75]])
+    expect(wrapper.emitted('seek')).toEqual([
+      [0.25],
+      [0.75]
+    ])
     expect(element.setPointerCapture).toHaveBeenCalledWith(7)
     expect(element.releasePointerCapture).toHaveBeenCalledWith(7)
   })

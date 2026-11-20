@@ -21,13 +21,22 @@ const bond = computed(() =>
 
 const spec = computed<LoreSpecEntry[]>(() => [
   ...specializations.value.length
-    ? [{ key: 'specializations', value: specializations.value.join(' · ').toUpperCase() }]
+    ? [
+        {
+          key: 'specializations',
+          value: specializations.value.join(' · ').toUpperCase()
+        }
+      ]
     : [],
   ...props.record.metadata.guardian?.class
-    ? [{ key: 'class', value: props.record.metadata.guardian.class }]
+    ? [
+        { key: 'class', value: props.record.metadata.guardian.class }
+      ]
     : [],
   ...props.record.metadata.guardian?.super
-    ? [{ key: 'super', value: props.record.metadata.guardian.super }]
+    ? [
+        { key: 'super', value: props.record.metadata.guardian.super }
+      ]
     : [],
 ])
 

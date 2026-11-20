@@ -47,7 +47,16 @@ describe('wolves hero typography timeline', () => {
     expect(legend.get('.wc-thesis').classes()).not.toContain('wc-thesis--welcome-back')
   })
 
-  it.each([344.999, 345, 347.75, 350.5, 359, 365, 404.999, 425.001])(
+  it.each([
+    344.999,
+    345,
+    347.75,
+    350.5,
+    359,
+    365,
+    404.999,
+    425.001
+  ])(
     'does not render readable hero text outside authored cue windows at %s',
     async (time) => {
       const wrapper = await renderAt(time)
@@ -383,16 +392,18 @@ describe('theater experience wolves-experience prop wiring', () => {
       id: 'album-test',
       title: 'Album Test',
       artwork: 'album.jpg',
-      segments: [{
-        id: 'track-one',
-        kind: 'youtube',
-        youtubeId: 'track-one',
-        chapter: 'Album Test',
-        title: 'Track One',
-        artist: 'Artist',
-        artwork: 'track.jpg',
-        durationSeconds: 200,
-      }],
+      segments: [
+        {
+          id: 'track-one',
+          kind: 'youtube',
+          youtubeId: 'track-one',
+          chapter: 'Album Test',
+          title: 'Track One',
+          artist: 'Artist',
+          artwork: 'track.jpg',
+          durationSeconds: 200,
+        }
+      ],
     })
     store.enterCinematic()
 

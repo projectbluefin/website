@@ -73,7 +73,10 @@ export function buildWolvesGalleryCycle<T extends WolvesGalleryPhoto>(
 
   for (const photo of photos) {
     const eventKey = getWolvesGalleryEventKey(photo)
-    eventGroups.set(eventKey, [...(eventGroups.get(eventKey) ?? []), photo])
+    eventGroups.set(eventKey, [
+      ...(eventGroups.get(eventKey) ?? []),
+      photo
+    ])
   }
 
   const placed: { photo: T, position: number }[] = []
@@ -115,7 +118,9 @@ export function separateAdjacentEvents<T extends WolvesGalleryPhoto>(
   segmentStarts: readonly number[] = [],
 ): T[] {
   const separated = [...photos]
-  const fences = [...new Set([0, ...segmentStarts, separated.length])].sort((left, right) => left - right)
+  const fences = [
+    ...new Set([0, ...segmentStarts, separated.length])
+  ].sort((left, right) => left - right)
   const segmentEndFor = (index: number) => fences.find(fence => fence > index) ?? separated.length
 
   for (let index = 1; index < separated.length; index++) {

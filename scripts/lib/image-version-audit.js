@@ -8,7 +8,12 @@ import { EvidenceError } from './verified-image-sbom.js'
  * Fields that appear in a generated output block but are never derived from an
  * image SBOM, so their disappearance is not evidence loss.
  */
-const NON_SBOM_FIELDS = new Set(['status', 'checkedAt', 'sources', 'isos'])
+const NON_SBOM_FIELDS = new Set([
+  'status',
+  'checkedAt',
+  'sources',
+  'isos'
+])
 
 /**
  * Partition extraction results into required and optional ambiguity.
@@ -133,7 +138,9 @@ export async function verifyRegistry(records, dependencies) {
     }
 
     if (extraction.missingRequired.length > 0 || ambiguousRequired.length > 0) {
-      const errorCode = extraction.missingRequired.length > 0 ? 'missing-required' : 'ambiguous-required'
+      const errorCode = extraction.missingRequired.length > 0
+        ? 'missing-required'
+        : 'ambiguous-required'
       const detail = extraction.missingRequired.length > 0
         ? `missing required fields: ${extraction.missingRequired.join(', ')}`
         : `ambiguous required fields: ${ambiguousRequired.join(', ')}`
@@ -147,7 +154,9 @@ export async function verifyRegistry(records, dependencies) {
     }
 
     if (extraction.missingOptional.length > 0 || ambiguousOptional.length > 0) {
-      const errorCode = ambiguousOptional.length > 0 ? 'ambiguous-optional' : 'missing-optional'
+      const errorCode = ambiguousOptional.length > 0
+        ? 'ambiguous-optional'
+        : 'missing-optional'
       const detail = ambiguousOptional.length > 0
         ? `ambiguous optional fields: ${ambiguousOptional.join(', ')}`
         : `missing optional fields: ${extraction.missingOptional.join(', ')}`
@@ -275,7 +284,10 @@ export function assertExplainedFieldLoss(options) {
     return
   }
 
-  const ignored = new Set([...NON_SBOM_FIELDS, ...ignore])
+  const ignored = new Set([
+    ...NON_SBOM_FIELDS,
+    ...ignore
+  ])
   const removed = Object.keys(previous).filter(key => !ignored.has(key) && !(key in next))
   if (removed.length === 0) {
     return
@@ -390,7 +402,10 @@ export function writeOutputsAtomically(outputs, destinationRoot, options = {}) {
         fsImpl.mkdirSync(tmpFileDir, { recursive: true })
       }
       fsImpl.writeFileSync(tmpPath, serialize(content), 'utf8')
-      staged.push({ tmpPath, finalPath: path.join(destinationRoot, filename) })
+      staged.push({
+        tmpPath,
+        finalPath: path.join(destinationRoot, filename)
+      })
     }
     // Ensure final directories exist
     for (const { finalPath } of staged) {

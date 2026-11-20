@@ -55,7 +55,9 @@ lts:
   const wrapper = mount(SectionPicker, {
     global: {
       plugins: [i18n],
-      provide: { visibleSection: ref('') }
+      provide: {
+        visibleSection: ref('')
+      }
     }
   })
   wrappers.push(wrapper)
@@ -188,7 +190,15 @@ describe('sectionPicker.vue', () => {
     await flushPromises()
     const labels = wrapper.findAll('.version-label').map(label => label.text())
 
-    for (const absent of ['Freedesktop SDK', 'Homebrew', 'Podman', 'podman', 'Flatpak', 'flatpak', 'OGC Kernel']) {
+    for (const absent of [
+      'Freedesktop SDK',
+      'Homebrew',
+      'Podman',
+      'podman',
+      'Flatpak',
+      'flatpak',
+      'OGC Kernel'
+    ]) {
       expect(labels).not.toContain(absent)
     }
     expect(wrapper.text()).not.toContain('4593.2.1')

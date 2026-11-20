@@ -189,7 +189,9 @@ function introSeekDuration(index: number): number {
 
 function introNativeStart(index: number): number {
   const segment = INTRO_SEGMENTS[index]
-  return segment && !isTextSegment(segment) ? (segment.startOffset ?? 0) : 0
+  return segment && !isTextSegment(segment)
+    ? (segment.startOffset ?? 0)
+    : 0
 }
 
 function cinematicSegmentDuration(index: number): number {
@@ -225,7 +227,10 @@ function buildCinematicTimeline(): TimelineEntry[] {
 }
 
 let CINEMATIC_TIMELINE = buildCinematicTimeline()
-let OVERALL_TIMELINE = [...INTRO_TIMELINE, ...CINEMATIC_TIMELINE]
+let OVERALL_TIMELINE = [
+  ...INTRO_TIMELINE,
+  ...CINEMATIC_TIMELINE
+]
 
 function sumTimelineDurations(entries: readonly TimelineEntry[]): number {
   return entries.reduce((sum, entry) => sum + entry.segmentDuration, 0)
@@ -258,7 +263,10 @@ function overallSequenceDuration(): number {
 function rebuildTimelines() {
   CINEMATIC_TIMELINE = buildCinematicTimeline()
   OVERALL_TIMELINE = introIncluded
-    ? [...INTRO_TIMELINE, ...CINEMATIC_TIMELINE]
+    ? [
+        ...INTRO_TIMELINE,
+        ...CINEMATIC_TIMELINE
+      ]
     : [...CINEMATIC_TIMELINE]
 }
 
@@ -297,15 +305,21 @@ export function resolveOverallElapsedTarget(elapsed: number): OverallTimelineTar
         ? clamp(overallElapsed - consumed, 0, entry.segmentDuration)
         : Math.max(0, overallElapsed - consumed)
       const nativeTime = entry.nativeStart + segmentElapsed
-      const denominator = entry.phase === 'intro' ? entry.seekDuration : entry.segmentDuration
-      const numerator = entry.phase === 'intro' ? nativeTime : segmentElapsed
+      const denominator = entry.phase === 'intro'
+        ? entry.seekDuration
+        : entry.segmentDuration
+      const numerator = entry.phase === 'intro'
+        ? nativeTime
+        : segmentElapsed
       return {
         phase: entry.phase,
         segmentIndex: entry.segmentIndex,
         segmentId: entry.segmentId,
         segmentElapsed,
         segmentDuration: entry.segmentDuration,
-        seekRatio: denominator > 0 ? clamp(numerator / denominator, 0, 1) : 0,
+        seekRatio: denominator > 0
+          ? clamp(numerator / denominator, 0, 1)
+          : 0,
         nativeTime,
         overallElapsed,
         overallDuration,
@@ -414,7 +428,9 @@ export const useCinematicStore = defineStore('cinematic', {
       state.segments[index]?.crossfadeMs ?? DEFAULT_CROSSFADE_MS,
     totalElapsed: state => state.completedElapsed + state.segmentElapsed,
     segmentProgress: state =>
-      state.segmentDuration > 0 ? Math.min(1, state.segmentElapsed / state.segmentDuration) : 0,
+      state.segmentDuration > 0
+        ? Math.min(1, state.segmentElapsed / state.segmentDuration)
+        : 0,
     sequenceDuration(state): number {
       void state.timelineRevision
       if (state.phase === 'intro') {
@@ -452,7 +468,9 @@ export const useCinematicStore = defineStore('cinematic', {
     overallProgress(): number {
       void this.timelineRevision
       const duration = overallSequenceDuration()
-      return duration > 0 ? Math.min(1, this.overallElapsed / duration) : 0
+      return duration > 0
+        ? Math.min(1, this.overallElapsed / duration)
+        : 0
     },
     isLastSegment: state => state.segmentIndex >= state.segments.length - 1,
     /**

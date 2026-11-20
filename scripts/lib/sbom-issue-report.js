@@ -151,7 +151,11 @@ export function buildSbomIssuePlan(audit, openIssues, options = {}) {
       plan.update.push({ number: existing.number, title, body })
     }
     else {
-      plan.create.push({ title, body, labels: ['bug', 'automation'] })
+      plan.create.push({
+        title,
+        body,
+        labels: ['bug', 'automation']
+      })
     }
   }
 

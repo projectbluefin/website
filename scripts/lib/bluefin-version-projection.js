@@ -93,7 +93,9 @@ export function projectBluefinStreams(auditResult, checkedAt) {
   function normalizeVals(vals) {
     const out = {}
     for (const [k, v] of Object.entries(vals)) {
-      out[k] = k === 'base' ? v : normalizeUserVersion(v)
+      out[k] = k === 'base'
+        ? v
+        : normalizeUserVersion(v)
     }
     return out
   }

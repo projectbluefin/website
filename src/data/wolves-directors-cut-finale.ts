@@ -298,7 +298,9 @@ export function directorsCutBulletinVisible(time: number): boolean {
 export function directorsCutCollapseNightOpacity(time: number): number {
   const span = DIRECTORS_CUT_FINALE_ANCHORS.collapseNightEnd - DIRECTORS_CUT_FINALE_ANCHORS.collapseDayStart
   if (span <= 0) {
-    return time >= DIRECTORS_CUT_FINALE_ANCHORS.collapseNightEnd ? 1 : 0
+    return time >= DIRECTORS_CUT_FINALE_ANCHORS.collapseNightEnd
+      ? 1
+      : 0
   }
   return clampUnit((time - DIRECTORS_CUT_FINALE_ANCHORS.collapseDayStart) / span)
 }
@@ -327,7 +329,9 @@ export const DIRECTORS_CUT_COVER_FADE_SECONDS: number
  */
 export function directorsCutCoverOpacity(time: number): number {
   if (DIRECTORS_CUT_COVER_FADE_SECONDS <= 0) {
-    return time >= DIRECTORS_CUT_FINALE_ANCHORS.coverStart ? 1 : 0
+    return time >= DIRECTORS_CUT_FINALE_ANCHORS.coverStart
+      ? 1
+      : 0
   }
   return clampUnit(
     (time - DIRECTORS_CUT_FINALE_ANCHORS.coverStart) / DIRECTORS_CUT_COVER_FADE_SECONDS,

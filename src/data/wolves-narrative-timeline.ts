@@ -139,7 +139,9 @@ function timingInput(id: string) {
   const record = recordsById.get(id)
   const kind = record?.kind === 'chatlog'
     ? 'chatlog' as const
-    : record?.kind === 'quote' ? 'quote' as const : 'prose' as const
+    : record?.kind === 'quote'
+      ? 'quote' as const
+      : 'prose' as const
   return {
     id,
     kind,

@@ -59,7 +59,12 @@ describe('resolveImageDigest', () => {
     expect(result).toBe(`ghcr.io/projectbluefin/dakota@${DAKOTA_DIGEST}`)
     expect(run).toHaveBeenCalledWith(
       'oras',
-      ['manifest', 'fetch', '--descriptor', 'ghcr.io/projectbluefin/dakota:latest'],
+      [
+        'manifest',
+        'fetch',
+        '--descriptor',
+        'ghcr.io/projectbluefin/dakota:latest'
+      ],
       expect.objectContaining({ encoding: 'utf8' }),
     )
   })
@@ -80,7 +85,12 @@ describe('discoverReferrers', () => {
     const result = discoverReferrers(imageAtDigest, run)
     expect(run).toHaveBeenCalledWith(
       'oras',
-      ['discover', '--format', 'json', imageAtDigest],
+      [
+        'discover',
+        '--format',
+        'json',
+        imageAtDigest
+      ],
       expect.objectContaining({ encoding: 'utf8' }),
     )
     expect(result).toEqual(dakotaDiscovery.referrers)
@@ -257,7 +267,12 @@ describe('collectVerifiedImageSbom', () => {
   })
 
   it('collects verified image SBOM for dakota with both provenance and SPDX', async () => {
-    const spdxDoc = { spdxVersion: 'SPDX-2.3', packages: [{ name: 'linux', versionInfo: '6.12.0' }] }
+    const spdxDoc = {
+      spdxVersion: 'SPDX-2.3',
+      packages: [
+        { name: 'linux', versionInfo: '6.12.0' }
+      ]
+    }
     const mockFs = {
       mkdtempSync: vi.fn().mockReturnValue('/mock-tmp/sbom-abc'),
       readdirSync: vi.fn().mockReturnValue(['sbom.spdx.json']),
@@ -541,7 +556,12 @@ describe('collectVerifiedImageSbom — publisher identity', () => {
   })
 
   it('collects with sbomSignature: missing when the referrer carries no publisher signature in discovery', async () => {
-    const spdxDoc = { spdxVersion: 'SPDX-2.3', packages: [{ name: 'linux', versionInfo: '6.12.0' }] }
+    const spdxDoc = {
+      spdxVersion: 'SPDX-2.3',
+      packages: [
+        { name: 'linux', versionInfo: '6.12.0' }
+      ]
+    }
     const mockFs = {
       mkdtempSync: vi.fn().mockReturnValue('/mock-tmp/sbom-unsigned'),
       readdirSync: vi.fn().mockReturnValue(['sbom.spdx.json']),

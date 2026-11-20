@@ -119,8 +119,24 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
   const started = ref(false)
 
   const sides: Record<PlayerSide, SideState> = {
-    a: { player: null, segmentIndex: -1, prewarming: false, parked: false, parking: false, failed: false, errorCode: null },
-    b: { player: null, segmentIndex: -1, prewarming: false, parked: false, parking: false, failed: false, errorCode: null },
+    a: {
+      player: null,
+      segmentIndex: -1,
+      prewarming: false,
+      parked: false,
+      parking: false,
+      failed: false,
+      errorCode: null
+    },
+    b: {
+      player: null,
+      segmentIndex: -1,
+      prewarming: false,
+      parked: false,
+      parking: false,
+      failed: false,
+      errorCode: null
+    },
   }
 
   let pollTimer: ReturnType<typeof setInterval> | null = null
@@ -160,7 +176,9 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
   let coldSkipTimeout: ReturnType<typeof setTimeout> | null = null
   const pendingReadyRejectors = new Set<(reason: Error) => void>()
 
-  const other = (side: PlayerSide): PlayerSide => (side === 'a' ? 'b' : 'a')
+  const other = (side: PlayerSide): PlayerSide => (side === 'a'
+    ? 'b'
+    : 'a')
   const activePlayer = () => sides[activeSide.value].player
 
   function releasePlayers() {
@@ -607,7 +625,9 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     // the incoming buffer here would report the new track's position against the old
     // segment. Keeping the outgoing clock alive is what stops the transport bar from
     // sticking for the whole fade and then snapping to zero at `advanceSegment()`.
-    const timeSide = swapping && swapOutgoingSide ? swapOutgoingSide : activeSide.value
+    const timeSide = swapping && swapOutgoingSide
+      ? swapOutgoingSide
+      : activeSide.value
     const player = sides[timeSide].player
     if (!player) {
       return
@@ -879,7 +899,9 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
           return
         }
 
-        const startIndex = store.phase === 'cinematic' ? store.segmentIndex : 0
+        const startIndex = store.phase === 'cinematic'
+          ? store.segmentIndex
+          : 0
         cueNext('a', startIndex)
         cueNext('b', startIndex + 1)
         prepared.value = true
@@ -1014,7 +1036,9 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
         intendedIndex,
         intended,
         actual,
-        matches: intended !== null && actual !== null ? intended === actual : null,
+        matches: intended !== null && actual !== null
+          ? intended === actual
+          : null,
         parked: state.parked,
         prewarming: state.prewarming,
         parking: state.parking,
@@ -1134,5 +1158,17 @@ export function useDualBufferPlayer(options: DualBufferOptions) {
     swapOutgoingSide = null
   }
 
-  return { activeSide, prepared, started, prepare, start, togglePlay, seekTo, seekToRatio, skip, destroy, bufferSnapshot }
+  return {
+    activeSide,
+    prepared,
+    started,
+    prepare,
+    start,
+    togglePlay,
+    seekTo,
+    seekToRatio,
+    skip,
+    destroy,
+    bufferSnapshot
+  }
 }

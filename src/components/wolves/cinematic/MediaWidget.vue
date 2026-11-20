@@ -55,14 +55,18 @@ const showCatalogueCredit = computed(() =>
 )
 const artworkSrc = computed(() => {
   const artwork = props.artwork ?? store.display.artwork
-  return artwork.startsWith('http') || artwork.startsWith('/') ? artwork : `${base}${artwork}`
+  return artwork.startsWith('http') || artwork.startsWith('/')
+    ? artwork
+    : `${base}${artwork}`
 })
 
 function formatTime(totalSeconds: number): string {
   const seconds = Math.max(0, Math.floor(totalSeconds))
   const minutes = Math.floor(seconds / 60)
   const rest = seconds % 60
-  return `${minutes}:${rest < 10 ? '0' : ''}${rest}`
+  return `${minutes}:${rest < 10
+    ? '0'
+    : ''}${rest}`
 }
 
 const segmentElapsed = computed(() => externalPlayback.value ? props.elapsed! : store.segmentElapsed)

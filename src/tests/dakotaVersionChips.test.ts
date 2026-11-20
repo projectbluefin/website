@@ -8,7 +8,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 const getDakotaVersionsMock = vi.fn<() => Promise<DakotaVersions>>()
 vi.mock('../composables', async (importOriginal) => {
   const orig = await importOriginal<typeof import('../composables')>()
-  return { ...orig, getDakotaVersions: () => getDakotaVersionsMock() }
+  return {
+    ...orig,
+    getDakotaVersions: () => getDakotaVersionsMock()
+  }
 })
 
 // Import after mock is set up
@@ -70,7 +73,9 @@ describe('dakotaVersionChips.vue', () => {
   it('limits chips to the requested keys', async () => {
     getDakotaVersionsMock.mockResolvedValue(VERSIONS_JSON)
 
-    const wrapper = mountChips({ keys: ['kernel'] })
+    const wrapper = mountChips({
+      keys: ['kernel']
+    })
     await flushPromises()
 
     const chips = wrapper.findAll('.version-chip')

@@ -10,7 +10,9 @@ const workflow = load(readFileSync(resolve(process.cwd(), '.github/workflows/ci.
 function policy(eventName: string, runId: number, pullRequestNumber?: number) {
   expect(workflow.concurrency.group).toBe(`\${{ github.workflow }}-\${{ github.event_name }}-\${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}`)
   expect(workflow.concurrency['cancel-in-progress']).toBe(`\${{ github.event_name == 'pull_request' }}`)
-  const identifier = eventName === 'pull_request' ? (pullRequestNumber || runId) : runId
+  const identifier = eventName === 'pull_request'
+    ? (pullRequestNumber || runId)
+    : runId
   return {
     group: `CI-${eventName}-${identifier}`,
     cancel: String(eventName === 'pull_request'),

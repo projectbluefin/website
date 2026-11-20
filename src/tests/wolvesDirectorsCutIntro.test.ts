@@ -296,7 +296,9 @@ describe('director\'s cut intro sequence', () => {
 
     // Every Europa frame sits after every Earth frame. This is the owner's
     // "save europa for the end" as a property of the cut rather than a comment.
-    const lastEarth = ids.reduce((last, path, index) => (/europa/i.test(path ?? '') ? last : index), -1)
+    const lastEarth = ids.reduce((last, path, index) => (/europa/i.test(path ?? '')
+      ? last
+      : index), -1)
     const firstEuropa = ids.findIndex(path => /europa/i.test(path ?? ''))
 
     expect(firstEuropa).toBeGreaterThan(lastEarth)
@@ -457,7 +459,12 @@ describe('director\'s cut intro sequence', () => {
       expect(cue.end).toBeLessThanOrEqual(IKORA_LAST_CONTENT_SECOND)
     }
     expect(directors.burnedInCaptions).toEqual([
-      { text: '', start: 21.9, end: 35.9, comicHeroTitleCard: true },
+      {
+        text: '',
+        start: 21.9,
+        end: 35.9,
+        comicHeroTitleCard: true
+      },
     ])
   })
 

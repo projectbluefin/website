@@ -105,6 +105,8 @@ export function compareVersions(a, b) {
  * @returns {string|undefined}
  */
 export function spdxPackageVersion(sbom, name) {
-  const { values } = extractMappedVersions(sbom, { _field: { name } })
+  const { values } = extractMappedVersions(sbom, {
+    _field: { name }
+  })
   return values._field
 }

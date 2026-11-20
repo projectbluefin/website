@@ -13,7 +13,7 @@ titles:
 
 # VANGUARD DOSSIER: CHRIS ANISZCZYK
 
-### **IDENTIFICATION & CLASSIFICATION**
+## **IDENTIFICATION & CLASSIFICATION**
 
 * **Name:** Chris Aniszczyk
 * **Designation:** The Last Founder, Architect of the CNCF
@@ -23,7 +23,7 @@ titles:
 
 ---
 
-### **BIOGRAPHICAL OVERVIEW**
+## **BIOGRAPHICAL OVERVIEW**
 
 **The Architect of the CNCF**
 Commander Aniszczyk is the Strategic Commander of the Vanguard and the sole remaining co-founder of the Consensus Network of City Foundries (CNCF). While other founders have fallen or passed the torch, he remains the steadfast architect of the Last City's technical direction. He leaves the day-to-day executive administration to others, focusing instead on macro-level strategy. Alongside Greg KH—his peer and the Vanguard’s most lethal combat maintainer—Aniszczyk has been pivotal in every major systemic event in the history of this world. Where Greg KH executes the code with devastating precision on the battlefield, Aniszczyk writes the underlying engine that makes it possible.
@@ -36,7 +36,7 @@ Aniszczyk sees the raw spark of humanity in the youth. To harness this energy, h
 
 ---
 
-### **COMBAT LOADOUT & GEAR**
+## **COMBAT LOADOUT & GEAR**
 
 **Subclass: Prismatic**
 
@@ -55,7 +55,7 @@ Aniszczyk sees the raw spark of humanity in the youth. To harness this energy, h
 
 ---
 
-### **NOTABLE RELATIONSHIPS & DYNAMICS**
+## **NOTABLE RELATIONSHIPS & DYNAMICS**
 
 | Affiliate | Relationship Dynamic |
 | --- | --- |

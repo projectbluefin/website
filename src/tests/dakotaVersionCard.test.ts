@@ -11,14 +11,22 @@ import { DAKOTA_ISOS } from '../data/dakota-isos'
 const getDakotaVersionsMock = vi.fn<() => Promise<DakotaVersions>>()
 vi.mock('../composables', async (importOriginal) => {
   const orig = await importOriginal<typeof import('../composables')>()
-  return { ...orig, getDakotaVersions: () => getDakotaVersionsMock() }
+  return {
+    ...orig,
+    getDakotaVersions: () => getDakotaVersionsMock()
+  }
 })
 
 const FULL_VERSIONS: DakotaVersions = {
   checkedAt: '2026-08-01T00:00:00Z',
   status: 'verified',
   sources: [
-    { id: 'dakota', image: 'ghcr.io/projectbluefin/dakota:latest', imageDigest: 'sha256:aaa', sbomDigest: 'sha256:bbb' },
+    {
+      id: 'dakota',
+      image: 'ghcr.io/projectbluefin/dakota:latest',
+      imageDigest: 'sha256:aaa',
+      sbomDigest: 'sha256:bbb'
+    },
   ],
   packages: {
     'kernel': '6.19.11',
@@ -78,7 +86,9 @@ describe('dakotaVersionCard.vue', () => {
   it('ignores a stale isos field left in cached dakota-versions.json', async () => {
     getDakotaVersionsMock.mockResolvedValue({
       ...FULL_VERSIONS,
-      isos: [{ label: 'Download ISO', filename: 'dakota-live-alpha5.iso' }],
+      isos: [
+        { label: 'Download ISO', filename: 'dakota-live-alpha5.iso' }
+      ],
     } as DakotaVersions)
 
     const wrapper = mountCard()

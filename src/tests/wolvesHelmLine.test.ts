@@ -12,7 +12,9 @@ function source(path: string): string {
 
 describe('helm-separated standfirst', () => {
   it('draws one helm for each authored separator', () => {
-    const wrapper = mount(WolvesHelmLine, { props: { text: LINE } })
+    const wrapper = mount(WolvesHelmLine, {
+      props: { text: LINE }
+    })
     const marks = wrapper.findAll('.wc-helm-sep')
 
     expect(marks).toHaveLength(2)
@@ -24,7 +26,9 @@ describe('helm-separated standfirst', () => {
   // The copy is not edited, only painted: the phrases and their spacing survive
   // verbatim, and only the separator glyph is gone from the rendered text.
   it('keeps the authored copy and drops only the separator glyph', () => {
-    const wrapper = mount(WolvesHelmLine, { props: { text: LINE } })
+    const wrapper = mount(WolvesHelmLine, {
+      props: { text: LINE }
+    })
 
     expect(wrapper.text()).not.toContain('·')
     expect(wrapper.text().replace(/\s+/g, ' ').trim())
@@ -34,14 +38,18 @@ describe('helm-separated standfirst', () => {
   // A separator is not content. Announcing a mark between phrases that are
   // already separated in the text adds nothing to read.
   it('hides the mark from assistive technology', () => {
-    const mark = mount(WolvesHelmLine, { props: { text: LINE } }).get('.wc-helm-sep')
+    const mark = mount(WolvesHelmLine, {
+      props: { text: LINE }
+    }).get('.wc-helm-sep')
 
     expect(mark.attributes('alt')).toBe('')
     expect(mark.attributes('aria-hidden')).toBe('true')
   })
 
   it('leaves a line without separators untouched', () => {
-    const wrapper = mount(WolvesHelmLine, { props: { text: 'ONE DESTINY' } })
+    const wrapper = mount(WolvesHelmLine, {
+      props: { text: 'ONE DESTINY' }
+    })
 
     expect(wrapper.findAll('.wc-helm-sep')).toHaveLength(0)
     expect(wrapper.text()).toBe('ONE DESTINY')
@@ -58,7 +66,9 @@ describe('helm-separated standfirst', () => {
   // element rather than the source, so a comment naming another path cannot
   // trip it.
   it('draws the published white symbolic icon', () => {
-    const src = mount(WolvesHelmLine, { props: { text: LINE } }).get('.wc-helm-sep').attributes('src')
+    const src = mount(WolvesHelmLine, {
+      props: { text: LINE }
+    }).get('.wc-helm-sep').attributes('src')
 
     expect(src).toMatch(/brands\/kubernetes-icon-white\.svg$/)
   })

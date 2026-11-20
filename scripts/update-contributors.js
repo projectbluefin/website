@@ -4,8 +4,12 @@ import { rename, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
-const MODULE_PATH = import.meta.url.startsWith('file:') ? fileURLToPath(import.meta.url) : null
-const ROOT_DIR = MODULE_PATH ? dirname(dirname(MODULE_PATH)) : process.cwd()
+const MODULE_PATH = import.meta.url.startsWith('file:')
+  ? fileURLToPath(import.meta.url)
+  : null
+const ROOT_DIR = MODULE_PATH
+  ? dirname(dirname(MODULE_PATH))
+  : process.cwd()
 const TARGET_PATH = join(ROOT_DIR, 'public', 'contributors.json')
 const LOGIN_PATTERN = /^[a-z\d][a-z\d-]{0,38}$/i
 const AUTOMATION_LOGINS = new Set([
@@ -27,7 +31,10 @@ async function fetchPages(path, allowEmpty = false) {
     if (process.env.GH_TOKEN) {
       headers.Authorization = `Bearer ${process.env.GH_TOKEN}`
     }
-    const response = await fetch(url, { headers, signal: AbortSignal.timeout(30000) })
+    const response = await fetch(url, {
+      headers,
+      signal: AbortSignal.timeout(30000)
+    })
     if (response.status === 204 && allowEmpty) {
       return records
     }
@@ -118,7 +125,9 @@ export async function updateContributors(targetPath = TARGET_PATH) {
   if (people.size === 0) {
     throw new Error('No human contributors found; refusing to replace existing data')
   }
-  const contributors = [...people.values()].sort((a, b) =>
+  const contributors = [
+    ...people.values()
+  ].sort((a, b) =>
     a.login.toLowerCase().localeCompare(b.login.toLowerCase(), 'en') || a.id - b.id,
   )
   const temporaryPath = `${targetPath}.${process.pid}.tmp`

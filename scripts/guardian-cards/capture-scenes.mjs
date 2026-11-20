@@ -18,7 +18,9 @@ import { chromium } from 'playwright'
 const here = path.dirname(fileURLToPath(import.meta.url))
 const { characters } = JSON.parse(fs.readFileSync(path.join(here, 'characters.json'), 'utf8'))
 const only = process.argv.slice(2)
-const selected = only.length ? characters.filter(character => only.includes(character.slug)) : characters
+const selected = only.length
+  ? characters.filter(character => only.includes(character.slug))
+  : characters
 
 fs.mkdirSync(path.join(here, 'scenes'), { recursive: true })
 
@@ -30,7 +32,9 @@ const server = http.createServer((req, res) => {
 await new Promise(resolve => server.listen(4175, resolve))
 
 const browser = await chromium.launch()
-const page = await browser.newPage({ viewport: { width: 1280, height: 720 } })
+const page = await browser.newPage({
+  viewport: { width: 1280, height: 720 }
+})
 
 let currentVideo = ''
 for (const character of selected) {
@@ -50,7 +54,12 @@ for (const character of selected) {
   // Crop to the letterboxed footage region inside the 16:9 player.
   await page.screenshot({
     path: path.join(here, 'scenes', `${character.slug}.png`),
-    clip: { x: 0, y: 96, width: 1280, height: 530 },
+    clip: {
+      x: 0,
+      y: 96,
+      width: 1280,
+      height: 530
+    },
   })
   console.info(`captured scenes/${character.slug}.png at ~${character.sceneTime}s of ${character.videoId}`)
 }

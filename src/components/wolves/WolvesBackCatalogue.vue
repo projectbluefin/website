@@ -14,7 +14,9 @@ const emit = defineEmits<{ launch: [manifest: ExperienceManifest] }>()
 const experiences = ref<ExperienceManifest[]>([])
 
 function resolveArtwork(artwork: string): string {
-  return /^https?:/.test(artwork) ? artwork : `${import.meta.env.BASE_URL}${artwork}`
+  return /^https?:/.test(artwork)
+    ? artwork
+    : `${import.meta.env.BASE_URL}${artwork}`
 }
 
 onMounted(async () => {

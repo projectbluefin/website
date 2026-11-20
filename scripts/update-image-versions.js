@@ -163,7 +163,9 @@ function isMainModule() {
 
 if (isMainModule()) {
   try {
-    await updateImageVersions({ checkOnly: process.argv.includes('--check-only') })
+    await updateImageVersions({
+      checkOnly: process.argv.includes('--check-only')
+    })
   }
   catch (err) {
     if (err instanceof ToolingError) {

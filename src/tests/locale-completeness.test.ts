@@ -13,7 +13,9 @@ function loadLocale(filename: string): Record<string, unknown> {
 function flatKeys(obj: Record<string, unknown>, prefix = ''): string[] {
   const keys: string[] = []
   for (const [key, value] of Object.entries(obj)) {
-    const fullKey = prefix ? `${prefix}.${key}` : key
+    const fullKey = prefix
+      ? `${prefix}.${key}`
+      : key
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       keys.push(...flatKeys(value as Record<string, unknown>, fullKey))
     }

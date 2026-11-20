@@ -10,7 +10,9 @@ const MUSIC_URL = `https://music.youtube.com/playlist?list=${PLAYLIST_ID}`
 const MODULE_PATH = import.meta.url.startsWith('file:')
   ? fileURLToPath(import.meta.url)
   : null
-const ROOT_DIR = MODULE_PATH ? resolve(dirname(MODULE_PATH), '..') : process.cwd()
+const ROOT_DIR = MODULE_PATH
+  ? resolve(dirname(MODULE_PATH), '..')
+  : process.cwd()
 const PUBLIC_DIR = join(ROOT_DIR, 'public')
 
 const TEMPO_CONFIGS = {
@@ -105,8 +107,12 @@ export function normalizePlaylistEntries(entries) {
 
     return {
       id,
-      title: hasArtistPrefix ? titleParts.join(' - ').trim() : title,
-      artist: ARTIST_OVERRIDES[id] ?? (hasArtistPrefix ? artistPrefix.trim() : uploader),
+      title: hasArtistPrefix
+        ? titleParts.join(' - ').trim()
+        : title,
+      artist: ARTIST_OVERRIDES[id] ?? (hasArtistPrefix
+        ? artistPrefix.trim()
+        : uploader),
       youtubeVideoId: id,
       artwork: `wolves-artwork/${id}.jpg`,
       thumbnailUrl: thumbnail,
@@ -127,7 +133,10 @@ function createManifest(tracks) {
       const { thumbnailUrl: _thumbnailUrl, ...manifestTrack } = track
       const tempo = TEMPO_CONFIGS[track.id]
       if (tempo) {
-        return { ...manifestTrack, ...tempo }
+        return {
+          ...manifestTrack,
+          ...tempo
+        }
       }
       return manifestTrack
     }),
@@ -216,7 +225,9 @@ export async function main() {
 
 if (MODULE_PATH && process.argv[1] && MODULE_PATH === resolve(process.argv[1])) {
   main().catch((error) => {
-    console.error(error instanceof Error ? error.message : String(error))
+    console.error(error instanceof Error
+      ? error.message
+      : String(error))
     process.exitCode = 1
   })
 }

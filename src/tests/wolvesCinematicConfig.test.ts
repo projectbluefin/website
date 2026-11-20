@@ -14,7 +14,18 @@ describe('wolves cinematic config', () => {
   })
 
   it('numbers the chapters contiguously from PART I through the final part', () => {
-    const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X']
+    const roman = [
+      'I',
+      'II',
+      'III',
+      'IV',
+      'V',
+      'VI',
+      'VII',
+      'VIII',
+      'IX',
+      'X'
+    ]
     expect(CINEMATIC_SEGMENTS.map(segment => segment.chapter))
       .toEqual(CINEMATIC_SEGMENTS.map((_, index) => `PART ${roman[index]}`))
   })

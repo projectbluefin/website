@@ -3,7 +3,13 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import ServerFeatures from './ServerFeatures.vue'
 import ServerHighlights from './ServerHighlights.vue'
 
-const phases: Phase[] = ['cluster', 'cpu', 'storage', 'highlights', 'features']
+const phases: Phase[] = [
+  'cluster',
+  'cpu',
+  'storage',
+  'highlights',
+  'features'
+]
 
 const baseUrl = import.meta.env.BASE_URL
 

@@ -62,7 +62,9 @@ export async function syncSbomIssues(deps) {
 
   const audit = JSON.parse(fsImpl.readFileSync(auditPath, 'utf8'))
   const openIssues = await listOpenAutomationIssues(github, context)
-  const plan = buildSbomIssuePlan(audit, openIssues, { workflowUrl: workflowRunUrl(context) })
+  const plan = buildSbomIssuePlan(audit, openIssues, {
+    workflowUrl: workflowRunUrl(context)
+  })
 
   for (const item of plan.create) {
     await github.rest.issues.create({

@@ -33,8 +33,15 @@ const reportPath = join(mkdtempSync(join(tmpdir(), 'wolves-baseline-')), 'vitest
 try {
   execFileSync(
     'npx',
-    ['vitest', 'run', '--reporter=json', `--outputFile=${reportPath}`],
-    { stdio: ['ignore', 'ignore', 'inherit'] },
+    [
+      'vitest',
+      'run',
+      '--reporter=json',
+      `--outputFile=${reportPath}`
+    ],
+    {
+      stdio: ['ignore', 'ignore', 'inherit']
+    },
   )
 }
 catch {

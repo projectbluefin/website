@@ -236,7 +236,10 @@ describe('director\'s cut Destiny concept-art registry', () => {
     // by index, so a Europa record sitting mid-list would put ice back into
     // Act I without anybody editing the shot list.
     const europaIndexes = DIRECTORS_CUT_DESTINY_CONCEPTS
-      .map((record, index) => ({ index, europa: /europa/i.test(record.id) }))
+      .map((record, index) => ({
+        index,
+        europa: /europa/i.test(record.id)
+      }))
       .filter(entry => entry.europa)
       .map(entry => entry.index)
 

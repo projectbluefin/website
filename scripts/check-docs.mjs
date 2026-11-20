@@ -10,7 +10,9 @@ function walk(directory) {
       return []
     }
     const path = join(directory, entry.name)
-    return entry.isDirectory() ? walk(path) : [path]
+    return entry.isDirectory()
+      ? walk(path)
+      : [path]
   })
 }
 
@@ -19,14 +21,27 @@ function addError(message) {
 }
 
 const markdown = walk(root).filter(path => extname(path).toLowerCase() === '.md')
-const required = ['AGENTS.md', 'docs/SKILL.md', 'docs/skills/INDEX.md', 'docs/README.md']
+const required = [
+  'AGENTS.md',
+  'docs/SKILL.md',
+  'docs/skills/INDEX.md',
+  'docs/README.md'
+]
 for (const path of required) {
   if (!existsSync(join(root, path))) {
     addError(`missing required file: ${path}`)
   }
 }
 
-const banned = ['IMPROVEMENTS.md', 'CHANGELOG.md', 'CHANGES.md', 'SESSION.md', 'NOTES.md', 'PLAN.md', 'TODO.md']
+const banned = [
+  'IMPROVEMENTS.md',
+  'CHANGELOG.md',
+  'CHANGES.md',
+  'SESSION.md',
+  'NOTES.md',
+  'PLAN.md',
+  'TODO.md'
+]
 for (const path of banned) {
   if (existsSync(join(root, path))) {
     addError(`banned agent changelog or session file: ${path} (write learnings to docs/skills/ instead)`)
@@ -100,7 +115,9 @@ for (const path of markdown) {
     addError(`${relativePath}: missing Verification section`)
   }
 
-  const links = [...source.matchAll(/\[[^\]]+\]\([^)]+\)/g)].map(([match]) => {
+  const links = [
+    ...source.matchAll(/\[[^\]]+\]\([^)]+\)/g)
+  ].map(([match]) => {
     const start = match.lastIndexOf('](') + 2
     return match.slice(start, -1)
   })

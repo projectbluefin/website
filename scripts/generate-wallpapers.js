@@ -339,7 +339,9 @@ async function generate() {
           name: stem,
           ...dayNightNames(stem, file, nightFile),
           title: formatTitle(stem),
-          ...(wideAspectStems.has(stem) ? { fit: 'cover' } : {})
+          ...(wideAspectStems.has(stem)
+            ? { fit: 'cover' }
+            : {})
         })
         processedStory.add(file)
         processedStory.add(nightFile)
@@ -355,7 +357,9 @@ async function generate() {
           name: stem,
           ...dayNightNames(stem, dayFile, file),
           title: formatTitle(stem),
-          ...(wideAspectStems.has(stem) ? { fit: 'cover' } : {})
+          ...(wideAspectStems.has(stem)
+            ? { fit: 'cover' }
+            : {})
         })
         processedStory.add(dayFile)
         processedStory.add(file)
@@ -369,8 +373,12 @@ async function generate() {
       type: 'single',
       name: `wolves/wolves/${file}`,
       title: formatTitle(base),
-      ...(description ? { description } : {}),
-      ...(wideAspectStems.has(base) ? { fit: 'cover' } : {})
+      ...(description
+        ? { description }
+        : {}),
+      ...(wideAspectStems.has(base)
+        ? { fit: 'cover' }
+        : {})
     })
     processedStory.add(file)
   }
@@ -393,8 +401,12 @@ async function generate() {
       type: 'single',
       name: `wolves/people/${file}`,
       title: formatTitle(base),
-      ...(description ? { description } : {}),
-      ...(titleOnlyTheaterCaptions.has(base) ? { theaterTitleOnly: true } : {})
+      ...(description
+        ? { description }
+        : {}),
+      ...(titleOnlyTheaterCaptions.has(base)
+        ? { theaterTitleOnly: true }
+        : {})
     })
   }
 
@@ -448,7 +460,9 @@ async function generate() {
       }
       const inner = entries
         .map(([key, v]) => {
-          const safeKey = IDENTIFIER_RE.test(key) ? key : `'${key.replace(/'/g, '\\\'')}'`
+          const safeKey = IDENTIFIER_RE.test(key)
+            ? key
+            : `'${key.replace(/'/g, '\\\'')}'`
           return `${indent}  ${safeKey}: ${serializeValue(v, `${indent}  `)}`
         })
         .join(',\n')

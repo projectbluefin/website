@@ -30,7 +30,15 @@ const ASCENDED_TEXT = 'You have ascended ...'
 const LEGEND_TEXT = 'Become Legend'
 const DEFAULT_HUD_LABEL = 'Celebrating Five Years of Universal Blue'
 
-const inactive: WolvesThesisState = { active: false, mode: 'inactive', text: '', subtitle: '', warning: '', dayPulse: false, hudLabel: '' }
+const inactive: WolvesThesisState = {
+  active: false,
+  mode: 'inactive',
+  text: '',
+  subtitle: '',
+  warning: '',
+  dayPulse: false,
+  hudLabel: ''
+}
 
 function active(
   mode: WolvesThesisMode,

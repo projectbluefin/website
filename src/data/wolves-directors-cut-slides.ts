@@ -115,14 +115,24 @@ export const DIRECTORS_CUT_TRACK_ZERO_SECTIONS: readonly DirectorsCutTrackZeroSe
     startTime: 0,
     endTime: TRACK_ZERO_SECTIONS.verseStart,
     beatGroups: [12, 8],
-    pools: ['dayNight', 'showcase', 'people', 'cncf'],
+    pools: [
+      'dayNight',
+      'showcase',
+      'people',
+      'cncf'
+    ],
   },
   {
     id: 'drivingVerse',
     startTime: TRACK_ZERO_SECTIONS.verseStart,
     endTime: TRACK_ZERO_SECTIONS.chorusStart,
     beatGroups: [10, 6],
-    pools: ['showcase', 'dayNight', 'people', 'cncf'],
+    pools: [
+      'showcase',
+      'dayNight',
+      'people',
+      'cncf'
+    ],
   },
   {
     id: 'contributorChorus',
@@ -236,7 +246,9 @@ function localFeedPhotoIds(slides: readonly DirectorsCutSlideSource[]): Set<stri
 function measuredBeatAtOrBefore(time: number): number {
   const index = trackZeroNearestBeatIndex(time)
   const beat = TRACK_ZERO_BEAT_TIMES[index]!
-  return beat <= time ? beat : (TRACK_ZERO_BEAT_TIMES[index - 1] ?? 0)
+  return beat <= time
+    ? beat
+    : (TRACK_ZERO_BEAT_TIMES[index - 1] ?? 0)
 }
 
 /**
@@ -294,7 +306,9 @@ export function buildDirectorsCutTrackZeroSlides<T extends DirectorsCutSlideSour
         unique.push(slide)
       }
     }
-    return unique.length > 0 ? buildWolvesGalleryCycle(unique, random) : []
+    return unique.length > 0
+      ? buildWolvesGalleryCycle(unique, random)
+      : []
   }
 
   // Order is load-bearing, not cosmetic. Every pool draws from one shared
@@ -313,7 +327,12 @@ export function buildDirectorsCutTrackZeroSlides<T extends DirectorsCutSlideSour
   pools.people = cycle(input.peopleSlides)
   pools.cncf = cycle((input.cncfSlides ?? []).filter(slide =>
     !alreadyLocal.has(slide.id) && !(input.duplicateCncfPhotoIds?.has(slide.id) ?? false)))
-  const cursors: Record<DirectorsCutPoolName, number> = { dayNight: 0, showcase: 0, people: 0, cncf: 0 }
+  const cursors: Record<DirectorsCutPoolName, number> = {
+    dayNight: 0,
+    showcase: 0,
+    people: 0,
+    cncf: 0
+  }
 
   function draw(count: number, order: readonly DirectorsCutPoolName[]): T[] {
     const picked: T[] = []
@@ -371,7 +390,12 @@ export function buildDirectorsCutTrackZeroSlides<T extends DirectorsCutSlideSour
     const cuts = trackZeroBeatCuts(startTime, endTime, count, section.beatGroups)
     slides.forEach((slide, index) => {
       const cut = cuts[index]!
-      schedule.push({ ...slide, startTime, duration: cut - startTime, endTime: cut })
+      schedule.push({
+        ...slide,
+        startTime,
+        duration: cut - startTime,
+        endTime: cut
+      })
       startTime = cut
     })
   }

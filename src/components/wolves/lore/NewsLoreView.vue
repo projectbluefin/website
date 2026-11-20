@@ -9,8 +9,16 @@ import LoreRecordHeader from './LoreRecordHeader.vue'
 const props = defineProps<LoreViewProps>()
 
 const spec = computed<LoreSpecEntry[]>(() => [
-  ...props.record.metadata.timestamp ? [{ key: 'dateline', value: props.record.metadata.timestamp }] : [],
-  ...props.record.metadata.classification ? [{ key: 'classification', value: props.record.metadata.classification }] : [],
+  ...props.record.metadata.timestamp
+    ? [
+        { key: 'dateline', value: props.record.metadata.timestamp }
+      ]
+    : [],
+  ...props.record.metadata.classification
+    ? [
+        { key: 'classification', value: props.record.metadata.classification }
+      ]
+    : [],
 ])
 
 const paragraphs = computed(() => parseLoreSpeakerParagraphs(props.record.body))

@@ -53,7 +53,9 @@ async function sourceFiles(directory: string): Promise<string[]> {
     if (entry.isDirectory()) {
       return sourceFiles(path)
     }
-    return /\.(?:vue|scss|css)$/.test(entry.name) ? [path] : []
+    return /\.(?:vue|scss|css)$/.test(entry.name)
+      ? [path]
+      : []
   }))
 
   return nestedFiles.flat()
@@ -94,7 +96,11 @@ describe('content exports', () => {
       expect(item.link.startsWith('https://')).toBe(true)
     }
 
-    for (const item of [...content.LangPoweredBy, ...content.LangAlumniCompanies, ...content.LangSponsors]) {
+    for (const item of [
+      ...content.LangPoweredBy,
+      ...content.LangAlumniCompanies,
+      ...content.LangSponsors
+    ]) {
       expect(item.altText).toEqual(expect.any(String))
       expect(item.imageUrl).toEqual(expect.any(String))
       expect(item.imageUrl.startsWith('/brands/')).toBe(true)

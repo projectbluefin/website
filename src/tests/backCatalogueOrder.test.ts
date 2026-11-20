@@ -26,7 +26,9 @@ function seededRandom(seed = 1) {
 function slide(kind: BackCatalogueSlideKind, index: number, event = 'KC+CNC_EU_240319'): BackCatalogueSlide {
   return {
     id: `${kind}-${index}`,
-    title: kind === 'cncf' ? `${event}_Breakouts_MN_${index}` : `Curated slide ${index}`,
+    title: kind === 'cncf'
+      ? `${event}_Breakouts_MN_${index}`
+      : `Curated slide ${index}`,
     kind,
   }
 }
@@ -106,7 +108,11 @@ describe('spaceOutCuratedSlides', () => {
   })
 
   it('leaves the sequence intact when there are too few CNCF slides to separate', () => {
-    const input = [slide('curated', 0), slide('showcase', 0), slide('hero', 0)]
+    const input = [
+      slide('curated', 0),
+      slide('showcase', 0),
+      slide('hero', 0)
+    ]
     expect(spaceOutCuratedSlides(input).map(item => item.id)).toEqual(input.map(item => item.id))
   })
 })
@@ -136,7 +142,15 @@ describe('orderBackCatalogueSlides', () => {
     const { cncf, curated } = buildPool()
     const kinds = new Set(orderBackCatalogueSlides(cncf, curated, seededRandom(23)).map(item => item.kind))
 
-    expect(kinds).toEqual(new Set(['cncf', 'curated', 'showcase', 'mascot', 'hero', 'artwork', 'bazzite']))
+    expect(kinds).toEqual(new Set([
+      'cncf',
+      'curated',
+      'showcase',
+      'mascot',
+      'hero',
+      'artwork',
+      'bazzite'
+    ]))
   })
 
   // The owner's instruction was "do not give a preference" — CNCF should lead
@@ -183,7 +197,10 @@ describe('orderBackCatalogueSlides', () => {
 })
 
 describe('artwork-wallpapers registry', () => {
-  const registries = [...ublueArtworkWallpapers, ...bazziteArtworkWallpapers]
+  const registries = [
+    ...ublueArtworkWallpapers,
+    ...bazziteArtworkWallpapers
+  ]
 
   it('imports 11 Bluefin day/night pairs and 2 Bazzite singles, skipping bluefin-11', () => {
     expect(ublueArtworkWallpapers).toHaveLength(11)
