@@ -37,6 +37,7 @@ Do not run the full application suite for documentation-only changes.
 8. For live-data cache updates, keep the cached file path list identical in order and content across `update-content.yml` (restore and save), `deploy.yml` (restore), and `preview.yml` (restore).
 9. When modifying a Vue component under `src/components/`, check `src/tests/` for existing component unit tests and keep test assertions aligned with the runtime contract.
 10. For CI concurrency changes, keep pull-request runs grouped by PR and non-PR runs unique; `scripts/tests/workflow-concurrency.test.ts` checks cancellation and group isolation. Assert the parsed YAML expressions directly instead of executing them as JavaScript.
+11. Renovate's npm pin (`constraints.npm` in `renovate.json`) must match the npm CI runs, which is the one bundled with Node (`node-version: '26'` → npm 11). With npm 12, Renovate's lock-file updates failed (#1009, `EALLOWREMOTE`). Renovate doesn't offer updates to the pin, so a Node major PR that brings a newer npm fails `scripts/tests/npm-constraint.test.ts` with the exact value to set. Fix it by raising `constraints.npm` in that same PR, not by editing or skipping the test.
 
 Documentation-only check:
 
