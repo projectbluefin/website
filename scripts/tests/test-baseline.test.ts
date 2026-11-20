@@ -428,6 +428,35 @@ describe('scripts/test-baseline.mjs (npm run test:gate)', () => {
     expect(runGate(root, { vitestRc: 1, report }).status).toBe(2)
   })
 
+  it('rejects a suite-load failure even when a known failure exists elsewhere', () => {
+    // A non-empty baseline plus an unrelated known failure must not mask a
+    // file that failed to import.
+    const root = makeRepo()
+    writeBaseline(root, 'src/tests/a.test.ts :: a fails\n')
+
+    const report = JSON.stringify({
+      success: false,
+      testResults: [
+        {
+          name: join(root, 'src/tests/a.test.ts'),
+          status: 'failed',
+          assertionResults: [{ status: 'failed', fullName: 'a fails' }],
+        },
+        {
+          name: join(root, 'src/tests/broken.test.ts'),
+          status: 'failed',
+          assertionResults: [],
+        },
+      ],
+    })
+
+    const { status, stderr } = runGate(root, { vitestRc: 1, report })
+    expect(status).toBe(2)
+    expect(stderr).toContain('src/tests/broken.test.ts')
+    expect(runGate(root, { vitestRc: 1, report, args: ['--update'] }).status).toBe(2)
+    expect(readFileSync(baselinePath(root), 'utf8')).toBe('src/tests/a.test.ts :: a fails\n')
+  })
+
   it('refuses to overwrite the baseline under --update on a runner error', () => {
     // The update mode must not record an empty baseline from an incomplete run.
     const root = makeRepo()

@@ -73,13 +73,27 @@ if (!report || typeof report !== 'object' || !Array.isArray(report.testResults))
 const cwd = `${process.cwd()}/`
 
 const current = new Set()
+// Files that failed (or reported a nameless failed assertion) without any
+// completed failed assertion to explain it: suite-load / import / setup errors.
+const unexplained = []
 for (const file of report.testResults) {
+  let named = 0
+  let nameless = 0
   for (const assertion of file.assertionResults ?? []) {
     // A suite that failed to load reports a failed assertion with no name;
     // it is not a completed assertion and must not enter the failure set.
-    if (assertion.status === 'failed' && assertion.fullName) {
-      current.add(`${file.name.replace(cwd, '')} :: ${assertion.fullName}`)
+    if (assertion.status === 'failed') {
+      if (assertion.fullName) {
+        named++
+        current.add(`${file.name.replace(cwd, '')} :: ${assertion.fullName}`)
+      }
+      else {
+        nameless++
+      }
     }
+  }
+  if ((file.status === 'failed' || nameless > 0) && named === 0) {
+    unexplained.push(String(file.name).replace(cwd, ''))
   }
 }
 
@@ -90,6 +104,17 @@ const sorted = [...current].sort()
 // normal red suite always has completed failed assertions to explain its exit
 // code, so the absence of any is itself a failure. Reject it before the
 // comparison and before any `--update` could record an empty baseline.
+// The check is also per file: an unrelated known failure elsewhere must not
+// mask a file that failed to load, so any such file rejects the run too.
+if (unexplained.length > 0) {
+  console.error('test-baseline: file(s) failed without any completed failed assertion:')
+  for (const name of unexplained) {
+    console.error(`  - ${name}`)
+  }
+  console.error('test-baseline: vitest failed to run to completion')
+  process.exit(2)
+}
+
 if (childExit !== 0 && current.size === 0) {
   console.error(
     'test-baseline: vitest failed to run to completion and reported no completed failures',
