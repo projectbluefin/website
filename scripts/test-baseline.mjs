@@ -30,6 +30,11 @@ const shouldUpdate = process.argv.includes('--update')
 
 const reportPath = join(mkdtempSync(join(tmpdir(), 'wolves-baseline-')), 'vitest.json')
 
+// Captured instead of swallowed: a non-zero exit is only acceptable when
+// completed failed assertions account for it. A runner that failed to finish
+// (suite-load error, setup error, import error) also exits non-zero, and that
+// is exactly the case the gate used to report as passing.
+let childExit = 0
 try {
   execFileSync(
     'npx',
@@ -44,8 +49,10 @@ try {
     },
   )
 }
-catch {
-  // vitest exits non-zero whenever tests fail, which is the normal case here.
+catch (error) {
+  childExit = Number.isInteger(error.status)
+    ? error.status
+    : 1
 }
 
 if (!existsSync(reportPath)) {
@@ -54,18 +61,70 @@ if (!existsSync(reportPath)) {
 }
 
 const report = JSON.parse(readFileSync(reportPath, 'utf8'))
+
+// Validate the report before interpreting it or writing an updated baseline.
+// An incomplete report (no `testResults`) means nothing ran to completion, so
+// it must never be read as "no new failures" nor recorded as a baseline.
+if (!report || typeof report !== 'object' || !Array.isArray(report.testResults)) {
+  console.error('test-baseline: vitest report is incomplete or malformed')
+  process.exit(2)
+}
+
 const cwd = `${process.cwd()}/`
 
 const current = new Set()
-for (const file of report.testResults ?? []) {
+// Files that failed (or reported a nameless failed assertion) without any
+// completed failed assertion to explain it: suite-load / import / setup errors.
+const unexplained = []
+for (const file of report.testResults) {
+  let named = 0
+  let nameless = 0
   for (const assertion of file.assertionResults ?? []) {
+    // A suite that failed to load reports a failed assertion with no name;
+    // it is not a completed assertion and must not enter the failure set.
     if (assertion.status === 'failed') {
-      current.add(`${file.name.replace(cwd, '')} :: ${assertion.fullName}`)
+      if (assertion.fullName) {
+        named++
+        current.add(`${file.name.replace(cwd, '')} :: ${assertion.fullName}`)
+      }
+      else {
+        nameless++
+      }
     }
+  }
+  // A file-level error message (hook throw, import failure) is reported on the
+  // file itself, never on an assertion, so it flags the file even when other
+  // named failures in it are baseline-known.
+  const fileError = typeof file.message === 'string' && file.message.trim() !== ''
+  if (fileError || ((file.status === 'failed' || nameless > 0) && named === 0)) {
+    unexplained.push(String(file.name).replace(cwd, ''))
   }
 }
 
 const sorted = [...current].sort()
+
+// A non-zero child exit with no completed failed assertions is a run that did
+// not finish: a suite failed to load, setup threw, or the runner errored. The
+// normal red suite always has completed failed assertions to explain its exit
+// code, so the absence of any is itself a failure. Reject it before the
+// comparison and before any `--update` could record an empty baseline.
+// The check is also per file: an unrelated known failure elsewhere must not
+// mask a file that failed to load, so any such file rejects the run too.
+if (unexplained.length > 0) {
+  console.error('test-baseline: file(s) failed without any completed failed assertion:')
+  for (const name of unexplained) {
+    console.error(`  - ${name}`)
+  }
+  console.error('test-baseline: vitest failed to run to completion')
+  process.exit(2)
+}
+
+if (childExit !== 0 && current.size === 0) {
+  console.error(
+    'test-baseline: vitest failed to run to completion and reported no completed failures',
+  )
+  process.exit(2)
+}
 
 if (shouldUpdate) {
   writeFileSync(BASELINE, `${sorted.join('\n')}\n`)
