@@ -208,6 +208,12 @@ A PR without evidence is not ready.
 Use `/var/tmp/website-agent/` for logs, screenshots, browser fixtures, and
 handoff documents. Never use `/tmp` for session artifacts.
 
+This is for an agent's own session files, not for committed tests. A test
+that writes files makes its own directory with
+`mkdtempSync(path.join(os.tmpdir(), '<name>-'))` and removes it afterwards:
+a fixed shared path fails with `EACCES` when another user on the host created
+it first.
+
 ## Cloudflare boundary
 
 Use the authenticated `wrangler` CLI and current Cloudflare documentation for
