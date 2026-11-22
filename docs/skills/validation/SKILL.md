@@ -47,6 +47,7 @@ Do not run the full application suite for documentation-only changes.
     literal text, so a `markdown/heading-increment` fix changes what the
     audience reads; keep it to the marker itself.
 12. Renovate's npm pin (`constraints.npm` in `renovate.json`) must match the npm CI runs, which is the one bundled with Node (`node-version: '26'` → npm 11). With npm 12, Renovate's lock-file updates failed (#1009, `EALLOWREMOTE`). Renovate doesn't offer updates to the pin, so a Node major PR that brings a newer npm fails `scripts/tests/npm-constraint.test.ts` with the exact value to set. Fix it by raising `constraints.npm` in that same PR, not by editing or skipping the test.
+13. For CI alert workflow edits, add a `scripts/tests/ci-alert-*.test.ts` vitest test that loads `.github/workflows/ci-alert.yml` and asserts on the step shell; run the actual jq filter from the workflow against fixtures rather than re-implementing the filter in JavaScript. `gh api` defaults to POST once any `-f` field is passed, so the unsupported `-G` shorthand aborts with "unknown shorthand flag: 'G'" before the request is sent — replace it with `--method GET`, and let the test assert both that `-G` is gone and that `--method GET` is present.
 
 Documentation-only check:
 

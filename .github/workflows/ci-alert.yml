@@ -49,7 +49,7 @@ jobs:
           # Any newer run that isn't a PR or queue run counts: deploy.yml shares one
           # concurrency group ("pages", cancel-in-progress) across push, release and
           # workflow_dispatch, so a release or manual deploy can cancel a push run.
-          newer=$(gh api --paginate --slurp -G \
+          newer=$(gh api --method GET --paginate --slurp \
             "repos/${REPO}/actions/workflows/${WORKFLOW_ID}/runs" \
             -f created=">=${CREATED}" -f per_page=100 |
             jq -r --argjson number "$RUN_NUMBER" \
