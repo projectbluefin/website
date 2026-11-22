@@ -1,4 +1,5 @@
 import fs from 'node:fs'
+import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
@@ -104,22 +105,25 @@ describe('social cards wallpaper pool', () => {
   })
 
   it('renders a valid social card with generateSocialCard', async () => {
-    const testOutputPath = '/var/tmp/website-agent/test-social-card.webp'
+    // A private directory per run: a fixed shared path fails with EACCES when
+    // another user on the same host created it first, and races parallel runs.
+    const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'social-card-'))
+    const testOutputPath = path.join(workDir, 'test-social-card.webp')
     const sample = BLUEFIN_EXTRA_WALLPAPERS[0]
 
-    await generateSocialCard({
-      wallpaper: sample,
-      outputPath: testOutputPath,
-      deviceScaleFactor: 1,
-    })
-
-    expect(fs.existsSync(testOutputPath)).toBe(true)
-    const stats = fs.statSync(testOutputPath)
-    expect(stats.size).toBeGreaterThan(5000)
-
     try {
-      fs.unlinkSync(testOutputPath)
+      await generateSocialCard({
+        wallpaper: sample,
+        outputPath: testOutputPath,
+        deviceScaleFactor: 1,
+      })
+
+      expect(fs.existsSync(testOutputPath)).toBe(true)
+      const stats = fs.statSync(testOutputPath)
+      expect(stats.size).toBeGreaterThan(5000)
     }
-    catch {}
+    finally {
+      fs.rmSync(workDir, { recursive: true, force: true })
+    }
   }, 20000)
 })
