@@ -21,7 +21,7 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
@@ -78,6 +78,21 @@ jobs:
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           path: './dist'
+      # deploy-pages looks the artifact up through the Actions API a fraction of
+      # a second after upload-pages-artifact finalizes it, and that listing can
+      # lag: runs 44902561882 and 45303513624 uploaded fine, then got "Found 0
+      # artifact(s)" and failed main (#1058). Retry once after a pause so a
+      # listing lag doesn't fail the deploy. When the failure is that lookup, no
+      # Pages deployment exists yet, so the retry is a clean first attempt. Any
+      # other failure is retried too; a real failure fails both and turns the job red.
       - name: Deploy to GitHub Pages
         id: deployment
+        continue-on-error: true
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+      - name: Wait for artifact listing before retry
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 30
+      - name: Retry deploy to GitHub Pages
+        id: deployment_retry
+        if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

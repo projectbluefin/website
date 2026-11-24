@@ -47,6 +47,21 @@ timeout to get there. When adding a boundary assertion to
 `tests/wolves-movie-flow.mjs`, wait for the transition rather than trusting the
 settle time.
 
+## "Found 0 artifact(s)" in the Pages deploy is a listing lag
+
+`actions/deploy-pages` asks the Actions API for the `github-pages` artifact
+well under a second after `upload-pages-artifact` reports it finalized. That
+listing can lag, and the deploy then fails with "Found 0 artifact(s)" / "No
+artifacts named "github-pages" were found" although the upload succeeded
+(#1058: runs 44902561882 and 45303513624). The build and the action pins are
+not the cause; the same pins deployed fine on the runs either side.
+
+`deploy.yml` therefore runs the deploy step with `continue-on-error`, waits
+30 seconds, and retries once. The environment URL reads from whichever attempt
+ran. A real deploy failure fails both attempts and still turns the job red, so
+do not add more retries to hide one. If this error ever survives the retry,
+check githubstatus.com before touching the workflow.
+
 ---
 
 Procedure and gate: [`../SKILL.md`](../SKILL.md).
