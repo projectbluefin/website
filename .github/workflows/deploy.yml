@@ -82,9 +82,9 @@ jobs:
       # a second after upload-pages-artifact finalizes it, and that listing can
       # lag: runs 44902561882 and 45303513624 uploaded fine, then got "Found 0
       # artifact(s)" and failed main (#1058). Retry once after a pause so a
-      # listing lag doesn't fail the deploy. That lookup fails before any Pages
-      # deployment exists, so the retry is a clean first attempt. A real failure
-      # fails both attempts and still turns the job red.
+      # listing lag doesn't fail the deploy. When the failure is that lookup, no
+      # Pages deployment exists yet, so the retry is a clean first attempt. Any
+      # other failure is retried too; a real failure fails both and turns the job red.
       - name: Deploy to GitHub Pages
         id: deployment
         continue-on-error: true
