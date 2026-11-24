@@ -66,7 +66,7 @@
     "vite": "8.3.8",
     "vitest": "5.1.1",
     "vue-tsc": "3.3.14",
-    "wrangler": "4.165.0"
+    "wrangler": "4.166.0"
   },
   "overrides": {
     "tinypool": "^2.2.0"
