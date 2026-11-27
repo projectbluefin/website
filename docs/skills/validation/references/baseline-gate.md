@@ -15,6 +15,10 @@ npm run test:gate
 Never trust a count written in prose. Never run `test:gate:update` to hide a
 failure caused by the current change.
 
+The gate also rejects any file-level load, setup, or hook error, even when that
+file has named failures already recorded in the baseline. This prevents a
+partially completed file from being mistaken for an ordinary known failure.
+
 ## CI is stricter
 
 The PR test job in `.github/workflows/ci.yml` runs:
