@@ -73,9 +73,9 @@ if (!report || typeof report !== 'object' || !Array.isArray(report.testResults))
 const cwd = `${process.cwd()}/`
 
 const current = new Set()
-// Files that failed to run to completion (load/setup/hook error), or reported
-// a nameless failed assertion, without any completed failed assertion to
-// explain it.
+// Files that failed to run to completion (load/setup/hook error), reported a
+// file-level error message, or had a nameless failed assertion with no named
+// failed assertion in the same file.
 const unexplained = []
 for (const file of report.testResults) {
   let named = 0
