@@ -73,8 +73,9 @@ if (!report || typeof report !== 'object' || !Array.isArray(report.testResults))
 const cwd = `${process.cwd()}/`
 
 const current = new Set()
-// Files that failed (or reported a nameless failed assertion) without any
-// completed failed assertion to explain it: suite-load / import / setup errors.
+// Files that failed to run to completion (load/setup/hook error), reported a
+// file-level error message, or had a nameless failed assertion with no named
+// failed assertion in the same file.
 const unexplained = []
 for (const file of report.testResults) {
   let named = 0
@@ -111,7 +112,7 @@ const sorted = [...current].sort()
 // The check is also per file: an unrelated known failure elsewhere must not
 // mask a file that failed to load, so any such file rejects the run too.
 if (unexplained.length > 0) {
-  console.error('test-baseline: file(s) failed without any completed failed assertion:')
+  console.error('test-baseline: file(s) failed to run to completion (load/setup/hook error):')
   for (const name of unexplained) {
     console.error(`  - ${name}`)
   }
